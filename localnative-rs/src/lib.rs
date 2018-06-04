@@ -1,0 +1,55 @@
+extern crate serde;
+extern crate serde_json;
+extern crate time;
+
+#[macro_use]
+extern crate serde_derive;
+
+use serde_json::Error;
+use time::Timespec;
+
+pub mod cmd;
+pub mod sql;
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Note {
+    pub title: String,
+    pub url: String,
+    pub tags: String,
+    pub description: String,
+    pub comments: String,
+    pub annotations: String,
+    pub created_at: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Cmd {
+    pub action: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct CmdInsert {
+    pub title: String,
+    pub url: String,
+    pub tags: String,
+    pub description: String,
+    pub comments: String,
+    pub annotations: String,
+
+    pub limit: u32,
+    pub offset: u32,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct CmdSearch {
+    pub query: String,
+
+    pub limit: u32,
+    pub offset: u32,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct CmdSelect {
+    pub limit: u32,
+    pub offset: u32,
+}
