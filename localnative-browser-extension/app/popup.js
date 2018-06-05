@@ -1,19 +1,22 @@
 function statusMessage(text) {
-  document.getElementById('status').innerHTML = "<p>" + text + "</p>";
+  document.getElementById('status').innerHTML = '';
+  document.getElementById('status').insertAdjacentHTML('beforeend', Sanitizer.escapeHTML`<p>${text}</p>`);
 }
 
 function onNativeMessage(message) {
   // console.log(message);
+  document.getElementById('notes').innerHTML = '';
   var notesHTML = message.notes.map(function(i){
-    return '<div class=note>'
-      + '<div class="note-created-at">' + i.created_at + "</div>"
-      + '<div class="note-title">' + i.title + "</div>"
-      + '<div class="note-url">' + '<a target="_blank" href="' + i.url  + '">' +i.url+'</a></div>'
-      + '<div class="note-tags">' + i.tags + "</div>"
-      + '</div>';
-  }).join('<div class="note-sep"></div>');
-  console.log(notesHTML);
-  document.getElementById('notes').innerHTML =  notesHTML;
+    document.getElementById('notes').insertAdjacentHTML('beforeend', Sanitizer.escapeHTML`
+    <div class=note>
+      <div class="note-created-at">${i.created_at}</div>
+      <div class="note-title">${i.title}</div>
+      <div class="note-url"><a target="_blank" href="${i.url}">${i.url}</a></div>
+      <div class="note-tags">${i.tags}</div>
+    </div>
+    <div class="note-sep"></div>
+      `)
+  });
 }
 
 function onDisconnected() {
@@ -22,7 +25,6 @@ function onDisconnected() {
 
 function connect() {
   var hostName = "app.localnative";
-  statusMessage("Connecting to native messaging host <b>" + hostName + "</b>")
   port = chrome.runtime.connectNative(hostName);
   port.onMessage.addListener(onNativeMessage);
   port.onDisconnect.addListener(onDisconnected);
@@ -86,5 +88,5 @@ function cmdSelect() {
 function cmd(message){
   var part = connect();
   port.postMessage(message);
-  statusMessage("Sent message: <b>" + JSON.stringify(message) + "</b>");
+  statusMessage("Sent message: " + JSON.stringify(message) );
 }
