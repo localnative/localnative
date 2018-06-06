@@ -32,10 +32,30 @@ function connect() {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
+  // focus on tags
+  document.getElementById('tags-text').focus();
+
+  // register cmdInsert
   document.getElementById('save-button').addEventListener(
       'click', cmdInsert);
+  document.getElementById('save-input').addEventListener('keypress', function (e) {
+    var key = e.which || e.keyCode;
+    if (key === 13) { // 13 is enter
+      cmdInsert();
+    }
+  });
+
+  // register cmdSearch
   document.getElementById('search-button').addEventListener(
       'click', cmdSearch);
+  document.getElementById('search-text').addEventListener('keypress', function (e) {
+    var key = e.which || e.keyCode;
+    if (key === 13) { // 13 is enter
+      cmdSearch();
+    }
+  });
+
+  // initial query
   cmdSelect();
 
   chrome.tabs.query({'active': true, 'lastFocusedWindow': true}, function (tabs) {
@@ -88,5 +108,5 @@ function cmdSelect() {
 function cmd(message){
   var part = connect();
   port.postMessage(message);
-  statusMessage("Sent message: " + JSON.stringify(message) );
+  statusMessage("Sent command: " + JSON.stringify(message) );
 }
