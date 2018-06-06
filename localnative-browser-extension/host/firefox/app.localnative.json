@@ -1,0 +1,9 @@
+{
+  "name": "app.localnative",
+  "description": "Local Native Host",
+  "path": "CHANGE_TO_HOST_PATH/localnative-web-ext-host",
+  "type": "stdio",
+  "allowed_extensions": [
+    "localnative@example.org"
+  ]
+}
