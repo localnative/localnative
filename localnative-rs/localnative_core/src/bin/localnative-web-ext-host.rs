@@ -3,17 +3,17 @@ use std::io::{Read, Write};
 use std::mem::transmute;
 use std::path::Path;
 use std::str;
-extern crate ln_core;
+extern crate localnative_core;
 extern crate rusqlite;
 extern crate serde_json;
 extern crate time;
-use ln_core::cmd::{create, insert, select};
-use ln_core::sql;
-use ln_core::Cmd;
-use ln_core::CmdInsert;
-use ln_core::CmdSearch;
-use ln_core::CmdSelect;
-use ln_core::Note;
+use localnative_core::cmd::{create, insert, select};
+use localnative_core::sql;
+use localnative_core::Cmd;
+use localnative_core::CmdInsert;
+use localnative_core::CmdSearch;
+use localnative_core::CmdSelect;
+use localnative_core::Note;
 use serde_json::Error;
 
 use rusqlite::Connection;
@@ -50,7 +50,7 @@ fn main() {
 fn process(cmd: Cmd, text: &str) {
     eprintln!("process cmd {:?}", cmd);
     //let path = Path::new("/home/e/.ln/ln.sqlite3");
-    let path = Path::new("ln.sqlite3");
+    let path = Path::new("localnative.sqlite3");
     let conn = Connection::open(path).unwrap();
 
     create(&conn);
