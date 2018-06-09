@@ -1,0 +1,15 @@
+#!/bin/bash
+
+set -e
+
+cd `dirname $0`/..
+
+echo "set version to" $1
+
+sed -i "6s/.*/version = \"$1\"/" localnative-rs/localnative_core/Cargo.toml
+
+sed -i "5s/.*/version = \"$1\"/" localnative-rs/localnative_cli/Cargo.toml
+
+sed -i "3s/.*/  \"version\": \"$1\",/" localnative-browser-extension/app/manifest.json
+
+sed -i "2s/.*/version: $1/" localnative-app-mdbook/src/localnative-app.md

@@ -1,0 +1,75 @@
+extern crate rusqlite;
+use self::rusqlite::Connection;
+use super::cmd::{create, insert, select};
+use super::sql;
+use std::path::Path;
+
+use super::Cmd;
+use super::CmdInsert;
+use super::CmdSearch;
+use super::CmdSelect;
+use super::Note;
+extern crate serde_json;
+use serde_json::Error;
+extern crate time;
+
+pub fn run(text: &str) -> String {
+    if let Ok(cmd) = serde_json::from_str::<Cmd>(text) {
+        process(cmd, text)
+    } else {
+        r#"{"error": "cmd json error"}"#.to_string()
+    }
+}
+
+fn process(cmd: Cmd, text: &str) -> String {
+    eprintln!("process cmd {:?}", cmd);
+    //let path = Path::new("/home/e/.ln/ln.sqlite3");
+    let path = Path::new("localnative.sqlite3");
+    let conn = Connection::open(path).unwrap();
+
+    create(&conn);
+    match cmd.action.as_ref() {
+        "insert" => {
+            if let Ok(i) = serde_json::from_str::<CmdInsert>(text) {
+                let created_at =
+                    time::strftime("%Y-%m-%d %H:%M:%S:%f UTC", &time::now_utc()).unwrap();
+                //eprintln!("created_at {}", created_at);
+                let note = Note {
+                    title: i.title,
+                    url: i.url,
+                    tags: i.tags,
+                    description: i.description,
+                    comments: i.comments,
+                    annotations: i.annotations,
+                    created_at,
+                };
+                insert(&conn, note);
+                do_select(&conn, &sql::select(i.limit, i.offset))
+            } else {
+                r#"{"error":"cmd insert json error"}"#.to_string()
+            }
+        }
+        "select" => {
+            if let Ok(s) = serde_json::from_str::<CmdSelect>(text) {
+                do_select(&conn, &sql::select(s.limit, s.offset))
+            } else {
+                r#"{"error":"cmd select json error"}"#.to_string()
+            }
+        }
+        "search" => {
+            if let Ok(s) = serde_json::from_str::<CmdSearch>(text) {
+                do_select(&conn, &sql::search(s.limit, s.offset, &s.query))
+            } else {
+                r#"{"error":"cmd search json error"}"#.to_string()
+            }
+        }
+        _ => r#"{"error": "cmd no match"}"#.to_string(),
+    }
+}
+
+fn do_select(conn: &Connection, sql: &str) -> String {
+    let j = select(&conn, sql);
+    let msg = format!("{{\"notes\":{}}}", j);
+    eprintln!("msg {}", msg);
+    msg
+}

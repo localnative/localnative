@@ -1,0 +1,12 @@
+[package]
+name = "localnative_cli"
+description = "localnative app command line utility"
+homepage = "https://localnative.app"
+version = "0.0.1"
+authors = ["Yi Wang"]
+license = "AGPLv3"
+
+[dependencies.localnative_core]
+version = "0.0.1"
+path = "../localnative_core"
+

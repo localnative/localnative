@@ -67,6 +67,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
 });
 
+let LIMIT = 10;
+
 function cmdInsert() {
   message = {
     action: "insert",
@@ -78,7 +80,7 @@ function cmdInsert() {
     comments: "",
     annotations: "",
 
-    limit: 5,
+    limit: LIMIT,
     offset: 0
   };
   console.log(message);
@@ -90,7 +92,7 @@ function cmdSearch() {
     action: "search",
 
     query: document.getElementById('search-text').value,
-    limit: 5,
+    limit: LIMIT,
     offset: 0
   };
   cmd(message);
@@ -99,7 +101,7 @@ function cmdSearch() {
 function cmdSelect() {
   message = {
     action: "select",
-    limit: 5,
+    limit: LIMIT,
     offset: 0
   };
   cmd(message);

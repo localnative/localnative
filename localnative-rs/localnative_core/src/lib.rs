@@ -9,6 +9,7 @@ use serde_json::Error;
 use time::Timespec;
 
 pub mod cmd;
+pub mod exe;
 pub mod sql;
 
 #[derive(Serialize, Deserialize, Debug)]

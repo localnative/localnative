@@ -9,15 +9,16 @@ use super::Note;
 
 pub fn select(conn: &Connection, sql: &str) -> String {
     let mut stmt = conn.prepare(sql).unwrap();
-    let note_iter = stmt.query_map(&[], |row| Note {
-        title: row.get(0),
-        url: row.get(1),
-        tags: row.get(2),
-        description: row.get(3),
-        comments: row.get(4),
-        annotations: row.get(5),
-        created_at: row.get(6),
-    }).unwrap();
+    let note_iter =
+        stmt.query_map(&[], |row| Note {
+            title: row.get(0),
+            url: row.get(1),
+            tags: row.get(2),
+            description: row.get(3),
+            comments: row.get(4),
+            annotations: row.get(5),
+            created_at: row.get(6),
+        }).unwrap();
 
     let mut j = "[ ".to_owned();
     for note in note_iter {

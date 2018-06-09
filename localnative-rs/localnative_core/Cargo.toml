@@ -1,7 +1,10 @@
 [package]
-name = "localnative-core"
-version = "0.1.0"
-authors = ["e"]
+name = "localnative_core"
+description = "localnative core lib"
+homepage = "https://localnative.app"
+authors = ["Yi Wang"]
+version = "0.0.1"
+license = "AGPLv3"
 
 [dependencies.rusqlite]
 version = "0.13.0"
