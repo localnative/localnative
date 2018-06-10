@@ -1,0 +1,29 @@
+#!/bin/bash
+
+set -e
+
+cd `dirname $0`/..
+
+script/set-version $1
+echo "release to" $1
+
+
+cd localnative-rs
+# cargo clean
+cargo build --release
+
+cd ..
+
+mkdir -p release/v$1/web-ext-host
+
+cp localnative-rs/target/release/localnative-web-ext-host release/v$1/web-ext-host/localnative-web-ext-host-$1
+cd release/v$1/web-ext-host
+sha256sum localnative-web-ext-host-$1 > localnative-web-ext-host-$1.sha256
+md5sum localnative-web-ext-host-$1 > localnative-web-ext-host-$1.md5
+
+# release tree
+cd ../../..
+echo "# Release" > localnative-app-mdbook/src/release.md
+echo '```' >> localnative-app-mdbook/src/release.md
+tree -s release >> localnative-app-mdbook/src/release.md
+echo '```' >> localnative-app-mdbook/src/release.md

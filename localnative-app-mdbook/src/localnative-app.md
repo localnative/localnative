@@ -3,8 +3,8 @@ version: 0.0.1
 
 A note/bookmark taking tool using a local sqlite database. The browser extension is built with native messaging.
 
-## Source code
-[git ssb](http://localhost:7718/%q13hLJchNXz/xZi9mjWVHyIbRnkr5VjF0Y6BfhrOV6Q=.sha256): `ssb://%q13hLJchNXz/xZi9mjWVHyIbRnkr5VjF0Y6BfhrOV6Q=.sha256`
+Currently only tested on GNU/Linux.
+
 
 ## Quick start
 
@@ -21,6 +21,11 @@ Below 3 componets must all exist and correctly setup for browser extension to wo
   - or from source at `localnative-browser-extension/app`
 
 - Setup browser extension host binary
+    - download from release archive
+
+        [https://localnative.app/release/v0.0.1/web-ext-host/localnative-web-ext-host](https://localnative.app/release/v0.0.1/web-ext-host/localnative-web-ext-host)
+
+        Currently only built on Ubuntu 16.04.4 LTS.
     - from source at `localnative-rs`
 
 - Setup native messaging manifest to point to extension host binary
@@ -29,3 +34,9 @@ Below 3 componets must all exist and correctly setup for browser extension to wo
         - [Firefox](https://developer.mozilla.org/en-US/Add-ons/WebExtensions/Native_manifests#Manifest_location)
         - [Chrome](https://developer.chrome.com/extensions/nativeMessaging#native-messaging-host-location)
     - Change the host `path` in `app.localnative.json` to where `localnative-web-ext-host` binary is from previous step
+
+## Source code
+[git ssb](http://localhost:7718/%q13hLJchNXz/xZi9mjWVHyIbRnkr5VjF0Y6BfhrOV6Q=.sha256): `ssb://%q13hLJchNXz/xZi9mjWVHyIbRnkr5VjF0Y6BfhrOV6Q=.sha256`
+
+## License
+[AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.en.html)
