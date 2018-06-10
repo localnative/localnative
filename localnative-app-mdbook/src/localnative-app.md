@@ -23,7 +23,7 @@ Below 3 componets must all exist and correctly setup for browser extension to wo
 - Setup browser extension host binary
     - download from release archive
 
-        [https://localnative.app/release/v0.0.1/web-ext-host/localnative-web-ext-host](https://localnative.app/release/v0.0.1/web-ext-host/localnative-web-ext-host)
+        [https://localnative.app/release/v0.0.1/web-ext-host/localnative-web-ext-host-0.0.1](https://localnative.app/release/v0.0.1/web-ext-host/localnative-web-ext-host-0.0.1)
 
         Currently only built on Ubuntu 16.04.4 LTS.
     - from source at `localnative-rs`

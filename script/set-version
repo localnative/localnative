@@ -13,3 +13,6 @@ sed -i "5s/.*/version = \"$1\"/" localnative-rs/localnative_cli/Cargo.toml
 sed -i "3s/.*/  \"version\": \"$1\",/" localnative-browser-extension/app/manifest.json
 
 sed -i "2s/.*/version: $1/" localnative-app-mdbook/src/localnative-app.md
+
+sed -i "26s/.*/        [https:\/\/localnative.app\/release\/v$1\/web-ext-host\/localnative-web-ext-host-$1](https:\/\/localnative.app\/release\/v$1\/web-ext-host\/localnative-web-ext-host-$1)/" localnative-app-mdbook/src/localnative-app.md
+
