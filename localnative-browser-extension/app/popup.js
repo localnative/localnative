@@ -100,13 +100,27 @@ document.addEventListener('DOMContentLoaded', function () {
 
 let LIMIT = 10;
 
+function makeTags(str) {
+  let s = str.replace(/,+/g, " ").trim();
+  let l = s.replace(/\s+/g, ",").split(",");
+  var set = {};
+  l.forEach(function(tag){
+    set[tag] = 1;
+  });
+  var arr = []
+  for (var key in set){
+    if(set.hasOwnProperty(key)) arr.push(key);
+  }
+  return arr.join(",");
+}
+
 function cmdInsert() {
   message = {
     action: "insert",
 
     title: document.getElementById('title').value,
     url: document.getElementById('url').value,
-    tags: document.getElementById('tags-text').value,
+    tags: makeTags(document.getElementById('tags-text').value),
     description: document.getElementById('desc-text').value,
     comments: "",
     annotations: "",
