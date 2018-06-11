@@ -68,8 +68,6 @@ document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('tags-text').focus();
 
   // register cmdInsert
-  document.getElementById('save-button').addEventListener(
-      'click', cmdInsert);
   document.getElementById('save-input').addEventListener('keypress', function (e) {
     var key = e.which || e.keyCode;
     if (key === 13) { // 13 is enter
@@ -78,13 +76,8 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   // register cmdSearch
-  document.getElementById('search-button').addEventListener(
-      'click', cmdSearch);
-  document.getElementById('search-text').addEventListener('keypress', function (e) {
-    var key = e.which || e.keyCode;
-    if (key === 13) { // 13 is enter
+  document.getElementById('search-text').addEventListener('keyup', function (e) {
       cmdSearch();
-    }
   });
 
   // initial query
