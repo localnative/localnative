@@ -17,9 +17,12 @@ pub fn select(limit: u32, offset: u32) -> String {
 pub fn search(limit: u32, offset: u32, query: &str) -> String {
     format!(
         r#"SELECT rowid, title, url, tags, description, comments, annotations, created_at FROM note
-           where title like '%{}%'
-            order by created_at desc limit {} offset {}"#,
-        query, limit, offset
+        where title like '%{}%'
+        or url like '%{}%'
+        or tags like '%{}%'
+        or description like '%{}%'
+        order by created_at desc limit {} offset {}"#,
+        query, query, query, query, limit, offset
     )
 }
 

@@ -19,8 +19,15 @@ function onNativeMessage(message) {
       </div>
 
       <div class="note-title">
-      ${i.title}</div>
+        ${i.title}
+      </div>
+
       <div class="note-url"><a target="_blank" href="${i.url}">${i.url}</a></div>
+
+      <div class="note-desc">
+        ${i.description}
+      </div>
+
       <div class="note-tags">
         <span id="note-tags-rowid-${i.rowid}">
         </span>
@@ -135,12 +142,12 @@ function cmdSelect() {
 function cmdDelete(rowid) {
   message = {
     action: "delete",
-    rowid: rowid,
 
+    query: document.getElementById('search-text').value,
+    rowid: rowid,
     limit: LIMIT,
     offset: 0
   };
-  console.log(message);
   cmd(message);
 }
 

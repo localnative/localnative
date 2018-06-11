@@ -52,9 +52,9 @@ fn process(cmd: Cmd, text: &str) -> String {
             }
         }
         "delete" => {
-            if let Ok(d) = serde_json::from_str::<CmdDelete>(text) {
-                delete(&conn, d.rowid);
-                do_select(&conn, &sql::select(d.limit, d.offset))
+            if let Ok(s) = serde_json::from_str::<CmdDelete>(text) {
+                delete(&conn, s.rowid);
+                do_select(&conn, &sql::search(s.limit, s.offset, &s.query))
             } else {
                 r#"{"error":"cmd delete json error"}"#.to_string()
             }

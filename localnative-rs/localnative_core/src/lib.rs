@@ -52,6 +52,7 @@ pub struct CmdSearch {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CmdDelete {
+    pub query: String,
     pub rowid: i64,
 
     pub limit: u32,
