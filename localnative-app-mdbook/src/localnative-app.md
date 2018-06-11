@@ -1,5 +1,5 @@
 # Local Native App
-version: 0.0.2-dev
+version: 0.0.2
 
 A note/bookmark taking tool using a local sqlite database. The browser extension is built with native messaging.
 
@@ -23,7 +23,7 @@ Below 3 componets must all exist and correctly setup for browser extension to wo
 - Setup browser extension host binary
     - download from release archive
 
-        [https://localnative.app/release/v0.0.2-dev/web-ext-host/localnative-web-ext-host-0.0.2-dev](https://localnative.app/release/v0.0.2-dev/web-ext-host/localnative-web-ext-host-0.0.2-dev)
+        [https://localnative.app/release/v0.0.2/web-ext-host/localnative-web-ext-host-0.0.2](https://localnative.app/release/v0.0.2/web-ext-host/localnative-web-ext-host-0.0.2)
 
         Currently only built on Ubuntu 16.04.4 LTS.
     - from source at `localnative-rs`
