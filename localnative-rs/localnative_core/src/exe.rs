@@ -1,10 +1,11 @@
 extern crate rusqlite;
 use self::rusqlite::Connection;
-use super::cmd::{create, insert, select};
+use super::cmd::{create, delete, insert, select};
 use super::sql;
 use std::path::Path;
 
 use super::Cmd;
+use super::CmdDelete;
 use super::CmdInsert;
 use super::CmdSearch;
 use super::CmdSelect;
@@ -35,6 +36,7 @@ fn process(cmd: Cmd, text: &str) -> String {
                     time::strftime("%Y-%m-%d %H:%M:%S:%f UTC", &time::now_utc()).unwrap();
                 //eprintln!("created_at {}", created_at);
                 let note = Note {
+                    rowid: 0i64,
                     title: i.title,
                     url: i.url,
                     tags: i.tags,
@@ -47,6 +49,14 @@ fn process(cmd: Cmd, text: &str) -> String {
                 do_select(&conn, &sql::select(i.limit, i.offset))
             } else {
                 r#"{"error":"cmd insert json error"}"#.to_string()
+            }
+        }
+        "delete" => {
+            if let Ok(d) = serde_json::from_str::<CmdDelete>(text) {
+                delete(&conn, d.rowid);
+                do_select(&conn, &sql::select(d.limit, d.offset))
+            } else {
+                r#"{"error":"cmd delete json error"}"#.to_string()
             }
         }
         "select" => {

@@ -1,10 +1,9 @@
 use std::io;
-use std::str;
 use std::io::{Read, Write};
 use std::mem::transmute;
+use std::str;
 extern crate localnative_core;
 use localnative_core::exe::run;
-
 
 fn main() {
     // Read the message length (first 4 bytes).

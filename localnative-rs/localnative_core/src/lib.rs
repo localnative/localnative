@@ -14,6 +14,7 @@ pub mod sql;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Note {
+    pub rowid: i64,
     pub title: String,
     pub url: String,
     pub tags: String,
@@ -44,6 +45,14 @@ pub struct CmdInsert {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CmdSearch {
     pub query: String,
+
+    pub limit: u32,
+    pub offset: u32,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct CmdDelete {
+    pub rowid: i64,
 
     pub limit: u32,
     pub offset: u32,

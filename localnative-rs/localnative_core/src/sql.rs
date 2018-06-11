@@ -8,7 +8,7 @@ macro_rules! mk_sql {
 
 pub fn select(limit: u32, offset: u32) -> String {
     format!(
-        r#"SELECT title, url, tags, description, comments, annotations, created_at
+        r#"SELECT rowid, title, url, tags, description, comments, annotations, created_at
            FROM note order by created_at desc limit {} offset {}"#,
         limit, offset
     )
@@ -16,7 +16,7 @@ pub fn select(limit: u32, offset: u32) -> String {
 
 pub fn search(limit: u32, offset: u32, query: &str) -> String {
     format!(
-        r#"SELECT title, url, tags, description, comments, annotations, created_at FROM note
+        r#"SELECT rowid, title, url, tags, description, comments, annotations, created_at FROM note
            where title like '%{}%'
             order by created_at desc limit {} offset {}"#,
         query, limit, offset

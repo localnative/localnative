@@ -11,13 +11,14 @@ pub fn select(conn: &Connection, sql: &str) -> String {
     let mut stmt = conn.prepare(sql).unwrap();
     let note_iter =
         stmt.query_map(&[], |row| Note {
-            title: row.get(0),
-            url: row.get(1),
-            tags: row.get(2),
-            description: row.get(3),
-            comments: row.get(4),
-            annotations: row.get(5),
-            created_at: row.get(6),
+            rowid: row.get(0),
+            title: row.get(1),
+            url: row.get(2),
+            tags: row.get(3),
+            description: row.get(4),
+            comments: row.get(5),
+            annotations: row.get(6),
+            created_at: row.get(7),
         }).unwrap();
 
     let mut j = "[ ".to_owned();
@@ -30,6 +31,11 @@ pub fn select(conn: &Connection, sql: &str) -> String {
     j.pop();
     j.push_str("]");
     j
+}
+
+pub fn delete(conn: &Connection, rowid: i64) {
+    conn.execute("delete from note where rowid = ?1", &[&rowid])
+        .unwrap();
 }
 
 pub fn insert(conn: &Connection, note: Note) {

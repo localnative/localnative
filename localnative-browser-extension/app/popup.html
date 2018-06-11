@@ -1,10 +1,19 @@
 <!DOCTYPE html>
 
-<html>
+<html style="min-width:600px;">
   <head>
     <script src='./sanitizer.js'></script>
     <script src='./popup.js'></script>
     <style>
+      .save-input{
+        min-width: 600px;
+      }
+      #search-text{
+        min-width: 600px;
+      }
+      .note{
+        background-color: #f0f0f5;
+      }
       .note-created-at{
         color: grey;
       }
@@ -12,8 +21,8 @@
        font-weight: bold;
       }
       .note-sep{
-        color: black;
-        height: 7px
+        background-color: #d1d1e0;
+        height: 1px
       }
     </style>
   </head>
@@ -25,7 +34,7 @@
       <input class='save-input' id='tags-text' type='text' placeholder='tags'/>
       <button id='save-button'>Save</button>
     </div>
-    <div id='status'></div>
+    <div id='status' style="max-width:600px;"></div>
     <div>
       <input id='search-text' type='text' />
       <button id='search-button'>Search</button>

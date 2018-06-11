@@ -4,18 +4,43 @@ function statusMessage(text) {
 }
 
 function onNativeMessage(message) {
-  // console.log(message);
   document.getElementById('notes').innerHTML = '';
-  var notesHTML = message.notes.map(function(i){
+  var notesHTML = message.notes.forEach(function(i){
+    // render one item
     document.getElementById('notes').insertAdjacentHTML('beforeend', Sanitizer.escapeHTML`
-    <div class=note>
-      <div class="note-created-at">${i.created_at}</div>
-      <div class="note-title">${i.title}</div>
-      <div class="note-url"><a target="_blank" href="${i.url}">${i.url}</a></div>
-      <div class="note-tags">${i.tags}</div>
-    </div>
     <div class="note-sep"></div>
-      `)
+    <div class="note">
+      <div class="note-created-at">
+        ${i.created_at}
+        rowid ${i.rowid}
+        <button id="btn-delete-rowid-${i.rowid}" title="delete">
+        X
+        </button>
+      </div>
+
+      <div class="note-title">
+      ${i.title}</div>
+      <div class="note-url"><a target="_blank" href="${i.url}">${i.url}</a></div>
+      <div class="note-tags">
+        <span id="note-tags-rowid-${i.rowid}">
+        </span>
+      </div>
+    </div>
+      `);
+
+    // tags
+    i.tags.split(',').forEach(function(tag){
+      document.getElementById('note-tags-rowid-' + i.rowid ).insertAdjacentHTML('beforeend', Sanitizer.escapeHTML`
+          <button>
+           ${tag}
+          </button>
+          `);
+    });
+
+    // delete button
+    document.getElementById('btn-delete-rowid-' + i.rowid).onclick = function(){
+      cmdDelete(i.rowid);
+    }
   });
 }
 
@@ -104,6 +129,18 @@ function cmdSelect() {
     limit: LIMIT,
     offset: 0
   };
+  cmd(message);
+}
+
+function cmdDelete(rowid) {
+  message = {
+    action: "delete",
+    rowid: rowid,
+
+    limit: LIMIT,
+    offset: 0
+  };
+  console.log(message);
   cmd(message);
 }
 
