@@ -35,19 +35,25 @@ function onNativeMessage(message) {
     </div>
       `);
 
-    // tags
-    i.tags.split(',').forEach(function(tag){
-      document.getElementById('note-tags-rowid-' + i.rowid ).insertAdjacentHTML('beforeend', Sanitizer.escapeHTML`
-          <button>
-           ${tag}
-          </button>
-          `);
-    });
-
     // delete button
     document.getElementById('btn-delete-rowid-' + i.rowid).onclick = function(){
       cmdDelete(i.rowid);
-    }
+    };
+
+    // tags
+    i.tags.split(',').forEach(function(tag){
+      document.getElementById('note-tags-rowid-' + i.rowid ).insertAdjacentHTML('beforeend', Sanitizer.escapeHTML`
+          <button id="note-tags-rowid-${i.rowid}-tag-${tag}">
+           ${tag}
+          </button>
+          `);
+      // tag search
+      document.getElementById('note-tags-rowid-' + i.rowid + '-tag-' + tag).onclick = function(){
+        document.getElementById('search-text').value = tag;
+        cmdSearch();;
+      }
+    });
+
   });
 }
 
