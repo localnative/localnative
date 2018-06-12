@@ -6,6 +6,6 @@
   "allowed_origins": [
     // use this ID if you install from chrome web store,
     // or change to what the actual ID is if you "LOAD UNPACKED" from source.
-    "chrome-extension://dmklaaoknbpchnlegcdpamkdgjodnccj/"
+    "chrome-extension://oclkmkeameccmgnajgogjlhdjeaconnb/"
   ]
 }
