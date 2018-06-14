@@ -1,5 +1,6 @@
 # Local Native App
 
+
 A notes/bookmark taking and search tool using local sqlite database.
 
 # Sub-directories
@@ -10,3 +11,5 @@ localnative-browser-extension: browser extension
 
 localnative-rs: rust code, to build `localnative-web-ext-host` binary
 
+# TODO
+[todo list](https://localnative.app/todo.html)

@@ -24,6 +24,7 @@ md5sum localnative-web-ext-host-$1 > localnative-web-ext-host-$1.md5
 # release tree
 cd ../../..
 echo "# Release" > localnative-app-mdbook/src/release.md
+echo 'https://localnative.app/release/' >> localnative-app-mdbook/src/release.md
 echo '```' >> localnative-app-mdbook/src/release.md
 tree -s release >> localnative-app-mdbook/src/release.md
 echo '```' >> localnative-app-mdbook/src/release.md

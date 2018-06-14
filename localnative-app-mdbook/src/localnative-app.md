@@ -6,7 +6,7 @@ A note/bookmark taking tool using a local sqlite database. The browser extension
 Currently only tested on GNU/Linux.
 
 
-## Quick start
+## (not so) Quick start
 
 ### Browser extension
 
@@ -21,12 +21,12 @@ Below 3 componets must all exist and correctly setup for browser extension to wo
   - or from source at `localnative-browser-extension/app`
 
 - Setup browser extension host binary
+    - use `cargo install localnative_cli`, and find the binary at `.cargo/bin/localnative-web-ext-host`
+
     - download from release archive
 
         [https://localnative.app/release/v0.0.2/web-ext-host/localnative-web-ext-host-0.0.2](https://localnative.app/release/v0.0.2/web-ext-host/localnative-web-ext-host-0.0.2)
-
         Currently only built on Ubuntu 16.04.4 LTS.
-    - from source at `localnative-rs`
 
 - Setup native messaging manifest to point to extension host binary
 
@@ -35,8 +35,8 @@ Below 3 componets must all exist and correctly setup for browser extension to wo
         - [Chrome](https://developer.chrome.com/extensions/nativeMessaging#native-messaging-host-location)
     - Change the host `path` in `app.localnative.json` to where `localnative-web-ext-host` binary is from previous step
 
-## Source code
-[git ssb](http://localhost:7718/%q13hLJchNXz/xZi9mjWVHyIbRnkr5VjF0Y6BfhrOV6Q=.sha256): `ssb://%q13hLJchNXz/xZi9mjWVHyIbRnkr5VjF0Y6BfhrOV6Q=.sha256`
+### Database
 
-## License
-[AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.en.html)
+`localnative.sqlite3` database file is created at the directory where `localnative-web-ext-host` exists.
+
+You can use [DB Browser for SQLite](http://sqlitebrowser.org/) to explore the database.
