@@ -4,7 +4,6 @@ extern crate serde_json;
 extern crate time;
 
 use self::rusqlite::Connection;
-use super::Cmd;
 use super::Note;
 
 pub fn select(conn: &Connection, sql: &str) -> String {

@@ -5,12 +5,12 @@ use std::str;
 extern crate localnative_core;
 use localnative_core::exe::run;
 
-fn main() {
+fn main() -> io::Result<()> {
     // Read the message length (first 4 bytes).
     let mut text_length_bytes = [0u8; 4];
     let stdin = io::stdin();
     let mut handle = stdin.lock();
-    handle.read_exact(&mut text_length_bytes);
+    handle.read_exact(&mut text_length_bytes)?;
 
     let text_length: u32 = unsafe { transmute(text_length_bytes) };
     let text_length: usize = text_length as usize;
@@ -19,17 +19,17 @@ fn main() {
     // Read the text (JSON object) of the message.
     // let mut text_buf = vec![0; text_length as usize];
     let mut text_buf = vec![0; text_length];
-    handle.read_exact(&mut text_buf);
+    handle.read_exact(&mut text_buf)?;
     let text = str::from_utf8(&text_buf).expect("not utf8 string");
     eprintln!("text_buf {:?}", text);
 
     let response = run(text);
     eprintln!("responset {:?}", response);
-    send_message(&response);
+    send_message(&response)
 }
 
 // Sends message to the browser extension.
-fn send_message(message: &str) {
+fn send_message(message: &str) -> io::Result<()> {
     let buf = message.as_bytes();
     let size = buf.len() as u32;
 
@@ -43,8 +43,9 @@ fn send_message(message: &str) {
 
     let mut handle = io::stdout();
     // Write message size.
-    handle.write(&bytes);
+    handle.write(&bytes)?;
     // Write the message itself.
-    handle.write(buf);
-    handle.flush();
+    handle.write(buf)?;
+    handle.flush()?;
+    Ok(())
 }

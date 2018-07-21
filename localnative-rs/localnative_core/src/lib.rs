@@ -5,12 +5,10 @@ extern crate time;
 #[macro_use]
 extern crate serde_derive;
 
-use serde_json::Error;
-use time::Timespec;
-
 pub mod cmd;
 pub mod exe;
 pub mod sql;
+pub mod ssb;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Note {

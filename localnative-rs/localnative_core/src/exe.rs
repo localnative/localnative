@@ -11,7 +11,6 @@ use super::CmdSearch;
 use super::CmdSelect;
 use super::Note;
 extern crate serde_json;
-use serde_json::Error;
 extern crate time;
 
 pub fn run(text: &str) -> String {
