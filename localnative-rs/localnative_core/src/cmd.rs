@@ -56,6 +56,7 @@ pub fn insert(conn: &Connection, note: Note) {
 pub fn create(conn: &Connection) {
     conn.execute(
         "CREATE TABLE IF NOT EXISTS note (
+         rowid          INTEGER PRIMARY KEY AUTOINCREMENT,
          title          TEXT NOT NULL,
          url            TEXT NOT NULL,
          tags           TEXT NOT NULL,
@@ -63,6 +64,19 @@ pub fn create(conn: &Connection) {
          comments       TEXT NOT NULL,
          annotations    TEXT NOT NULL,
          created_at     TEXT NOT NULL
+         )",
+        &[],
+    ).unwrap();
+
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS ssb (
+         note_rowid         INTEGER NOT NULL,
+         is_author_active   BOOLEAN NOT NULL,
+         is_author_last     BOOLEAN NOT NULL,
+         author             TEXT NOT NULL,
+         timestamp          TEXT NOT NULL,
+         key                TEXT NOT NULL,
+         previous           TEXT NOT NULL
          )",
         &[],
     ).unwrap();

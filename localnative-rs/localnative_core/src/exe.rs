@@ -10,6 +10,7 @@ use super::CmdInsert;
 use super::CmdSearch;
 use super::CmdSelect;
 use super::Note;
+
 extern crate serde_json;
 extern crate time;
 
@@ -23,7 +24,6 @@ pub fn run(text: &str) -> String {
 
 fn process(cmd: Cmd, text: &str) -> String {
     eprintln!("process cmd {:?}", cmd);
-    //let path = Path::new("/home/e/.ln/ln.sqlite3");
     let path = Path::new("localnative.sqlite3");
     let conn = Connection::open(path).unwrap();
 
