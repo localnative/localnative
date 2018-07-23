@@ -6,6 +6,14 @@ extern crate time;
 use self::rusqlite::Connection;
 use super::Note;
 
+pub fn count(conn: &Connection, tbl: &str) -> i64 {
+    let mut stmt = conn
+        .prepare(&format!("select count(1) as cnt from {}", tbl))
+        .unwrap();
+    let rs = stmt.query_row(&[], |row| row.get(0)).unwrap();
+    rs
+}
+
 pub fn select(conn: &Connection, sql: &str) -> String {
     let mut stmt = conn.prepare(sql).unwrap();
     let note_iter =
@@ -70,14 +78,20 @@ pub fn create(conn: &Connection) {
 
     conn.execute(
         "CREATE TABLE IF NOT EXISTS ssb (
-         note_rowid         INTEGER NOT NULL,
-         is_author_active   BOOLEAN NOT NULL,
-         is_author_last     BOOLEAN NOT NULL,
-         author             TEXT NOT NULL,
-         timestamp          TEXT NOT NULL,
-         key                TEXT NOT NULL,
-         previous           TEXT NOT NULL
-         )",
+         note_rowid         INTEGER NOT NULL UNIQUE DEFAULT 0,
+         author             TEXT PRIMARY KEY,
+         is_active_author   BOOLEAN NOT NULL,
+         is_last_note       BOOLEAN NOT NULL,
+         ts                 INTEGER NOT NULL,
+         seq                INTEGER NOT NULL,
+         key                TEXT    NOT NULL,
+         prev               TEXT    NOT NULL
+         ) WITHOUT ROWID",
         &[],
     ).unwrap();
+}
+
+pub fn clear(conn: &Connection) {
+    conn.execute("drop TABLE IF EXISTS note", &[]).unwrap();
+    conn.execute("drop TABLE IF EXISTS ssb", &[]).unwrap();
 }

@@ -11,6 +11,18 @@ pub mod sql;
 pub mod ssb;
 
 #[derive(Serialize, Deserialize, Debug)]
+pub struct Ssb {
+    pub note_rowid: i64,
+    pub author: String,
+    pub is_active_author: bool,
+    pub is_last_note: bool,
+    pub ts: String,
+    pub seq: i64,
+    pub key: String,
+    pub prev: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Note {
     pub rowid: i64,
     pub title: String,
