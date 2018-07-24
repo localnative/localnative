@@ -27,11 +27,19 @@ ssbClient(function (err, sbot) {
             // filter localnative
             if (decoded && decoded.type && decoded.type === 'post'
             && decoded.localnative ){
-              decoded.key = msg.key
-              decoded.prev = msg.value.previous
-              decoded.author = msg.value.author
-              decoded.seq = msg.value.sequence
-              console.log(decoded)
+              var out = {
+                note_title: decoded.localnative.note.title,
+                note_url: decoded.localnative.note.url,
+                note_tags: decoded.localnative.note.tags,
+                author: msg.value.author,
+                ts: msg.value.timestamp,
+                key: msg.key,
+                prev: msg.value.previous,
+                author: msg.value.author,
+                seq: msg.value.sequence
+              }
+              console.error(msg)
+              console.log(JSON.stringify(out))
               // only output 1 item
               process.exit(0)
             }

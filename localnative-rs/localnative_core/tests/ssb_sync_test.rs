@@ -38,3 +38,11 @@ fn test_init_active_author() {
     let ssb = get_ssb(&conn, &id);
     tail(&id, 0);
 }
+
+#[test]
+fn test_tail() {
+    let id = whoami();
+    let rs = tail(&id, 0).unwrap();
+    eprintln!("{:?}", rs);
+    assert_eq!(rs.author, id);
+}

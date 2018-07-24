@@ -1,6 +1,7 @@
 pub mod sync;
-
+extern crate serde_json;
 use std::process::Command;
+use SsbNote;
 
 pub fn whoami() -> String {
     let output = Command::new("node")
@@ -18,7 +19,7 @@ pub fn whoami() -> String {
         .to_string()
 }
 
-pub fn tail(id: &str, gt: i64) -> String {
+pub fn tail(id: &str, gt: i64) -> Option<SsbNote> {
     let output = Command::new("node")
         .arg("../../localnative-nodejs/tail.js")
         .arg(id)
@@ -26,12 +27,19 @@ pub fn tail(id: &str, gt: i64) -> String {
         .output()
         .expect("failed to execute process");
 
-    eprintln!("status: {}", output.status);
-    eprintln!("stdout: {}", String::from_utf8_lossy(&output.stdout));
-    eprintln!("stderr: {}", String::from_utf8_lossy(&output.stderr));
+    // eprintln!("status: {}", output.status);
+    // eprintln!("stdout: {}", String::from_utf8_lossy(&output.stdout));
+    // eprintln!("stderr: {}", String::from_utf8_lossy(&output.stderr));
 
     assert!(output.status.success());
-    String::from_utf8_lossy(&output.stdout).to_string()
+
+    let text = String::from_utf8_lossy(&output.stdout);
+
+    if let Ok(i) = serde_json::from_str::<SsbNote>(&text) {
+        Some(i)
+    } else {
+        None
+    }
 }
 
 pub fn publish() -> String {
