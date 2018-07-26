@@ -1,7 +1,6 @@
-extern crate rusqlite;
-use self::rusqlite::Connection;
 use super::cmd::{create, delete, insert, select};
 use super::sql;
+use rusqlite::Connection;
 use std::path::Path;
 
 use super::Cmd;

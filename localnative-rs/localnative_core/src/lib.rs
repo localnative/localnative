@@ -1,3 +1,4 @@
+extern crate rusqlite;
 extern crate serde;
 extern crate serde_json;
 extern crate time;
@@ -28,7 +29,7 @@ pub struct Ssb {
     pub author: String,
     pub is_active_author: bool,
     pub is_last_note: bool,
-    pub ts: String,
+    pub ts: i64,
     pub seq: i64,
     pub key: String,
     pub prev: String,

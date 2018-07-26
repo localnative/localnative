@@ -2,7 +2,9 @@ extern crate localnative_core;
 extern crate rusqlite;
 
 use localnative_core::cmd::{clear, count, create, delete, insert, select};
-use localnative_core::ssb::sync::{get_ssb, init_active_author};
+use localnative_core::ssb::sync::{
+    get_ssb, get_ssb_active, init_active_author, insert_ssb_note_to_db,
+};
 use localnative_core::ssb::{publish, tail, whoami};
 use rusqlite::Connection;
 use std::path::Path;
@@ -10,13 +12,13 @@ use std::path::Path;
 fn prepare_test_db() -> Connection {
     let path = Path::new("localnative-test.sqlite3");
     let conn = Connection::open(path).unwrap();
-    clear(&conn);
     conn
 }
 
 #[test]
 fn test_reset_db() {
     let conn = prepare_test_db();
+    clear(&conn);
     create(&conn);
     assert_eq!(0, count(&conn, "ssb"));
     assert_eq!(0, count(&conn, "note"));
@@ -32,17 +34,25 @@ fn test_whoami() {
 #[test]
 fn test_init_active_author() {
     let conn = prepare_test_db();
+    //clear(&conn);
     create(&conn);
     let id = whoami();
     init_active_author(&conn, &id);
     let ssb = get_ssb(&conn, &id);
-    tail(&id, 0);
+    let ssb_active = get_ssb_active(&conn);
+    assert_eq!(ssb.author, ssb_active.author);
 }
 
 #[test]
 fn test_tail() {
+    let conn = prepare_test_db();
+    //clear(&conn);
+    create(&conn);
     let id = whoami();
-    let rs = tail(&id, 0).unwrap();
+    init_active_author(&conn, &id);
+    let seq = get_ssb_active(&conn).seq;
+    let rs = tail(&id, seq).unwrap();
     eprintln!("{:?}", rs);
     assert_eq!(rs.author, id);
+    insert_ssb_note_to_db(&conn, &rs);
 }

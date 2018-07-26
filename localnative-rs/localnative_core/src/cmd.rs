@@ -62,8 +62,9 @@ pub fn insert(conn: &Connection, note: Note) {
 }
 
 pub fn create(conn: &Connection) {
-    conn.execute(
-        "CREATE TABLE IF NOT EXISTS note (
+    conn.execute_batch(
+        "BEGIN;
+        CREATE TABLE IF NOT EXISTS note (
          rowid          INTEGER PRIMARY KEY AUTOINCREMENT,
          title          TEXT NOT NULL,
          url            TEXT NOT NULL,
@@ -72,12 +73,9 @@ pub fn create(conn: &Connection) {
          comments       TEXT NOT NULL,
          annotations    TEXT NOT NULL,
          created_at     TEXT NOT NULL
-         )",
-        &[],
-    ).unwrap();
+         );
 
-    conn.execute(
-        "CREATE TABLE IF NOT EXISTS ssb (
+         CREATE TABLE IF NOT EXISTS ssb (
          note_rowid         INTEGER NOT NULL UNIQUE DEFAULT 0,
          author             TEXT PRIMARY KEY,
          is_active_author   BOOLEAN NOT NULL,
@@ -86,12 +84,17 @@ pub fn create(conn: &Connection) {
          seq                INTEGER NOT NULL,
          key                TEXT    NOT NULL,
          prev               TEXT    NOT NULL
-         ) WITHOUT ROWID",
-        &[],
+         ) WITHOUT ROWID;
+         COMMIT;",
     ).unwrap();
 }
 
 pub fn clear(conn: &Connection) {
-    conn.execute("drop TABLE IF EXISTS note", &[]).unwrap();
-    conn.execute("drop TABLE IF EXISTS ssb", &[]).unwrap();
+    conn.execute_batch(
+        "BEGIN;
+        drop TABLE IF EXISTS note;
+        drop TABLE IF EXISTS ssb;
+        COMMIT;
+        ",
+    ).unwrap();
 }
