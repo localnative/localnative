@@ -33,6 +33,23 @@ fn test_whoami() {
 }
 
 #[test]
+fn test_insert() {
+    let note = Note {
+        rowid: -1,
+        title: "title test insert".to_string(),
+        url: "http://www.example.com".to_string(),
+        tags: "tag1,tag2".to_string(),
+        description: "desc".to_string(),
+        comments: "comment".to_string(),
+        annotations: "annotations".to_string(),
+        created_at: "".to_string(),
+    };
+    let conn = prepare_test_db();
+    create(&conn);
+    insert(&conn, note);
+}
+
+#[test]
 fn test_publish() {
     let note = Note {
         rowid: -1,
