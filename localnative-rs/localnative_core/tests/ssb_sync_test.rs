@@ -4,7 +4,7 @@ use localnative_core::Note;
 
 use localnative_core::cmd::{clear, count, create, delete, insert, select};
 use localnative_core::ssb::sync::{
-    get_ssb, get_ssb_active, init_active_author, insert_ssb_note_to_db,
+    get_note_to_publish, get_ssb, get_ssb_active, init_active_author, insert_ssb_note_to_db,
 };
 use localnative_core::ssb::{publish, tail, whoami};
 use rusqlite::Connection;
@@ -47,6 +47,14 @@ fn test_insert() {
     let conn = prepare_test_db();
     create(&conn);
     insert(&conn, note);
+}
+
+#[test]
+fn test_get_note_to_publish() {
+    let conn = prepare_test_db();
+    create(&conn);
+    let note = get_note_to_publish(&conn);
+    eprintln!("{:?}", note);
 }
 
 #[test]

@@ -1,7 +1,55 @@
 extern crate rusqlite;
+use super::publish;
 use rusqlite::Connection;
+use Note;
 use Ssb;
 use SsbNote;
+
+pub fn get_note_to_publish(conn: &Connection) -> Result<Note, rusqlite::Error> {
+    let mut stmt =
+        conn.prepare(
+            "select rowid,
+        title,
+        url,
+        tags,
+        description,
+        comments,
+        annotations,
+        created_at
+        from note
+        where rowid > (select note_rowid from ssb where is_active_author = 1)
+        order by rowid
+        limit 1",
+        ).unwrap();
+    stmt.query_row(&[], |row| Note {
+        rowid: row.get(0),
+        title: row.get(1),
+        url: row.get(2),
+        tags: row.get(3),
+        description: row.get(4),
+        comments: row.get(5),
+        annotations: row.get(6),
+        created_at: row.get(7),
+    })
+}
+
+pub fn publish_to_ssb(conn: &Connection) {
+    loop {
+        if let Ok(note) = get_note_to_publish(conn) {
+            eprintln!("{:?}", note);
+            publish(note);
+            conn.execute_batch(&format!(
+                "BEGIN;
+
+                    COMMIT;
+                    "
+            )).unwrap();
+        } else {
+            eprintln!("nothing to publish");
+            break;
+        }
+    }
+}
 
 pub fn insert_ssb_note_to_db(conn: &Connection, rs: &SsbNote) {
     conn.execute_batch(&format!(
