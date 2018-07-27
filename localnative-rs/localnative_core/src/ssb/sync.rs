@@ -149,6 +149,7 @@ pub fn get_ssb(conn: &Connection, author: &str) -> Ssb {
 pub fn init_active_author(conn: &Connection, author: &str) {
     conn.execute(
         "replace into ssb (
+         note_rowid         ,
          author             ,
          is_active_author   ,
          is_last_note       ,
@@ -158,6 +159,7 @@ pub fn init_active_author(conn: &Connection, author: &str) {
          prev
          )
         values(
+            coalesce((select note_rowid from ssb where author = ?1), 0),
             ?1,
             1,
             coalesce((select is_last_note from ssb where author = ?1), 0),

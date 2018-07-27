@@ -76,7 +76,7 @@ pub fn create(conn: &Connection) {
          );
 
          CREATE TABLE IF NOT EXISTS ssb (
-         note_rowid         INTEGER NOT NULL UNIQUE DEFAULT 0,
+         note_rowid         INTEGER NOT NULL UNIQUE,
          author             TEXT PRIMARY KEY,
          is_active_author   BOOLEAN NOT NULL,
          is_last_note       BOOLEAN NOT NULL,
