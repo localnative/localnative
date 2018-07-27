@@ -3,6 +3,8 @@ extern crate serde_json;
 use std::process::Command;
 use SsbNote;
 
+pub fn sync_to_db() {}
+
 pub fn whoami() -> String {
     let output = Command::new("node")
         .arg("../../localnative-nodejs/whoami.js")
