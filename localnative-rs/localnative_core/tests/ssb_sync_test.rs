@@ -1,5 +1,6 @@
 extern crate localnative_core;
 extern crate rusqlite;
+use localnative_core::Note;
 
 use localnative_core::cmd::{clear, count, create, delete, insert, select};
 use localnative_core::ssb::sync::{
@@ -29,6 +30,22 @@ fn test_whoami() {
     let id = whoami();
     eprintln!("{}", id);
     assert_eq!(whoami(), id);
+}
+
+#[test]
+fn test_publish() {
+    let note = Note {
+        rowid: -1,
+        title: "title".to_string(),
+        url: "http://www.example.com".to_string(),
+        tags: "tag1,tag2".to_string(),
+        description: "desc".to_string(),
+        comments: "comment".to_string(),
+        annotations: "annotations".to_string(),
+        created_at: "".to_string(),
+    };
+    let msg = publish(note);
+    eprintln!("{}", msg);
 }
 
 #[test]

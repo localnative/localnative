@@ -1,5 +1,6 @@
 extern crate rusqlite;
 extern crate serde;
+#[macro_use]
 extern crate serde_json;
 extern crate time;
 

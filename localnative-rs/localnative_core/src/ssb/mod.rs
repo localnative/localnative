@@ -1,6 +1,8 @@
 pub mod sync;
 extern crate serde_json;
+
 use std::process::Command;
+use Note;
 use SsbNote;
 
 pub fn sync_to_db() {}
@@ -44,9 +46,14 @@ pub fn tail(id: &str, gt: i64) -> Option<SsbNote> {
     }
 }
 
-pub fn publish() -> String {
+pub fn publish(note: Note) -> String {
+    let note_json = json!(note).to_string();
+
+    // eprintln!("{}", note_json);
+
     let output = Command::new("node")
         .arg("../../localnative-nodejs/publish.js")
+        .arg(note_json)
         .output()
         .expect("failed to execute process");
 
