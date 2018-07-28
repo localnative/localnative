@@ -13,6 +13,7 @@ use std::path::Path;
 fn prepare_test_db() -> Connection {
     let path = Path::new("localnative-test.sqlite3");
     let conn = Connection::open(path).unwrap();
+    create(&conn);
     conn
 }
 
@@ -45,14 +46,19 @@ fn test_insert() {
         created_at: "".to_string(),
     };
     let conn = prepare_test_db();
-    create(&conn);
     insert(&conn, note);
+}
+
+#[test]
+fn test_publish_to_ssb() {
+    let conn = prepare_test_db();
+    let note = get_note_to_publish(&conn);
+    eprintln!("{:?}", note);
 }
 
 #[test]
 fn test_get_note_to_publish() {
     let conn = prepare_test_db();
-    create(&conn);
     let note = get_note_to_publish(&conn);
     eprintln!("{:?}", note);
 }
@@ -76,8 +82,6 @@ fn test_publish() {
 #[test]
 fn test_init_active_author() {
     let conn = prepare_test_db();
-    //clear(&conn);
-    create(&conn);
     let id = whoami();
     init_active_author(&conn, &id);
     let ssb = get_ssb(&conn, &id);
@@ -88,8 +92,6 @@ fn test_init_active_author() {
 #[test]
 fn test_tail() {
     let conn = prepare_test_db();
-    //clear(&conn);
-    create(&conn);
     let id = whoami();
     init_active_author(&conn, &id);
     loop {
