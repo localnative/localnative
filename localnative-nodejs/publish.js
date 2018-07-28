@@ -28,11 +28,23 @@ ssbClient(function (err, sbot) {
     // recipient PKs:
     pubkeys,
     // cb:
-    function (err, privateMsg) {
+    function (err, msg) {
       // privateMsg.value.content is
       // an encrypted string
       if (err) throw err
-      console.log(privateMsg)
+      console.error(msg)
+      var out = {
+        note_title: note.title,
+        note_url: note.url,
+        note_tags: note.tags,
+        author: msg.value.author,
+        ts: msg.value.timestamp,
+        key: msg.key,
+        prev: msg.value.previous,
+        author: msg.value.author,
+        seq: msg.value.sequence
+      }
+      console.log(JSON.stringify(out))
     }
   )
 

@@ -33,20 +33,33 @@ pub fn get_note_to_publish(conn: &Connection) -> Result<Note, rusqlite::Error> {
     })
 }
 
-pub fn publish_to_ssb(conn: &Connection) {
+pub fn sync_to_ssb(conn: &Connection) {
+    // loop till ssb note_rowid catch up to note
     loop {
-        if let Ok(note) = get_note_to_publish(conn) {
-            eprintln!("{:?}", note);
-            publish(note);
-            conn.execute_batch(&format!(
-                "BEGIN;
+        match get_note_to_publish(conn) {
+            Ok(note) => {
+                eprintln!("{:?}", note);
+                // sync from db to ssb
+                let ssb_note = publish(&note);
 
-                    COMMIT;
-                    "
-            )).unwrap();
-        } else {
-            eprintln!("nothing to publish");
-            break;
+                // update ssb
+                conn.execute_batch(&format!(
+                    "BEGIN;
+                UPDATE ssb SET seq = {},
+                note_rowid = {}
+                where is_active_author = 1;
+                 COMMIT;
+                ",
+                    ssb_note.seq, note.rowid
+                )).unwrap();
+            }
+            Err(e) => {
+                match e {
+                    rusqlite::Error::QueryReturnedNoRows => eprintln!("nothing to publish"),
+                    _ => eprintln!("{:?}", e),
+                }
+                break;
+            }
         }
     }
 }

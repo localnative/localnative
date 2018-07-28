@@ -46,7 +46,7 @@ pub fn tail(id: &str, gt: i64) -> Option<SsbNote> {
     }
 }
 
-pub fn publish(note: Note) -> String {
+pub fn publish(note: &Note) -> SsbNote {
     let note_json = json!(note).to_string();
 
     // eprintln!("{}", note_json);
@@ -62,7 +62,6 @@ pub fn publish(note: Note) -> String {
     // eprintln!("stderr: {}", String::from_utf8_lossy(&output.stderr));
 
     assert!(output.status.success());
-    String::from_utf8_lossy(&output.stdout)
-        .trim_right()
-        .to_string()
+    let text = String::from_utf8_lossy(&output.stdout).to_string();
+    serde_json::from_str::<SsbNote>(&text).unwrap()
 }
