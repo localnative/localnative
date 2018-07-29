@@ -29,7 +29,7 @@ ssbClient(function (err, sbot) {
     pubkeys,
     // cb:
     function (err, msg) {
-      // privateMsg.value.content is
+      // msg.value.content is
       // an encrypted string
       if (err) throw err
       console.error(msg)
@@ -37,6 +37,11 @@ ssbClient(function (err, sbot) {
         note_title: note.title,
         note_url: note.url,
         note_tags: note.tags,
+        note_description: note.description,
+        note_comments: note.comments,
+        note_annotations: note.annotations,
+        note_created_at: note.created_at,
+
         author: msg.value.author,
         ts: msg.value.timestamp,
         key: msg.key,

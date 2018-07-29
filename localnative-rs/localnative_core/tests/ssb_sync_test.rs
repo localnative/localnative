@@ -1,5 +1,6 @@
 extern crate localnative_core;
 extern crate rusqlite;
+extern crate time;
 use localnative_core::Note;
 
 use localnative_core::cmd::{clear, count, create, delete, insert, select};
@@ -67,13 +68,13 @@ fn test_get_note_to_publish() {
 fn test_publish() {
     let note = Note {
         rowid: -1,
-        title: "title".to_string(),
+        title: "test_publish".to_string(),
         url: "http://www.example.com".to_string(),
         tags: "tag1,tag2".to_string(),
         description: "desc".to_string(),
         comments: "comment".to_string(),
         annotations: "annotations".to_string(),
-        created_at: "".to_string(),
+        created_at: time::strftime("%Y-%m-%d %H:%M:%S:%f UTC", &time::now_utc()).unwrap(),
     };
     let ssb_note = publish(&note);
     eprintln!("{:?}", ssb_note);

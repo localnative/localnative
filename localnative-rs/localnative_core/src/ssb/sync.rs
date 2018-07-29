@@ -100,7 +100,7 @@ pub fn insert_ssb_note_to_db(conn: &Connection, rs: &SsbNote) {
     conn.execute_batch(&format!(
         "BEGIN;
        INSERT INTO note (title, url, tags, description, comments, annotations, created_at)
-       VALUES ('{}', '{}', '{}', '', '', '', '');
+       VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}');
 
        UPDATE ssb SET is_last_note = 0;
 
@@ -129,6 +129,10 @@ pub fn insert_ssb_note_to_db(conn: &Connection, rs: &SsbNote) {
         rs.note_title,
         rs.note_url,
         rs.note_tags,
+        rs.note_description,
+        rs.note_comments,
+        rs.note_annotations,
+        rs.note_created_at,
         seq = rs.seq,
         ts = rs.ts,
         key = rs.key,

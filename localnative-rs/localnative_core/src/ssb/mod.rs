@@ -1,5 +1,7 @@
 pub mod sync;
+extern crate rusqlite;
 extern crate serde_json;
+use rusqlite::Connection;
 
 use std::process::Command;
 extern crate dirs;
@@ -17,6 +19,13 @@ fn node_dir() -> String {
 
 fn node_exe() -> String {
     "node".to_string()
+}
+
+pub fn run_sync(conn: &Connection) {
+    let id = whoami();
+    sync::init_active_author(&conn, &id);
+    sync::sync_to_ssb(&conn);
+    sync::sync_to_db(&conn, &id);
 }
 
 pub fn whoami() -> String {
@@ -44,18 +53,20 @@ pub fn tail(id: &str, gt: i64) -> Option<SsbNote> {
         .output()
         .expect("failed to execute process");
 
-    // eprintln!("status: {}", output.status);
-    // eprintln!("stdout: {}", String::from_utf8_lossy(&output.stdout));
-    // eprintln!("stderr: {}", String::from_utf8_lossy(&output.stderr));
+    eprintln!("status: {}", output.status);
+    eprintln!("stdout: {}", String::from_utf8_lossy(&output.stdout));
+    eprintln!("stderr: {}", String::from_utf8_lossy(&output.stderr));
 
     assert!(output.status.success());
 
     let text = String::from_utf8_lossy(&output.stdout);
 
-    if let Ok(i) = serde_json::from_str::<SsbNote>(&text) {
-        Some(i)
-    } else {
-        None
+    match serde_json::from_str::<SsbNote>(&text) {
+        Ok(i) => Some(i),
+        Err(e) => {
+            eprintln!("{:?}", e);
+            None
+        }
     }
 }
 

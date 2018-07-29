@@ -28,10 +28,14 @@ ssbClient(function (err, sbot) {
             if (decoded && decoded.type && decoded.type === 'post'
             && decoded.localnative ){
               var out = {
-                note_title: decoded.localnative.note.title,
-                note_url: decoded.localnative.note.url,
-                note_tags: decoded.localnative.note.tags,
-                author: msg.value.author,
+                note_title: decoded.localnative.note.title || '',
+                note_url: decoded.localnative.note.url || '',
+                note_tags: decoded.localnative.note.tags || '',
+                note_description: decoded.localnative.note.description || '',
+                note_comments: decoded.localnative.note.comments || '',
+                note_annotations: decoded.localnative.note.annotations || '',
+                note_created_at: decoded.localnative.note.created_at || '',
+
                 ts: msg.value.timestamp,
                 key: msg.key,
                 prev: msg.value.previous,

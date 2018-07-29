@@ -17,6 +17,11 @@ pub struct SsbNote {
     pub note_title: String,
     pub note_url: String,
     pub note_tags: String,
+    pub note_description: String,
+    pub note_comments: String,
+    pub note_annotations: String,
+    pub note_created_at: String,
+
     pub author: String,
     pub ts: i64,
     pub key: String,

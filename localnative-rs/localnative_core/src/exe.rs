@@ -4,7 +4,6 @@ use rusqlite::Connection;
 use std::path::Path;
 
 use super::ssb;
-use super::ssb::sync;
 use super::Cmd;
 use super::CmdDelete;
 use super::CmdInsert;
@@ -47,10 +46,7 @@ fn process(cmd: Cmd, text: &str) -> String {
                 };
                 insert(&conn, note);
                 // make insert the only place with ssb dependency
-                let id = ssb::whoami();
-                sync::init_active_author(&conn, &id);
-                sync::sync_to_ssb(&conn);
-                sync::sync_to_db(&conn, &id);
+                ssb::run_sync(&conn);
                 // end ssb dependency
                 do_select(&conn, &sql::select(i.limit, i.offset))
             } else {
