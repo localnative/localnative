@@ -62,9 +62,16 @@ function mkMsg(note){
     return `#${t}`
   }).join(' ')
 
+  if(tagsText == '#'){
+    // no tags then no # sign show
+    tagsText = ''
+  }else{
+    tagsText += ' '
+  }
+
   return {
     type: 'post',
-    text: `${tagsText} ${note.title}
+    text: `${tagsText}${note.title}
 [${note.url}](${note.url})
 `,
     mentions: mentions,
