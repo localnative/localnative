@@ -2,14 +2,27 @@ pub mod sync;
 extern crate serde_json;
 
 use std::process::Command;
+extern crate dirs;
 use Note;
 use SsbNote;
 
-pub fn sync_to_db() {}
+fn node_dir() -> String {
+    let p = format!(
+        "{}/.localnative/localnative/localnative-nodejs",
+        dirs::home_dir().unwrap().to_str().unwrap()
+    );
+    // println!("{}", p);
+    p
+}
+
+fn node_exe() -> String {
+    "node".to_string()
+}
 
 pub fn whoami() -> String {
-    let output = Command::new("node")
-        .arg("../../localnative-nodejs/whoami.js")
+    // let output = Command::new(node_exe())
+    let output = Command::new(node_exe())
+        .arg(format!("{}/whoami.js", node_dir()))
         .output()
         .expect("failed to execute process");
 
@@ -24,8 +37,8 @@ pub fn whoami() -> String {
 }
 
 pub fn tail(id: &str, gt: i64) -> Option<SsbNote> {
-    let output = Command::new("node")
-        .arg("../../localnative-nodejs/tail.js")
+    let output = Command::new(node_exe())
+        .arg(format!("{}/tail.js", node_dir()))
         .arg(id)
         .arg(gt.to_string())
         .output()
@@ -51,8 +64,8 @@ pub fn publish(note: &Note) -> SsbNote {
 
     // eprintln!("{}", note_json);
 
-    let output = Command::new("node")
-        .arg("../../localnative-nodejs/publish.js")
+    let output = Command::new(node_exe())
+        .arg(format!("{}/publish.js", node_dir()))
         .arg(note_json)
         .output()
         .expect("failed to execute process");

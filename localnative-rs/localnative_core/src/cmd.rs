@@ -46,19 +46,24 @@ pub fn delete(conn: &Connection, rowid: i64) {
 }
 
 pub fn insert(conn: &Connection, note: Note) {
-    conn.execute(
-        "INSERT INTO note (title, url, tags, description, comments, annotations, created_at)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
-        &[
-            &note.title,
-            &note.url,
-            &note.tags,
-            &note.description,
-            &note.comments,
-            &note.annotations,
-            &note.created_at,
-        ],
-    ).unwrap();
+    // mark is_last_note = 0 to indicate out of sync, i.e. db > ssb
+    conn.execute_batch(&format!(
+        "BEGIN;
+        INSERT INTO note (title, url, tags, description, comments, annotations, created_at)
+        VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}');
+
+        UPDATE ssb SET is_last_note = 0
+        WHERE is_active_author = 1;
+        COMMIT;
+        ",
+        note.title,
+        note.url,
+        note.tags,
+        note.description,
+        note.comments,
+        note.annotations,
+        note.created_at
+    )).unwrap();
 }
 
 pub fn create(conn: &Connection) {

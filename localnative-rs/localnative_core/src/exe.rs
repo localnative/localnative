@@ -3,6 +3,8 @@ use super::sql;
 use rusqlite::Connection;
 use std::path::Path;
 
+use super::ssb;
+use super::ssb::sync;
 use super::Cmd;
 use super::CmdDelete;
 use super::CmdInsert;
@@ -25,8 +27,12 @@ fn process(cmd: Cmd, text: &str) -> String {
     eprintln!("process cmd {:?}", cmd);
     let path = Path::new("localnative.sqlite3");
     let conn = Connection::open(path).unwrap();
-
     create(&conn);
+    let id = ssb::whoami();
+    sync::init_active_author(&conn, &id);
+    sync::sync_to_ssb(&conn);
+    sync::sync_to_db(&conn, &id);
+
     match cmd.action.as_ref() {
         "insert" => {
             if let Ok(i) = serde_json::from_str::<CmdInsert>(text) {
@@ -44,6 +50,7 @@ fn process(cmd: Cmd, text: &str) -> String {
                     created_at,
                 };
                 insert(&conn, note);
+                sync::sync_to_ssb(&conn);
                 do_select(&conn, &sql::select(i.limit, i.offset))
             } else {
                 r#"{"error":"cmd insert json error"}"#.to_string()

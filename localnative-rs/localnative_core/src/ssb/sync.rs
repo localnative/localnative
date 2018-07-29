@@ -1,5 +1,6 @@
 extern crate rusqlite;
 use super::publish;
+use super::tail;
 use rusqlite::Connection;
 use Note;
 use Ssb;
@@ -47,7 +48,7 @@ pub fn sync_to_ssb(conn: &Connection) {
                     "BEGIN;
                 UPDATE ssb SET seq = {},
                 note_rowid = {}
-                where is_active_author = 1;
+                WHERE is_active_author = 1;
                  COMMIT;
                 ",
                     ssb_note.seq, note.rowid
@@ -55,11 +56,42 @@ pub fn sync_to_ssb(conn: &Connection) {
             }
             Err(e) => {
                 match e {
-                    rusqlite::Error::QueryReturnedNoRows => eprintln!("nothing to publish"),
+                    rusqlite::Error::QueryReturnedNoRows => {
+                        refresh_is_last_note(&conn);
+                        eprintln!("nothing to publish")
+                    }
                     _ => eprintln!("{:?}", e),
                 }
                 break;
             }
+        }
+    }
+}
+
+pub fn refresh_is_last_note(conn: &Connection) {
+    conn.execute_batch(
+        "BEGIN;
+    UPDATE ssb
+    SET is_last_note = CASE WHEN
+    (select max(rowid) from note) = ssb.note_rowid
+    THEN 1
+    ELSE 0
+    END;
+     COMMIT;
+    ",
+    ).unwrap();
+}
+
+pub fn sync_to_db(conn: &Connection, id: &str) {
+    loop {
+        let seq = get_ssb_active(&conn).seq;
+        if let Some(rs) = tail(&id, seq) {
+            eprintln!("{:?}", rs);
+            assert_eq!(rs.author, id);
+            insert_ssb_note_to_db(&conn, &rs);
+        } else {
+            eprintln!("tail end");
+            break;
         }
     }
 }
@@ -85,8 +117,8 @@ pub fn insert_ssb_note_to_db(conn: &Connection, rs: &SsbNote) {
         values(
             last_insert_rowid(),
             (select author from ssb where is_active_author = 1),
-            1,
-            1,
+            1, --is_active_author
+            1, --is_last_note
             {seq},
             {ts},
             '{key}',
