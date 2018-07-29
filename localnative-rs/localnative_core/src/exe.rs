@@ -28,10 +28,6 @@ fn process(cmd: Cmd, text: &str) -> String {
     let path = Path::new("localnative.sqlite3");
     let conn = Connection::open(path).unwrap();
     create(&conn);
-    let id = ssb::whoami();
-    sync::init_active_author(&conn, &id);
-    sync::sync_to_ssb(&conn);
-    sync::sync_to_db(&conn, &id);
 
     match cmd.action.as_ref() {
         "insert" => {
@@ -50,7 +46,12 @@ fn process(cmd: Cmd, text: &str) -> String {
                     created_at,
                 };
                 insert(&conn, note);
+                // make insert the only place with ssb dependency
+                let id = ssb::whoami();
+                sync::init_active_author(&conn, &id);
                 sync::sync_to_ssb(&conn);
+                sync::sync_to_db(&conn, &id);
+                // end ssb dependency
                 do_select(&conn, &sql::select(i.limit, i.offset))
             } else {
                 r#"{"error":"cmd insert json error"}"#.to_string()
