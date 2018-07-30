@@ -70,15 +70,26 @@ function mkMsg(note){
   if(tagsText == '#'){
     // no tags then no # sign show
     tagsText = ''
+    mentions = {}
   }else{
-    tagsText += ' '
+    tagsText = '\n' + tagsText
   }
+
+  var text = [
+    note.title, note.url,
+    tagsText,
+    note.description, note.comments, note.annotations, note.created_at
+  ].reduce(function(acc, i){
+    if(i == ''){
+      return acc
+    }else{
+      return acc + '\n' + i
+    }
+  },'')
 
   return {
     type: 'post',
-    text: `${tagsText}${note.title}
-[${note.url}](${note.url})
-`,
+    text: text,
     mentions: mentions,
     recps: pubkeys,
     localnative: {

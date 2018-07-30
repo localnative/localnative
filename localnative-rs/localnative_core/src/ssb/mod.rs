@@ -81,9 +81,9 @@ pub fn publish(note: &Note) -> SsbNote {
         .output()
         .expect("failed to execute process");
 
-    // eprintln!("status: {}", output.status);
-    // eprintln!("stdout: {}", String::from_utf8_lossy(&output.stdout));
-    // eprintln!("stderr: {}", String::from_utf8_lossy(&output.stderr));
+    eprintln!("status: {}", output.status);
+    eprintln!("stdout: {}", String::from_utf8_lossy(&output.stdout));
+    eprintln!("stderr: {}", String::from_utf8_lossy(&output.stderr));
 
     assert!(output.status.success());
     let text = String::from_utf8_lossy(&output.stdout).to_string();
