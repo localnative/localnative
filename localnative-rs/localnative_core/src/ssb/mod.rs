@@ -89,7 +89,39 @@ pub fn tail(id: &str, gt: i64) -> Option<SsbNote> {
     }
 }
 
-pub fn publish(note: &Note) -> SsbNote {
+pub fn publish(note: Note) -> SsbNote {
+    let note_json = json!(note).to_string();
+
+    // eprintln!("{}", note_json);
+
+    let output = Command::new(node_exe())
+        .arg(format!("{}/publish.js", node_dir()))
+        .arg(note_json)
+        .output()
+        .expect("failed to execute process");
+
+    eprintln!("status: {}", output.status);
+    eprintln!("stdout: {}", String::from_utf8_lossy(&output.stdout));
+    let stderr = String::from_utf8_lossy(&output.stderr);
+
+    if output.status.success() {
+        let text = String::from_utf8_lossy(&output.stdout).to_string();
+        serde_json::from_str::<SsbNote>(&text).unwrap()
+    } else if stderr.contains("Error: encoded message must not be larger than") {
+        eprintln!("stderr: {}", stderr);
+        //panic!("stderr: {}", stderr);
+        let annotations = ssbify_string(&note.annotations, &note.title, &note.url);
+        publish2(note, format!("\n{}", annotations))
+    } else {
+        panic!("stderr: {}", stderr);
+    }
+}
+
+pub fn publish2(note: Note, annotations: String) -> SsbNote {
+    let note = Note {
+        annotations,
+        ..note
+    };
     let note_json = json!(note).to_string();
 
     // eprintln!("{}", note_json);
@@ -105,6 +137,7 @@ pub fn publish(note: &Note) -> SsbNote {
     eprintln!("stderr: {}", String::from_utf8_lossy(&output.stderr));
 
     assert!(output.status.success());
+
     let text = String::from_utf8_lossy(&output.stdout).to_string();
     serde_json::from_str::<SsbNote>(&text).unwrap()
 }

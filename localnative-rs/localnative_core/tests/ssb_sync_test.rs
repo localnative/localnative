@@ -76,7 +76,7 @@ fn test_publish() {
         annotations: "annotations".to_string(),
         created_at: time::strftime("%Y-%m-%d %H:%M:%S:%f UTC", &time::now_utc()).unwrap(),
     };
-    let ssb_note = publish(&note);
+    let ssb_note = publish(note);
     eprintln!("{:?}", ssb_note);
 }
 

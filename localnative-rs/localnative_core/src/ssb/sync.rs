@@ -41,8 +41,8 @@ pub fn sync_to_ssb(conn: &Connection) {
             Ok(note) => {
                 eprintln!("{:?}", note);
                 // sync from db to ssb
-                let ssb_note = publish(&note);
-
+                let rowid = note.rowid;
+                let ssb_note = publish(note);
                 // update ssb
                 conn.execute_batch(&format!(
                     "BEGIN;
@@ -51,7 +51,7 @@ pub fn sync_to_ssb(conn: &Connection) {
                 WHERE is_active_author = 1;
                  COMMIT;
                 ",
-                    ssb_note.seq, note.rowid
+                    ssb_note.seq, rowid
                 )).unwrap();
             }
             Err(e) => {
