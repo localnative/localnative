@@ -28,6 +28,25 @@ pub fn run_sync(conn: &Connection) {
     sync::sync_to_db(&conn, &id);
 }
 
+pub fn ssbify_string(content: &str, title: &str, url: &str) -> String {
+    let output = Command::new("ssbify-string")
+        .arg(content)
+        .arg(title)
+        .arg(url)
+        .arg("true")
+        .output()
+        .expect("failed to execute process");
+
+    eprintln!("status: {}", output.status);
+    eprintln!("stdout: {}", String::from_utf8_lossy(&output.stdout));
+    eprintln!("stderr: {}", String::from_utf8_lossy(&output.stderr));
+
+    assert!(output.status.success());
+    String::from_utf8_lossy(&output.stdout)
+        .trim_right()
+        .to_string()
+}
+
 pub fn whoami() -> String {
     // let output = Command::new(node_exe())
     let output = Command::new(node_exe())
