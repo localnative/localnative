@@ -19,5 +19,5 @@ fn test_ssbify_string_cn() {
         "http://some.website",
     );
     println!("{}", link);
-    assert_eq!(link, "&nUNxeZTJkqw0q6yoUqUdlwjz22Pu0XITnhVDiIelEoM=.sha256");
+    assert_eq!(link, "&kNkjGQvUkOEC1xbaqnRDrnUQ3daN1jnA0SaNoMatkuc=.sha256");
 }
