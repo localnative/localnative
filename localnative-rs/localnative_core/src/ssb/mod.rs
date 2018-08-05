@@ -2,11 +2,27 @@ pub mod sync;
 extern crate rusqlite;
 extern crate serde_json;
 use rusqlite::Connection;
-
+use std::path::Path;
 use std::process::Command;
 extern crate dirs;
 use Note;
 use SsbNote;
+
+pub fn get_sqlite_connection() -> Connection {
+    let p = sqlite3_db_location();
+    let path = Path::new(&p);
+    let conn = Connection::open(path).unwrap();
+    conn
+}
+
+fn sqlite3_db_location() -> String {
+    let p = format!(
+        "{}/.ssb/localnative.sqlite3",
+        dirs::home_dir().unwrap().to_str().unwrap()
+    );
+    // println!("{}", p);
+    p
+}
 
 fn node_dir() -> String {
     let p = format!(

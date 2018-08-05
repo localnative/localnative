@@ -8,13 +8,11 @@ use localnative_core::ssb::sync::{
     get_note_to_publish, get_ssb, get_ssb_active, init_active_author, insert_ssb_note_to_db,
     sync_to_ssb,
 };
-use localnative_core::ssb::{publish, tail, whoami};
+use localnative_core::ssb::{get_sqlite_connection, publish, tail, whoami};
 use rusqlite::Connection;
-use std::path::Path;
 
 fn prepare_test_db() -> Connection {
-    let path = Path::new("localnative-test.sqlite3");
-    let conn = Connection::open(path).unwrap();
+    let conn = get_sqlite_connection();
     create(&conn);
     conn
 }

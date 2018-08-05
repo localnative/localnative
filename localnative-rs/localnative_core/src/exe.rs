@@ -1,7 +1,6 @@
 use super::cmd::{create, delete, insert, select};
 use super::sql;
 use rusqlite::Connection;
-use std::path::Path;
 
 use super::ssb;
 use super::Cmd;
@@ -24,8 +23,7 @@ pub fn run(text: &str) -> String {
 
 fn process(cmd: Cmd, text: &str) -> String {
     eprintln!("process cmd {:?}", cmd);
-    let path = Path::new("localnative.sqlite3");
-    let conn = Connection::open(path).unwrap();
+    let conn = ssb::get_sqlite_connection();
     create(&conn);
 
     match cmd.action.as_ref() {
