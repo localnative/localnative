@@ -70,14 +70,34 @@ function connect() {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
+  // setup content script
+  chrome.tabs.executeScript({
+    file: 'contentScript.js'
+  });
+
   // focus on tags
   document.getElementById('tags-text').focus();
+
+  // ssbify
+  document.getElementById('ssbify').addEventListener('onclick', function (e) {
+    console.log(e.checked);
+  });
 
   // register cmdInsert
   document.getElementById('save-input').addEventListener('keypress', function (e) {
     var key = e.which || e.keyCode;
     if (key === 13) { // 13 is enter
-      cmdInsert();
+      var annotations = "";
+      if(document.getElementById('ssbify').checked){
+        chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+          chrome.tabs.sendMessage(tabs[0].id, "get_content", function(content){
+            annotations = content || "";
+            cmdInsert(annotations);
+          });
+        });
+      }else{
+        cmdInsert("");
+      }
     }
   });
 
@@ -114,8 +134,8 @@ function makeTags(str) {
   return arr.join(",");
 }
 
-function cmdInsert() {
-  message = {
+function cmdInsert(annotations) {
+  var message = {
     action: "insert",
 
     title: document.getElementById('title').value,
@@ -123,7 +143,7 @@ function cmdInsert() {
     tags: makeTags(document.getElementById('tags-text').value),
     description: document.getElementById('desc-text').value,
     comments: "",
-    annotations: "",
+    annotations: annotations,
 
     limit: LIMIT,
     offset: 0
@@ -133,7 +153,7 @@ function cmdInsert() {
 }
 
 function cmdSearch() {
-  message = {
+  var message = {
     action: "search",
 
     query: document.getElementById('search-text').value,
@@ -144,7 +164,7 @@ function cmdSearch() {
 }
 
 function cmdSelect() {
-  message = {
+  var message = {
     action: "select",
     limit: LIMIT,
     offset: 0
@@ -153,7 +173,7 @@ function cmdSelect() {
 }
 
 function cmdDelete(rowid) {
-  message = {
+  var message = {
     action: "delete",
 
     query: document.getElementById('search-text').value,
@@ -169,3 +189,4 @@ function cmd(message){
   port.postMessage(message);
   statusMessage("Sent command: " + JSON.stringify(message) );
 }
+
