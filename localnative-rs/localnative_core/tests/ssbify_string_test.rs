@@ -8,7 +8,7 @@ fn test_ssbify_string() {
         "test html blob",
         "http://some.website",
     );
-    assert_eq!(link, "&nUNxeZTJkqw0q6yoUqUdlwjz22Pu0XITnhVDiIelEoM=.sha256");
+    assert_eq!(link, "&Z05BGxF7EKKGSv2vMtSN/WWMmHJjI4KOqpskAbhQjaM=.sha256");
 }
 
 #[test]
@@ -19,5 +19,5 @@ fn test_ssbify_string_cn() {
         "http://some.website",
     );
     println!("{}", link);
-    assert_eq!(link, "&kNkjGQvUkOEC1xbaqnRDrnUQ3daN1jnA0SaNoMatkuc=.sha256");
+    assert_eq!(link, "&vNyMLlGhTjfSuTtdWLD3cz4+pd6OS3RYFCm+zk1BszM=.sha256");
 }
