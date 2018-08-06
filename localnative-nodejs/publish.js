@@ -75,7 +75,7 @@ function mkMsg(note){
 
   var text = [
     note.created_at,
-    note.title, note.url,
+    "**" + note.title + "**", note.url,
     tagsText,
     note.description, note.comments, note.annotations
   ].reduce(function(acc, i){
