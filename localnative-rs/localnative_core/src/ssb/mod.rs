@@ -3,8 +3,9 @@ extern crate rusqlite;
 extern crate serde_json;
 use rusqlite::Connection;
 use std::path::Path;
-use std::process::Command;
+use std::process::{Command, Stdio};
 extern crate dirs;
+use std::io::Write;
 use Note;
 use SsbNote;
 
@@ -45,13 +46,25 @@ pub fn run_sync(conn: &Connection) {
 }
 
 pub fn ssbify_string(content: &str, title: &str, url: &str) -> String {
-    let output = Command::new("ssbify-string")
-        .arg(content)
+    let mut child = Command::new("ssbify-string")
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .arg("-")
         .arg(title)
         .arg(url)
         .arg("true")
-        .output()
-        .expect("failed to execute process");
+        .spawn()
+        .expect("failed to execute ssbify_string_via_stdin");
+
+    {
+        let stdin = child.stdin.as_mut().expect("Failed to open stdin");
+        stdin
+            .write_all(content.as_bytes())
+            .expect("Failed to write to stdin");
+    }
+
+    let output = child.wait_with_output().expect("Failed to read stdout");
 
     eprintln!("status: {}", output.status);
     eprintln!("stdout: {}", String::from_utf8_lossy(&output.stdout));
@@ -127,7 +140,7 @@ pub fn publish(note: Note) -> SsbNote {
         eprintln!("stderr: {}", stderr);
         //panic!("stderr: {}", stderr);
         let annotations = ssbify_string(&note.annotations, &note.title, &note.url);
-        publish2(note, format!("\n{}", annotations))
+        publish2(note, annotations)
     } else {
         panic!("stderr: {}", stderr);
     }

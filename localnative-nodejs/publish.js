@@ -71,14 +71,13 @@ function mkMsg(note){
     // no tags then no # sign show
     tagsText = ''
     mentions = {}
-  }else{
-    tagsText = '\n' + tagsText
   }
 
   var text = [
+    note.created_at,
     note.title, note.url,
     tagsText,
-    note.description, note.comments, note.annotations, note.created_at
+    note.description, note.comments, note.annotations
   ].reduce(function(acc, i){
     if(i == ''){
       return acc
