@@ -79,9 +79,12 @@ document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('tags-text').focus();
 
   // ssbify
-  document.getElementById('ssbify').addEventListener('onclick', function (e) {
-    console.log(e.checked);
-  });
+  document.getElementById('ssbify').checked = JSON.parse(localStorage.getItem('ssbify'))
+
+  document.getElementById('ssbify').onchange = function (e) {
+    localStorage.setItem('ssbify', e.target.checked);
+    console.log('ssbify is set to ' + e.target.checked);
+  };
 
   // register cmdInsert
   document.getElementById('save-input').addEventListener('keypress', function (e) {
