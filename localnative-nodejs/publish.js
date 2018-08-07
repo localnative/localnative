@@ -10,7 +10,7 @@ var keys = ssbKeys.loadOrCreateSync(homedir + '/.ssb/secret')
 const fs = require('fs')
 var pubkeys = JSON.parse(fs.readFileSync(homedir + '/.ssb/localnative-pub-keys'))
 
-var note = JSON.parse(process.argv[2])
+var note = JSON.parse(fs.readFileSync("/dev/stdin", "utf-8"))
 
 console.error(note)
 console.error(mkMsg(note))
@@ -75,8 +75,8 @@ function mkMsg(note){
 
   var text = [
     note.created_at,
-    "**" + note.title + "**", note.url,
     tagsText,
+    "**" + note.title + "**", note.url,
     note.description, note.comments, note.annotations
   ].reduce(function(acc, i){
     if(i == ''){

@@ -123,11 +123,22 @@ pub fn publish(note: Note) -> SsbNote {
 
     // eprintln!("{}", note_json);
 
-    let output = Command::new(node_exe())
+    let mut child = Command::new(node_exe())
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
         .arg(format!("{}/publish.js", node_dir()))
-        .arg(note_json)
-        .output()
+        .spawn()
         .expect("failed to execute process");
+
+    {
+        let stdin = child.stdin.as_mut().expect("Failed to open stdin");
+        stdin
+            .write_all(note_json.as_bytes())
+            .expect("Failed to write to stdin");
+    }
+
+    let output = child.wait_with_output().expect("Failed to read stdout");
 
     eprintln!("status: {}", output.status);
     eprintln!("stdout: {}", String::from_utf8_lossy(&output.stdout));
@@ -155,11 +166,22 @@ pub fn publish2(note: Note, annotations: String) -> SsbNote {
 
     // eprintln!("{}", note_json);
 
-    let output = Command::new(node_exe())
+    let mut child = Command::new(node_exe())
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
         .arg(format!("{}/publish.js", node_dir()))
-        .arg(note_json)
-        .output()
+        .spawn()
         .expect("failed to execute process");
+
+    {
+        let stdin = child.stdin.as_mut().expect("Failed to open stdin");
+        stdin
+            .write_all(note_json.as_bytes())
+            .expect("Failed to write to stdin");
+    }
+
+    let output = child.wait_with_output().expect("Failed to read stdout");
 
     eprintln!("status: {}", output.status);
     eprintln!("stdout: {}", String::from_utf8_lossy(&output.stdout));

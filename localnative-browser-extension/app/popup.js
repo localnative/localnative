@@ -187,6 +187,6 @@ function cmdDelete(rowid) {
 function cmd(message){
   var part = connect();
   port.postMessage(message);
-  statusMessage("Sent command: " + JSON.stringify(message) );
+  statusMessage("Sent command: " + JSON.stringify(message.action) );
 }
 
