@@ -13,7 +13,9 @@ function onNativeMessage(message) {
       <div class="note-created-at">
         ${i.created_at}
         rowid ${i.rowid}
-        <button id="btn-delete-rowid-${i.rowid}" title="delete">
+        <span class="note-tags" id="note-tags-rowid-${i.rowid}">
+        </span>
+        <button id="btn-delete-rowid-${i.rowid}" title="delete" style="display: none">
         X
         </button>
       </div>
@@ -28,10 +30,6 @@ function onNativeMessage(message) {
         ${i.description}
       </div>
 
-      <div class="note-tags">
-        <span id="note-tags-rowid-${i.rowid}">
-        </span>
-      </div>
     </div>
       `);
 
@@ -41,18 +39,20 @@ function onNativeMessage(message) {
     };
 
     // tags
-    i.tags.split(',').forEach(function(tag){
-      document.getElementById('note-tags-rowid-' + i.rowid ).insertAdjacentHTML('beforeend', Sanitizer.escapeHTML`
-          <button id="note-tags-rowid-${i.rowid}-tag-${tag}">
-           ${tag}
-          </button>
-          `);
-      // tag search
-      document.getElementById('note-tags-rowid-' + i.rowid + '-tag-' + tag).onclick = function(){
-        document.getElementById('search-text').value = tag;
-        cmdSearch();;
-      }
-    });
+    if(i.tags.length > 0){
+      i.tags.split(',').forEach(function(tag){
+        document.getElementById('note-tags-rowid-' + i.rowid ).insertAdjacentHTML('beforeend', Sanitizer.escapeHTML`
+            <button id="note-tags-rowid-${i.rowid}-tag-${tag}">
+             ${tag}
+            </button>
+            `);
+        // tag search
+        document.getElementById('note-tags-rowid-' + i.rowid + '-tag-' + tag).onclick = function(){
+          document.getElementById('search-text').value = tag;
+          cmdSearch();;
+        }
+      });
+    }
 
   });
 }
@@ -190,6 +190,6 @@ function cmdDelete(rowid) {
 function cmd(message){
   var part = connect();
   port.postMessage(message);
-  statusMessage("Sent command: " + JSON.stringify(message.action) );
+  statusMessage("Sent command: " + JSON.stringify(message).substring(0,180) + " ...");
 }
 
