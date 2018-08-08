@@ -24,7 +24,7 @@ pub fn select(conn: &Connection, sql: &str) -> String {
             tags: row.get(3),
             description: row.get(4),
             comments: row.get(5),
-            annotations: row.get(6),
+            annotations: "".to_string(), //row.get(6),
             created_at: row.get(7),
         }).unwrap();
 
