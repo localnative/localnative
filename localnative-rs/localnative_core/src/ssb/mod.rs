@@ -118,7 +118,7 @@ pub fn tail(id: &str, gt: i64) -> Option<SsbNote> {
     }
 }
 
-pub fn publish(note: Note) -> SsbNote {
+pub fn publish(note: Note, pubkeys: &str) -> SsbNote {
     let note_json = json!(note).to_string();
 
     // eprintln!("{}", note_json);
@@ -128,6 +128,7 @@ pub fn publish(note: Note) -> SsbNote {
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .arg(format!("{}/publish.js", node_dir()))
+        .arg(pubkeys)
         .spawn()
         .expect("failed to execute process");
 
@@ -151,13 +152,13 @@ pub fn publish(note: Note) -> SsbNote {
         eprintln!("stderr: {}", stderr);
         //panic!("stderr: {}", stderr);
         let annotations = ssbify_string(&note.annotations, &note.title, &note.url);
-        publish2(note, annotations)
+        publish2(note, annotations, pubkeys)
     } else {
         panic!("stderr: {}", stderr);
     }
 }
 
-pub fn publish2(note: Note, annotations: String) -> SsbNote {
+pub fn publish2(note: Note, annotations: String, pubkeys: &str) -> SsbNote {
     let note = Note {
         annotations,
         ..note
@@ -171,6 +172,7 @@ pub fn publish2(note: Note, annotations: String) -> SsbNote {
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .arg(format!("{}/publish.js", node_dir()))
+        .arg(pubkeys)
         .spawn()
         .expect("failed to execute process");
 

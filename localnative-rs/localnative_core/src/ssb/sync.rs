@@ -72,6 +72,7 @@ pub fn get_note_to_publish(conn: &Connection) -> Result<Note, rusqlite::Error> {
 }
 
 pub fn sync_to_ssb(conn: &Connection) {
+    let pubkeys = get_pubkeys(conn);
     // loop till ssb note_rowid catch up to note
     loop {
         match get_note_to_publish(conn) {
@@ -79,7 +80,7 @@ pub fn sync_to_ssb(conn: &Connection) {
                 eprintln!("{:?}", note);
                 // sync from db to ssb
                 let rowid = note.rowid;
-                let ssb_note = publish(note);
+                let ssb_note = publish(note, &pubkeys);
                 // update ssb
                 conn.execute_batch(&format!(
                     "BEGIN;

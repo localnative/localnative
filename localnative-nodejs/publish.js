@@ -8,9 +8,9 @@ const homedir = os.homedir()
 var keys = ssbKeys.loadOrCreateSync(homedir + '/.ssb/secret')
 
 const fs = require('fs')
-var pubkeys = JSON.parse(fs.readFileSync(homedir + '/.ssb/localnative-pub-keys'))
 
-var note = JSON.parse(fs.readFileSync("/dev/stdin", "utf-8"))
+let note = JSON.parse(fs.readFileSync("/dev/stdin", "utf-8"))
+let pubkeys = JSON.parse(process.argv[2])
 
 console.error(note)
 console.error(mkMsg(note))
