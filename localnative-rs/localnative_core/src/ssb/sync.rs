@@ -6,6 +6,43 @@ use Note;
 use Ssb;
 use SsbNote;
 
+pub fn get_pubkeys(conn: &Connection) -> String {
+    let mut stmt =
+        conn.prepare(
+            "select note_rowid,
+        author,
+        is_active_author,
+        is_last_note,
+        seq,
+        ts,
+        key,
+        prev
+        from ssb",
+        ).unwrap();
+    let ssb_iter =
+        stmt.query_map(&[], |row| Ssb {
+            note_rowid: row.get(0),
+            author: row.get(1),
+            is_active_author: false, //row.get(2),
+            is_last_note: false,     // row.get(3),
+            seq: row.get(4),
+            ts: row.get(5),
+            key: row.get(6),
+            prev: row.get(7),
+        }).unwrap();
+
+    let mut j = "[ ".to_owned();
+    for ssb in ssb_iter {
+        let ssb = ssb.unwrap();
+        j.push_str(r#"""#);
+        j.push_str(&ssb.author);
+        j.push_str(r#"","#);
+    }
+    j.pop();
+    j.push_str("]");
+    j
+}
+
 pub fn get_note_to_publish(conn: &Connection) -> Result<Note, rusqlite::Error> {
     let mut stmt =
         conn.prepare(
