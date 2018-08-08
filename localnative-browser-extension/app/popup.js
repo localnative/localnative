@@ -49,7 +49,7 @@ function onNativeMessage(message) {
         // tag search
         document.getElementById('note-tags-rowid-' + i.rowid + '-tag-' + tag).onclick = function(){
           document.getElementById('search-text').value = tag;
-          cmdSearch();;
+          cmdSearch();
         }
       });
     }
@@ -108,6 +108,11 @@ document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('search-text').addEventListener('keyup', function (e) {
       cmdSearch();
   });
+
+  document.getElementById('search-clear-btn').onclick = function(){
+    document.getElementById('search-text').value = '';
+    cmdSearch();
+  };
 
   // initial query
   cmdSelect();
