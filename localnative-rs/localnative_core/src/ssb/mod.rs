@@ -45,8 +45,8 @@ pub fn run_sync(conn: &Connection) {
     sync::sync_all_to_db(&conn);
 }
 
-pub fn ssbify_string(content: &str, title: &str, url: &str) -> String {
-    let mut child = Command::new("ssbify-string")
+pub fn ssbify_bom(content: &str, title: &str, url: &str) -> String {
+    let mut child = Command::new("ssbify-bom")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -151,7 +151,7 @@ pub fn publish(note: Note, pubkeys: &str) -> SsbNote {
     } else if stderr.contains("Error: encoded message must not be larger than") {
         eprintln!("stderr: {}", stderr);
         //panic!("stderr: {}", stderr);
-        let annotations = ssbify_string(&note.annotations, &note.title, &note.url);
+        let annotations = ssbify_bom(&note.annotations, &note.title, &note.url);
         publish2(note, annotations, pubkeys)
     } else {
         panic!("stderr: {}", stderr);
