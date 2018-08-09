@@ -55,7 +55,7 @@ pub fn get_note_to_publish(conn: &Connection) -> Result<Note, rusqlite::Error> {
         annotations,
         created_at
         from note
-        where rowid > (select note_rowid from ssb where is_active_author = 1)
+        where rowid > (select max(note_rowid) from ssb)
         order by rowid
         limit 1",
         ).unwrap();
@@ -122,11 +122,11 @@ pub fn refresh_is_last_note(conn: &Connection) {
 
 pub fn sync_to_db(conn: &Connection, id: &str) {
     loop {
-        let seq = get_ssb_active(&conn).seq;
+        let seq = get_ssb(&conn, id).seq;
         if let Some(rs) = tail(&id, seq) {
             eprintln!("{:?}", rs);
             assert_eq!(rs.author, id);
-            insert_ssb_note_to_db(&conn, &rs);
+            insert_ssb_note_to_db(&conn, id, &rs);
         } else {
             eprintln!("tail end");
             break;
@@ -134,7 +134,7 @@ pub fn sync_to_db(conn: &Connection, id: &str) {
     }
 }
 
-pub fn insert_ssb_note_to_db(conn: &Connection, rs: &SsbNote) {
+pub fn insert_ssb_note_to_db(conn: &Connection, id: &str, rs: &SsbNote) {
     conn.execute_batch(&format!(
         "BEGIN;
        INSERT INTO note (title, url, tags, description, comments, annotations, created_at)
@@ -154,8 +154,8 @@ pub fn insert_ssb_note_to_db(conn: &Connection, rs: &SsbNote) {
          )
         values(
             last_insert_rowid(),
-            (select author from ssb where is_active_author = 1),
-            1, --is_active_author
+            '{id}',
+            (select '{id}' = (select author from ssb where is_active_author = 1)),  --is_active_author
             1, --is_last_note
             {seq},
             {ts},
@@ -171,6 +171,7 @@ pub fn insert_ssb_note_to_db(conn: &Connection, rs: &SsbNote) {
         rs.note_comments,
         rs.note_annotations,
         rs.note_created_at,
+        id = id,
         seq = rs.seq,
         ts = rs.ts,
         key = rs.key,

@@ -96,11 +96,11 @@ fn test_tail() {
     let id = whoami();
     init_active_author(&conn, &id);
     loop {
-        let seq = get_ssb_active(&conn).seq;
+        let seq = get_ssb(&conn, &id).seq;
         if let Some(rs) = tail(&id, seq) {
             eprintln!("{:?}", rs);
             assert_eq!(rs.author, id);
-            insert_ssb_note_to_db(&conn, &rs);
+            insert_ssb_note_to_db(&conn, &id, &rs);
         } else {
             eprintln!("tail end");
             break;
