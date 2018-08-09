@@ -120,7 +120,38 @@ pub fn refresh_is_last_note(conn: &Connection) {
     ).unwrap();
 }
 
-pub fn sync_to_db(conn: &Connection, id: &str) {
+pub fn sync_all_to_db(conn: &Connection) {
+    let mut stmt =
+        conn.prepare(
+            "select note_rowid,
+        author,
+        is_active_author,
+        is_last_note,
+        seq,
+        ts,
+        key,
+        prev
+        from ssb",
+        ).unwrap();
+    let ssb_iter =
+        stmt.query_map(&[], |row| Ssb {
+            note_rowid: row.get(0),
+            author: row.get(1),
+            is_active_author: false, //row.get(2),
+            is_last_note: false,     // row.get(3),
+            seq: row.get(4),
+            ts: row.get(5),
+            key: row.get(6),
+            prev: row.get(7),
+        }).unwrap();
+
+    for ssb in ssb_iter {
+        let ssb = ssb.unwrap();
+        sync_one_to_db(conn, &ssb.author);
+    }
+}
+
+pub fn sync_one_to_db(conn: &Connection, id: &str) {
     loop {
         let seq = get_ssb(&conn, id).seq;
         if let Some(rs) = tail(&id, seq) {
@@ -128,7 +159,7 @@ pub fn sync_to_db(conn: &Connection, id: &str) {
             assert_eq!(rs.author, id);
             insert_ssb_note_to_db(&conn, id, &rs);
         } else {
-            eprintln!("tail end");
+            eprintln!("tail end {}", id);
             break;
         }
     }

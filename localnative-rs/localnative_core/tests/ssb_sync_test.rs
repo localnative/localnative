@@ -6,7 +6,7 @@ use localnative_core::Note;
 use localnative_core::cmd::{clear, count, create, delete, insert, select};
 use localnative_core::ssb::sync::{
     get_note_to_publish, get_pubkeys, get_ssb, get_ssb_active, init_active_author,
-    insert_ssb_note_to_db, sync_to_ssb,
+    insert_ssb_note_to_db, sync_all_to_db, sync_one_to_db, sync_to_ssb,
 };
 use localnative_core::ssb::{get_sqlite_connection, publish, tail, whoami};
 use rusqlite::Connection;
@@ -106,4 +106,20 @@ fn test_tail() {
             break;
         }
     }
+}
+
+#[test]
+fn test_sync_one_to_db() {
+    let conn = prepare_test_db();
+    let id = whoami();
+    init_active_author(&conn, &id);
+    sync_one_to_db(&conn, &id);
+}
+
+#[test]
+fn test_sync_all_to_db() {
+    let conn = prepare_test_db();
+    let id = whoami();
+    init_active_author(&conn, &id);
+    sync_all_to_db(&conn);
 }
