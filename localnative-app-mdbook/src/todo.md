@@ -1,16 +1,16 @@
 # TODO
 
-## db
-- sync via ssb
-- encryption
-
-## mobile
-- android
-- ios
+## i18n
+- zh
 
 ## desktop platform support
 - mac
 - windows
 
-## i18n
-- zh
+## mobile
+- android
+- ios
+
+## db
+- encryption
+

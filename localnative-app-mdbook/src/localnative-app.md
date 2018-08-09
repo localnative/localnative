@@ -3,9 +3,6 @@ version: 0.1.0
 
 A note/bookmark taking tool using a local sqlite database. The browser extension is built with native messaging.
 
-Currently only tested on GNU/Linux.
-
-
 ## (not so) Quick start
 
 ### Browser extension
