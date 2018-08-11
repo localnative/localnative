@@ -166,13 +166,31 @@ pub fn sync_one_to_db(conn: &Connection, id: &str) {
 }
 
 pub fn insert_ssb_note_to_db(conn: &Connection, id: &str, rs: &SsbNote) {
-    conn.execute_batch(&format!(
-        "BEGIN;
+    conn.execute(
+        "
        INSERT INTO note (title, url, tags, description, comments, annotations, created_at)
-       VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}');
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
+       ",
+        &[
+            &rs.note_title,
+            &rs.note_url,
+            &rs.note_tags,
+            &rs.note_description,
+            &rs.note_comments,
+            &rs.note_annotations,
+            &rs.note_created_at,
+        ],
+    ).unwrap();
 
-       UPDATE ssb SET is_last_note = 0;
+    conn.execute(
+        "
+    UPDATE ssb SET is_last_note = 0;
+    ",
+        &[],
+    ).unwrap();
 
+    conn.execute(
+        "
        REPLACE INTO ssb (
          note_rowid         ,
          author             ,
@@ -185,29 +203,18 @@ pub fn insert_ssb_note_to_db(conn: &Connection, id: &str, rs: &SsbNote) {
          )
         values(
             last_insert_rowid(),
-            '{id}',
-            (select '{id}' = (select author from ssb where is_active_author = 1)),  --is_active_author
+            ?1,
+            (select ?1 = (select author from ssb where is_active_author = 1)),  --is_active_author
             1, --is_last_note
-            {seq},
-            {ts},
-            '{key}',
-            '{prev}'
+            ?2,
+            ?3,
+            ?4,
+            ?5
             );
        COMMIT;
        ",
-        rs.note_title,
-        rs.note_url,
-        rs.note_tags,
-        rs.note_description,
-        rs.note_comments,
-        rs.note_annotations,
-        rs.note_created_at,
-        id = id,
-        seq = rs.seq,
-        ts = rs.ts,
-        key = rs.key,
-        prev = rs.prev
-    )).unwrap();
+        &[&id, &rs.seq, &rs.ts, &rs.key, &rs.prev],
+    ).unwrap();
 }
 
 pub fn get_ssb_active(conn: &Connection) -> Ssb {
