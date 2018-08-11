@@ -45,8 +45,7 @@ fn test_insert() {
         annotations: "annotations".to_string(),
         created_at: "".to_string(),
     };
-    let conn = prepare_test_db();
-    insert(&conn, note);
+    insert(note);
 }
 
 #[test]

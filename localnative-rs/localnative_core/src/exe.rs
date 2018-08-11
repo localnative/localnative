@@ -42,7 +42,7 @@ fn process(cmd: Cmd, text: &str) -> String {
                     annotations: i.annotations,
                     created_at,
                 };
-                insert(&conn, note);
+                insert(note);
                 // make insert the only place with ssb dependency
                 ssb::run_sync(&conn);
                 // end ssb dependency

@@ -45,32 +45,38 @@ pub fn delete(conn: &Connection, rowid: i64) {
         .unwrap();
 }
 
-pub fn insert(conn: &Connection, note: Note) {
-    // mark is_last_note = 0 to indicate out of sync, i.e. db > ssb
-    conn.execute(
-        "
+pub fn insert(note: Note) {
+    let conn = &mut super::ssb::get_sqlite_connection();
+    let tx = conn.transaction().unwrap();
+    {
+        tx.execute(
+            "
         INSERT INTO note (title, url, tags, description, comments, annotations, created_at)
         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7);
 
         ",
-        &[
-            &note.title,
-            &note.url,
-            &note.tags,
-            &note.description,
-            &note.comments,
-            &note.annotations,
-            &note.created_at,
-        ],
-    ).unwrap();
-
-    conn.execute_batch(
-        "BEGIN;
+            &[
+                &note.title,
+                &note.url,
+                &note.tags,
+                &note.description,
+                &note.comments,
+                &note.annotations,
+                &note.created_at,
+            ],
+        ).unwrap();
+    }
+    {
+        // mark is_last_note = 0 to indicate out of sync, i.e. db > ssb
+        tx.execute(
+            "
         UPDATE ssb SET is_last_note = 0
-        WHERE is_active_author = 1;
-        COMMIT;
+        WHERE is_active_author = 1
         ",
-    ).unwrap();
+            &[],
+        ).unwrap();
+    }
+    tx.commit().unwrap();
 }
 
 pub fn create(conn: &Connection) {
