@@ -100,7 +100,7 @@ fn test_tail() {
         if let Some(rs) = tail(&id, seq) {
             eprintln!("{:?}", rs);
             assert_eq!(rs.author, id);
-            insert_ssb_note_to_db(&conn, &id, &rs);
+            insert_ssb_note_to_db(&id, &rs);
         } else {
             eprintln!("tail end");
             break;
@@ -113,13 +113,10 @@ fn test_sync_one_to_db() {
     let conn = prepare_test_db();
     let id = whoami();
     init_active_author(&conn, &id);
-    sync_one_to_db(&conn, &id);
+    sync_one_to_db(&id);
 }
 
 #[test]
 fn test_sync_all_to_db() {
-    let conn = prepare_test_db();
-    let id = whoami();
-    init_active_author(&conn, &id);
-    sync_all_to_db(&conn);
+    sync_all_to_db();
 }

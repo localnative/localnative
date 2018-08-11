@@ -29,7 +29,7 @@ pub fn run_sync(conn: &Connection) {
     let id = whoami();
     sync::init_active_author(&conn, &id);
     sync::sync_to_ssb(&conn);
-    sync::sync_all_to_db(&conn);
+    sync::sync_all_to_db();
 }
 
 pub fn ssbify_bom(content: &str, title: &str, url: &str) -> String {

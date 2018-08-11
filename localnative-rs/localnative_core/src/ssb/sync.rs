@@ -120,7 +120,8 @@ pub fn refresh_is_last_note(conn: &Connection) {
     ).unwrap();
 }
 
-pub fn sync_all_to_db(conn: &Connection) {
+pub fn get_authors() -> Vec<String> {
+    let conn = super::get_sqlite_connection();
     let mut stmt =
         conn.prepare(
             "
@@ -145,20 +146,29 @@ pub fn sync_all_to_db(conn: &Connection) {
             key: row.get(6),
             prev: row.get(7),
         }).unwrap();
-
+    let mut v = Vec::new();
     for ssb in ssb_iter {
-        let ssb = ssb.unwrap();
-        sync_one_to_db(conn, &ssb.author);
+        v.push(ssb.unwrap().author)
+    }
+    v
+}
+pub fn sync_all_to_db() {
+    let authors = get_authors();
+    eprintln!("{:?}", authors);
+    for id in authors {
+        sync_one_to_db(&id);
     }
 }
 
-pub fn sync_one_to_db(conn: &Connection, id: &str) {
+pub fn sync_one_to_db(id: &str) {
     loop {
+        let conn = super::get_sqlite_connection();
         let seq = get_ssb(&conn, id).seq;
+        conn.close().unwrap();
         if let Some(rs) = tail(&id, seq) {
             eprintln!("{:?}", rs);
             assert_eq!(rs.author, id);
-            insert_ssb_note_to_db(&conn, id, &rs);
+            insert_ssb_note_to_db(id, &rs);
         } else {
             eprintln!("tail end {}", id);
             break;
@@ -166,32 +176,40 @@ pub fn sync_one_to_db(conn: &Connection, id: &str) {
     }
 }
 
-pub fn insert_ssb_note_to_db(conn: &Connection, id: &str, rs: &SsbNote) {
-    conn.execute(
-        "
+pub fn insert_ssb_note_to_db(id: &str, rs: &SsbNote) {
+    let conn = &mut super::get_sqlite_connection();
+    let tx = conn.transaction().unwrap();
+
+    {
+        tx.execute(
+            "
        INSERT INTO note (title, url, tags, description, comments, annotations, created_at)
        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
        ",
-        &[
-            &rs.note_title,
-            &rs.note_url,
-            &rs.note_tags,
-            &rs.note_description,
-            &rs.note_comments,
-            &rs.note_annotations,
-            &rs.note_created_at,
-        ],
-    ).unwrap();
+            &[
+                &rs.note_title,
+                &rs.note_url,
+                &rs.note_tags,
+                &rs.note_description,
+                &rs.note_comments,
+                &rs.note_annotations,
+                &rs.note_created_at,
+            ],
+        ).unwrap();
+    }
 
-    conn.execute(
-        "
+    {
+        tx.execute(
+            "
     UPDATE ssb SET is_last_note = 0;
     ",
-        &[],
-    ).unwrap();
+            &[],
+        ).unwrap();
+    }
 
-    conn.execute(
-        "
+    {
+        tx.execute(
+            "
        REPLACE INTO ssb (
          note_rowid         ,
          author             ,
@@ -214,8 +232,11 @@ pub fn insert_ssb_note_to_db(conn: &Connection, id: &str, rs: &SsbNote) {
             );
        COMMIT;
        ",
-        &[&id, &rs.seq, &rs.ts, &rs.key, &rs.prev],
-    ).unwrap();
+            &[&id, &rs.seq, &rs.ts, &rs.key, &rs.prev],
+        ).unwrap();
+    }
+
+    tx.commit().unwrap();
 }
 
 pub fn get_ssb_active(conn: &Connection) -> Ssb {
