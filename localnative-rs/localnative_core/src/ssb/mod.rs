@@ -25,19 +25,6 @@ fn sqlite3_db_location() -> String {
     p
 }
 
-fn node_dir() -> String {
-    let p = format!(
-        "{}/.localnative/localnative/localnative-nodejs",
-        dirs::home_dir().unwrap().to_str().unwrap()
-    );
-    // println!("{}", p);
-    p
-}
-
-fn node_exe() -> String {
-    "node".to_string()
-}
-
 pub fn run_sync(conn: &Connection) {
     let id = whoami();
     sync::init_active_author(&conn, &id);
@@ -77,9 +64,7 @@ pub fn ssbify_bom(content: &str, title: &str, url: &str) -> String {
 }
 
 pub fn whoami() -> String {
-    // let output = Command::new(node_exe())
-    let output = Command::new(node_exe())
-        .arg(format!("{}/whoami.js", node_dir()))
+    let output = Command::new("localnative-ssb-whoami")
         .output()
         .expect("failed to execute process");
 
@@ -94,8 +79,7 @@ pub fn whoami() -> String {
 }
 
 pub fn tail(id: &str, gt: i64) -> Option<SsbNote> {
-    let output = Command::new(node_exe())
-        .arg(format!("{}/tail.js", node_dir()))
+    let output = Command::new("localnative-ssb-tail")
         .arg(id)
         .arg(gt.to_string())
         .output()
@@ -123,11 +107,10 @@ pub fn publish(note: Note, pubkeys: &str) -> SsbNote {
 
     // eprintln!("{}", note_json);
 
-    let mut child = Command::new(node_exe())
+    let mut child = Command::new("localnative-ssb-publish")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
-        .arg(format!("{}/publish.js", node_dir()))
         .arg(pubkeys)
         .spawn()
         .expect("failed to execute process");
@@ -167,11 +150,10 @@ pub fn publish2(note: Note, annotations: String, pubkeys: &str) -> SsbNote {
 
     // eprintln!("{}", note_json);
 
-    let mut child = Command::new(node_exe())
+    let mut child = Command::new("localnative-ssb-publish")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
-        .arg(format!("{}/publish.js", node_dir()))
         .arg(pubkeys)
         .spawn()
         .expect("failed to execute process");

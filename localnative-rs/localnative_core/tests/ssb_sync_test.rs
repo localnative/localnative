@@ -17,14 +17,14 @@ fn prepare_test_db() -> Connection {
     conn
 }
 
-#[test]
-fn test_reset_db() {
-    let conn = prepare_test_db();
-    clear(&conn);
-    create(&conn);
-    assert_eq!(0, count(&conn, "ssb"));
-    assert_eq!(0, count(&conn, "note"));
-}
+// #[test]
+// fn test_reset_db() {
+//     let conn = prepare_test_db();
+//     clear(&conn);
+//     create(&conn);
+//     assert_eq!(0, count(&conn, "ssb"));
+//     assert_eq!(0, count(&conn, "note"));
+// }
 
 #[test]
 fn test_whoami() {

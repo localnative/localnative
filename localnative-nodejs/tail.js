@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 'use strict'
 var sodium     = require('chloride')
 var ssbClient = require('ssb-client')

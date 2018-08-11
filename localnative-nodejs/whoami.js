@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 var ssbKeys = require('ssb-keys')
 
 const os = require('os')
