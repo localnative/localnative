@@ -82,15 +82,14 @@ pub fn sync_to_ssb(conn: &Connection) {
                 let rowid = note.rowid;
                 let ssb_note = publish(note, &pubkeys);
                 // update ssb
-                conn.execute_batch(&format!(
-                    "BEGIN;
-                UPDATE ssb SET seq = {},
-                note_rowid = {}
-                WHERE is_active_author = 1;
-                 COMMIT;
+                conn.execute(
+                    "
+                UPDATE ssb SET seq = ?1,
+                note_rowid = ?2
+                WHERE is_active_author = 1
                 ",
-                    ssb_note.seq, rowid
-                )).unwrap();
+                    &[&ssb_note.seq, &rowid],
+                ).unwrap();
             }
             Err(e) => {
                 match e {
@@ -108,14 +107,15 @@ pub fn sync_to_ssb(conn: &Connection) {
 
 pub fn refresh_is_last_note(conn: &Connection) {
     conn.execute_batch(
-        "BEGIN;
+        "
+    BEGIN;
     UPDATE ssb
     SET is_last_note = CASE WHEN
     (select max(rowid) from note) = ssb.note_rowid
     THEN 1
     ELSE 0
     END;
-     COMMIT;
+    COMMIT;
     ",
     ).unwrap();
 }
@@ -123,7 +123,8 @@ pub fn refresh_is_last_note(conn: &Connection) {
 pub fn sync_all_to_db(conn: &Connection) {
     let mut stmt =
         conn.prepare(
-            "select note_rowid,
+            "
+        select note_rowid,
         author,
         is_active_author,
         is_last_note,
