@@ -13,6 +13,12 @@ pub mod sql;
 pub mod ssb;
 
 #[derive(Serialize, Deserialize, Debug)]
+pub struct Ssbify {
+    pub hash: String,
+    pub md: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SsbNote {
     pub note_title: String,
     pub note_url: String,

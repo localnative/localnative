@@ -8,6 +8,7 @@ extern crate dirs;
 use std::io::Write;
 use Note;
 use SsbNote;
+use Ssbify;
 
 pub fn get_sqlite_connection() -> Connection {
     let p = sqlite3_db_location();
@@ -32,7 +33,7 @@ pub fn run_sync(conn: &Connection) {
     sync::sync_all_to_db();
 }
 
-pub fn ssbify_bom(content: &str, title: &str, url: &str) -> String {
+pub fn ssbify(content: &str, title: &str, url: &str) -> Option<Ssbify> {
     let mut child = Command::new("localnative-ssbify")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -40,9 +41,8 @@ pub fn ssbify_bom(content: &str, title: &str, url: &str) -> String {
         .arg("-")
         .arg(title)
         .arg(url)
-        .arg("true")
         .spawn()
-        .expect("failed to execute ssbify_string_via_stdin");
+        .expect("failed to execute ssbify");
 
     {
         let stdin = child.stdin.as_mut().expect("Failed to open stdin");
@@ -58,9 +58,15 @@ pub fn ssbify_bom(content: &str, title: &str, url: &str) -> String {
     eprintln!("stderr: {}", String::from_utf8_lossy(&output.stderr));
 
     assert!(output.status.success());
-    String::from_utf8_lossy(&output.stdout)
-        .trim_right()
-        .to_string()
+    let text = String::from_utf8_lossy(&output.stdout);
+
+    match serde_json::from_str::<Ssbify>(&text) {
+        Ok(i) => Some(i),
+        Err(e) => {
+            eprintln!("{:?}", e);
+            None
+        }
+    }
 }
 
 pub fn whoami() -> String {
@@ -134,8 +140,8 @@ pub fn publish(note: Note, pubkeys: &str) -> SsbNote {
     } else if stderr.contains("Error: encoded message must not be larger than") {
         eprintln!("stderr: {}", stderr);
         //panic!("stderr: {}", stderr);
-        let annotations = ssbify_bom(&note.annotations, &note.title, &note.url);
-        publish2(note, annotations, pubkeys)
+        let annotations = ssbify(&note.annotations, &note.title, &note.url).unwrap();
+        publish2(note, annotations.md, pubkeys)
     } else {
         panic!("stderr: {}", stderr);
     }

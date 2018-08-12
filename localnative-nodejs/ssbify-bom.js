@@ -74,9 +74,17 @@ module.exports = function (sbot, htmlString, opts, cb) {
   var postMarkdownWithBlobs = function (blobRes) {
     var md = markItDown(blobRes)
 
+    var cb2 = function(err, hash){
+      if (err) return cb(err)
+      cb(null, {
+        hash: hash,
+        md: md
+      })
+    }
+
     addBlob(sbot, new Buffer(md), function (err, res) {
       if (err) return cb(err)
-      waitUntilHas(sbot, res, cb)
+      waitUntilHas(sbot, res, cb2)
     })
   }
 
@@ -108,7 +116,6 @@ module.exports = function (sbot, htmlString, opts, cb) {
       }
     })
   }, function(blobRes) {
-       if (opts.xmitAsBlob) postMarkdownWithBlobs(blobRes)
-       else cb(null, markItDown(blobRes))
+       postMarkdownWithBlobs(blobRes)
      })
 }

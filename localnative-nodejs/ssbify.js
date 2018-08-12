@@ -39,12 +39,11 @@ ssbClient(function (err, sbot) {
   ssbifyString(sbot, html,
                { ignoreBrokenLinks: true,
                  title: process.argv[3] || 'untitled snippet',
-                 url: process.argv[4] || '',
-                 xmitAsBlob: process.argv[5] || false
+                 url: process.argv[4] || ''
                },
                function (err, res) {
                  if (err) throw err
-                 console.log(res)
+                 console.log(JSON.stringify(res))
                  process.exit(0)
                })
 })
