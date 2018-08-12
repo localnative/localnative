@@ -1,5 +1,5 @@
 # Local Native App
-version: 0.1.0
+version: 0.1.1
 
 A note/bookmark taking tool using a local sqlite database. The browser extension is built with native messaging.
 
