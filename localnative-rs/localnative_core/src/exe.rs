@@ -43,9 +43,6 @@ fn process(cmd: Cmd, text: &str) -> String {
                     created_at,
                 };
                 insert(note);
-                // make insert the only place with ssb dependency
-                ssb::run_sync(&conn);
-                // end ssb dependency
                 do_select(&conn, &sql::select(i.limit, i.offset))
             } else {
                 r#"{"error":"cmd insert json error"}"#.to_string()
@@ -78,6 +75,9 @@ fn process(cmd: Cmd, text: &str) -> String {
 }
 
 fn do_select(conn: &Connection, sql: &str) -> String {
+    // make insert the only place with ssb dependency
+    ssb::run_sync(&conn);
+    // end ssb dependency
     let j = select(&conn, sql);
     let msg = format!("{{\"notes\":{}}}", j);
     eprintln!("msg {}", msg);

@@ -33,7 +33,7 @@ pub fn run_sync(conn: &Connection) {
 }
 
 pub fn ssbify_bom(content: &str, title: &str, url: &str) -> String {
-    let mut child = Command::new("ssbify-bom")
+    let mut child = Command::new("localnative-ssbify")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
