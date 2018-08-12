@@ -109,6 +109,13 @@ pub fn tail(id: &str, gt: i64) -> Option<SsbNote> {
 }
 
 pub fn publish(note: Note, pubkeys: &str) -> SsbNote {
+    let rs = ssbify(&note.annotations, &note.title, &note.url).unwrap();
+    let note = Note {
+        comments: rs.hash.to_string(),
+        annotations: rs.markdown.to_string(),
+        ..note
+    };
+
     let note_json = json!(note).to_string();
 
     // eprintln!("{}", note_json);
@@ -139,17 +146,16 @@ pub fn publish(note: Note, pubkeys: &str) -> SsbNote {
         serde_json::from_str::<SsbNote>(&text).unwrap()
     } else if stderr.contains("Error: encoded message must not be larger than") {
         eprintln!("stderr: {}", stderr);
-        //panic!("stderr: {}", stderr);
-        let annotations = ssbify(&note.annotations, &note.title, &note.url).unwrap();
-        publish2(note, annotations.md, pubkeys)
+        publish2(note, rs.hash, pubkeys)
     } else {
         panic!("stderr: {}", stderr);
     }
 }
 
-pub fn publish2(note: Note, annotations: String, pubkeys: &str) -> SsbNote {
+pub fn publish2(note: Note, hash: String, pubkeys: &str) -> SsbNote {
     let note = Note {
-        annotations,
+        annotations: "".to_string(),
+        comments: hash,
         ..note
     };
     let note_json = json!(note).to_string();

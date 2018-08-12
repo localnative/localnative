@@ -78,7 +78,7 @@ module.exports = function (sbot, htmlString, opts, cb) {
       if (err) return cb(err)
       cb(null, {
         hash: hash,
-        md: md
+        markdown: md
       })
     }
 

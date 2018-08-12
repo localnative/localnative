@@ -77,7 +77,8 @@ function mkMsg(note){
     note.created_at,
     tagsText,
     "**" + note.title + "**", note.url,
-    note.description, note.comments, note.annotations
+    note.description, note.comments,
+    note.annotations
   ].reduce(function(acc, i){
     if(i == ''){
       return acc

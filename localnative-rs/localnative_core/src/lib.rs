@@ -15,7 +15,7 @@ pub mod ssb;
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Ssbify {
     pub hash: String,
-    pub md: String,
+    pub markdown: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
