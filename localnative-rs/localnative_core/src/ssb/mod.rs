@@ -109,6 +109,11 @@ pub fn tail(id: &str, gt: i64) -> Option<SsbNote> {
 }
 
 pub fn publish(note: Note, pubkeys: &str) -> SsbNote {
+    if &note.annotations.trim().to_string() == "" {
+        let ssb_note = publish2(note, "".to_string(), pubkeys);
+        return ssb_note;
+    };
+
     let rs = ssbify(&note.annotations, &note.title, &note.url).unwrap();
     let note = Note {
         comments: rs.hash.to_string(),
