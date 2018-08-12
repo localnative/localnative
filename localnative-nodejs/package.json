@@ -9,7 +9,8 @@
   "bin": {
     "localnative-ssb-tail": "./tail.js",
     "localnative-ssb-whoami": "./whoami.js",
-    "localnative-ssb-publish": "./publish.js"
+    "localnative-ssb-publish": "./publish.js",
+    "localnative-ssbify": "./ssbify.js"
   },
   "keywords": [
     "localnative"
@@ -19,6 +20,14 @@
   "dependencies": {
     "scuttlebot": "^11.3.3",
     "ssb-client": "^4.5.7",
-    "ssb-private": "^0.2.1"
+    "ssb-private": "^0.2.1",
+    "async": "^1.5.2",
+    "cheerio": "^0.19.0",
+    "crypto": "0.0.3",
+    "node-readability": "^2.1.0",
+    "pull-stream": "^3.1.0",
+    "request": "^2.67.0",
+    "striptags": "^2.1.1",
+    "to-markdown": "^2.0.1"
   }
 }
