@@ -1,6 +1,7 @@
 # Changelog
 
-## v0.2.0
+## v0.1.2
+- fix to not ssbify when empty annotations
 - internalize ssbify code
 - allow small sized markdown to be displayed in ssb message
 
