@@ -3,6 +3,9 @@
 ## i18n
 - zh
 
+## ssb
+- graceful error handling to not halt web ext
+
 ## desktop platform support
 - mac
 - windows
