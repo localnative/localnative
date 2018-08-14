@@ -115,46 +115,10 @@ pub fn publish(note: Note, pubkeys: &str) -> SsbNote {
         return ssb_note;
     };
 
-    let rs = ssbify(&note.annotations, &note.title, &note.url).unwrap();
-    let note = Note {
-        comments: rs.hash.to_string(),
-        annotations: rs.markdown.to_string(),
-        ..note
-    };
-
-    let note_json = json!(note).to_string();
-
-    // eprintln!("{}", note_json);
-
-    let mut child = Command::new("localnative-ssb-publish")
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .arg(pubkeys)
-        .spawn()
-        .expect("failed to execute process");
-
-    {
-        let stdin = child.stdin.as_mut().expect("Failed to open stdin");
-        stdin
-            .write_all(note_json.as_bytes())
-            .expect("Failed to write to stdin");
-    }
-
-    let output = child.wait_with_output().expect("Failed to read stdout");
-
-    eprintln!("status: {}", output.status);
-    eprintln!("stdout: {}", String::from_utf8_lossy(&output.stdout));
-    let stderr = String::from_utf8_lossy(&output.stderr);
-
-    if output.status.success() {
-        let text = String::from_utf8_lossy(&output.stdout).to_string();
-        serde_json::from_str::<SsbNote>(&text).unwrap()
-    } else if stderr.contains("Error: encoded message must not be larger than") {
-        eprintln!("stderr: {}", stderr);
+    if let Some(rs) = ssbify(&note.annotations, &note.title, &note.url) {
         publish2(note, &rs.hash, &rs.markdown, pubkeys, size)
     } else {
-        panic!("stderr: {}", stderr);
+        publish2(note, "", "", pubkeys, size)
     }
 }
 
