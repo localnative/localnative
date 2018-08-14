@@ -27,11 +27,16 @@ release
 │       ├── [    5857136]  localnative-web-ext-host-0.1.2
 │       ├── [         65]  localnative-web-ext-host-0.1.2.md5
 │       └── [         97]  localnative-web-ext-host-0.1.2.sha256
-└── [       4096]  v0.1.3
+├── [       4096]  v0.1.3
+│   └── [       4096]  web-ext-host
+│       ├── [    5857264]  localnative-web-ext-host-0.1.3
+│       ├── [         65]  localnative-web-ext-host-0.1.3.md5
+│       └── [         97]  localnative-web-ext-host-0.1.3.sha256
+└── [       4096]  v0.1.4
     └── [       4096]  web-ext-host
-        ├── [    5857264]  localnative-web-ext-host-0.1.3
-        ├── [         65]  localnative-web-ext-host-0.1.3.md5
-        └── [         97]  localnative-web-ext-host-0.1.3.sha256
+        ├── [    5857064]  localnative-web-ext-host-0.1.4
+        ├── [         65]  localnative-web-ext-host-0.1.4.md5
+        └── [         97]  localnative-web-ext-host-0.1.4.sha256
 
-12 directories, 18 files
+14 directories, 21 files
 ```

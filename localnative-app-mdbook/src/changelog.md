@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.1.4
+- remove annotations in ssb message
+- fill all ssb fields after publish
+
 ## v0.1.3
 - recursively reduce annotation markdown size
 - ssbify None result handling 
