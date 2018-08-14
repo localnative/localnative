@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.1.3
+- recursively reduce annotation markdown size
+- ssbify None result handling 
+
 ## v0.1.2
 - fix to not ssbify when empty annotations
 - internalize ssbify code

@@ -4,7 +4,7 @@
 - zh
 
 ## ssb
-- graceful error handling to not halt web ext
+- web ext function without ssb
 
 ## desktop platform support
 - mac
