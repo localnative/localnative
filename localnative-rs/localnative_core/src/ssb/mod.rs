@@ -109,8 +109,9 @@ pub fn tail(id: &str, gt: i64) -> Option<SsbNote> {
 }
 
 pub fn publish(note: Note, pubkeys: &str) -> SsbNote {
+    let size = 4000;
     if &note.annotations.trim().to_string() == "" {
-        let ssb_note = publish2(note, "".to_string(), pubkeys);
+        let ssb_note = publish2(note, "", "", pubkeys, size);
         return ssb_note;
     };
 
@@ -151,16 +152,16 @@ pub fn publish(note: Note, pubkeys: &str) -> SsbNote {
         serde_json::from_str::<SsbNote>(&text).unwrap()
     } else if stderr.contains("Error: encoded message must not be larger than") {
         eprintln!("stderr: {}", stderr);
-        publish2(note, rs.hash, pubkeys)
+        publish2(note, &rs.hash, &rs.markdown, pubkeys, size)
     } else {
         panic!("stderr: {}", stderr);
     }
 }
 
-pub fn publish2(note: Note, hash: String, pubkeys: &str) -> SsbNote {
+pub fn publish2(note: Note, hash: &str, markdown: &str, pubkeys: &str, size: usize) -> SsbNote {
     let note = Note {
-        annotations: "".to_string(),
-        comments: hash,
+        comments: hash.to_string(),
+        annotations: markdown.chars().take(size).collect(),
         ..note
     };
     let note_json = json!(note).to_string();
@@ -186,10 +187,15 @@ pub fn publish2(note: Note, hash: String, pubkeys: &str) -> SsbNote {
 
     eprintln!("status: {}", output.status);
     eprintln!("stdout: {}", String::from_utf8_lossy(&output.stdout));
-    eprintln!("stderr: {}", String::from_utf8_lossy(&output.stderr));
+    let stderr = String::from_utf8_lossy(&output.stderr);
 
-    assert!(output.status.success());
-
-    let text = String::from_utf8_lossy(&output.stdout).to_string();
-    serde_json::from_str::<SsbNote>(&text).unwrap()
+    if output.status.success() {
+        let text = String::from_utf8_lossy(&output.stdout).to_string();
+        serde_json::from_str::<SsbNote>(&text).unwrap()
+    } else if stderr.contains("Error: encoded message must not be larger than") {
+        eprintln!("stderr: {}", stderr);
+        publish2(note, hash, markdown, pubkeys, size - 100)
+    } else {
+        panic!("stderr: {}", stderr);
+    }
 }
