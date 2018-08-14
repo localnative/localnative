@@ -116,7 +116,7 @@ pub fn publish(note: Note, pubkeys: &str) -> SsbNote {
     };
 
     if let Some(rs) = ssbify(&note.annotations, &note.title, &note.url) {
-        publish2(note, &rs.hash, &rs.markdown, pubkeys, size)
+        publish2(note, &rs.hash, "", pubkeys, size)
     } else {
         publish2(note, "", "", pubkeys, size)
     }
