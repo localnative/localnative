@@ -84,11 +84,21 @@ pub fn sync_to_ssb(conn: &Connection) {
                 // update ssb
                 conn.execute(
                     "
-                UPDATE ssb SET seq = ?1,
-                note_rowid = ?2
+                UPDATE ssb SET
+                note_rowid = ?1,
+                ts = ?2,
+                key = ?3,
+                prev = ?4,
+                seq = ?5
                 WHERE is_active_author = 1
                 ",
-                    &[&ssb_note.seq, &rowid],
+                    &[
+                        &rowid,
+                        &ssb_note.ts,
+                        &ssb_note.key,
+                        &ssb_note.prev,
+                        &ssb_note.seq,
+                    ],
                 ).unwrap();
             }
             Err(e) => {
