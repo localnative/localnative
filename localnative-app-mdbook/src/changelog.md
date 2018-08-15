@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.1.5
+- allow web-ext to function without ssb sync
+- docs with screenshots
+
 ## v0.1.4
 - remove annotations in ssb message
 - fill all ssb fields after publish

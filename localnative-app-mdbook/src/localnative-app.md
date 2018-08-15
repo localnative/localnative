@@ -87,8 +87,8 @@ the host may not know the global node bin path, so cd to where you node global b
 ```
 
 
-#### Start ssb
-Currently it assumes sbot server running, as ssb related error handling [needs improvement](/todo.html).
+#### Start a sbot server
+The web extension send message to `localnative-web-ext-host` and writes new note to sqlite first, then response to display the search result, and finally try to sync with ssb. If sbot server is not running, the host will not sync with ssb at that time.
 
 So use those softwares:
 
