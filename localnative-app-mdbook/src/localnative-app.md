@@ -36,8 +36,6 @@ cargo build
 ```
 - or download from [release archive](https://localnative.app/release.html)
 
-    currently only for GNU/Linux, built on Ubuntu 18.04.1 LTS.
-
 #### Setup native messaging manifest to point to extension host binary
 - Copy manifest json template file `app.localnative.json` from `localnative-browser-extension/host` to your browser's specific manifest location
     - [Firefox](https://developer.mozilla.org/en-US/Add-ons/WebExtensions/Native_manifests#Manifest_location)
