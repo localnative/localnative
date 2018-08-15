@@ -26,8 +26,9 @@ fn sqlite3_db_location() -> String {
     p
 }
 
-pub fn run_sync(conn: &Connection) {
+pub fn run_sync() {
     let id = whoami();
+    let conn = get_sqlite_connection();
     sync::init_active_author(&conn, &id);
     sync::sync_to_ssb(&conn);
     sync::sync_all_to_db();

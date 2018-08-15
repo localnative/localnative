@@ -75,9 +75,6 @@ fn process(cmd: Cmd, text: &str) -> String {
 }
 
 fn do_select(conn: &Connection, sql: &str) -> String {
-    // make insert the only place with ssb dependency
-    ssb::run_sync(&conn);
-    // end ssb dependency
     let j = select(&conn, sql);
     let msg = format!("{{\"notes\":{}}}", j);
     eprintln!("msg {}", msg);

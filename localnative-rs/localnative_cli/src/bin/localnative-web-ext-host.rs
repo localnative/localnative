@@ -4,6 +4,7 @@ use std::mem::transmute;
 use std::str;
 extern crate localnative_core;
 use localnative_core::exe::run;
+use localnative_core::ssb;
 
 fn main() -> io::Result<()> {
     // Read the message length (first 4 bytes).
@@ -25,7 +26,9 @@ fn main() -> io::Result<()> {
 
     let response = run(text);
     eprintln!("responset {:?}", response);
-    send_message(&response)
+    send_message(&response);
+    ssb::run_sync();
+    Ok(())
 }
 
 // Sends message to the browser extension.
