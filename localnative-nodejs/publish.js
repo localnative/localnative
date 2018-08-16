@@ -87,6 +87,8 @@ function mkMsg(note){
     }
   },'')
 
+  delete note.rowid
+
   return {
     type: 'post',
     text: text,
