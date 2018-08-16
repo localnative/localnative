@@ -9,7 +9,6 @@ extern crate serde_derive;
 
 pub mod cmd;
 pub mod exe;
-pub mod sql;
 pub mod ssb;
 
 #[derive(Serialize, Deserialize, Debug)]

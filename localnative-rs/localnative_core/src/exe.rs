@@ -1,5 +1,4 @@
 use super::cmd::{create, delete, insert, select};
-use super::sql;
 use rusqlite::Connection;
 
 use super::ssb;
@@ -43,7 +42,7 @@ fn process(cmd: Cmd, text: &str) -> String {
                     created_at,
                 };
                 insert(note);
-                do_select(&conn, &sql::select(i.limit, i.offset))
+                do_select(&conn, "")
             } else {
                 r#"{"error":"cmd insert json error"}"#.to_string()
             }
@@ -51,21 +50,21 @@ fn process(cmd: Cmd, text: &str) -> String {
         "delete" => {
             if let Ok(s) = serde_json::from_str::<CmdDelete>(text) {
                 delete(&conn, s.rowid);
-                do_select(&conn, &sql::search(s.limit, s.offset, &s.query))
+                do_select(&conn, &s.query)
             } else {
                 r#"{"error":"cmd delete json error"}"#.to_string()
             }
         }
         "select" => {
             if let Ok(s) = serde_json::from_str::<CmdSelect>(text) {
-                do_select(&conn, &sql::select(s.limit, s.offset))
+                do_select(&conn, "")
             } else {
                 r#"{"error":"cmd select json error"}"#.to_string()
             }
         }
         "search" => {
             if let Ok(s) = serde_json::from_str::<CmdSearch>(text) {
-                do_select(&conn, &sql::search(s.limit, s.offset, &s.query))
+                do_select(&conn, &s.query)
             } else {
                 r#"{"error":"cmd search json error"}"#.to_string()
             }
@@ -74,8 +73,8 @@ fn process(cmd: Cmd, text: &str) -> String {
     }
 }
 
-fn do_select(conn: &Connection, sql: &str) -> String {
-    let j = select(&conn, sql);
+fn do_select(conn: &Connection, query: &str) -> String {
+    let j = select(&conn, query);
     let msg = format!("{{\"notes\":{}}}", j);
     eprintln!("msg {}", msg);
     msg

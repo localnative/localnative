@@ -14,10 +14,17 @@ pub fn count(conn: &Connection, tbl: &str) -> i64 {
     rs
 }
 
-pub fn select(conn: &Connection, sql: &str) -> String {
-    let mut stmt = conn.prepare(sql).unwrap();
+pub fn select(conn: &Connection, query: &str) -> String {
+    let mut stmt = conn.prepare(
+        "SELECT rowid, title, url, tags, description, comments, annotations, created_at FROM note
+        where title like :query
+        or url like :query
+        or tags like :query
+        or description like :query
+        order by created_at desc limit 15"
+        ).unwrap();
     let note_iter =
-        stmt.query_map(&[], |row| Note {
+        stmt.query_map_named(&[(":query", &format!("%{}%", query))], |row| Note {
             rowid: row.get(0),
             title: row.get(1),
             url: row.get(2),
