@@ -42,6 +42,9 @@ fn process(cmd: Cmd, text: &str) -> String {
                     created_at,
                 };
                 insert(note);
+                if i.is_public {
+                    eprintln!("is_public")
+                }
                 do_select(&conn, "")
             } else {
                 r#"{"error":"cmd insert json error"}"#.to_string()

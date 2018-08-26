@@ -100,13 +100,13 @@ document.addEventListener('DOMContentLoaded', function () {
         chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
           chrome.tabs.sendMessage(tabs[0].id, "get_content", function(content){
             annotations = content || "";
-            cmdInsert(annotations);
+            cmdInsert(annotations, false);
           });
         });
       }else if(document.getElementById('cb-public').checked){
-        cmdInsert("");
+        cmdInsert("", true);
       }else{
-        cmdInsert("");
+        cmdInsert("", false);
       }
     }
   });
@@ -149,7 +149,7 @@ function makeTags(str) {
   return arr.join(",");
 }
 
-function cmdInsert(annotations) {
+function cmdInsert(annotations, is_public) {
   var message = {
     action: "insert",
 
@@ -161,7 +161,8 @@ function cmdInsert(annotations) {
     annotations: annotations,
 
     limit: LIMIT,
-    offset: 0
+    offset: 0,
+    is_public: is_public
   };
   console.log(message);
   cmd(message);
