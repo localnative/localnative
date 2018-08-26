@@ -86,18 +86,25 @@ document.addEventListener('DOMContentLoaded', function () {
     console.log('ssbify is set to ' + e.target.checked);
   };
 
+  // cb-public
+  document.getElementById('cb-public').onchange = function (e) {
+    document.getElementById('ssbify').disabled = e.target.checked;
+  };
+
   // register cmdInsert
   document.getElementById('save-input').addEventListener('keypress', function (e) {
     var key = e.which || e.keyCode;
     if (key === 13) { // 13 is enter
       var annotations = "";
-      if(document.getElementById('ssbify').checked){
+      if(document.getElementById('ssbify').checked && !document.getElementById('cb-public').checked){
         chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
           chrome.tabs.sendMessage(tabs[0].id, "get_content", function(content){
             annotations = content || "";
             cmdInsert(annotations);
           });
         });
+      }else if(document.getElementById('cb-public').checked){
+        cmdInsert("");
       }else{
         cmdInsert("");
       }
