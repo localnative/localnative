@@ -16,7 +16,8 @@ pub fn count(conn: &Connection, tbl: &str) -> i64 {
 
 pub fn select(conn: &Connection, query: &str) -> String {
     let mut stmt = conn.prepare(
-        "SELECT rowid, title, url, tags, description, comments, annotations, created_at FROM note
+        "SELECT rowid, title, url, tags, description, comments, annotations, created_at, is_public
+        FROM note
         where title like :query
         or url like :query
         or tags like :query
@@ -33,6 +34,7 @@ pub fn select(conn: &Connection, query: &str) -> String {
             comments: row.get(5),
             annotations: "".to_string(), //row.get(6),
             created_at: row.get(7),
+            is_public: row.get(8),
         }).unwrap();
 
     let mut j = "[ ".to_owned();
@@ -58,8 +60,8 @@ pub fn insert(note: Note) {
     {
         tx.execute(
             "
-        INSERT INTO note (title, url, tags, description, comments, annotations, created_at)
-        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7);
+        INSERT INTO note (title, url, tags, description, comments, annotations, created_at, is_public)
+        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8);
 
         ",
             &[
@@ -70,6 +72,7 @@ pub fn insert(note: Note) {
                 &note.comments,
                 &note.annotations,
                 &note.created_at,
+                &note.is_public,
             ],
         ).unwrap();
     }
@@ -97,7 +100,8 @@ pub fn create(conn: &Connection) {
          description    TEXT NOT NULL,
          comments       TEXT NOT NULL,
          annotations    TEXT NOT NULL,
-         created_at     TEXT NOT NULL
+         created_at     TEXT NOT NULL,
+         is_public      BOOLEAN NOT NULL
          );
 
          CREATE TABLE IF NOT EXISTS ssb (

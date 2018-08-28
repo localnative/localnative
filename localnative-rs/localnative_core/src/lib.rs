@@ -56,6 +56,7 @@ pub struct Note {
     pub comments: String,
     pub annotations: String,
     pub created_at: String,
+    pub is_public: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

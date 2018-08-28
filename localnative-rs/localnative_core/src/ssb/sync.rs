@@ -53,7 +53,8 @@ pub fn get_note_to_publish(conn: &Connection) -> Result<Note, rusqlite::Error> {
         description,
         comments,
         annotations,
-        created_at
+        created_at,
+        is_public
         from note
         where rowid > (select max(note_rowid) from ssb)
         order by rowid
@@ -68,6 +69,7 @@ pub fn get_note_to_publish(conn: &Connection) -> Result<Note, rusqlite::Error> {
         comments: row.get(5),
         annotations: row.get(6),
         created_at: row.get(7),
+        is_public: row.get(8),
     })
 }
 

@@ -40,6 +40,7 @@ fn process(cmd: Cmd, text: &str) -> String {
                     comments: i.comments,
                     annotations: i.annotations,
                     created_at,
+                    is_public: i.is_public,
                 };
                 insert(note);
                 if i.is_public {
