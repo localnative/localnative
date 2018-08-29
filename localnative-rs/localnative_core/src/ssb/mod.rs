@@ -131,7 +131,7 @@ pub fn publish2(note: Note, hash: &str, markdown: &str, pubkeys: &str, size: usi
     };
     let note_json = json!(note).to_string();
 
-    // eprintln!("{}", note_json);
+    // eprintln!("node_json: {}", note_json);
 
     let mut child = Command::new("localnative-ssb-publish")
         .stdin(Stdio::piped())
@@ -153,6 +153,7 @@ pub fn publish2(note: Note, hash: &str, markdown: &str, pubkeys: &str, size: usi
     eprintln!("status: {}", output.status);
     eprintln!("stdout: {}", String::from_utf8_lossy(&output.stdout));
     let stderr = String::from_utf8_lossy(&output.stderr);
+    // eprintln!("stderr: {}", stderr);
 
     if output.status.success() {
         let text = String::from_utf8_lossy(&output.stdout).to_string();
