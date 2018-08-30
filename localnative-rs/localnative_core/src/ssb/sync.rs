@@ -195,8 +195,8 @@ pub fn insert_ssb_note_to_db(id: &str, rs: &SsbNote) {
     {
         tx.execute(
             "
-       INSERT INTO note (title, url, tags, description, comments, annotations, created_at)
-       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
+       INSERT INTO note (title, url, tags, description, comments, annotations, created_at, is_public)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
        ",
             &[
                 &rs.note_title,
@@ -206,6 +206,7 @@ pub fn insert_ssb_note_to_db(id: &str, rs: &SsbNote) {
                 &rs.note_comments,
                 &rs.note_annotations,
                 &rs.note_created_at,
+                &rs.is_public,
             ],
         ).unwrap();
     }

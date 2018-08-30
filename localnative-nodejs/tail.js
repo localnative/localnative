@@ -24,6 +24,7 @@ ssbClient(function (err, sbot) {
       pull.collect(function (err, msgs){
         if (err) throw err
         msgs.forEach(function(msg){
+          // private
           if(typeof msg.value.content == 'string'){
             var decoded = ssbKeys.unbox(msg.value.content, keys)
             // filter localnative
@@ -42,9 +43,35 @@ ssbClient(function (err, sbot) {
                 key: msg.key,
                 prev: msg.value.previous,
                 author: msg.value.author,
-                seq: msg.value.sequence
+                seq: msg.value.sequence,
+                is_public: false
               }
               console.error(msg)
+              console.log(JSON.stringify(out))
+              // only output 1 item
+              process.exit(0)
+            }
+          } else {
+            // public
+            if (msg.value.content.type == 'post' && msg.value.content.localnative){
+              let ln = msg.value.content.localnative
+              let out = {
+                note_title: ln.note.title || '',
+                note_url: ln.note.url || '',
+                note_tags: ln.note.tags || '',
+                note_description: ln.note.description || '',
+                note_comments: ln.note.comments || '',
+                note_annotations: ln.note.annotations || '',
+                note_created_at: ln.note.created_at || '',
+
+                ts: msg.value.timestamp,
+                key: msg.key,
+                prev: msg.value.previous,
+                author: msg.value.author,
+                seq: msg.value.sequence,
+                is_public: true
+              }
+              console.error(out)
               console.log(JSON.stringify(out))
               // only output 1 item
               process.exit(0)

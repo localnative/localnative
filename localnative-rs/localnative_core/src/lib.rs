@@ -32,6 +32,7 @@ pub struct SsbNote {
     pub key: String,
     pub prev: String,
     pub seq: i64,
+    pub is_public: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
