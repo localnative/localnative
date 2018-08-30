@@ -101,7 +101,7 @@ pub fn create(conn: &Connection) {
          comments       TEXT NOT NULL,
          annotations    TEXT NOT NULL,
          created_at     TEXT NOT NULL,
-         is_public      BOOLEAN NOT NULL
+         is_public      BOOLEAN NOT NULL default 0
          );
 
          CREATE TABLE IF NOT EXISTS ssb (

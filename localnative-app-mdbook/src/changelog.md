@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.2.0
+- allow public note be send to ssb
+- breaking schema change of table note by adding is_public column, sql migration script added
+
 ## v0.1.5
 - allow web-ext to function without ssb sync
 - docs with screenshots
