@@ -18,38 +18,42 @@ ssbClient(function (err, sbot) {
   if (err)
     throw err
 
+  let is_public = note.is_public
   // sbot is now ready. when done:
   sbot.publish(
     // message:
     mkMsg(note),
     // cb:
-    cb
+    cb(is_public)
   )
   sbot.close()
 })
 
-function cb (err, msg) {
-  // msg.value.content is
-  // an encrypted string for private msg
-  if (err) throw err
-  console.error(msg)
-  var out = {
-    note_title: note.title,
-    note_url: note.url,
-    note_tags: note.tags,
-    note_description: note.description,
-    note_comments: note.comments,
-    note_annotations: note.annotations,
-    note_created_at: note.created_at,
+function cb(is_public){
+  return function(err, msg) {
+    // msg.value.content is
+    // an encrypted string for private msg
+    if (err) throw err
+    console.error(msg)
+    var out = {
+      note_title: note.title,
+      note_url: note.url,
+      note_tags: note.tags,
+      note_description: note.description,
+      note_comments: note.comments,
+      note_annotations: note.annotations,
+      note_created_at: note.created_at,
 
-    author: msg.value.author,
-    ts: msg.value.timestamp,
-    key: msg.key,
-    prev: msg.value.previous,
-    author: msg.value.author,
-    seq: msg.value.sequence
+      author: msg.value.author,
+      ts: msg.value.timestamp,
+      key: msg.key,
+      prev: msg.value.previous,
+      author: msg.value.author,
+      seq: msg.value.sequence,
+      is_public: is_public
+    }
+    console.log(JSON.stringify(out))
   }
-  console.log(JSON.stringify(out))
 }
 
 function mkMsg(note){
