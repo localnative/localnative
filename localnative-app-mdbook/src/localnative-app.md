@@ -21,6 +21,7 @@ Below componets must all exist and correctly setup.
 
 - or from source
 ```
+git clone https://gitlab.com/yiwang/localnative.git
 cd localnative-browser-extension/app
 npm i -g web-ext
 web-ext run --verbose # firefox
