@@ -1,8 +1,11 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 
 <html style="min-width:600px;">
   <head>
     <script src='./sanitizer.js'></script>
+    <script src='./i18n.js'></script>
+    <script src='./locales/zh-CN.js'></script>
+    <script src='./locales/en-US.js'></script>
     <script src='./popup.js'></script>
     <style>
       .save-input{
@@ -33,8 +36,14 @@
         <a href="https://localnative.app" target="_blank">Local Native App</a>
 v0.2.0
         </b>
-        <input type="checkbox" id='ssbify' name="ssbify" value="ssbify"> ssbify
-        <input type="checkbox" id='cb-public' name="public" value="public"> public
+        <input type="checkbox" id='ssbify' name="ssbify" value="ssbify"> <label for="ssbify" id="label-ssbify">ssbify</label>
+        <input type="checkbox" id='cb-public' name="public" value="public"> <label for="cb-public" id="label-public">public</label>
+        <span style="float: right"> <span id="label-language">language</span>
+          <select id='select-language'>
+            <option value="en-US">en-US English - US</option>
+            <option value="zh-CN">zh-CN 中文简体 - 大陆</option>
+          </select>
+        </span>
       </div>
       <input class='save-input' id='title' type='text' placeholder='title'/>
       <input class='save-input' id='url' type='text' placeholder='url'/>
