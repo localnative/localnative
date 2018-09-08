@@ -1,5 +1,5 @@
 # Local Native App
-version: 0.2.0
+version: 0.2.1
 
 A note/bookmark taking tool to save your notes in a local sqlite database, synced with other devices via [ssb](https://ssbc.github.io/secure-scuttlebutt/) [protocal](https://ssbc.github.io/scuttlebutt-protocol-guide/).
 

@@ -3,7 +3,7 @@ name = "localnative_core"
 description = "localnative core lib"
 homepage = "https://localnative.app"
 authors = ["Yi Wang"]
-version = "0.2.0"
+version = "0.2.1"
 license = "AGPL-3.0"
 
 [dependencies.rusqlite]

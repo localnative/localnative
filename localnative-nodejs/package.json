@@ -1,6 +1,6 @@
 {
   "name": "localnative",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "localnative node.js code",
   "main": "index.js",
   "scripts": {
