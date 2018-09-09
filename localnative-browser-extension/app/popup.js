@@ -88,14 +88,15 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   // i18n
-  let lang = navigator.language;
+  let lang = localStorage.getItem('lang') || navigator.language;
   document.getElementById('select-language').value = locales[lang]? lang: 'en-US';
   lc = locales[lang] || locales['en-US'];
-
+  i18nRefresh();
   document.getElementById('select-language').onchange = function (e) {
     let lang = e.target.options[e.target.selectedIndex].value;
     lc=locales[lang];
     i18nRefresh();
+    localStorage.setItem('lang', lang);
   };
 
   // focus on tags
