@@ -1,7 +1,7 @@
 # TODO
 
 ## i18n
-- zh
+- fix language dropdown firefox issue
 
 ## desktop platform
 - windows?

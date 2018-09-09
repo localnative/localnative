@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.2.1
+- add i18n zh-CN
+
 ## v0.2.0
 - allow public note be send to ssb
 - breaking schema change of table note by adding is_public column, sql migration script added

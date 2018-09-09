@@ -4,10 +4,10 @@ version: 0.2.1
 A note/bookmark taking tool to save your notes in a local sqlite database, synced with other devices via [ssb](https://ssbc.github.io/secure-scuttlebutt/) [protocal](https://ssbc.github.io/scuttlebutt-protocol-guide/).
 
 ## Web extension UI
-![Local Native web extension popup screenshot](/img/localnative-web-ext-popup.png)
+![Local Native web extension popup screenshot](./img/localnative-web-ext-popup.png)
 
 ## Search your notes
-![Local Native patchbay screenshot](/img/localnative-ssb-patchbay.png)
+![Local Native patchbay screenshot](./img/localnative-ssb-patchbay.png)
 
 ## (not so) Quick start
 It is developer friendly now, and requires some fiddling.
