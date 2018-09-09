@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.2.2
+- persist language choice
+- fix firefox language dropdown issue
+
 ## v0.2.1
 - add i18n zh-CN
 

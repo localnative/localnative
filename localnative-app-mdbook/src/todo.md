@@ -1,14 +1,14 @@
 # TODO
 
-## i18n
-- fix language dropdown firefox issue
-
 ## desktop platform
 - windows?
 
 ## mobile
 - android
 - ios
+
+## i18n
+- more languages?
 
 ## db
 - encryption?
