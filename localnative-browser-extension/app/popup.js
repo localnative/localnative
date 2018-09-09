@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('select-language').value = locales[lang]? lang: 'en-US';
   lc = locales[lang] || locales['en-US'];
 
-  document.getElementById('select-language').onclick = function (e) {
+  document.getElementById('select-language').onchange = function (e) {
     let lang = e.target.options[e.target.selectedIndex].value;
     lc=locales[lang];
     i18nRefresh();
