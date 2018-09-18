@@ -7,12 +7,12 @@ version = "0.2.2"
 license = "AGPL-3.0"
 
 [dependencies.rusqlite]
-version = "0.13.0"
+version = "0.14.0"
 features = ["bundled"]
 
 [dependencies]
 time = "0.1.40"
-serde = "1.0.66"
-serde_derive = "1.0.66"
-serde_json = "1.0.19"
+serde = "1.0.79"
+serde_derive = "1.0.79"
+serde_json = "1.0.27"
 dirs = "1.0.2"

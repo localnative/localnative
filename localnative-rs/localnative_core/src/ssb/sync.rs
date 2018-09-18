@@ -7,8 +7,8 @@ use Ssb;
 use SsbNote;
 
 pub fn get_pubkeys(conn: &Connection) -> String {
-    let mut stmt =
-        conn.prepare(
+    let mut stmt = conn
+        .prepare(
             "select note_rowid,
         author,
         is_active_author,
@@ -19,8 +19,8 @@ pub fn get_pubkeys(conn: &Connection) -> String {
         prev
         from ssb",
         ).unwrap();
-    let ssb_iter =
-        stmt.query_map(&[], |row| Ssb {
+    let ssb_iter = stmt
+        .query_map(&[], |row| Ssb {
             note_rowid: row.get(0),
             author: row.get(1),
             is_active_author: false, //row.get(2),
@@ -44,8 +44,8 @@ pub fn get_pubkeys(conn: &Connection) -> String {
 }
 
 pub fn get_note_to_publish(conn: &Connection) -> Result<Note, rusqlite::Error> {
-    let mut stmt =
-        conn.prepare(
+    let mut stmt = conn
+        .prepare(
             "select rowid,
         title,
         url,
@@ -134,8 +134,8 @@ pub fn refresh_is_last_note(conn: &Connection) {
 
 pub fn get_authors() -> Vec<String> {
     let conn = super::get_sqlite_connection();
-    let mut stmt =
-        conn.prepare(
+    let mut stmt = conn
+        .prepare(
             "
         select note_rowid,
         author,
@@ -147,8 +147,8 @@ pub fn get_authors() -> Vec<String> {
         prev
         from ssb",
         ).unwrap();
-    let ssb_iter =
-        stmt.query_map(&[], |row| Ssb {
+    let ssb_iter = stmt
+        .query_map(&[], |row| Ssb {
             note_rowid: row.get(0),
             author: row.get(1),
             is_active_author: false, //row.get(2),
@@ -253,8 +253,8 @@ pub fn insert_ssb_note_to_db(id: &str, rs: &SsbNote) {
 }
 
 pub fn get_ssb_active(conn: &Connection) -> Ssb {
-    let mut stmt =
-        conn.prepare(
+    let mut stmt = conn
+        .prepare(
             "select note_rowid,
         author,
         is_active_author,
@@ -265,8 +265,8 @@ pub fn get_ssb_active(conn: &Connection) -> Ssb {
         prev
         from ssb where is_active_author = 1",
         ).unwrap();
-    let rs =
-        stmt.query_row(&[], |row| Ssb {
+    let rs = stmt
+        .query_row(&[], |row| Ssb {
             note_rowid: row.get(0),
             author: row.get(1),
             is_active_author: row.get(2),
@@ -280,8 +280,8 @@ pub fn get_ssb_active(conn: &Connection) -> Ssb {
 }
 
 pub fn get_ssb(conn: &Connection, author: &str) -> Ssb {
-    let mut stmt =
-        conn.prepare(&format!(
+    let mut stmt = conn
+        .prepare(&format!(
             "select note_rowid,
         author,
         is_active_author,
@@ -293,8 +293,8 @@ pub fn get_ssb(conn: &Connection, author: &str) -> Ssb {
         from ssb where author = '{}'",
             author
         )).unwrap();
-    let rs =
-        stmt.query_row(&[], |row| Ssb {
+    let rs = stmt
+        .query_row(&[], |row| Ssb {
             note_rowid: row.get(0),
             author: row.get(1),
             is_active_author: row.get(2),

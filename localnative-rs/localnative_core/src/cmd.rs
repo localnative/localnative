@@ -1,7 +1,6 @@
 extern crate rusqlite;
 extern crate serde;
 extern crate serde_json;
-extern crate time;
 
 use self::rusqlite::Connection;
 use super::Note;
@@ -24,8 +23,8 @@ pub fn select(conn: &Connection, query: &str) -> String {
         or description like :query
         order by created_at desc limit 15"
         ).unwrap();
-    let note_iter =
-        stmt.query_map_named(&[(":query", &format!("%{}%", query))], |row| Note {
+    let note_iter = stmt
+        .query_map_named(&[(":query", &format!("%{}%", query))], |row| Note {
             rowid: row.get(0),
             title: row.get(1),
             url: row.get(2),
