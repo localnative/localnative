@@ -1,6 +1,0 @@
-[workspace]
-members = [
-    "localnative_core",
-    "localnative_cli"
-]
-
