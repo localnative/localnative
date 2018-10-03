@@ -1,2 +1,4 @@
 release/*
 .idea/*
+.*
+!.gitignore
