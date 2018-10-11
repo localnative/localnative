@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		04F2D13621702BD900C57AAD /* RustLocalNative.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04F2D13521702BD900C57AAD /* RustLocalNative.swift */; };
+		3C3B492B216EF91D000B6349 /* libresolv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C3B492A216EF91D000B6349 /* libresolv.tbd */; };
 		3C6A5F30214F40BA008C36F9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C6A5F2F214F40BA008C36F9 /* AppDelegate.swift */; };
 		3C6A5F32214F40BA008C36F9 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C6A5F31214F40BA008C36F9 /* ViewController.swift */; };
 		3C6A5F35214F40BB008C36F9 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3C6A5F33214F40BB008C36F9 /* Main.storyboard */; };
@@ -17,6 +19,7 @@
 		3CD0459A214F4A38005E3D05 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CD04599214F4A38005E3D05 /* ShareViewController.swift */; };
 		3CD0459D214F4A38005E3D05 /* MainInterface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3CD0459B214F4A38005E3D05 /* MainInterface.storyboard */; };
 		3CD045A1214F4A38005E3D05 /* share-ext.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 3CD04597214F4A38005E3D05 /* share-ext.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		3CFF7A8E21703900009CA6EA /* liblocalnative_core.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3CFF7A8D21703900009CA6EA /* liblocalnative_core.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -58,6 +61,10 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		04F2D13521702BD900C57AAD /* RustLocalNative.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RustLocalNative.swift; sourceTree = "<group>"; };
+		04F2D13921702D7400C57AAD /* localnative-core.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "localnative-core.h"; path = "../localnative-rs/localnative_core/src/localnative-core.h"; sourceTree = "<group>"; };
+		3C3B492A216EF91D000B6349 /* libresolv.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libresolv.tbd; path = usr/lib/libresolv.tbd; sourceTree = SDKROOT; };
+		3C3B492D216F00B4000B6349 /* LocalNative-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "LocalNative-Bridging-Header.h"; sourceTree = "<group>"; };
 		3C6A5F2C214F40BA008C36F9 /* localnative-ios.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "localnative-ios.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3C6A5F2F214F40BA008C36F9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		3C6A5F31214F40BA008C36F9 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -75,6 +82,7 @@
 		3CD04599214F4A38005E3D05 /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
 		3CD0459C214F4A38005E3D05 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/MainInterface.storyboard; sourceTree = "<group>"; };
 		3CD0459E214F4A38005E3D05 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		3CFF7A8D21703900009CA6EA /* liblocalnative_core.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = liblocalnative_core.a; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -82,6 +90,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3CFF7A8E21703900009CA6EA /* liblocalnative_core.a in Frameworks */,
+				3C3B492B216EF91D000B6349 /* libresolv.tbd in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -109,14 +119,27 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		3C3B4927216EF836000B6349 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				3CFF7A8D21703900009CA6EA /* liblocalnative_core.a */,
+				3C3B492A216EF91D000B6349 /* libresolv.tbd */,
+			);
+			path = Frameworks;
+			sourceTree = "<group>";
+		};
 		3C6A5F23214F40BA008C36F9 = {
 			isa = PBXGroup;
 			children = (
+				04F2D13921702D7400C57AAD /* localnative-core.h */,
+				04F2D13521702BD900C57AAD /* RustLocalNative.swift */,
+				3C3B492D216F00B4000B6349 /* LocalNative-Bridging-Header.h */,
 				3C6A5F2E214F40BA008C36F9 /* ln-ios */,
 				3C6A5F43214F40BC008C36F9 /* ln-iosTests */,
 				3C6A5F4E214F40BC008C36F9 /* ln-iosUITests */,
 				3CD04598214F4A38005E3D05 /* share-ext */,
 				3C6A5F2D214F40BA008C36F9 /* Products */,
+				3C3B4927216EF836000B6349 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -336,6 +359,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				04F2D13621702BD900C57AAD /* RustLocalNative.swift in Sources */,
 				3C6A5F32214F40BA008C36F9 /* ViewController.swift in Sources */,
 				3C6A5F30214F40BA008C36F9 /* AppDelegate.swift in Sources */,
 			);
@@ -539,8 +563,14 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
+				"LIBRARY_SEARCH_PATHS[arch=*]" = "$(PROJECT_DIR)";
 				PRODUCT_BUNDLE_IDENTIFIER = app.localnative.ios;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				"SWIFT_OBJC_BRIDGING_HEADER[arch=*]" = "$(PROJECT_DIR)/LocalNative-Bridging-Header.h";
 				SWIFT_VERSION = 4.2;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -558,8 +588,14 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
+				"LIBRARY_SEARCH_PATHS[arch=*]" = "$(PROJECT_DIR)";
 				PRODUCT_BUNDLE_IDENTIFIER = app.localnative.ios;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				"SWIFT_OBJC_BRIDGING_HEADER[arch=*]" = "$(PROJECT_DIR)/LocalNative-Bridging-Header.h";
 				SWIFT_VERSION = 4.2;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};

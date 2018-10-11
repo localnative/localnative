@@ -10,6 +10,30 @@ pub mod cmd;
 pub mod exe;
 pub mod ssb;
 
+use std::ffi::{CStr, CString};
+use std::os::raw::c_char;
+
+#[no_mangle]
+pub extern "C" fn localnative_run(json_input: *const c_char) -> *mut c_char {
+    let c_str = unsafe { CStr::from_ptr(json_input) };
+    let json = match c_str.to_str() {
+        Err(_) => "input error",
+        Ok(string) => string,
+    };
+
+    CString::new(json).unwrap().into_raw()
+}
+
+#[no_mangle]
+pub extern "C" fn localnative_free(s: *mut c_char) {
+    unsafe {
+        if s.is_null() {
+            return;
+        }
+        CString::from_raw(s)
+    };
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Ssbify {
     pub hash: String,

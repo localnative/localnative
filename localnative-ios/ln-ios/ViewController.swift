@@ -7,13 +7,21 @@
 //
 
 import UIKit
-
+let ln = RustLocalNative()
 class ViewController: UIViewController {
 
     @IBOutlet var searchButton: UIButton!
     @IBOutlet var searchText: UITextField!
     @IBAction func onClick(_ sender: UIButton) {
-        searchText.text = "type to search"
+
+        let txt = ln.run(json_input:"""
+{
+"action": "search"
+}
+"""
+        )
+
+        searchText.text = txt
     }
     override func viewDidLoad() {
         super.viewDidLoad()
