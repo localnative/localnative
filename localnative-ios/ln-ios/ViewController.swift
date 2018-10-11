@@ -11,9 +11,14 @@ import UIKit
 class ViewController: UIViewController {
 
     @IBOutlet var searchButton: UIButton!
+    @IBOutlet var searchText: UITextField!
+    @IBAction func onClick(_ sender: UIButton) {
+        searchText.text = "type to search"
+    }
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
+
     }
 
     override func didReceiveMemoryWarning() {
