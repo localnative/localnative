@@ -15,9 +15,7 @@ class ViewController: UIViewController {
     @IBAction func onClick(_ sender: UIButton) {
 
         let txt = ln.run(json_input:"""
-{
-"action": "search"
-}
+{"action":"select","limit":10,"offset":0}
 """
         )
 
