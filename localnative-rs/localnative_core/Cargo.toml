@@ -10,6 +10,9 @@ license = "AGPL-3.0"
 version = "0.14.0"
 features = ["bundled"]
 
+[target.'cfg(target_os="android")'.dependencies]
+jni = { version = "0.10.2", default-features = false }
+
 [dependencies]
 time = "0.1.40"
 serde = "1.0.79"
