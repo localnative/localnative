@@ -18,17 +18,20 @@ pub fn get_sqlite_connection() -> Connection {
     conn
 }
 
+
 fn sqlite3_db_location() -> String {
-    fs::create_dir_all(format!(
-        "{}/.ssb",
-        dirs::home_dir().unwrap().to_str().unwrap()
-    )).unwrap();
-    let p = format!(
-        "{}/.ssb/localnative.sqlite3",
-        dirs::home_dir().unwrap().to_str().unwrap()
+    let mut dir_name = ".ssb";
+    if cfg!(target_os = "ios") {
+        dir_name = "Documents";
+    }
+    let dir = format!(
+        "{}/{}",
+        dirs::home_dir().unwrap().to_str().unwrap(),
+        dir_name
     );
-    eprintln!("db location: {}", p);
-    p
+    eprintln!("db dir location: {}", dir);
+    fs::create_dir_all(&dir).unwrap();
+    format!("{}/localnative.sqlite3", dir)
 }
 
 pub fn run_sync() {
