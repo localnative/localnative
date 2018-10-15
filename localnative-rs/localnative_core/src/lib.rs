@@ -10,6 +10,38 @@ pub mod cmd;
 pub mod exe;
 pub mod ssb;
 
+// JNI interface for android
+#[cfg(target_os = "android")]
+#[allow(non_snake_case)]
+pub mod android {
+    extern crate jni;
+
+    use self::jni::objects::{JClass, JString};
+    use self::jni::sys::jstring;
+    use self::jni::JNIEnv;
+    use super::*;
+
+    #[no_mangle]
+    pub unsafe extern "C" fn Java_app_localnative_android_RustBridge_localnativeRun(
+        env: JNIEnv,
+        _: JClass,
+        json_input: JString,
+    ) -> jstring {
+        let json = localnative_run(
+            env.get_string(json_input)
+                .expect("Invalid json input string!")
+                .as_ptr(),
+        );
+        // Retake pointer so that we can use it below and allow memory to be freed when it goes out of scope.
+        let output_ptr = CString::from_raw(json);
+        let output = env
+            .new_string(output_ptr.to_str().unwrap())
+            .expect("Couldn't create java output string!");
+
+        output.into_inner()
+    }
+}
+
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 

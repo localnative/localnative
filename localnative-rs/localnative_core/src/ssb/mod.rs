@@ -18,9 +18,11 @@ pub fn get_sqlite_connection() -> Connection {
     conn
 }
 
-
 fn sqlite3_db_location() -> String {
-    let mut dir_name = ".ssb";
+    if cfg!(target_os = "android") {
+        return "/sdcard/localnative.sqlite3".to_string();
+    }
+    let mut dir_name = ".ssb"; // for desktop to co-locate with .ssb
     if cfg!(target_os = "ios") {
         dir_name = "Documents";
     }
