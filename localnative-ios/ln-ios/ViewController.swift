@@ -20,6 +20,12 @@ class ViewController: UIViewController {
         )
 
         searchText.text = txt
+        let data = txt.data(using: .utf8)!
+        if let notes = try? JSONSerialization.jsonObject(with: data) as? [String: NSArray] {
+            for note in notes!["notes"]! {
+                print(note)
+            }
+        }
     }
     override func viewDidLoad() {
         super.viewDidLoad()
