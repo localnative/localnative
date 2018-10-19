@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		04F2D13621702BD900C57AAD /* RustLocalNative.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04F2D13521702BD900C57AAD /* RustLocalNative.swift */; };
+		3C0891792179799000A333DE /* NoteTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C0891782179799000A333DE /* NoteTableViewCell.swift */; };
 		3C3B492B216EF91D000B6349 /* libresolv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C3B492A216EF91D000B6349 /* libresolv.tbd */; };
 		3C6A5F30214F40BA008C36F9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C6A5F2F214F40BA008C36F9 /* AppDelegate.swift */; };
 		3C6A5F32214F40BA008C36F9 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C6A5F31214F40BA008C36F9 /* ViewController.swift */; };
@@ -63,6 +64,7 @@
 /* Begin PBXFileReference section */
 		04F2D13521702BD900C57AAD /* RustLocalNative.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RustLocalNative.swift; sourceTree = "<group>"; };
 		04F2D13921702D7400C57AAD /* localnative-core.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "localnative-core.h"; path = "../localnative-rs/localnative_core/src/localnative-core.h"; sourceTree = "<group>"; };
+		3C0891782179799000A333DE /* NoteTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteTableViewCell.swift; sourceTree = "<group>"; };
 		3C3B492A216EF91D000B6349 /* libresolv.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libresolv.tbd; path = usr/lib/libresolv.tbd; sourceTree = SDKROOT; };
 		3C3B492D216F00B4000B6349 /* LocalNative-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "LocalNative-Bridging-Header.h"; sourceTree = "<group>"; };
 		3C6A5F2C214F40BA008C36F9 /* localnative-ios.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "localnative-ios.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -160,6 +162,7 @@
 				3C6A5F2F214F40BA008C36F9 /* AppDelegate.swift */,
 				3C6A5F31214F40BA008C36F9 /* ViewController.swift */,
 				3C6A5F33214F40BB008C36F9 /* Main.storyboard */,
+				3C0891782179799000A333DE /* NoteTableViewCell.swift */,
 				3C6A5F36214F40BC008C36F9 /* Assets.xcassets */,
 				3C6A5F38214F40BC008C36F9 /* LaunchScreen.storyboard */,
 				3C6A5F3B214F40BC008C36F9 /* Info.plist */,
@@ -362,6 +365,7 @@
 				04F2D13621702BD900C57AAD /* RustLocalNative.swift in Sources */,
 				3C6A5F32214F40BA008C36F9 /* ViewController.swift in Sources */,
 				3C6A5F30214F40BA008C36F9 /* AppDelegate.swift in Sources */,
+				3C0891792179799000A333DE /* NoteTableViewCell.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -8,29 +8,42 @@
 
 import UIKit
 let ln = RustLocalNative()
-class ViewController: UIViewController {
-
-    @IBOutlet var searchButton: UIButton!
-    @IBOutlet var searchText: UITextField!
-    @IBAction func onClick(_ sender: UIButton) {
-
-        let txt = ln.run(json_input:"""
-{"action":"select","limit":10,"offset":0}
-"""
-        )
-
-        searchText.text = txt
-        let data = txt.data(using: .utf8)!
-        if let notes = try? JSONSerialization.jsonObject(with: data) as? [String: NSArray] {
-            for note in notes!["notes"]! {
-                print(note)
-            }
-        }
+class ViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UISearchBarDelegate {
+    @IBOutlet weak var searchBar: UISearchBar!
+    @IBOutlet weak var tableView: UITableView!
+    var notes : NSArray = []
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return notes.count
     }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "NoteTableViewCell") as! NoteTableViewCell
+        if(indexPath.row < notes.count){
+            cell.titleLabel.text = (notes[indexPath.row] as! [String:Any]) ["title"] as? String
+        }
+        return cell;
+    }
+    
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        let txt = ln.run(json_input:"""
+            {"action":"search","query":"\(searchText)","limit":10,"offset":0}
+            """
+        )
+        let data = txt.data(using: .utf8)!
+        if let jsonNotes = try? JSONSerialization.jsonObject(with: data) as? [String: NSArray] {
+            notes =  jsonNotes!["notes"]!
+        }
+        self.tableView.reloadData()
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
-
+        /* Setup delegates */
+        tableView.delegate = self
+        tableView.dataSource = self
+        searchBar.delegate = self
     }
 
     override func didReceiveMemoryWarning() {
