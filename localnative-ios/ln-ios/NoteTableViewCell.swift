@@ -10,7 +10,9 @@ import UIKit
 
 class NoteTableViewCell: UITableViewCell {
 
-    @IBOutlet weak var titleLabel: UILabel!
+    @IBOutlet weak var createdAtText: UITextView!
+    @IBOutlet weak var titleText: UITextView!
+    @IBOutlet weak var urlText: UITextView!
     override func awakeFromNib() {
         super.awakeFromNib()
         // Initialization code

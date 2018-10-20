@@ -20,7 +20,10 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "NoteTableViewCell") as! NoteTableViewCell
         if(indexPath.row < notes.count){
-            cell.titleLabel.text = (notes[indexPath.row] as! [String:Any]) ["title"] as? String
+            let note = notes[indexPath.row] as! [String:Any]
+            cell.createdAtText.text =  note["created_at"] as? String
+            cell.titleText.text =  note["title"] as? String
+            cell.urlText.text = note["url"] as? String
         }
         return cell;
     }
