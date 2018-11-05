@@ -21,9 +21,12 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         let cell = tableView.dequeueReusableCell(withIdentifier: "NoteTableViewCell") as! NoteTableViewCell
         if(indexPath.row < notes.count){
             let note = notes[indexPath.row] as! [String:Any]
-            cell.createdAtText.text =  note["created_at"] as? String
-            cell.titleText.text =  note["title"] as? String
-            cell.urlText.text = note["url"] as? String
+            cell.contentText.text = (note["tags"] as! String)
+                + "\n" + (note["created_at"] as! String) + " rowid " + (note["rowid"] as! NSNumber).stringValue
+                + "\n" + (note["title"] as! String)
+                + "\n" + (note["description"] as! String)
+                + "\n" + (note["annotations"] as! String)
+            cell.urlText.text = (note["url"] as! String)
         }
         return cell;
     }
