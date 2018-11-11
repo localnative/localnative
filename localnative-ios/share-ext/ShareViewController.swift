@@ -12,8 +12,16 @@ import MobileCoreServices
 import UIKit
 import Social
 
-class ShareViewController: SLComposeServiceViewController {
+class ShareViewController: UIViewController {
+    @IBOutlet weak var saveButton: UIButton!
+    @IBOutlet weak var cancelButton: UIButton!
+    @IBOutlet weak var urlText: UITextView!
+    @IBAction func cancelButtonTouchDown(_ sender: Any) {
+        self.extensionContext!.completeRequest(returningItems: [], completionHandler: nil)
+    }
+
     override func viewDidLoad() {
+        print("viewDidLoad")
         let extensionItem = extensionContext?.inputItems.first as! NSExtensionItem
         let itemProvider = extensionItem.attachments?.first as! NSItemProvider
         let propertyList = String(kUTTypePropertyList)
@@ -22,9 +30,9 @@ class ShareViewController: SLComposeServiceViewController {
                 guard let dictionary = item as? NSDictionary else { return }
                 OperationQueue.main.addOperation {
                     if let results = dictionary[NSExtensionJavaScriptPreprocessingResultsKey] as? NSDictionary,
-                        let urlString = results["URL"] as? String,
-                        let url = NSURL(string: urlString) {
-                        print("URL retrieved: \(urlString)")
+                        let urlString = results["URL"] as? String
+                    {
+                        self.urlText.text =  urlString
                     }
                 }
             })
@@ -32,19 +40,19 @@ class ShareViewController: SLComposeServiceViewController {
             print("error")
         }
     }
-    override func isContentValid() -> Bool {
+    func isContentValid() -> Bool {
         // Do validation of contentText and/or NSExtensionContext attachments here
         return true
     }
     
-    override func didSelectPost() {
+    func didSelectPost() {
         // This is called after the user selects Post. Do the upload of contentText and/or NSExtensionContext attachments.
     
         // Inform the host that we're done, so it un-blocks its UI. Note: Alternatively you could call super's -didSelectPost, which will similarly complete the extension context.
         self.extensionContext!.completeRequest(returningItems: [], completionHandler: nil)
     }
 
-    override func configurationItems() -> [Any]! {
+    func configurationItems() -> [Any]! {
         // To add configuration options via table cells at the bottom of the sheet, return an array of SLComposeSheetConfigurationItem here.
         return []
     }
