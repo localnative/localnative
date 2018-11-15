@@ -15,11 +15,18 @@ import Social
 class ShareViewController: UIViewController {
     @IBOutlet weak var saveButton: UIButton!
     @IBOutlet weak var cancelButton: UIButton!
+    @IBOutlet weak var titleText: UITextView!
     @IBOutlet weak var urlText: UITextView!
+    @IBOutlet weak var tagsText: UITextView!
+    @IBOutlet weak var descriptionText: UITextView!
     @IBAction func cancelButtonTouchDown(_ sender: Any) {
         self.extensionContext!.completeRequest(returningItems: [], completionHandler: nil)
     }
-
+    
+    @IBAction func saveButtonTouchDown(_ sender: Any) {
+        self.extensionContext!.completeRequest(returningItems: [], completionHandler: nil)
+    }
+    
     override func viewDidLoad() {
         print("viewDidLoad")
         let extensionItem = extensionContext?.inputItems.first as! NSExtensionItem
@@ -29,10 +36,13 @@ class ShareViewController: UIViewController {
             itemProvider.loadItem(forTypeIdentifier: propertyList, options: nil, completionHandler: { (item, error) -> Void in
                 guard let dictionary = item as? NSDictionary else { return }
                 OperationQueue.main.addOperation {
-                    if let results = dictionary[NSExtensionJavaScriptPreprocessingResultsKey] as? NSDictionary,
-                        let urlString = results["URL"] as? String
+                    if let results = dictionary[NSExtensionJavaScriptPreprocessingResultsKey] as? NSDictionary
                     {
-                        self.urlText.text =  urlString
+                        print("results")
+                        print(results)
+                        self.urlText.text =  results["url"] as? String
+                        self.titleText.text = results["title"] as? String
+                        
                     }
                 }
             })
