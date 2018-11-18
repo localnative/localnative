@@ -24,6 +24,27 @@ class ShareViewController: UIViewController {
     }
     
     @IBAction func saveButtonTouchDown(_ sender: Any) {
+        let message : [String: Any] = [
+            "action": "insert",
+            
+            "title": titleText.text,
+            "url": urlText.text,
+            "tags": tagsText.text,
+            "description": descriptionText.text,
+            "comments": "",
+            "annotations": "",
+            
+            "limit": 15,
+            "offset": 0,
+            "is_public": false
+        ]
+
+        let valid = JSONSerialization.isValidJSONObject(message)
+        if valid {
+            let jsonText = try? JSONSerialization.data(withJSONObject: message)
+            ln.run(json_input: String(data: jsonText!, encoding: .utf8)!)
+        }
+
         self.extensionContext!.completeRequest(returningItems: [], completionHandler: nil)
     }
     
