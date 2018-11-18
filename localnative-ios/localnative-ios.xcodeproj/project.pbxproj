@@ -7,8 +7,14 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		04F2D13621702BD900C57AAD /* RustLocalNative.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04F2D13521702BD900C57AAD /* RustLocalNative.swift */; };
 		3C0891792179799000A333DE /* NoteTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C0891782179799000A333DE /* NoteTableViewCell.swift */; };
+		3C25951D21A1C187005BB947 /* libresolv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C3B492A216EF91D000B6349 /* libresolv.tbd */; };
+		3C25952021A1C2B3005BB947 /* liblocalnative_core.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C25951E21A1C1A0005BB947 /* liblocalnative_core.a */; };
+		3C25952121A1C2DA005BB947 /* liblocalnative_core.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C25951E21A1C1A0005BB947 /* liblocalnative_core.a */; };
+		3C25952821A1CA5F005BB947 /* RustLocalNative.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C25952721A1CA5F005BB947 /* RustLocalNative.swift */; };
+		3C25952921A1CA5F005BB947 /* RustLocalNative.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C25952721A1CA5F005BB947 /* RustLocalNative.swift */; };
+		3C25952A21A1CA5F005BB947 /* RustLocalNative.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C25952721A1CA5F005BB947 /* RustLocalNative.swift */; };
+		3C25952B21A1CA5F005BB947 /* RustLocalNative.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C25952721A1CA5F005BB947 /* RustLocalNative.swift */; };
 		3C3B492B216EF91D000B6349 /* libresolv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C3B492A216EF91D000B6349 /* libresolv.tbd */; };
 		3C6A5F30214F40BA008C36F9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C6A5F2F214F40BA008C36F9 /* AppDelegate.swift */; };
 		3C6A5F32214F40BA008C36F9 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C6A5F31214F40BA008C36F9 /* ViewController.swift */; };
@@ -21,7 +27,6 @@
 		3CD0459D214F4A38005E3D05 /* MainInterface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3CD0459B214F4A38005E3D05 /* MainInterface.storyboard */; };
 		3CD045A1214F4A38005E3D05 /* share-ext.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 3CD04597214F4A38005E3D05 /* share-ext.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		3CFE7C2E2193B19C00AF0C26 /* GetURL.js in Resources */ = {isa = PBXBuildFile; fileRef = 3CFE7C2D2193B19C00AF0C26 /* GetURL.js */; };
-		3CFF7A8E21703900009CA6EA /* liblocalnative_core.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3CFF7A8D21703900009CA6EA /* liblocalnative_core.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -63,9 +68,10 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		04F2D13521702BD900C57AAD /* RustLocalNative.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RustLocalNative.swift; sourceTree = "<group>"; };
-		04F2D13921702D7400C57AAD /* localnative-core.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "localnative-core.h"; path = "../localnative-rs/localnative_core/src/localnative-core.h"; sourceTree = "<group>"; };
 		3C0891782179799000A333DE /* NoteTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteTableViewCell.swift; sourceTree = "<group>"; };
+		3C25951E21A1C1A0005BB947 /* liblocalnative_core.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = liblocalnative_core.a; path = "../../localnative-rs/localnative_core/target/universal/release/liblocalnative_core.a"; sourceTree = "<group>"; };
+		3C25952521A1C6D4005BB947 /* localnative-core.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "localnative-core.h"; path = "../localnative-rs/localnative_core/src/localnative-core.h"; sourceTree = "<group>"; };
+		3C25952721A1CA5F005BB947 /* RustLocalNative.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RustLocalNative.swift; sourceTree = SOURCE_ROOT; };
 		3C3B492A216EF91D000B6349 /* libresolv.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libresolv.tbd; path = usr/lib/libresolv.tbd; sourceTree = SDKROOT; };
 		3C3B492D216F00B4000B6349 /* LocalNative-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "LocalNative-Bridging-Header.h"; sourceTree = "<group>"; };
 		3C6A5F2C214F40BA008C36F9 /* localnative-ios.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "localnative-ios.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -88,7 +94,6 @@
 		3CF3678221987E9F00D72FE3 /* share-ext.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "share-ext.entitlements"; sourceTree = "<group>"; };
 		3CF3678321987EB400D72FE3 /* localnative-ios.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "localnative-ios.entitlements"; sourceTree = "<group>"; };
 		3CFE7C2D2193B19C00AF0C26 /* GetURL.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = GetURL.js; sourceTree = "<group>"; };
-		3CFF7A8D21703900009CA6EA /* liblocalnative_core.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = liblocalnative_core.a; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -96,7 +101,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3CFF7A8E21703900009CA6EA /* liblocalnative_core.a in Frameworks */,
+				3C25952021A1C2B3005BB947 /* liblocalnative_core.a in Frameworks */,
 				3C3B492B216EF91D000B6349 /* libresolv.tbd in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -119,6 +124,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3C25952121A1C2DA005BB947 /* liblocalnative_core.a in Frameworks */,
+				3C25951D21A1C187005BB947 /* libresolv.tbd in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -128,7 +135,7 @@
 		3C3B4927216EF836000B6349 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				3CFF7A8D21703900009CA6EA /* liblocalnative_core.a */,
+				3C25951E21A1C1A0005BB947 /* liblocalnative_core.a */,
 				3C3B492A216EF91D000B6349 /* libresolv.tbd */,
 			);
 			path = Frameworks;
@@ -137,9 +144,9 @@
 		3C6A5F23214F40BA008C36F9 = {
 			isa = PBXGroup;
 			children = (
+				3C25952721A1CA5F005BB947 /* RustLocalNative.swift */,
+				3C25952521A1C6D4005BB947 /* localnative-core.h */,
 				3CF3678321987EB400D72FE3 /* localnative-ios.entitlements */,
-				04F2D13921702D7400C57AAD /* localnative-core.h */,
-				04F2D13521702BD900C57AAD /* RustLocalNative.swift */,
 				3C3B492D216F00B4000B6349 /* LocalNative-Bridging-Header.h */,
 				3C6A5F2E214F40BA008C36F9 /* ln-ios */,
 				3C6A5F43214F40BC008C36F9 /* ln-iosTests */,
@@ -380,7 +387,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				04F2D13621702BD900C57AAD /* RustLocalNative.swift in Sources */,
+				3C25952821A1CA5F005BB947 /* RustLocalNative.swift in Sources */,
 				3C6A5F32214F40BA008C36F9 /* ViewController.swift in Sources */,
 				3C6A5F30214F40BA008C36F9 /* AppDelegate.swift in Sources */,
 				3C0891792179799000A333DE /* NoteTableViewCell.swift in Sources */,
@@ -391,6 +398,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3C25952921A1CA5F005BB947 /* RustLocalNative.swift in Sources */,
 				3C6A5F45214F40BC008C36F9 /* ln_iosTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -399,6 +407,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3C25952A21A1CA5F005BB947 /* RustLocalNative.swift in Sources */,
 				3C6A5F50214F40BC008C36F9 /* ln_iosUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -407,6 +416,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3C25952B21A1CA5F005BB947 /* RustLocalNative.swift in Sources */,
 				3CD0459A214F4A38005E3D05 /* ShareViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -715,15 +725,18 @@
 				CODE_SIGN_ENTITLEMENTS = "share-ext/share-ext.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 38Y7PH227Q;
+				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = "share-ext/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
+				"LIBRARY_SEARCH_PATHS[arch=*]" = "$(PROJECT_DIR)";
 				PRODUCT_BUNDLE_IDENTIFIER = "app.localnative.ios.share-ext";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
+				"SWIFT_OBJC_BRIDGING_HEADER[arch=*]" = "$(PROJECT_DIR)/LocalNative-Bridging-Header.h";
 				SWIFT_VERSION = 4.2;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -735,15 +748,18 @@
 				CODE_SIGN_ENTITLEMENTS = "share-ext/share-ext.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 38Y7PH227Q;
+				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = "share-ext/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
+				"LIBRARY_SEARCH_PATHS[arch=*]" = "$(PROJECT_DIR)";
 				PRODUCT_BUNDLE_IDENTIFIER = "app.localnative.ios.share-ext";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
+				"SWIFT_OBJC_BRIDGING_HEADER[arch=*]" = "$(PROJECT_DIR)/LocalNative-Bridging-Header.h";
 				SWIFT_VERSION = 4.2;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};

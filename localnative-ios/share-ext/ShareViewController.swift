@@ -11,7 +11,7 @@
 import MobileCoreServices
 import UIKit
 import Social
-
+let ln = RustLocalNative()
 class ShareViewController: UIViewController {
     @IBOutlet weak var saveButton: UIButton!
     @IBOutlet weak var cancelButton: UIButton!
