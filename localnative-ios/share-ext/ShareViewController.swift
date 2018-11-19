@@ -11,7 +11,9 @@
 import MobileCoreServices
 import UIKit
 import Social
-let ln = RustLocalNative()
+import MMWormhole
+let wormhole = MMWormhole(applicationGroupIdentifier: "group.app.localnative.ios", optionalDirectory: "wormhole")
+
 class ShareViewController: UIViewController {
     @IBOutlet weak var saveButton: UIButton!
     @IBOutlet weak var cancelButton: UIButton!
@@ -42,7 +44,7 @@ class ShareViewController: UIViewController {
         let valid = JSONSerialization.isValidJSONObject(message)
         if valid {
             let jsonText = try? JSONSerialization.data(withJSONObject: message)
-            ln.run(json_input: String(data: jsonText!, encoding: .utf8)!)
+            wormhole.passMessageObject( String(data: jsonText!, encoding: .utf8)! as NSCoding, identifier: "message")
         }
 
         self.extensionContext!.completeRequest(returningItems: [], completionHandler: nil)

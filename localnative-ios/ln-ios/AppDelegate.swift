@@ -7,15 +7,20 @@
 //
 
 import UIKit
+import MMWormhole
+let wormhole = MMWormhole(applicationGroupIdentifier: "group.app.localnative.ios", optionalDirectory: "wormhole")
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
-
+    let ln = RustLocalNative()
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
+        wormhole.listenForMessage(withIdentifier: "message", listener: { (messageObject) -> Void in
+            self.ln.run(json_input: messageObject as! String)
+        })
         return true
     }
 
