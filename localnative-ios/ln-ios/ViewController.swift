@@ -10,7 +10,7 @@ import UIKit
 let ln = RustLocalNative()
 
 class ViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UISearchBarDelegate {
-    @IBOutlet weak var searchBar: UISearchBar!
+    @IBOutlet weak var searchInput: UISearchBar!
     @IBOutlet weak var tableView: UITableView!
     var notes : NSArray = []
     
@@ -32,7 +32,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         return cell;
     }
     
-    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+    func searchBar(_ searchInput: UISearchBar, textDidChange searchText: String) {
         let txt = ln.run(json_input:"""
             {"action":"search","query":"\(searchText)","limit":10,"offset":0}
             """
@@ -44,15 +44,19 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         self.tableView.reloadData()
     }
     
+    func search(input: String){
+        searchBar(searchInput, textDidChange: input)
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
         /* Setup delegates */
         tableView.delegate = self
         tableView.dataSource = self
-        searchBar.delegate = self
+        searchInput.delegate = self
         // search with empty string first to show content
-        searchBar(self.searchBar as UISearchBar, textDidChange: "")
+        search(input: "")
     }
 
     override func didReceiveMemoryWarning() {

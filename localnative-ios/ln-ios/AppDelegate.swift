@@ -16,6 +16,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
     let ln = RustLocalNative()
 
+    func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
+        let message = url.host?.removingPercentEncoding
+        if message == "insert" {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                if let vc = self.window?.rootViewController as? ViewController {
+                    vc.search(input: "")
+                }
+            }
+        }
+        return true
+    }
+    
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
         wormhole.listenForMessage(withIdentifier: "message", listener: { (messageObject) -> Void in

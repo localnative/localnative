@@ -25,6 +25,17 @@ class ShareViewController: UIViewController {
         self.extensionContext!.completeRequest(returningItems: [], completionHandler: nil)
     }
     
+    @objc func openURL(_ url: URL) -> Bool {
+        var responder: UIResponder? = self
+        while responder != nil {
+            if let application = responder as? UIApplication {
+                return application.perform(#selector(openURL(_:)), with: url) != nil
+            }
+            responder = responder?.next
+        }
+        return false
+    }
+    
     @IBAction func saveButtonTouchDown(_ sender: Any) {
         let message : [String: Any] = [
             "action": "insert",
@@ -42,12 +53,19 @@ class ShareViewController: UIViewController {
         ]
 
         let valid = JSONSerialization.isValidJSONObject(message)
-        if valid {
-            let jsonText = try? JSONSerialization.data(withJSONObject: message)
-            wormhole.passMessageObject( String(data: jsonText!, encoding: .utf8)! as NSCoding, identifier: "message")
+        
+        let url = URL(string: "localnative://insert") as! URL
+        openURL(url)
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { // change 2 to desired number of seconds
+            // Your code with delay
+            if valid {
+                let jsonText = try? JSONSerialization.data(withJSONObject: message)
+                wormhole.passMessageObject( String(data: jsonText!, encoding: .utf8)! as NSCoding, identifier: "message")
+            }
+            self.extensionContext!.completeRequest(returningItems: [], completionHandler: nil)
         }
 
-        self.extensionContext!.completeRequest(returningItems: [], completionHandler: nil)
     }
     
     override func viewDidLoad() {
