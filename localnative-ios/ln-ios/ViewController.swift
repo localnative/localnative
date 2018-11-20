@@ -51,6 +51,8 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         tableView.delegate = self
         tableView.dataSource = self
         searchBar.delegate = self
+        // search with empty string first to show content
+        searchBar(self.searchBar as UISearchBar, textDidChange: "")
     }
 
     override func didReceiveMemoryWarning() {
