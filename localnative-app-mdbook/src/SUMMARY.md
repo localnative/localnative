@@ -6,3 +6,4 @@
 - [Release](./release.md)
 - [Source Code](./source-code.md)
 - [License](./license.md)
+- [Privacy Policy](./privacy-policy.md)
