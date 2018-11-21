@@ -11,6 +11,7 @@
 import MobileCoreServices
 import UIKit
 import Social
+import UITextView_Placeholder
 import MMWormhole
 let wormhole = MMWormhole(applicationGroupIdentifier: "group.app.localnative.ios", optionalDirectory: "wormhole")
 
@@ -56,10 +57,9 @@ class ShareViewController: UIViewController {
         
         let url = URL(string: "localnative://insert") as! URL
         openURL(url)
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { // change 2 to desired number of seconds
-            // Your code with delay
-            if valid {
+        // send json after container app open
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+           if valid {
                 let jsonText = try? JSONSerialization.data(withJSONObject: message)
                 wormhole.passMessageObject( String(data: jsonText!, encoding: .utf8)! as NSCoding, identifier: "message")
             }
@@ -69,7 +69,12 @@ class ShareViewController: UIViewController {
     }
     
     override func viewDidLoad() {
-        print("viewDidLoad")
+        titleText.placeholder = "title"
+        urlText.placeholder = "url"
+        tagsText.placeholder = "type to add tags, enter to save, comma or space as tag seperator"
+        descriptionText.placeholder = "description"
+        tagsText.becomeFirstResponder()
+
         let extensionItem = extensionContext?.inputItems.first as! NSExtensionItem
         let itemProvider = extensionItem.attachments?.first as! NSItemProvider
         let propertyList = String(kUTTypePropertyList)
