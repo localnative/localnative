@@ -4,6 +4,6 @@
 
 - Local Native App developer does not run any service to collect or store any personal information about you.
 
-- If you choose to use sync via ssb functionality, be aware that is you voluntarily share your data with other peers.
+- If you choose to replicate data via ssb, be aware that is you voluntarily share your data with other ssb peers.
 
-- Platform providers and underlying operating systems (android, ios, web browsers, app store) may collect information about the application (crash reports, usage stats) and make those avaliable to Local Native App developer. Local Native App developer may use those data to improve the application.
+- Platform providers and underlying operating systems (android, ios, web browsers, app store) may collect information about the application (crash reports, usage stats) and make those avaliable to Local Native App developer, who may use those data to improve the application.

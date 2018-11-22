@@ -1,9 +1,19 @@
 # Local Native App
 version: 0.2.2
 
-A note/bookmark taking tool to save your notes in a local sqlite database, synced with other devices via [ssb](https://ssbc.github.io/secure-scuttlebutt/) [protocal](https://ssbc.github.io/scuttlebutt-protocol-guide/).
+A note/bookmark taking tool to save your notes in a local SQLite database.
 
-## Web extension UI
+## iOS App
+You can copy the SQLite database file from an iOS device to desktop device via [File Sharing](https://support.apple.com/en-us/HT201301) or vice versa.
+
+## Android App
+Comming soon.
+
+## Web extension
+On desktop, with proper web extension and host setup, you can replicate your data with other devices via [ssb](https://ssbc.github.io/secure-scuttlebutt/) [protocal](https://ssbc.github.io/scuttlebutt-protocol-guide/).
+
+By default, note is your private message in ssb, you can also publish public note to ssb if you explictly choose so.
+
 ![Local Native web extension popup screenshot](./img/localnative-web-ext-popup.png)
 
 ## Search your notes
