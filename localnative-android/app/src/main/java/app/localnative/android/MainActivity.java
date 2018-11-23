@@ -4,6 +4,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.TextView;
 
+import app.ln.R;
+import app.localnative.android.RustBridge;
+
 public class MainActivity extends AppCompatActivity {
     static {
         System.loadLibrary("localnative_core");
