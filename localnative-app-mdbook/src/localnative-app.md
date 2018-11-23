@@ -4,10 +4,14 @@ version: 0.2.2
 A note/bookmark taking tool to save your notes in a local SQLite database.
 
 ## iOS App
-You can copy the SQLite database file from an iOS device to desktop device via [File Sharing](https://support.apple.com/en-us/HT201301) or vice versa.
+[App Store]()
+
+You can copy the SQLite database file from an iOS device to desktop device via [File Sharing](https://support.apple.com/en-us/HT201301) and vice versa.
 
 ## Android App
-Comming soon.
+[Google Play](https://play.google.com/store/apps/details?id=app.ln)
+
+You can copy the SQLite database file from an android device to desktop device and vice versa.
 
 ## Web extension
 On desktop, with proper web extension and host setup, you can replicate your data with other devices via [ssb](https://ssbc.github.io/secure-scuttlebutt/) [protocal](https://ssbc.github.io/scuttlebutt-protocol-guide/).
@@ -115,6 +119,6 @@ RUST_BACKTRACE=1 chromium-browser
 RUST_BACKTRACE=1 web-ext run --verbose
 ```
 
-You can use [DB Browser for SQLite](http://sqlitebrowser.org/) to explore the database, and adding other device's ssb public key as `authoer` in the `ssb` table.
+You can use [DB Browser for SQLite](http://sqlitebrowser.org/) to explore the database, and adding other device's ssb public key as `author` in the `ssb` table.
 
 
