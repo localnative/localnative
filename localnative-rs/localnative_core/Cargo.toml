@@ -14,6 +14,8 @@ features = ["bundled"]
 jni = { version = "0.10.2", default-features = false }
 
 [dependencies]
+linked_hash_set = "0.1.3"
+regex = "1.0.6"
 time = "0.1.40"
 serde = "1.0.79"
 serde_derive = "1.0.79"

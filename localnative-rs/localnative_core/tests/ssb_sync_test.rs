@@ -44,6 +44,7 @@ fn test_insert() {
         comments: "comment".to_string(),
         annotations: "annotations".to_string(),
         created_at: "".to_string(),
+        is_public: false,
     };
     insert(note);
 }
@@ -72,6 +73,7 @@ fn test_publish() {
         comments: "comment".to_string(),
         annotations: "annotations".to_string(),
         created_at: time::strftime("%Y-%m-%d %H:%M:%S:%f UTC", &time::now_utc()).unwrap(),
+        is_public: false,
     };
     let conn = prepare_test_db();
     let pubkeys = get_pubkeys(&conn);
