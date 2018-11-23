@@ -15,6 +15,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         RustBridge r = new RustBridge();
+        //TODO detect allow write to storage permission
         String s = r.run("{\"action\": \"select\", \"limit\":10,\"offset\":0}");
         ((TextView)findViewById(R.id.searchText)).setText(s);
     }
