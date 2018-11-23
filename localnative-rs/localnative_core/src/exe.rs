@@ -60,7 +60,7 @@ fn process(cmd: Cmd, text: &str) -> String {
             }
         }
         "select" => {
-            if let Ok(s) = serde_json::from_str::<CmdSelect>(text) {
+            if let Ok(_s) = serde_json::from_str::<CmdSelect>(text) {
                 do_select(&conn, "")
             } else {
                 r#"{"error":"cmd select json error"}"#.to_string()

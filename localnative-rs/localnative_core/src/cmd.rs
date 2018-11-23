@@ -7,6 +7,7 @@ use self::linked_hash_set::LinkedHashSet;
 use self::regex::Regex;
 use self::rusqlite::Connection;
 use super::Note;
+use std::iter::FromIterator;
 
 pub fn count(conn: &Connection, tbl: &str) -> i64 {
     let mut stmt = conn
@@ -41,7 +42,8 @@ pub fn select(conn: &Connection, query: &str) -> String {
 
     let mut j = "[ ".to_owned();
     for note in note_iter {
-        let note = note.unwrap();
+        let mut note = note.unwrap();
+        note.tags = make_tags(&note.tags);
         //eprintln!("Found note {:?}", note);
         j.push_str(&serde_json::to_string(&note).unwrap());
         j.push_str(",");
@@ -56,8 +58,6 @@ pub fn delete(conn: &Connection, rowid: i64) {
         .unwrap();
 }
 
-use std::collections::HashSet;
-use std::iter::FromIterator;
 // format and dedup tags
 pub fn make_tags(input: &str) -> String {
     let re1 = Regex::new(r",+").unwrap();
@@ -65,7 +65,7 @@ pub fn make_tags(input: &str) -> String {
     let s1 = re1.replace_all(input, " ");
     let s2 = re2.replace_all(s1.trim(), ",");
     let v1 = s2.split(",");
-    let mut h1: LinkedHashSet<&str> = LinkedHashSet::from_iter(v1);
+    let h1: LinkedHashSet<&str> = LinkedHashSet::from_iter(v1);
     let mut s = "".to_string();
     for e in h1 {
         s.push_str(e);
