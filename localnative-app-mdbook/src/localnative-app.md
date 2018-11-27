@@ -4,7 +4,7 @@ version: 0.2.2
 A note/bookmark taking tool to save your notes in a local SQLite database.
 
 ## iOS App
-[App Store]()
+[App Store](https://itunes.apple.com/us/app/local-native/id1443968309?ls=1&mt=8)
 
 You can copy the SQLite database file from an iOS device to desktop device via [File Sharing](https://support.apple.com/en-us/HT201301) and vice versa.
 
