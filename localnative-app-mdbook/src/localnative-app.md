@@ -16,7 +16,7 @@ You can copy the SQLite database file from an iOS device to desktop device via [
 You can copy the SQLite database file from an android device to desktop device and vice versa.
 
 ## Web extension
-On desktop, with proper web extension and host setup, you can replicate your data with other devices via [ssb](https://ssbc.github.io/secure-scuttlebutt/) [protocal](https://ssbc.github.io/scuttlebutt-protocol-guide/).
+On desktop, with proper web extension and host setup, you can replicate your data with other devices via [ssb](https://www.scuttlebutt.nz) [protocal](https://ssbc.github.io/scuttlebutt-protocol-guide/).
 
 By default, note is your private message in ssb, you can also publish public note to ssb if you explictly choose so.
 
