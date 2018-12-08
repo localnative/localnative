@@ -70,14 +70,17 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
             doSearch(query);
         }
 
-        RustBridge r = new RustBridge();
-        //TODO detect allow write to storage permission
-        String s = r.run("{\"action\": \"select\", \"limit\":10,\"offset\":0}");
-        ((TextView)findViewById(R.id.searchText)).setText(s);
     }
 
     private void doSearch(String query) {
         Log.d("doSearch", query);
+        RustBridge r = new RustBridge();
+        //TODO detect allow write to storage permission
+        String s = r.run("{\"action\": \"search\", \"query\": \""
+                + query
+                +"\", \"limit\":10,\"offset\":0}");
+        ((TextView)findViewById(R.id.searchText)).setText(s);
+
     }
 
 }
