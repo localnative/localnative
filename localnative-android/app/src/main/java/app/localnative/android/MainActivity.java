@@ -42,15 +42,13 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     @Override
     public boolean onQueryTextSubmit(String query) {
         Log.d("onQueryTextSubmit",  query);
-        doSearch(query);
         return false;
     }
 
     @Override
     public boolean onQueryTextChange(String query) {
         Log.d("onQueryTextChange", query);
-        //((TextView)findViewById(R.id.searchText)).setText(query);
-        //doSearch(query);
+        doSearch(query);
         return false;
     }
 
@@ -74,17 +72,19 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 //            doSearch(query);
 //        }
 
-        doSearch(" ");
+        doSearch("");
     }
 
 
     private void doSearch(String query) {
         Log.d("doSearch", query);
-        //RustBridge r = new RustBridge();
         //TODO detect allow write to storage permission
-        String s = r.run("{\"action\": \"search\", \"query\": \""
+        String cmd = "{\"action\": \"search\", \"query\": \""
                 + query
-                +"\", \"limit\":10,\"offset\":0}");
+                +"\", \"limit\":10, \"offset\":0}";
+        Log.d("doSearchCmd", cmd);
+        String s = r.run(cmd);
+        Log.d("doSearchResult", s);
         ((TextView)findViewById(R.id.searchText)).setText(s);
 
     }
