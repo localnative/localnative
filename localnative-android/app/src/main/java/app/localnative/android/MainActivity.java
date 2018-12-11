@@ -17,6 +17,7 @@ import android.widget.TextView;
 import app.ln.R;
 
 public class MainActivity extends AppCompatActivity implements SearchView.OnQueryTextListener{
+    RustBridge r = new RustBridge();
     static {
         System.loadLibrary("localnative_core");
     }
@@ -41,12 +42,15 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     @Override
     public boolean onQueryTextSubmit(String query) {
         Log.d("onQueryTextSubmit",  query);
+        doSearch(query);
         return false;
     }
 
     @Override
     public boolean onQueryTextChange(String query) {
         Log.d("onQueryTextChange", query);
+        //((TextView)findViewById(R.id.searchText)).setText(query);
+        //doSearch(query);
         return false;
     }
 
@@ -64,17 +68,19 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayShowTitleEnabled(true);
 
-        Intent intent = getIntent();
-        if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
-            String query = intent.getStringExtra(SearchManager.QUERY);
-            doSearch(query);
-        }
+//        Intent intent = getIntent();
+//        if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
+//            String query = intent.getStringExtra(SearchManager.QUERY);
+//            doSearch(query);
+//        }
 
+        doSearch(" ");
     }
+
 
     private void doSearch(String query) {
         Log.d("doSearch", query);
-        RustBridge r = new RustBridge();
+        //RustBridge r = new RustBridge();
         //TODO detect allow write to storage permission
         String s = r.run("{\"action\": \"search\", \"query\": \""
                 + query
