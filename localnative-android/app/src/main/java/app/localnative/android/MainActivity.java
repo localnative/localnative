@@ -4,7 +4,10 @@ import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -15,8 +18,10 @@ import android.view.WindowManager;
 import android.widget.TextView;
 
 import app.ln.R;
+import app.localnative.android.dummy.DummyContent;
 
-public class MainActivity extends AppCompatActivity implements SearchView.OnQueryTextListener{
+public class MainActivity extends AppCompatActivity implements SearchView.OnQueryTextListener,
+        NoteFragment.OnListFragmentInteractionListener {
     RustBridge r = new RustBridge();
     static {
         System.loadLibrary("localnative_core");
@@ -52,6 +57,10 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         return false;
     }
 
+    private RecyclerView mRecyclerView;
+    private RecyclerView.Adapter mAdapter;
+    private RecyclerView.LayoutManager mLayoutManager;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -73,6 +82,20 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 //        }
 
         doSearch("");
+
+//        mRecyclerView = (RecyclerView) findViewById(R.id.notes_recycler_view);
+//
+//        // use this setting to improve performance if you know that changes
+//        // in content do not change the layout size of the RecyclerView
+//        mRecyclerView.setHasFixedSize(true);
+//
+//        // use a linear layout manager
+//        mLayoutManager = new LinearLayoutManager(this);
+//        mRecyclerView.setLayoutManager(mLayoutManager);
+//
+//        // specify an adapter (see also next example)
+//        mAdapter = new NoteRecyclerViewAdapter(myDataset);
+//        mRecyclerView.setAdapter(mAdapter);
     }
 
 
@@ -89,4 +112,8 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
     }
 
+    @Override
+    public void onListFragmentInteraction(DummyContent.DummyItem item) {
+
+    }
 }
