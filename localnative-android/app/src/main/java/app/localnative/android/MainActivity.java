@@ -85,7 +85,6 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         Log.d("doSearchCmd", cmd);
         String s = r.run(cmd);
         Log.d("doSearchResult", s);
-        ((TextView)findViewById(R.id.searchText)).setText(s);
         NoteListFragment noteListFragment = (NoteListFragment) getSupportFragmentManager().findFragmentById(R.id.notes_recycler_view);
         NoteContent.refresh(s);
         noteListFragment.mViewAdpater.notifyDataSetChanged();

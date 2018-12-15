@@ -28,19 +28,12 @@ public class NoteContent {
      */
     public static final Map<String, NoteItem> ITEM_MAP = new HashMap<String, NoteItem>();
 
-    private static final int COUNT = 25;
-
-    static {
-        // Add some sample items.
-        for (int i = 1; i <= COUNT; i++) {
-            addItem(createDummyItem(i));
-        }
-    }
-
     public static void refresh(String s){
         try{
             JSONArray notes = new JSONObject(s).getJSONArray("notes");
             ITEMS.clear();
+            // first item is a hack as placeholder under toolbar
+            addItem(createDummyItem(1));
             for (int i = 0; i < notes.length(); i++ ){
                 JSONObject note = notes.getJSONObject(i);
                 NoteItem noteItem = new NoteItem(
