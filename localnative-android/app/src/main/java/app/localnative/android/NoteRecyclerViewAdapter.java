@@ -7,22 +7,22 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import app.ln.R;
-import app.localnative.android.NoteFragment.OnListFragmentInteractionListener;
-import app.localnative.android.dummy.DummyContent.DummyItem;
+import app.localnative.android.NoteListFragment.OnListFragmentInteractionListener;
+import app.localnative.android.NoteContent.NoteItem;
 
 import java.util.List;
 
 /**
- * {@link RecyclerView.Adapter} that can display a {@link DummyItem} and makes a call to the
+ * {@link RecyclerView.Adapter} that can display a {@link NoteItem} and makes a call to the
  * specified {@link OnListFragmentInteractionListener}.
  * TODO: Replace the implementation with code for your data type.
  */
 public class NoteRecyclerViewAdapter extends RecyclerView.Adapter<NoteRecyclerViewAdapter.ViewHolder> {
 
-    private final List<DummyItem> mValues;
+    private final List<NoteItem> mValues;
     private final OnListFragmentInteractionListener mListener;
 
-    public NoteRecyclerViewAdapter(List<DummyItem> items, OnListFragmentInteractionListener listener) {
+    public NoteRecyclerViewAdapter(List<NoteItem> items, OnListFragmentInteractionListener listener) {
         mValues = items;
         mListener = listener;
     }
@@ -61,7 +61,7 @@ public class NoteRecyclerViewAdapter extends RecyclerView.Adapter<NoteRecyclerVi
         public final View mView;
         public final TextView mIdView;
         public final TextView mContentView;
-        public DummyItem mItem;
+        public NoteItem mItem;
 
         public ViewHolder(View view) {
             super(view);

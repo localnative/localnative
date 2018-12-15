@@ -2,11 +2,8 @@ package app.localnative.android;
 
 import android.app.SearchManager;
 import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
@@ -18,10 +15,9 @@ import android.view.WindowManager;
 import android.widget.TextView;
 
 import app.ln.R;
-import app.localnative.android.dummy.DummyContent;
 
 public class MainActivity extends AppCompatActivity implements SearchView.OnQueryTextListener,
-        NoteFragment.OnListFragmentInteractionListener {
+        NoteListFragment.OnListFragmentInteractionListener {
     RustBridge r = new RustBridge();
     static {
         System.loadLibrary("localnative_core");
@@ -94,7 +90,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     }
 
     @Override
-    public void onListFragmentInteraction(DummyContent.DummyItem item) {
+    public void onListFragmentInteraction(NoteContent.NoteItem item) {
 
     }
 }

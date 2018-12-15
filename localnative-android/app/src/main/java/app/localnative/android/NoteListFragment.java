@@ -11,8 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import app.ln.R;
-import app.localnative.android.dummy.DummyContent;
-import app.localnative.android.dummy.DummyContent.DummyItem;
+import app.localnative.android.NoteContent.NoteItem;
 
 /**
  * A fragment representing a list of Items.
@@ -20,7 +19,7 @@ import app.localnative.android.dummy.DummyContent.DummyItem;
  * Activities containing this fragment MUST implement the {@link OnListFragmentInteractionListener}
  * interface.
  */
-public class NoteFragment extends Fragment {
+public class NoteListFragment extends Fragment {
 
     // TODO: Customize parameter argument names
     private static final String ARG_COLUMN_COUNT = "column-count";
@@ -32,13 +31,13 @@ public class NoteFragment extends Fragment {
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
      */
-    public NoteFragment() {
+    public NoteListFragment() {
     }
 
     // TODO: Customize parameter initialization
     @SuppressWarnings("unused")
-    public static NoteFragment newInstance(int columnCount) {
-        NoteFragment fragment = new NoteFragment();
+    public static NoteListFragment newInstance(int columnCount) {
+        NoteListFragment fragment = new NoteListFragment();
         Bundle args = new Bundle();
         args.putInt(ARG_COLUMN_COUNT, columnCount);
         fragment.setArguments(args);
@@ -68,7 +67,7 @@ public class NoteFragment extends Fragment {
             } else {
                 recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
             }
-            recyclerView.setAdapter(new NoteRecyclerViewAdapter(DummyContent.ITEMS, mListener));
+            recyclerView.setAdapter(new NoteRecyclerViewAdapter(NoteContent.ITEMS, mListener));
         }
         return view;
     }
@@ -103,6 +102,6 @@ public class NoteFragment extends Fragment {
      */
     public interface OnListFragmentInteractionListener {
         // TODO: Update argument type and name
-        void onListFragmentInteraction(DummyItem item);
+        void onListFragmentInteraction(NoteItem item);
     }
 }
