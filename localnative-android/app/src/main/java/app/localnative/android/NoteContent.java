@@ -32,6 +32,10 @@ public class NoteContent {
         }
     }
 
+    public static void purge(){
+        ITEMS.clear();
+    }
+
     private static void addItem(NoteItem item) {
         ITEMS.add(item);
         ITEM_MAP.put(item.id, item);

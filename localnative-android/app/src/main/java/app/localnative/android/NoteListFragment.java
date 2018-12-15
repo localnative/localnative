@@ -53,6 +53,7 @@ public class NoteListFragment extends Fragment {
         }
     }
 
+    public NoteRecyclerViewAdapter mViewAdpater;
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -67,7 +68,8 @@ public class NoteListFragment extends Fragment {
             } else {
                 recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
             }
-            recyclerView.setAdapter(new NoteRecyclerViewAdapter(NoteContent.ITEMS, mListener));
+            mViewAdpater = new NoteRecyclerViewAdapter(NoteContent.ITEMS, mListener);
+            recyclerView.setAdapter(mViewAdpater);
         }
         return view;
     }
