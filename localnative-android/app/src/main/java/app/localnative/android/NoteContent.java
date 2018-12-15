@@ -1,5 +1,10 @@
 package app.localnative.android;
 
+import android.util.Log;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,8 +37,22 @@ public class NoteContent {
         }
     }
 
-    public static void purge(){
-        ITEMS.clear();
+    public static void refresh(String s){
+        try{
+            JSONArray notes = new JSONObject(s).getJSONArray("notes");
+            ITEMS.clear();
+            for (int i = 0; i < notes.length(); i++ ){
+                JSONObject note = notes.getJSONObject(i);
+                NoteItem noteItem = new NoteItem(
+                        note.getString("rowid"),
+                        note.getString("title"),
+                        note.getString("url")
+                );
+                addItem(noteItem);
+            }
+        }catch (Exception e){
+            Log.d("JSON Parse Exception", e.toString());
+        }
     }
 
     private static void addItem(NoteItem item) {
