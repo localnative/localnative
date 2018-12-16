@@ -14,7 +14,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.TextView;
 
-import app.ln.R;
+import app.localnative.R;
 
 public class MainActivity extends AppCompatActivity implements SearchView.OnQueryTextListener,
         NoteListFragment.OnListFragmentInteractionListener {

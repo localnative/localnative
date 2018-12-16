@@ -6,7 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import app.ln.R;
+import app.localnative.R;
 import app.localnative.android.NoteListFragment.OnListFragmentInteractionListener;
 import app.localnative.android.NoteContent.NoteItem;
 
