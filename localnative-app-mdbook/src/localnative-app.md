@@ -11,7 +11,7 @@ A note/bookmark taking tool to save your notes in a local SQLite database.
 You can copy the SQLite database file from an iOS device to desktop device via [File Sharing](https://support.apple.com/en-us/HT201301) and vice versa.
 
 ## Android App
-[Google Play](https://play.google.com/store/apps/details?id=app.ln)
+[Google Play](https://play.google.com/store/apps/details?id=app.localnative)
 
 You can copy the SQLite database file from an android device to desktop device and vice versa.
 
