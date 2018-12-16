@@ -10,23 +10,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Helper class for providing sample content for user interfaces created by
- * Android template wizards.
- * <p>
- * TODO: Replace all uses of this class before publishing your app.
- */
 public class NoteContent {
 
     /**
-     * An array of sample (dummy) items.
+     * An array of note items.
      */
     public static final List<NoteItem> ITEMS = new ArrayList<NoteItem>();
 
     /**
-     * A map of sample (dummy) items, by ID.
+     * A map of note items, by rowid.
      */
-    public static final Map<String, NoteItem> ITEM_MAP = new HashMap<String, NoteItem>();
+    public static final Map<Integer, NoteItem> ITEM_MAP = new HashMap<Integer, NoteItem>();
 
     public static void refresh(String s){
         try{
@@ -37,9 +31,15 @@ public class NoteContent {
             for (int i = 0; i < notes.length(); i++ ){
                 JSONObject note = notes.getJSONObject(i);
                 NoteItem noteItem = new NoteItem(
-                        note.getString("rowid"),
+                        note.getInt("rowid"),
                         note.getString("title"),
-                        note.getString("url")
+                        note.getString("url"),
+                        note.getString("tags"),
+                        note.getString("description"),
+                        note.getString("comments"),
+                        note.getString("annotations"),
+                        note.getString("created_at"),
+                        note.getBoolean("is_public")
                 );
                 addItem(noteItem);
             }
@@ -50,39 +50,52 @@ public class NoteContent {
 
     private static void addItem(NoteItem item) {
         ITEMS.add(item);
-        ITEM_MAP.put(item.id, item);
+        ITEM_MAP.put(item.rowid, item);
     }
 
     private static NoteItem createDummyItem(int position) {
-        return new NoteItem(String.valueOf(position), "Item " + position, makeDetails(position));
+        return new NoteItem(position, "Item " + position, makeDetails(position),
+                "","", "", "", "",false);
     }
 
     private static String makeDetails(int position) {
         StringBuilder builder = new StringBuilder();
         builder.append("Details about Item: ").append(position);
         for (int i = 0; i < position; i++) {
-            builder.append("\nMore details information here.");
+            builder.append("\nMore url information here.");
         }
         return builder.toString();
     }
 
     /**
-     * A dummy item representing a piece of content.
+     * Note item representing a note.
      */
     public static class NoteItem {
-        public final String id;
-        public final String content;
-        public final String details;
+        public final Integer rowid;
+        public final String title;
+        public final String url;
+        public final String tags;
+        public final String description;
+        public final String comments;
+        public final String annotations;
+        public final String created_at;
+        public final Boolean is_public;
 
-        public NoteItem(String id, String content, String details) {
-            this.id = id;
-            this.content = content;
-            this.details = details;
+        public NoteItem(Integer rowid, String title, String url, String tags, String description, String comments, String annotations, String created_at, Boolean is_public) {
+            this.rowid = rowid;
+            this.title = title;
+            this.url = url;
+            this.tags = tags;
+            this.description = description;
+            this.comments = comments;
+            this.annotations = annotations;
+            this.created_at = created_at;
+            this.is_public = is_public;
         }
 
         @Override
         public String toString() {
-            return content;
+            return title;
         }
     }
 }
