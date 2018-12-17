@@ -26,16 +26,18 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Get the SearchView and set the searchable configuration
-        SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+        // SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
         getMenuInflater().inflate(R.menu.toolbar, menu);
         MenuItem searchItem = menu.findItem(R.id.toolbar_search);
         SearchView searchView =
                 (SearchView) searchItem.getActionView();
-        searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
+        //searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
         searchView.setIconifiedByDefault(false);
         if (searchView != null) {
             searchView.setOnQueryTextListener(this);
         }
+        searchView.setQueryHint(getString(R.string.search_hint));
+        searchView.requestFocusFromTouch();
         return super.onCreateOptionsMenu(menu);
     }
 
