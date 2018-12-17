@@ -8,8 +8,7 @@ import app.localnative.R
 import kotlinx.android.synthetic.main.activity_share.*
 import org.json.JSONObject
 
-class ShareActivity : AppCompatActivity() {
-
+class ShareActivity : AppCompatActivity(), Permission.OnPermissonGrantedListenr {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_share)
@@ -32,19 +31,11 @@ class ShareActivity : AppCompatActivity() {
 
             val cmd = j.toString()
             Log.d("CmdInsert", cmd)
-            val s = RustBridge.run(cmd)
-            Log.d("CmdInsertResult", s)
-            finish()
-
-            val intent = Intent(this, MainActivity::class.java)
-            startActivity(intent)
+            Permission.invoke_WRITE_EXTERNAL_STORAGE(this, cmd)
         }
         when {
             intent?.action == Intent.ACTION_SEND -> {
                 if ("text/plain" == intent.type) {
-                    intent.getStringExtra(Intent.EXTRA_TEXT)?.let {
-                        urlText.setText(it)
-                    }
                     handleSendText(intent) // Handle text being sent
                 } else if (intent.type?.startsWith("image/") == true) {
                     // handleSendImage(intent) // Handle single image being sent
@@ -55,10 +46,18 @@ class ShareActivity : AppCompatActivity() {
             }
         }
     }
-}
-private fun handleSendText(intent: Intent) {
-    intent.getStringExtra(Intent.EXTRA_TEXT)?.let {
-        // Update UI to reflect text being shared
-        Log.d("share", it)
+
+    override fun onPermissonGranted(cmd: String?) {
+        val s = RustBridge.run(cmd)
+        Log.d("CmdInsertResult", s)
+        finish()
+        val intent = Intent(this, MainActivity::class.java)
+        startActivity(intent)
+    }
+
+    private fun handleSendText(intent: Intent) {
+        intent.getStringExtra(Intent.EXTRA_TEXT)?.let {
+            urlText.setText(it)
+        }
     }
 }

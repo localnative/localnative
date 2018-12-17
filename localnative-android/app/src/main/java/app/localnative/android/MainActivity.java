@@ -1,7 +1,6 @@
 package app.localnative.android;
 
-import android.app.SearchManager;
-import android.content.Context;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
@@ -10,14 +9,14 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.Window;
-import android.view.WindowManager;
-import android.widget.TextView;
 
 import app.localnative.R;
 
+import static app.localnative.android.Permission.*;
+
 public class MainActivity extends AppCompatActivity implements SearchView.OnQueryTextListener,
-        NoteListFragment.OnListFragmentInteractionListener {
+        NoteListFragment.OnListFragmentInteractionListener,
+        OnPermissonGrantedListenr {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -67,7 +66,12 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
     private void doSearch(String query) {
         Log.d("doSearch", query);
-        //TODO detect allow write to storage permission
+        // request allow write to storage permission
+        invoke_WRITE_EXTERNAL_STORAGE(this, query);
+    }
+
+    @Override
+    public void onPermissonGranted (String query) {
         String cmd = "{\"action\": \"search\", \"query\": \""
                 + query
                 +"\", \"limit\":10, \"offset\":0}";
@@ -83,4 +87,27 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     public void onListFragmentInteraction(NoteContent.NoteItem item) {
 
     }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case 1: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // permission was granted, yay! Do the
+                    // contacts-related task you need to do.
+                } else {
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                }
+                return;
+            }
+
+            // other 'case' lines to check for other
+            // permissions this app might request.
+        }
+    }
+
 }
