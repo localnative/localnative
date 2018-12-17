@@ -26,8 +26,6 @@ public class NoteContent {
         try{
             JSONArray notes = new JSONObject(s).getJSONArray("notes");
             ITEMS.clear();
-            // first item is a hack as placeholder under toolbar
-            addItem(createDummyItem(1));
             for (int i = 0; i < notes.length(); i++ ){
                 JSONObject note = notes.getJSONObject(i);
                 NoteItem noteItem = new NoteItem(
@@ -51,20 +49,6 @@ public class NoteContent {
     private static void addItem(NoteItem item) {
         ITEMS.add(item);
         ITEM_MAP.put(item.rowid, item);
-    }
-
-    private static NoteItem createDummyItem(int position) {
-        return new NoteItem(position, "Item " + position, makeDetails(position),
-                "","", "", "", "",false);
-    }
-
-    private static String makeDetails(int position) {
-        StringBuilder builder = new StringBuilder();
-        builder.append("Details about Item: ").append(position);
-        for (int i = 0; i < position; i++) {
-            builder.append("\nMore url information here.");
-        }
-        return builder.toString();
     }
 
     /**

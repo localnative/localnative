@@ -37,8 +37,13 @@ public class NoteRecyclerViewAdapter extends RecyclerView.Adapter<NoteRecyclerVi
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
         holder.mItem = mValues.get(position);
-        holder.mIdView.setText(mValues.get(position).rowid.toString());
-        holder.mContentView.setText(mValues.get(position).title);
+        NoteItem note = mValues.get(position);
+        holder.mContentView.setText(note.created_at + " rowid: " + note.rowid + "\n"
+                + note.tags + "\n"
+                + note.title + "\n"
+                + note.url + "\n"
+                + note.description
+        );
 
         holder.mView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -59,14 +64,12 @@ public class NoteRecyclerViewAdapter extends RecyclerView.Adapter<NoteRecyclerVi
 
     public class ViewHolder extends RecyclerView.ViewHolder {
         public final View mView;
-        public final TextView mIdView;
         public final TextView mContentView;
         public NoteItem mItem;
 
         public ViewHolder(View view) {
             super(view);
             mView = view;
-            mIdView = (TextView) view.findViewById(R.id.item_number);
             mContentView = (TextView) view.findViewById(R.id.content);
         }
 
