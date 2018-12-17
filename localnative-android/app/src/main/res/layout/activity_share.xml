@@ -6,4 +6,63 @@
     android:layout_height="match_parent"
     tools:context=".android.ShareActivity">
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <EditText
+            android:id="@+id/titleText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:hint="title"
+            android:inputType="textMultiLine"
+            android:importantForAutofill="no" />
+
+        <EditText
+            android:id="@+id/urlText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:hint="url"
+            android:inputType="textMultiLine|textUri"
+            android:importantForAutofill="no" />
+
+        <EditText
+            android:id="@+id/tagsText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:hint="type to add tags, comma or space as tag seperator"
+            android:inputType="textMultiLine" />
+
+        <EditText
+            android:id="@+id/descText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:hint="description"
+            android:inputType="textMultiLine" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnCancel"
+                android:layout_width="200dp"
+                android:layout_height="wrap_content"
+                android:text="Cancel" />
+
+            <Button
+                android:id="@+id/btnSave"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Save" />
+        </LinearLayout>
+
+    </LinearLayout>
 </android.support.constraint.ConstraintLayout>

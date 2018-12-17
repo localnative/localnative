@@ -5,6 +5,7 @@ import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import app.localnative.R
+import kotlinx.android.synthetic.main.activity_share.*
 
 class ShareActivity : AppCompatActivity() {
 
@@ -14,6 +15,9 @@ class ShareActivity : AppCompatActivity() {
         when {
             intent?.action == Intent.ACTION_SEND -> {
                 if ("text/plain" == intent.type) {
+                    intent.getStringExtra(Intent.EXTRA_TEXT)?.let {
+                        urlText.setText(it)
+                    }
                     handleSendText(intent) // Handle text being sent
                 } else if (intent.type?.startsWith("image/") == true) {
 //                    handleSendImage(intent) // Handle single image being sent
