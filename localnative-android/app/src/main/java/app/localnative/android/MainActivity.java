@@ -70,7 +70,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayShowTitleEnabled(true);
-
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         doSearch("");
 
     }
