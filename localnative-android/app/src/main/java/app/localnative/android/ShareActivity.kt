@@ -6,12 +6,39 @@ import android.os.Bundle
 import android.util.Log
 import app.localnative.R
 import kotlinx.android.synthetic.main.activity_share.*
+import org.json.JSONObject
 
 class ShareActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_share)
+        btnCancel.setOnClickListener {
+            finish()
+        }
+        btnSave.setOnClickListener {
+
+            val j = JSONObject()
+            j.put("action", "insert")
+            j.put("title", titleText.text)
+            j.put("url", urlText.text)
+            j.put("tags", tagsText.text)
+            j.put("description", descText.text)
+            j.put("comments", "")
+            j.put("annotations", "")
+            j.put("limit", 15)
+            j.put("offset", 0)
+            j.put("is_public", false)
+
+            val cmd = j.toString()
+            Log.d("CmdInsert", cmd)
+            val s = RustBridge.run(cmd)
+            Log.d("CmdInsertResult", s)
+            finish()
+
+            val intent = Intent(this, MainActivity::class.java)
+            startActivity(intent)
+        }
         when {
             intent?.action == Intent.ACTION_SEND -> {
                 if ("text/plain" == intent.type) {
@@ -20,7 +47,7 @@ class ShareActivity : AppCompatActivity() {
                     }
                     handleSendText(intent) // Handle text being sent
                 } else if (intent.type?.startsWith("image/") == true) {
-//                    handleSendImage(intent) // Handle single image being sent
+                    // handleSendImage(intent) // Handle single image being sent
                 }
             }
             else -> {

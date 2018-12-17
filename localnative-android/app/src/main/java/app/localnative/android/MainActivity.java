@@ -18,10 +18,6 @@ import app.localnative.R;
 
 public class MainActivity extends AppCompatActivity implements SearchView.OnQueryTextListener,
         NoteListFragment.OnListFragmentInteractionListener {
-    RustBridge r = new RustBridge();
-    static {
-        System.loadLibrary("localnative_core");
-    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -76,7 +72,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
                 + query
                 +"\", \"limit\":10, \"offset\":0}";
         Log.d("doSearchCmd", cmd);
-        String s = r.run(cmd);
+        String s = RustBridge.run(cmd);
         Log.d("doSearchResult", s);
         NoteListFragment noteListFragment = (NoteListFragment) getSupportFragmentManager().findFragmentById(R.id.notes_recycler_view);
         NoteContent.refresh(s);
