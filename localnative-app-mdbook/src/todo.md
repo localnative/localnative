@@ -5,9 +5,10 @@
 
 ## mobile
 - android
-    - feature parity to ios 0.2.2
+    - click on tag text to search
+    - ProGuard to shrink size
 - ios
-    - click on tag to search
+    - click on tag text to search
     - UI tunning for ipad, notch
 
 ## i18n

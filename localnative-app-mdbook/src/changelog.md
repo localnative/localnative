@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.2.4-android
+- insert note on android for chrome
+
+## v0.2.3-android
+- search on android
+
+## v0.2.3-ios
+- insert and search on ios for safari
+
 ## v0.2.2
 - release initial iOS App
 - web extension
