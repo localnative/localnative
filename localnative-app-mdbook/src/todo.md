@@ -1,7 +1,12 @@
 # TODO
 
 ## desktop platform
-- windows?
+- gnu/linux
+  - installer
+- mac
+  - installer
+- windows
+  - installer
 
 ## mobile
 - android

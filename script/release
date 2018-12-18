@@ -9,10 +9,12 @@ echo "release to" $1
 
 
 cd localnative-rs
-# cargo clean
+cd localnative_core
+cargo build --release
+cd ../localnative_cli
 cargo build --release
 
-cd ..
+cd ../..
 
 mkdir -p release/v$1/web-ext-host
 
@@ -24,7 +26,14 @@ md5sum localnative-web-ext-host-$1 > localnative-web-ext-host-$1.md5
 # release tree
 cd ../../..
 echo "# Release" > localnative-app-mdbook/src/release.md
-echo 'https://localnative.app/release/' >> localnative-app-mdbook/src/release.md
+echo '## npm' >> localnative-app-mdbook/src/release.md
+echo '[https://www.npmjs.com/package/localnative](https://www.npmjs.com/package/localnative)' >> localnative-app-mdbook/src/release.md
+echo '## rust crates' >> localnative-app-mdbook/src/release.md
+echo '[https://crates.io/crates/localnative_cli](https://crates.io/crates/localnative_cli)' >> localnative-app-mdbook/src/release.md
+echo '' >> localnative-app-mdbook/src/release.md
+echo '[https://crates.io/crates/localnative_core](https://crates.io/crates/localnative_core)' >> localnative-app-mdbook/src/release.md
+echo '### gnu/linux binaries of web extension host' >> localnative-app-mdbook/src/release.md
+echo 'https://localnative.app/release/vX.Y.Z/web-ext-host/localnative-web-ext-host-X.Y.Z' >> localnative-app-mdbook/src/release.md
 echo '```' >> localnative-app-mdbook/src/release.md
 tree -s release >> localnative-app-mdbook/src/release.md
 echo '```' >> localnative-app-mdbook/src/release.md
