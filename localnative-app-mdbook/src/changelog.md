@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.2.4-rust
+- format and dedup tags in rust 
+
 ## v0.2.4-android
 - insert note on android for chrome
 

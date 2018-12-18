@@ -26,12 +26,20 @@ md5sum localnative-web-ext-host-$1 > localnative-web-ext-host-$1.md5
 # release tree
 cd ../../..
 echo "# Release" > localnative-app-mdbook/src/release.md
+echo '## ios' >> localnative-app-mdbook/src/release.md
+echo '[https://itunes.apple.com/us/app/local-native/id1443968309](https://itunes.apple.com/us/app/local-native/id1443968309)' >> localnative-app-mdbook/src/release.md
+echo '## android' >> localnative-app-mdbook/src/release.md
+echo '[https://play.google.com/store/apps/details?id=app.localnative](https://play.google.com/store/apps/details?id=app.localnative)' >> localnative-app-mdbook/src/release.md
 echo '## npm' >> localnative-app-mdbook/src/release.md
 echo '[https://www.npmjs.com/package/localnative](https://www.npmjs.com/package/localnative)' >> localnative-app-mdbook/src/release.md
 echo '## rust crates' >> localnative-app-mdbook/src/release.md
-echo '[https://crates.io/crates/localnative_cli](https://crates.io/crates/localnative_cli)' >> localnative-app-mdbook/src/release.md
+echo '[https://crates.io/crates/localnative_cli](https://crates.io/crates/localnative_cli) - web extension host' >> localnative-app-mdbook/src/release.md
 echo '' >> localnative-app-mdbook/src/release.md
 echo '[https://crates.io/crates/localnative_core](https://crates.io/crates/localnative_core)' >> localnative-app-mdbook/src/release.md
+echo '## firefox addon' >> localnative-app-mdbook/src/release.md
+echo '[https://addons.mozilla.org/en-US/firefox/addon/localnative/](https://addons.mozilla.org/en-US/firefox/addon/localnative/)' >> localnative-app-mdbook/src/release.md
+echo '## chrome extension' >> localnative-app-mdbook/src/release.md
+echo '[https://chrome.google.com/webstore/detail/local-native/oclkmkeameccmgnajgogjlhdjeaconnb](https://chrome.google.com/webstore/detail/local-native/oclkmkeameccmgnajgogjlhdjeaconnb)' >> localnative-app-mdbook/src/release.md
 echo '### gnu/linux binaries of web extension host' >> localnative-app-mdbook/src/release.md
 echo 'https://localnative.app/release/vX.Y.Z/web-ext-host/localnative-web-ext-host-X.Y.Z' >> localnative-app-mdbook/src/release.md
 echo '```' >> localnative-app-mdbook/src/release.md
