@@ -1,7 +1,8 @@
 extern crate rusqlite;
 use super::publish;
 use super::tail;
-use rusqlite::Connection;
+use rusqlite::types::ToSql;
+use rusqlite::{Connection, NO_PARAMS};
 use Note;
 use Ssb;
 use SsbNote;
@@ -18,9 +19,10 @@ pub fn get_pubkeys(conn: &Connection) -> String {
         key,
         prev
         from ssb",
-        ).unwrap();
+        )
+        .unwrap();
     let ssb_iter = stmt
-        .query_map(&[], |row| Ssb {
+        .query_map(NO_PARAMS, |row| Ssb {
             note_rowid: row.get(0),
             author: row.get(1),
             is_active_author: false, //row.get(2),
@@ -29,7 +31,8 @@ pub fn get_pubkeys(conn: &Connection) -> String {
             ts: row.get(5),
             key: row.get(6),
             prev: row.get(7),
-        }).unwrap();
+        })
+        .unwrap();
 
     let mut j = "[ ".to_owned();
     for ssb in ssb_iter {
@@ -59,8 +62,9 @@ pub fn get_note_to_publish(conn: &Connection) -> Result<Note, rusqlite::Error> {
         where rowid > (select max(note_rowid) from ssb)
         order by rowid
         limit 1",
-        ).unwrap();
-    stmt.query_row(&[], |row| Note {
+        )
+        .unwrap();
+    stmt.query_row(NO_PARAMS, |row| Note {
         rowid: row.get(0),
         title: row.get(1),
         url: row.get(2),
@@ -95,13 +99,14 @@ pub fn sync_to_ssb(conn: &Connection) {
                 WHERE is_active_author = 1
                 ",
                     &[
-                        &rowid,
+                        &rowid as &ToSql,
                         &ssb_note.ts,
                         &ssb_note.key,
                         &ssb_note.prev,
                         &ssb_note.seq,
                     ],
-                ).unwrap();
+                )
+                .unwrap();
             }
             Err(e) => {
                 match e {
@@ -129,7 +134,8 @@ pub fn refresh_is_last_note(conn: &Connection) {
     END;
     COMMIT;
     ",
-    ).unwrap();
+    )
+    .unwrap();
 }
 
 pub fn get_authors() -> Vec<String> {
@@ -146,9 +152,10 @@ pub fn get_authors() -> Vec<String> {
         key,
         prev
         from ssb",
-        ).unwrap();
+        )
+        .unwrap();
     let ssb_iter = stmt
-        .query_map(&[], |row| Ssb {
+        .query_map(NO_PARAMS, |row| Ssb {
             note_rowid: row.get(0),
             author: row.get(1),
             is_active_author: false, //row.get(2),
@@ -157,7 +164,8 @@ pub fn get_authors() -> Vec<String> {
             ts: row.get(5),
             key: row.get(6),
             prev: row.get(7),
-        }).unwrap();
+        })
+        .unwrap();
     let mut v = Vec::new();
     for ssb in ssb_iter {
         v.push(ssb.unwrap().author)
@@ -206,7 +214,7 @@ pub fn insert_ssb_note_to_db(id: &str, rs: &SsbNote) {
                 &rs.note_comments,
                 &rs.note_annotations,
                 &rs.note_created_at,
-                &rs.is_public,
+                &rs.is_public as &ToSql,
             ],
         ).unwrap();
     }
@@ -216,8 +224,9 @@ pub fn insert_ssb_note_to_db(id: &str, rs: &SsbNote) {
             "
     UPDATE ssb SET is_last_note = 0;
     ",
-            &[],
-        ).unwrap();
+            NO_PARAMS,
+        )
+        .unwrap();
     }
 
     {
@@ -245,8 +254,9 @@ pub fn insert_ssb_note_to_db(id: &str, rs: &SsbNote) {
             );
        COMMIT;
        ",
-            &[&id, &rs.seq, &rs.ts, &rs.key, &rs.prev],
-        ).unwrap();
+            &[&id, &rs.seq as &ToSql, &rs.ts, &rs.key, &rs.prev],
+        )
+        .unwrap();
     }
 
     tx.commit().unwrap();
@@ -264,9 +274,10 @@ pub fn get_ssb_active(conn: &Connection) -> Ssb {
         key,
         prev
         from ssb where is_active_author = 1",
-        ).unwrap();
+        )
+        .unwrap();
     let rs = stmt
-        .query_row(&[], |row| Ssb {
+        .query_row(NO_PARAMS, |row| Ssb {
             note_rowid: row.get(0),
             author: row.get(1),
             is_active_author: row.get(2),
@@ -275,7 +286,8 @@ pub fn get_ssb_active(conn: &Connection) -> Ssb {
             ts: row.get(5),
             key: row.get(6),
             prev: row.get(7),
-        }).unwrap();
+        })
+        .unwrap();
     rs
 }
 
@@ -292,9 +304,10 @@ pub fn get_ssb(conn: &Connection, author: &str) -> Ssb {
         prev
         from ssb where author = '{}'",
             author
-        )).unwrap();
+        ))
+        .unwrap();
     let rs = stmt
-        .query_row(&[], |row| Ssb {
+        .query_row(NO_PARAMS, |row| Ssb {
             note_rowid: row.get(0),
             author: row.get(1),
             is_active_author: row.get(2),
@@ -303,7 +316,8 @@ pub fn get_ssb(conn: &Connection, author: &str) -> Ssb {
             ts: row.get(5),
             key: row.get(6),
             prev: row.get(7),
-        }).unwrap();
+        })
+        .unwrap();
     rs
 }
 
@@ -330,5 +344,6 @@ pub fn init_active_author(conn: &Connection, author: &str) {
             coalesce((select prev from ssb where author = ?1), '')
             )",
         &[&author],
-    ).unwrap();
+    )
+    .unwrap();
 }

@@ -5,7 +5,8 @@ extern crate serde;
 extern crate serde_json;
 use self::linked_hash_set::LinkedHashSet;
 use self::regex::Regex;
-use self::rusqlite::Connection;
+use self::rusqlite::types::ToSql;
+use self::rusqlite::{Connection, NO_PARAMS};
 use super::Note;
 use std::iter::FromIterator;
 
@@ -13,7 +14,7 @@ pub fn count(conn: &Connection, tbl: &str) -> i64 {
     let mut stmt = conn
         .prepare(&format!("select count(1) as cnt from {}", tbl))
         .unwrap();
-    let rs = stmt.query_row(&[], |row| row.get(0)).unwrap();
+    let rs = stmt.query_row(NO_PARAMS, |row| row.get(0)).unwrap();
     rs
 }
 
@@ -38,7 +39,8 @@ pub fn select(conn: &Connection, query: &str) -> String {
             annotations: "".to_string(), //row.get(6),
             created_at: row.get(7),
             is_public: row.get(8),
-        }).unwrap();
+        })
+        .unwrap();
 
     let mut j = "[ ".to_owned();
     for note in note_iter {
@@ -93,7 +95,7 @@ pub fn insert(note: Note) {
                 &note.comments,
                 &note.annotations,
                 &note.created_at,
-                &note.is_public,
+                &note.is_public as &ToSql,
             ],
         ).unwrap();
     }
@@ -104,8 +106,9 @@ pub fn insert(note: Note) {
         UPDATE ssb SET is_last_note = 0
         WHERE is_active_author = 1
         ",
-            &[],
-        ).unwrap();
+            NO_PARAMS,
+        )
+        .unwrap();
     }
     tx.commit().unwrap();
 }
@@ -136,7 +139,8 @@ pub fn create(conn: &Connection) {
          prev               TEXT    NOT NULL
          ) WITHOUT ROWID;
          COMMIT;",
-    ).unwrap();
+    )
+    .unwrap();
 }
 
 pub fn clear(conn: &Connection) {
@@ -146,5 +150,6 @@ pub fn clear(conn: &Connection) {
         drop TABLE IF EXISTS ssb;
         COMMIT;
         ",
-    ).unwrap();
+    )
+    .unwrap();
 }
