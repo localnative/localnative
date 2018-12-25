@@ -1,5 +1,5 @@
 # Local Native App
-version: 0.2.4
+version: 0.3.0
 
 A note/bookmark taking tool to save your notes in a local SQLite database.
 

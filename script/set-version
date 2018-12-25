@@ -10,8 +10,12 @@ echo "set version to" $1
 # rs
 sed -i "6s/.*/version = \"$1\"/" localnative-rs/localnative_core/Cargo.toml
 
+sed -i "6s/.*/version = \"$1\"/" localnative-rs/localnative_ssb/Cargo.toml
+sed -i "13s/.*/version = \"$1\"/" localnative-rs/localnative_ssb/Cargo.toml
+
 sed -i "5s/.*/version = \"$1\"/" localnative-rs/localnative_cli/Cargo.toml
 sed -i "10s/.*/version = \"$1\"/" localnative-rs/localnative_cli/Cargo.toml
+sed -i "14s/.*/version = \"$1\"/" localnative-rs/localnative_cli/Cargo.toml
 
 # web-ext
 sed -i "37s/.*/v$1/" localnative-browser-extension/app/popup.html
