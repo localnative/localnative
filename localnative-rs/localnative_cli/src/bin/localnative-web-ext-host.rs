@@ -3,8 +3,9 @@ use std::io::{Read, Write};
 use std::mem::transmute;
 use std::str;
 extern crate localnative_core;
+extern crate localnative_ssb;
 use localnative_core::exe::run;
-use localnative_core::ssb;
+use localnative_ssb as ssb;
 
 fn main() -> io::Result<()> {
     // Read the message length (first 4 bytes).
@@ -26,7 +27,10 @@ fn main() -> io::Result<()> {
 
     let response = run(text);
     eprintln!("responset {:?}", response);
-    send_message(&response);
+    match send_message(&response) {
+        Ok(_) => (),
+        Err(err) => eprintln!("Error: {:?}", err),
+    };
     ssb::run_sync();
     Ok(())
 }

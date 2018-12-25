@@ -1,0 +1,17 @@
+[package]
+name = "localnative_ssb"
+description = "localnative ssb lib"
+homepage = "https://localnative.app"
+authors = ["Yi Wang"]
+version = "0.2.4"
+license = "AGPL-3.0"
+
+[dependencies]
+serde_json = "1.0.33"
+
+[dependencies.localnative_core]
+version = "0.2.4"
+path = "../localnative_core"
+
+[lib]
+name = "localnative_ssb"

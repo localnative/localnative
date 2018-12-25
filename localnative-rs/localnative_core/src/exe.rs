@@ -1,16 +1,43 @@
-use super::cmd::{create, delete, insert, select};
-use rusqlite::Connection;
-
-use super::ssb;
-use super::Cmd;
-use super::CmdDelete;
-use super::CmdInsert;
-use super::CmdSearch;
-use super::CmdSelect;
-use super::Note;
-
+extern crate dirs;
+extern crate rusqlite;
 extern crate serde_json;
 extern crate time;
+
+use cmd::{create, delete, insert, select};
+use rusqlite::Connection;
+use std::fs;
+use std::path::Path;
+use Cmd;
+use CmdDelete;
+use CmdInsert;
+use CmdSearch;
+use CmdSelect;
+use Note;
+
+pub fn get_sqlite_connection() -> Connection {
+    let p = sqlite3_db_location();
+    let path = Path::new(&p);
+    let conn = Connection::open(path).unwrap();
+    conn
+}
+
+fn sqlite3_db_location() -> String {
+    if cfg!(target_os = "android") {
+        return "/sdcard/localnative.sqlite3".to_string();
+    }
+    let mut dir_name = ".ssb"; // for desktop to co-locate with .ssb
+    if cfg!(target_os = "ios") {
+        dir_name = "Documents";
+    }
+    let dir = format!(
+        "{}/{}",
+        dirs::home_dir().unwrap().to_str().unwrap(),
+        dir_name
+    );
+    eprintln!("db dir location: {}", dir);
+    fs::create_dir_all(&dir).unwrap();
+    format!("{}/localnative.sqlite3", dir)
+}
 
 pub fn run(text: &str) -> String {
     if let Ok(cmd) = serde_json::from_str::<Cmd>(text) {
@@ -22,7 +49,7 @@ pub fn run(text: &str) -> String {
 
 fn process(cmd: Cmd, text: &str) -> String {
     eprintln!("process cmd {:?}", cmd);
-    let conn = ssb::get_sqlite_connection();
+    let conn = get_sqlite_connection();
     create(&conn);
 
     match cmd.action.as_ref() {

@@ -1,11 +1,10 @@
-extern crate rusqlite;
-use super::publish;
-use super::tail;
+extern crate localnative_core;
+use localnative_core::rusqlite;
+use localnative_core::{Note, Ssb, SsbNote};
+use publish;
 use rusqlite::types::ToSql;
 use rusqlite::{Connection, NO_PARAMS};
-use Note;
-use Ssb;
-use SsbNote;
+use tail;
 
 pub fn get_pubkeys(conn: &Connection) -> String {
     let mut stmt = conn

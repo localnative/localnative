@@ -1,40 +1,12 @@
-pub mod sync;
-extern crate rusqlite;
+extern crate localnative_core;
+use localnative_core::rusqlite;
+#[macro_use]
 extern crate serde_json;
-use rusqlite::Connection;
-use std::path::Path;
-use std::process::{Command, Stdio};
-extern crate dirs;
-use std::fs;
+use localnative_core::exe::get_sqlite_connection;
+use localnative_core::{Note, SsbNote, Ssbify};
 use std::io::Write;
-use Note;
-use SsbNote;
-use Ssbify;
-
-pub fn get_sqlite_connection() -> Connection {
-    let p = sqlite3_db_location();
-    let path = Path::new(&p);
-    let conn = Connection::open(path).unwrap();
-    conn
-}
-
-fn sqlite3_db_location() -> String {
-    if cfg!(target_os = "android") {
-        return "/sdcard/localnative.sqlite3".to_string();
-    }
-    let mut dir_name = ".ssb"; // for desktop to co-locate with .ssb
-    if cfg!(target_os = "ios") {
-        dir_name = "Documents";
-    }
-    let dir = format!(
-        "{}/{}",
-        dirs::home_dir().unwrap().to_str().unwrap(),
-        dir_name
-    );
-    eprintln!("db dir location: {}", dir);
-    fs::create_dir_all(&dir).unwrap();
-    format!("{}/localnative.sqlite3", dir)
-}
+use std::process::{Command, Stdio};
+pub mod sync;
 
 pub fn run_sync() {
     let id = whoami();

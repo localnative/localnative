@@ -1,14 +1,10 @@
-extern crate rusqlite;
+pub extern crate rusqlite;
 extern crate serde;
-#[macro_use]
 extern crate serde_json;
-
 #[macro_use]
 extern crate serde_derive;
-
 pub mod cmd;
 pub mod exe;
-pub mod ssb;
 
 // JNI interface for android
 #[cfg(target_os = "android")]

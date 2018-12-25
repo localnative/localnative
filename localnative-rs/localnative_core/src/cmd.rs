@@ -78,7 +78,7 @@ pub fn make_tags(input: &str) -> String {
 }
 
 pub fn insert(note: Note) {
-    let conn = &mut super::ssb::get_sqlite_connection();
+    let conn = &mut super::exe::get_sqlite_connection();
     let tx = conn.transaction().unwrap();
     {
         tx.execute(
