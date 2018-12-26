@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.3.1-rust
+- fix crate-type, all builds works on mac
+
+## v0.3.0-rust
+- extract localnative_ssb as new crate
+
 ## v0.2.4-rust
 - format and dedup tags in rust 
 
