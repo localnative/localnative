@@ -1,0 +1,18 @@
+{
+  "name": "localnaitve-electron",
+  "version": "0.3.1",
+  "description": "localnative electron application",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "keywords": [
+    "localnative",
+    "sqlite"
+  ],
+  "author": "Yi Wang",
+  "license": "AGPL-3.0",
+  "devDependencies": {
+    "electron": "^4.0.0"
+  }
+}
