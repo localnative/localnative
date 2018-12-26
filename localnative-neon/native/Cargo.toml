@@ -1,0 +1,17 @@
+[package]
+name = "localnative-neon"
+version = "0.3.1"
+authors = ["Yi Wang < >"]
+license = "AGPL-3.0"
+build = "build.rs"
+exclude = ["artifacts.json", "index.node"]
+
+[lib]
+name = "localnative_neon"
+crate-type = ["dylib"]
+
+[build-dependencies]
+neon-build = "0.2.0"
+
+[dependencies]
+neon = "0.2.0"

@@ -1,0 +1,14 @@
+{
+  "name": "localnative-neon",
+  "version": "0.3.1",
+  "description": "localnative native node.js modeuls",
+  "main": "lib/index.js",
+  "author": "Yi Wang",
+  "license": "AGPL-3.0",
+  "dependencies": {
+    "neon-cli": "^0.2.0"
+  },
+  "scripts": {
+    "install": "neon build"
+  }
+}
