@@ -14,12 +14,12 @@
   "author": "Yi Wang",
   "license": "AGPL-3.0",
   "devDependencies": {
-    "localnative-neon": "../localnative-neon",
     "electron": "^4.0.0",
     "electron-build-env": "^0.2.0",
     "neon-cli": "^0.2.0"
   },
   "dependencies": {
-    "roddeh-i18n": "^1.1.1"
+    "roddeh-i18n": "^1.1.1",
+    "localnative-neon": "../localnative-neon"
   }
 }
