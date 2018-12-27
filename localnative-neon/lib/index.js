@@ -1,3 +1,4 @@
 var addon = require('../native');
+module.exports = addon.run;
 
-console.log(addon.hello());
+console.log(addon.run(""));

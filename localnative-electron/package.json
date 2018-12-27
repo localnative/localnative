@@ -4,7 +4,8 @@
   "description": "localnative electron application",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "build": "electron-build-env neon build localnative-neon --release"
   },
   "keywords": [
     "localnative",
@@ -13,7 +14,10 @@
   "author": "Yi Wang",
   "license": "AGPL-3.0",
   "devDependencies": {
-    "electron": "^4.0.0"
+    "localnative-neon": "../localnative-neon",
+    "electron": "^4.0.0",
+    "electron-build-env": "^0.2.0",
+    "neon-cli": "^0.2.0"
   },
   "dependencies": {
     "roddeh-i18n": "^1.1.1"

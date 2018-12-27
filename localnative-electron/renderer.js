@@ -1,6 +1,7 @@
 // This file is required by the index.html file and will
 // be executed in the renderer process for that window.
 // All of the Node.js APIs are available in this process.
+let run = require('localnative-neon');
 function statusMessage(text) {
   document.getElementById('status').innerHTML = '';
   document.getElementById('status').insertAdjacentHTML('beforeend', Sanitizer.escapeHTML`<p>${text}</p>`);
@@ -60,18 +61,6 @@ function onNativeMessage(message) {
   });
 }
 
-function onDisconnected() {
-  console.log("Disconnected: " + chrome.runtime.lastError.message);
-}
-
-function connect() {
-  var hostName = "app.localnative";
-  port = chrome.runtime.connectNative(hostName);
-  port.onMessage.addListener(onNativeMessage);
-  port.onDisconnect.addListener(onDisconnected);
-  return port;
-}
-
 function i18nRefresh() {
   document.getElementById('label-ssbify').innerHTML = Sanitizer.escapeHTML`${lc('ssbify')}`;
   document.getElementById('label-public').innerHTML = Sanitizer.escapeHTML`${lc('public')}`;
@@ -100,7 +89,7 @@ document.addEventListener('DOMContentLoaded', function () {
   };
 
   // focus on tags
-  document.getElementById('tags-text').focus();
+  document.getElementById('search-text').focus();
 
   // ssbify
   document.getElementById('ssbify').checked = JSON.parse(localStorage.getItem('ssbify'))
@@ -147,13 +136,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // initial query
   cmdSelect();
-
-  chrome.tabs.query({'active': true, 'lastFocusedWindow': true}, function (tabs) {
-    var title = tabs[0].title;
-    var url = tabs[0].url;
-    document.getElementById('title').value =  title ;
-    document.getElementById('url').value =  url ;
-  });
 
 });
 
@@ -225,8 +207,9 @@ function cmdDelete(rowid) {
 }
 
 function cmd(message){
-  var part = connect();
-  port.postMessage(message);
-  statusMessage(">> " + JSON.stringify(message).substring(0,180) + " ...");
+  let input = JSON.stringify(message);
+  statusMessage(">> " + input.substring(0,180) + " ...");
+  var resp = JSON.parse(run(input));
+  onNativeMessage(resp);
 }
 
