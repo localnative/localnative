@@ -17,6 +17,9 @@ sed -i "5s/.*/version = \"$1\"/" localnative-rs/localnative_cli/Cargo.toml
 sed -i "10s/.*/version = \"$1\"/" localnative-rs/localnative_cli/Cargo.toml
 sed -i "14s/.*/version = \"$1\"/" localnative-rs/localnative_cli/Cargo.toml
 
+# neon
+sed -i "20s/.*/version = \"$1\"/" localnative-neon/native/Cargo.toml
+
 # web-ext
 sed -i "37s/.*/v$1/" localnative-browser-extension/app/popup.html
 sed -i "3s/.*/  \"version\": \"$1\",/" localnative-browser-extension/app/manifest.json
@@ -24,6 +27,7 @@ sed -i "3s/.*/  \"version\": \"$1\",/" localnative-browser-extension/app/manifes
 # js
 sed -i "3s/.*/  \"version\": \"$1\",/" localnative-nodejs/package.json
 sed -i "3s/.*/  \"version\": \"$1\",/" localnative-electron/package.json
+sed -i "3s/.*/  \"version\": \"$1\",/" localnative-neon/package.json
 
 # docs
 sed -i "2s/.*/version: $1/" localnative-app-mdbook/src/localnative-app.md
