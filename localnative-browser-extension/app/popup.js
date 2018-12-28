@@ -193,6 +193,7 @@ function cmdInsert(annotations, is_public) {
 }
 
 function cmdSearch() {
+  document.getElementById('search-text').focus();
   var message = {
     action: "search",
 
