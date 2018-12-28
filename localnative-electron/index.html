@@ -26,6 +26,9 @@
         background-color: #ffffff;
         height: 4px;
       }
+      .hidden{
+        display: none;
+      }
     </style>
     <title>Local Native</title>
   </head>
@@ -40,8 +43,8 @@
         <a href="https://localnative.app" target="_blank">Local Native App</a>
 v0.3.1
         </b>
-        <input type="checkbox" id='ssbify' name="ssbify" value="ssbify"> <label for="ssbify" id="label-ssbify">ssbify</label>
-        <input type="checkbox" id='cb-public' name="public" value="public"> <label for="cb-public" id="label-public">public</label>
+        <input type="checkbox" id='ssbify' name="ssbify" value="ssbify" class="hidden"> <label for="ssbify" id="label-ssbify" class="hidden">ssbify</label>
+        <input type="checkbox" id='cb-public' name="public" value="public" class="hidden"> <label for="cb-public" id="label-public" class="hidden">public</label>
         <span style="float: right"> <span id="label-language">language</span>
           <select id='select-language'>
             <option value="en-US">en-US English - US</option>
@@ -49,10 +52,10 @@ v0.3.1
           </select>
         </span>
       </div>
-      <input class='save-input' id='title' type='text' placeholder='title'/>
-      <input class='save-input' id='url' type='text' placeholder='url'/>
-      <input class='save-input' id='tags-text' type='text' placeholder='type to add tags, enter to save, comma or space as tag seperator'/>
-      <input class='save-input' id='desc-text' type='text' placeholder='description'/>
+      <input class='save-input hidden' id='title' type='text' placeholder='title'/>
+      <input class='save-input hidden' id='url' type='text' placeholder='url'/>
+      <input class='save-input hidden' id='tags-text' type='text' placeholder='type to add tags, enter to save, comma or space as tag seperator'/>
+      <input class='save-input hidden' id='desc-text' type='text' placeholder='description'/>
 
 
     </div>
