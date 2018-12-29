@@ -9,6 +9,15 @@ function createWindow () {
   // Create the browser window.
   mainWindow = new BrowserWindow({width: 800, height: 600})
 
+  // set title
+  let title = "Local Native - Node.js " + process.versions.node +
+    " Chromium " + process.versions.chrome +
+    " Electron " + process.versions.electron
+  mainWindow.setTitle(title)
+  mainWindow.on('page-title-updated', function(e) {
+    e.preventDefault()
+  });
+
   // and load the index.html of the app.
   mainWindow.loadFile('src/index.html')
 
