@@ -4,6 +4,14 @@ appId: app.localnative.mac
 productName: 'Local Native'
 files:
   - src/
+linux:
+  category: Utility
+  icon: resources/512x512.png
+  desktop:
+    Type: Application
+    Name: 'Local Native'
+  target:
+    - AppImage
 mac:
   category: public.app-category.productivity
   entitlements: build/entitlements.mac.plist
