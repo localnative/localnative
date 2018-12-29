@@ -2,7 +2,7 @@
   "name": "localnaitve-electron",
   "version": "0.3.1",
   "description": "localnative electron application",
-  "main": "main.js",
+  "main": "src/main.js",
   "scripts": {
     "start": "electron .",
     "build": "electron-build-env neon build localnative-neon --release"
