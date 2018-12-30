@@ -1,87 +1,26 @@
 # Release
-## ios
-[https://itunes.apple.com/us/app/local-native/id1443968309](https://itunes.apple.com/us/app/local-native/id1443968309)
-## android
-[https://play.google.com/store/apps/details?id=app.localnative](https://play.google.com/store/apps/details?id=app.localnative)
+
+## versions with checksums
+[https://gitlab.com/yiwang/localnative-release](https://gitlab.com/yiwang/localnative-release)
+
+## mobile
+ios [https://itunes.apple.com/us/app/local-native/id1443968309](https://itunes.apple.com/us/app/local-native/id1443968309)
+
+android [https://play.google.com/store/apps/details?id=app.localnative](https://play.google.com/store/apps/details?id=app.localnative)
+
 ## npm
 [https://www.npmjs.com/package/localnative](https://www.npmjs.com/package/localnative)
+
+[https://www.npmjs.com/package/localnative-neon](https://www.npmjs.com/package/localnative-neon)
+
 ## rust crates
 [https://crates.io/crates/localnative_cli](https://crates.io/crates/localnative_cli) - web extension host
 
 [https://crates.io/crates/localnative_core](https://crates.io/crates/localnative_core)
-## firefox addon
-[https://addons.mozilla.org/en-US/firefox/addon/localnative/](https://addons.mozilla.org/en-US/firefox/addon/localnative/)
-## chrome extension
-[https://chrome.google.com/webstore/detail/local-native/oclkmkeameccmgnajgogjlhdjeaconnb](https://chrome.google.com/webstore/detail/local-native/oclkmkeameccmgnajgogjlhdjeaconnb)
-### gnu/linux binaries of web extension host
-https://localnative.app/release/vX.Y.Z/web-ext-host/localnative-web-ext-host-X.Y.Z
-```
-release
-├── [       4096]  v0.0.1
-│   └── [       4096]  web-ext-host
-│       ├── [    5656824]  localnative-web-ext-host-0.0.1
-│       ├── [         65]  localnative-web-ext-host-0.0.1.md5
-│       └── [         97]  localnative-web-ext-host-0.0.1.sha256
-├── [       4096]  v0.0.2
-│   └── [       4096]  web-ext-host
-│       ├── [    5667040]  localnative-web-ext-host-0.0.2
-│       ├── [         65]  localnative-web-ext-host-0.0.2.md5
-│       └── [         97]  localnative-web-ext-host-0.0.2.sha256
-├── [       4096]  v0.1.0
-│   └── [       4096]  web-ext-host
-│       ├── [    5840840]  localnative-web-ext-host-0.1.0
-│       ├── [         65]  localnative-web-ext-host-0.1.0.md5
-│       └── [         97]  localnative-web-ext-host-0.1.0.sha256
-├── [       4096]  v0.1.1
-│   └── [       4096]  web-ext-host
-│       ├── [    5847912]  localnative-web-ext-host-0.1.1
-│       ├── [         65]  localnative-web-ext-host-0.1.1.md5
-│       └── [         97]  localnative-web-ext-host-0.1.1.sha256
-├── [       4096]  v0.1.2
-│   └── [       4096]  web-ext-host
-│       ├── [    5857136]  localnative-web-ext-host-0.1.2
-│       ├── [         65]  localnative-web-ext-host-0.1.2.md5
-│       └── [         97]  localnative-web-ext-host-0.1.2.sha256
-├── [       4096]  v0.1.3
-│   └── [       4096]  web-ext-host
-│       ├── [    5857264]  localnative-web-ext-host-0.1.3
-│       ├── [         65]  localnative-web-ext-host-0.1.3.md5
-│       └── [         97]  localnative-web-ext-host-0.1.3.sha256
-├── [       4096]  v0.1.4
-│   └── [       4096]  web-ext-host
-│       ├── [    5857064]  localnative-web-ext-host-0.1.4
-│       ├── [         65]  localnative-web-ext-host-0.1.4.md5
-│       └── [         97]  localnative-web-ext-host-0.1.4.sha256
-├── [       4096]  v0.1.5
-│   └── [       4096]  web-ext-host
-│       ├── [    5857344]  localnative-web-ext-host-0.1.5
-│       ├── [         65]  localnative-web-ext-host-0.1.5.md5
-│       └── [         97]  localnative-web-ext-host-0.1.5.sha256
-├── [       4096]  v0.2.0
-│   └── [       4096]  web-ext-host
-│       ├── [    5861624]  localnative-web-ext-host-0.2.0
-│       ├── [         65]  localnative-web-ext-host-0.2.0.md5
-│       └── [         97]  localnative-web-ext-host-0.2.0.sha256
-├── [       4096]  v0.2.4
-│   └── [       4096]  web-ext-host
-│       ├── [    5861624]  localnative-web-ext-host-0.2.4
-│       ├── [         65]  localnative-web-ext-host-0.2.4.md5
-│       └── [         97]  localnative-web-ext-host-0.2.4.sha256
-├── [       4096]  v0.3.0
-│   └── [       4096]  web-ext-host
-│       ├── [    5861624]  localnative-web-ext-host-0.3.0
-│       ├── [         65]  localnative-web-ext-host-0.3.0.md5
-│       └── [         97]  localnative-web-ext-host-0.3.0.sha256
-├── [       4096]  v0.3.1
-│   └── [       4096]  web-ext-host
-│       ├── [    5861624]  localnative-web-ext-host-0.3.1
-│       ├── [         65]  localnative-web-ext-host-0.3.1.md5
-│       └── [         97]  localnative-web-ext-host-0.3.1.sha256
-└── [       4096]  v0.3.2
-    └── [       4096]  web-ext-host
-        ├── [    5861624]  localnative-web-ext-host-0.3.2
-        ├── [         65]  localnative-web-ext-host-0.3.2.md5
-        └── [         97]  localnative-web-ext-host-0.3.2.sha256
 
-26 directories, 39 files
-```
+[https://crates.io/crates/localnative_core](https://crates.io/crates/localnative_ssb)
+
+## browser extension
+firefox addon [https://addons.mozilla.org/en-US/firefox/addon/localnative/](https://addons.mozilla.org/en-US/firefox/addon/localnative/)
+
+chrome extension [https://chrome.google.com/webstore/detail/local-native/oclkmkeameccmgnajgogjlhdjeaconnb](https://chrome.google.com/webstore/detail/local-native/oclkmkeameccmgnajgogjlhdjeaconnb)
