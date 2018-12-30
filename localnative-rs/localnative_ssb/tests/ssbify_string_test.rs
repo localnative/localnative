@@ -1,5 +1,5 @@
-extern crate localnative_core;
-use localnative_core::ssb::ssbify;
+extern crate localnative_ssb;
+use localnative_ssb::ssbify;
 
 #[test]
 fn test_ssbify_bom() {

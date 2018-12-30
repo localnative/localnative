@@ -1,14 +1,15 @@
 extern crate localnative_core;
-extern crate rusqlite;
+extern crate localnative_ssb;
 extern crate time;
-use localnative_core::Note;
-
 use localnative_core::cmd::{clear, count, create, delete, insert, select};
-use localnative_core::ssb::sync::{
+use localnative_core::exe::get_sqlite_connection;
+use localnative_core::rusqlite;
+use localnative_core::Note;
+use localnative_ssb::sync::{
     get_note_to_publish, get_pubkeys, get_ssb, get_ssb_active, init_active_author,
     insert_ssb_note_to_db, sync_all_to_db, sync_one_to_db, sync_to_ssb,
 };
-use localnative_core::ssb::{get_sqlite_connection, publish, tail, whoami};
+use localnative_ssb::{publish, tail, whoami};
 use rusqlite::Connection;
 
 fn prepare_test_db() -> Connection {
