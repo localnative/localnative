@@ -17,5 +17,5 @@ neon-build = "0.2.0"
 neon = "0.2.0"
 
 [dependencies.localnative_core]
-version = "0.3.1"
+version = "0.3.2"
 path = "../../localnative-rs/localnative_core"

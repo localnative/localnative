@@ -3,14 +3,14 @@ name = "localnative_ssb"
 description = "localnative ssb lib"
 homepage = "https://localnative.app"
 authors = ["Yi Wang"]
-version = "0.3.1"
+version = "0.3.2"
 license = "AGPL-3.0"
 
 [dependencies]
 serde_json = "1.0.33"
 
 [dependencies.localnative_core]
-version = "0.3.1"
+version = "0.3.2"
 path = "../localnative_core"
 
 [lib]

@@ -1,6 +1,6 @@
 {
   "name": "localnaitve-electron",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "localnative electron application",
   "main": "src/main.js",
   "scripts": {

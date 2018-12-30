@@ -18,3 +18,11 @@ mac:
   icon: resources/app.icns
   target:
     - dmg
+    - mas
+mas:
+  type: distribution
+  category: public.app-category.productivity
+  entitlements: build/entitlements.mas.plist
+  icon: resources/app.icns
+  provisioningProfile: embedded.provisionprofile
+  binaries: ["node_modules/localnative-neon/native/index.node"]
