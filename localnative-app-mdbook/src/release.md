@@ -62,11 +62,26 @@ release
 │       ├── [    5861624]  localnative-web-ext-host-0.2.0
 │       ├── [         65]  localnative-web-ext-host-0.2.0.md5
 │       └── [         97]  localnative-web-ext-host-0.2.0.sha256
-└── [       4096]  v0.2.4
+├── [       4096]  v0.2.4
+│   └── [       4096]  web-ext-host
+│       ├── [    5861624]  localnative-web-ext-host-0.2.4
+│       ├── [         65]  localnative-web-ext-host-0.2.4.md5
+│       └── [         97]  localnative-web-ext-host-0.2.4.sha256
+├── [       4096]  v0.3.0
+│   └── [       4096]  web-ext-host
+│       ├── [    5861624]  localnative-web-ext-host-0.3.0
+│       ├── [         65]  localnative-web-ext-host-0.3.0.md5
+│       └── [         97]  localnative-web-ext-host-0.3.0.sha256
+├── [       4096]  v0.3.1
+│   └── [       4096]  web-ext-host
+│       ├── [    5861624]  localnative-web-ext-host-0.3.1
+│       ├── [         65]  localnative-web-ext-host-0.3.1.md5
+│       └── [         97]  localnative-web-ext-host-0.3.1.sha256
+└── [       4096]  v0.3.2
     └── [       4096]  web-ext-host
-        ├── [    5861624]  localnative-web-ext-host-0.2.4
-        ├── [         65]  localnative-web-ext-host-0.2.4.md5
-        └── [         97]  localnative-web-ext-host-0.2.4.sha256
+        ├── [    5861624]  localnative-web-ext-host-0.3.2
+        ├── [         65]  localnative-web-ext-host-0.3.2.md5
+        └── [         97]  localnative-web-ext-host-0.3.2.sha256
 
-20 directories, 30 files
+26 directories, 39 files
 ```
