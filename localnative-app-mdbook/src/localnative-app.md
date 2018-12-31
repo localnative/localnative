@@ -1,126 +1,28 @@
 # Local Native App
-version: 0.3.2
+<script defer src="https://use.fontawesome.com/releases/v5.6.3/js/all.js" integrity="sha384-EIHISlAOj4zgYieurP0SdoiBYfGJKkgWedPHH4jCzpCXLmzVsw1ouK59MuUtP4a1" crossorigin="anonymous"></script>
 
-A note/bookmark taking tool to save your notes in a local SQLite database.
+## Installer
+| ios | android | firefox<br>addon | chrome<br>extension | gnu<br>linux | mac | 
+|-----|---------|------------------|---------------------|--------------|-----|
+| [<i class="fab fa-apple fa-3x"></i>](https://itunes.apple.com/us/app/local-native/id1443968309) | [<i class="fab fa-android fa-3x"></i>](https://play.google.com/store/apps/details?id=app.localnative) | [<i class="fab fa-firefox fa-3x"></i>](https://addons.mozilla.org/en-US/firefox/addon/localnative/) | [<i class="fab fa-chrome fa-3x"></i>](https://chrome.google.com/webstore/detail/local-native/oclkmkeameccmgnajgogjlhdjeaconnb) | [<i class="fab fa-linux fa-3x"></i>](https://gitlab.com/yiwang/localnative-release/tree/master/v0.3.2/gnu-linux) | [<i class="fab fa-app-store fa-3x"></i>](https://gitlab.com/yiwang/localnative-release/tree/master/v0.3.2/mac) |
 
-## iOS App
-[App Store](https://itunes.apple.com/us/app/local-native/id1443968309?ls=1&mt=8)
+[iOS video](https://youtu.be/3dhB5gTtXNM)
+<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/3dhB5gTtXNM" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
-[Video](https://youtu.be/3dhB5gTtXNM)
+## Own your data on your device
+[Local Native App](https://localnative.app) is a cross-platform tool to save and sync your notes in local SQLite database without going through any centralized service.
 
-You can copy the SQLite database file from an iOS device to desktop device via [File Sharing](https://support.apple.com/en-us/HT201301) and vice versa.
+You can copy the SQLite database file from mobile device to desktop device via [File Sharing](https://support.apple.com/en-us/HT201301) and vice versa.
 
-## Android App
-[Google Play](https://play.google.com/store/apps/details?id=app.localnative)
-
-You can copy the SQLite database file from an android device to desktop device and vice versa.
-
-## Web extension
+### sync via ssb
 On desktop, with proper web extension and host setup, you can replicate your data with other devices via [ssb](https://www.scuttlebutt.nz) [protocal](https://ssbc.github.io/scuttlebutt-protocol-guide/).
 
 By default, note is your private message in ssb, you can also publish public note to ssb if you explictly choose so.
 
+## Screenshot
+### Web extension
 ![Local Native web extension popup screenshot](./img/localnative-web-ext-popup.png)
 
-## Search your notes
+### Search your notes in patchbay
 ![Local Native patchbay screenshot](./img/localnative-ssb-patchbay.png)
-
-## (not so) Quick start
-It is developer friendly now, and requires some fiddling.
-
-Below componets must all exist and correctly setup.
-
-#### Install browser extension
-- from browser extension site
-  - [Firefox Add-on](https://addons.mozilla.org/addon/localnative/)
-  - [Chrome Extension](https://chrome.google.com/webstore/detail/local-native/oclkmkeameccmgnajgogjlhdjeaconnb)
-
-- or from source
-```
-git clone https://gitlab.com/yiwang/localnative.git
-cd localnative-browser-extension/app
-npm i -g web-ext
-web-ext run --verbose # firefox
-```
-
-#### Setup browser extension host binary
-- use `cargo install localnative_cli`, and find the binary at `~/.cargo/bin/localnative-web-ext-host`
-
-- or build from source, via [cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html)
-```
-cd localnative-rs
-cargo build
-```
-- or download from [release archive](https://localnative.app/release.html)
-
-#### Setup native messaging manifest to point to extension host binary
-- Copy manifest json template file `app.localnative.json` from `localnative-browser-extension/host` to your browser's specific manifest location
-    - [Firefox](https://developer.mozilla.org/en-US/Add-ons/WebExtensions/Native_manifests#Manifest_location)
-    - [Chrome](https://developer.chrome.com/extensions/nativeMessaging#native-messaging-host-location)
-- Change the host `path` in `app.localnative.json` to where `localnative-web-ext-host` binary is from previous step
-
-##### Firefox example manifest file
-`~/.mozilla/native-messaging-hosts/app.localnative.json`
-```
-{
-  "name": "app.localnative",
-  "description": "Local Native Host",
-  "path": "/home/USER/.cargo/bin/localnative-web-ext-host",
-  "type": "stdio",
-  "allowed_extensions": [
-    "localnative@example.org"
-  ]
-}
-```
-
-##### Chromium example manifest file
-` ~/.config/chromium/NativeMessagingHosts/app.localnative.json`
-```
-{
-  "name": "app.localnative",
-  "description": "Local Native Host",
-  "path": "/home/USER/.cargo/bin/localnative-web-ext-host",
-  "type": "stdio",
-  "allowed_origins": [
-    // use this ID if you install from chrome web store,
-    // or add/change to what the actual ID is if you "LOAD UNPACKED" from source.
-    "chrome-extension://oclkmkeameccmgnajgogjlhdjeaconnb/"
-  ]
-}
-```
-
-
-#### Setup Node.js global binaries
-currently the rust host binary calls some node.js binaries for ssb work, so
-
-```
-npm i -g localnative
-```
-the host may not know the global node bin path, so cd to where you node global bin directory, and
-```
-(sudo) ln -s localnative-ssb* /usr/local/bin/
-```
-
-
-#### Start a sbot server
-The web extension send message to `localnative-web-ext-host` and writes new note to sqlite first, then response to display the search result, and finally try to sync with ssb. If sbot server is not running, the host will not sync with ssb at that time.
-
-So use those softwares:
-
-[Patchwork](https://github.com/ssbc/patchwork/releases) simpler user friendly UI.
-
-[Patchbay](https://github.com/ssbc/patchbay/releases) more advanced, and show the `raw` json of each message for easiler debugging, combined with custom filter and good enough free text search.
-
-#### Database
-
-If above things are correctly setup, `localnative.sqlite3` database file is created at the directory `~/.ssb/localnative.sqlite3` the first time you click the web ext popup.
-
-hint to see what `localnative-web-ext-host` went wrong:
-```
-RUST_BACKTRACE=1 chromium-browser
-RUST_BACKTRACE=1 web-ext run --verbose
-```
-
-You can use [DB Browser for SQLite](http://sqlitebrowser.org/) to explore the database, and adding other device's ssb public key as `author` in the `ssb` table.
-
 

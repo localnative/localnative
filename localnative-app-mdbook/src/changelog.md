@@ -12,6 +12,9 @@
 ## v0.3.2-rust
 - same as v0.3.1-rust and v0.3.0-rust
 
+## v0.3.2-npm
+- upgrade package.json dependencies
+
 ## v0.3.2-mas-pkg
 - electron mac app store build but got rejected
 
