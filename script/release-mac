@@ -1,0 +1,22 @@
+#!/bin/bash
+
+set -e
+
+cd `dirname $0`/..
+
+script/set-version $1
+echo "release electron version" $1
+
+cd localnative-electron
+rm -rf node_modules/localnative-neon/native/target
+electron-builder .
+
+DIR="../../localnative-release/v$1/mac/"
+mkdir -p $DIR
+FILE="Local Native-$1.dmg"
+cp "release/$FILE" $DIR/
+cd $DIR
+shasum -a 256 "$FILE" > "$FILE.sha256"
+md5 "$FILE" > "$FILE.md5"
+
+
