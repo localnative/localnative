@@ -1,10 +1,29 @@
 # Changelog
 
+## v0.4.0
+- consolidate localnative-nodejs into only one binary
+
+## v0.3.2-appimage
+- electron gnu/linux desktop build
+
+## v0.3.2-neon
+- nodejs to rust bridge used in electron
+
+## v0.3.2-rust
+- same as v0.3.1-rust and v0.3.0-rust
+
+## v0.3.2-mas-pkg
+- electron mac app store build but got rejected
+
 ## v0.3.1-rust
-- fix crate-type, all builds works on mac
+- fix crate-type, all rust builds works on mac
 
 ## v0.3.0-rust
 - extract localnative_ssb as new crate
+
+## v0.2.4-ios
+- move cancel and save button down
+- upgrade rusqlite to 0.16.0 etc
 
 ## v0.2.4-rust
 - format and dedup tags in rust 
