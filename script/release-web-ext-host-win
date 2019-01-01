@@ -1,0 +1,23 @@
+#!/bin/bash
+
+set -e
+
+cd `dirname $0`/..
+
+script/set-version $1
+echo "release web-ext-host version" $1
+
+
+cd localnative-rs/localnative_cli
+cargo build --release
+
+cd ../..
+
+DIR="../localnative-release/v$1/web-ext-host"
+mkdir -p $DIR
+
+cp localnative-rs/localnative_cli/target/release/localnative-web-ext-host.exe $DIR/localnative-web-ext-host-$1.exe
+cd $DIR
+sha256sum localnative-web-ext-host-$1.exe > localnative-web-ext-host-$1.exe.sha256
+md5sum localnative-web-ext-host-$1.exe > localnative-web-ext-host-$1.exe.md5
+
