@@ -1,3 +1,4 @@
+localnative-web-ext-host*
 package-lock.json
 native/target
 native/index.node

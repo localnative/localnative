@@ -16,8 +16,10 @@ cd ../..
 DIR="../localnative-release/v$1/web-ext-host"
 mkdir -p $DIR
 
-cp localnative-rs/localnative_cli/target/release/localnative-web-ext-host $DIR/localnative-web-ext-host-$1
+FILE="localnative-web-ext-host-$1-gnu-linux"
+cp localnative-rs/localnative_cli/target/release/localnative-web-ext-host $DIR/$FILE
 cd $DIR
-sha256sum localnative-web-ext-host-$1 > localnative-web-ext-host-$1.sha256
-md5sum localnative-web-ext-host-$1 > localnative-web-ext-host-$1.md5
+sha256sum $FILE > $FILE.sha256
+md5sum $FILE > $FILE.md5
 
+cp $FILE ../../../localnative/localnative-neon/lib

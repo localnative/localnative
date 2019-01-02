@@ -1,10 +1,11 @@
 // This file is required by the index.html file and will
 // be executed in the renderer process for that window.
 // All of the Node.js APIs are available in this process.
-let run = require('localnative-neon');
+let neon = require('localnative-neon');
+
 function statusMessage(text) {
   document.getElementById('status').innerHTML = '';
-  document.getElementById('status').insertAdjacentHTML('beforeend', Sanitizer.escapeHTML`<p>${text}</p>`);
+  document.getElementById('status').insertAdjacentHTML('beforeend', Sanitizer.escapeHTML`${neon.dir}<p>${text}</p>`);
 }
 
 function onNativeMessage(message) {
@@ -74,8 +75,6 @@ function i18nRefresh() {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-  console.log("DOM");
-
   // i18n
   let lang = localStorage.getItem('lang') || navigator.language;
   document.getElementById('select-language').value = locales[lang]? lang: 'en-US';
@@ -219,7 +218,7 @@ function cmdDelete(rowid) {
 function cmd(message){
   let input = JSON.stringify(message);
   statusMessage(">> " + input.substring(0,180) + " ...");
-  var resp = JSON.parse(run(input));
+  var resp = JSON.parse(neon.run(input));
   onNativeMessage(resp);
 }
 
