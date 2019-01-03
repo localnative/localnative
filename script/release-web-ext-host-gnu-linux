@@ -22,4 +22,5 @@ cd $DIR
 sha256sum $FILE > $FILE.sha256
 md5sum $FILE > $FILE.md5
 
+rm ../../../localnative/localnative-neon/lib/localnative-web-ext-host*
 cp $FILE ../../../localnative/localnative-neon/lib
