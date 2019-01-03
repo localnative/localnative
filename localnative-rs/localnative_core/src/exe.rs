@@ -25,7 +25,7 @@ fn sqlite3_db_location() -> String {
     if cfg!(target_os = "android") {
         return "/sdcard/localnative.sqlite3".to_string();
     }
-    let mut dir_name = ".ssb"; // for desktop to co-locate with .ssb
+    let mut dir_name = "LocalNative";
     if cfg!(target_os = "ios") {
         dir_name = "Documents";
     }

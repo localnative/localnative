@@ -14,8 +14,9 @@ let fs = require('fs');
 
 // create dir
 const home = require('os').homedir();
-const dir = home +'/.localnative';
+const dir = home +'/LocalNative';
 const dirBin = dir + '/bin';
+const dirConfig = dir + '/config';
 if (!fs.existsSync(dir)){
   fs.mkdirSync(dir, {recursive: true});
 }
@@ -23,6 +24,7 @@ if (!fs.existsSync(dir)){
 if (!fs.existsSync(dirBin)){
   fs.mkdirSync(dirBin, {recursive: true});
 }
+
 
 // copy file
 let fileName = 'localnative-web-ext-host' + '-' + version + platform;
@@ -60,8 +62,11 @@ if (platform == '-mac') {
   pathChrome = home + '/Library/Application Support/Google/Chrome/NativeMessagingHosts/app.localnative.json'
 }
 if (platform == '.exe'){
-  pathMozilla = home + '/.localnative/app.localnative.firefox.json'
-  pathChrome = home + '/.localnative/app.localnative.chrome.json'
+  if (!fs.existsSync(dirConfig)){
+    fs.mkdirSync(dirConfig, {recursive: true});
+  }
+  pathMozilla = dirConfig + '/app.localnative.firefox.json'
+  pathChrome = dirConfig + '/app.localnative.chrome.json'
 }
 fs.writeFileSync(pathMozilla, JSON.stringify(jsonMozilla, null, 2))
 fs.writeFileSync(pathChrome, JSON.stringify(jsonChrome, null, 2))
