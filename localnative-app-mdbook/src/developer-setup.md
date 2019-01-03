@@ -15,14 +15,16 @@ web-ext run --verbose # firefox
 ```
 
 #### Setup browser extension host binary
-- use `cargo install localnative_cli`, and find the binary at `~/.cargo/bin/localnative-web-ext-host`
+- Download and run the desktop applcation from [release archive](https://gitlab.com/yiwang/localnative-release)
+
+    this will create `~/LocalNative/bin` directory containing the host binary
+- or use `cargo install localnative_cli`, and find the binary at `~/.cargo/bin/localnative-web-ext-host`
 
 - or build from source, via [cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html)
 ```
 cd localnative-rs
 cargo build
 ```
-- or download from [release archive](https://gitlab.com/yiwang/localnative-release)
 
 #### Setup native messaging manifest to point to extension host binary
 - Copy manifest json template file `app.localnative.json` from `localnative-browser-extension/host` to your browser's specific manifest location

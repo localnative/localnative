@@ -1,6 +1,8 @@
 # Changelog
 
-## v0.4.0
+## v0.3.3
+- package web host inside electron and setup manifest
+- change path to ~/LocalNative
 - consolidate localnative-nodejs into only one binary
 
 ## v0.3.2-appimage
