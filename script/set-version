@@ -17,17 +17,21 @@ sed -i "5s/.*/version = \"$1\"/" localnative-rs/localnative_cli/Cargo.toml
 sed -i "10s/.*/version = \"$1\"/" localnative-rs/localnative_cli/Cargo.toml
 sed -i "14s/.*/version = \"$1\"/" localnative-rs/localnative_cli/Cargo.toml
 
+# electron
+sed -i "3s/.*/  \"version\": \"$1\",/" localnative-electron/package.json
+sed -i "1s/.*/const version = \"$1\"/" localnative-electron/src/main.js
+
 # neon
+sed -i "3s/.*/  \"version\": \"$1\",/" localnative-neon/package.json
+sed -i "1s/.*/let version = '$1'/" localnative-neon/lib/index.js
+sed -i "3s/.*/version = \"$1\"/" localnative-neon/native/Cargo.toml
 sed -i "20s/.*/version = \"$1\"/" localnative-neon/native/Cargo.toml
 
 # web-ext
 sed -i "37s/.*/v$1/" localnative-browser-extension/app/popup.html
 sed -i "3s/.*/  \"version\": \"$1\",/" localnative-browser-extension/app/manifest.json
 
-# js
+# nodejs
 sed -i "3s/.*/  \"version\": \"$1\",/" localnative-nodejs/package.json
-sed -i "3s/.*/  \"version\": \"$1\",/" localnative-electron/package.json
-sed -i "3s/.*/  \"version\": \"$1\",/" localnative-neon/package.json
 
-sed -i "1s/.*/let version = '$1'/" localnative-neon/lib/index.js
 

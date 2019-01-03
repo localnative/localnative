@@ -1,3 +1,4 @@
+const version = "0.3.3"
 // Modules to control application life and create native browser window
 const {app, BrowserWindow} = require('electron')
 
@@ -10,7 +11,8 @@ function createWindow () {
   mainWindow = new BrowserWindow({width: 800, height: 600})
 
   // set title
-  let title = "Local Native - Node.js " + process.versions.node +
+  let title = "Local Native v" + version +
+    " - Node.js " + process.versions.node +
     " Chromium " + process.versions.chrome +
     " Electron " + process.versions.electron
   mainWindow.setTitle(title)
