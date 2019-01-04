@@ -1,0 +1,12 @@
+#!/bin/bash
+
+set -e
+
+cd `dirname $0`/..
+
+script/set-version $1
+echo "pkg localnative-nodejs version" $1
+
+rm -f localnative-neon/lib/localnative-nodejs*
+pkg localnative-nodejs -o localnative-neon/lib/localnative-nodejs-$1
+

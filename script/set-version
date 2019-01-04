@@ -17,6 +17,8 @@ sed -i "5s/.*/version = \"$1\"/" localnative-rs/localnative_cli/Cargo.toml
 sed -i "10s/.*/version = \"$1\"/" localnative-rs/localnative_cli/Cargo.toml
 sed -i "14s/.*/version = \"$1\"/" localnative-rs/localnative_cli/Cargo.toml
 
+sed -i "16s/.*/        \"$1\"/" localnative-rs/localnative_ssb/src/lib.rs
+
 # electron
 sed -i "3s/.*/  \"version\": \"$1\",/" localnative-electron/package.json
 sed -i "1s/.*/const version = \"$1\"/" localnative-electron/src/main.js
@@ -33,5 +35,4 @@ sed -i "3s/.*/  \"version\": \"$1\",/" localnative-browser-extension/app/manifes
 
 # nodejs
 sed -i "3s/.*/  \"version\": \"$1\",/" localnative-nodejs/package.json
-
 

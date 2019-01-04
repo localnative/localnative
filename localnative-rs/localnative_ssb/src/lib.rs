@@ -1,4 +1,5 @@
 extern crate localnative_core;
+use localnative_core::dirs;
 use localnative_core::rusqlite;
 #[macro_use]
 extern crate serde_json;
@@ -7,6 +8,14 @@ use localnative_core::{Note, SsbNote, Ssbify};
 use std::io::Write;
 use std::process::{Command, Stdio};
 pub mod sync;
+
+fn get_ssb_cli_path() -> String {
+    format!(
+        "{}/LocalNative/bin/localnative-nodejs-{}",
+        dirs::home_dir().unwrap().to_str().unwrap(),
+        "0.3.3"
+    )
+}
 
 pub fn run_sync() {
     let id = whoami();
@@ -17,7 +26,7 @@ pub fn run_sync() {
 }
 
 pub fn ssbify(content: &str, title: &str, url: &str) -> Option<Ssbify> {
-    let mut child = Command::new("localnative-nodejs")
+    let mut child = Command::new(get_ssb_cli_path())
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -54,7 +63,7 @@ pub fn ssbify(content: &str, title: &str, url: &str) -> Option<Ssbify> {
 }
 
 pub fn whoami() -> String {
-    let output = Command::new("localnative-nodejs")
+    let output = Command::new(get_ssb_cli_path())
         .arg("ssb-whoami")
         .output()
         .expect("failed to execute process");
@@ -70,7 +79,7 @@ pub fn whoami() -> String {
 }
 
 pub fn tail(id: &str, gt: i64) -> Option<SsbNote> {
-    let output = Command::new("localnative-nodejs")
+    let output = Command::new(get_ssb_cli_path())
         .arg("ssb-tail")
         .arg(id)
         .arg(gt.to_string())
@@ -118,7 +127,7 @@ pub fn publish2(note: Note, hash: &str, markdown: &str, pubkeys: &str, size: usi
 
     // eprintln!("node_json: {}", note_json);
 
-    let mut child = Command::new("localnative-nodejs")
+    let mut child = Command::new(get_ssb_cli_path())
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())

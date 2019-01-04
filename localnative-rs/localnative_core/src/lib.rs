@@ -1,4 +1,5 @@
 pub extern crate rusqlite;
+pub extern crate dirs;
 extern crate serde;
 extern crate serde_json;
 #[macro_use]

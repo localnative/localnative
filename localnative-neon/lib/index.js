@@ -26,12 +26,19 @@ if (!fs.existsSync(dirBin)){
 }
 
 
-// copy file
-let fileName = 'localnative-web-ext-host' + '-' + version + platform;
-let webExtSource = __dirname + '/' + fileName;
-let webExtTarget = dirBin + '/' + fileName;
+// copy binary files
+let webExtFileName = 'localnative-web-ext-host' + '-' + version + platform;
+let webExtSource = __dirname + '/' + webExtFileName;
+let webExtTarget = dirBin + '/' + webExtFileName;
 if (!fs.existsSync(webExtTarget)){
   fs.copyFileSync(webExtSource, webExtTarget);
+}
+
+let NodePkgFileName = 'localnative-nodejs' + '-' + version;
+let NodePkgSource = __dirname + '/' + NodePkgFileName;
+let NodePkgTarget = dirBin + '/' + NodePkgFileName;
+if (!fs.existsSync(NodePkgTarget)){
+  fs.copyFileSync(NodePkgSource, NodePkgTarget);
 }
 
 // create manifest
