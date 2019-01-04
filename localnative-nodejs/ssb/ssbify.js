@@ -25,25 +25,26 @@ var ssbClient = require('ssb-client')
 var ssbifyString = require('./ssbify-bom.js')
 const fs = require("fs")
 
-if (!process.argv[2]) {
-  console.error('usage: ssbify <string of valid HTML>')
-  process.exit(1)
-}
-
-ssbClient(function (err, sbot) {
-  if (err) throw err
-  var html = process.argv[2]
-  if (html === '-'){
-    html = fs.readFileSync("/dev/stdin", "utf-8")
+module.exports =  function(html, title, url){
+  if (!html) {
+    console.error('usage: ssbify <string of valid HTML>')
+    process.exit(1)
   }
-  ssbifyString(sbot, html,
-               { ignoreBrokenLinks: true,
-                 title: process.argv[3] || 'untitled snippet',
-                 url: process.argv[4] || ''
-               },
-               function (err, res) {
-                 if (err) throw err
-                 console.log(JSON.stringify(res))
-                 process.exit(0)
-               })
-})
+
+  ssbClient(function (err, sbot) {
+    if (err) throw err
+    if (html === '-'){
+      html = fs.readFileSync("/dev/stdin", "utf-8")
+    }
+    ssbifyString(sbot, html,
+                 { ignoreBrokenLinks: true,
+                   title: title || 'Untitled',
+                   url: url || ''
+                 },
+                 function (err, res) {
+                   if (err) throw err
+                   console.log(JSON.stringify(res))
+                   process.exit(0)
+                 })
+  })
+}

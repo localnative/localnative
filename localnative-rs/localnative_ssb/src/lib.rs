@@ -17,10 +17,11 @@ pub fn run_sync() {
 }
 
 pub fn ssbify(content: &str, title: &str, url: &str) -> Option<Ssbify> {
-    let mut child = Command::new("localnative-ssbify")
+    let mut child = Command::new("localnative-nodejs")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
+        .arg("ssbify")
         .arg("-")
         .arg(title)
         .arg(url)
@@ -53,7 +54,8 @@ pub fn ssbify(content: &str, title: &str, url: &str) -> Option<Ssbify> {
 }
 
 pub fn whoami() -> String {
-    let output = Command::new("localnative-ssb-whoami")
+    let output = Command::new("localnative-nodejs")
+        .arg("ssb-whoami")
         .output()
         .expect("failed to execute process");
 
@@ -68,7 +70,8 @@ pub fn whoami() -> String {
 }
 
 pub fn tail(id: &str, gt: i64) -> Option<SsbNote> {
-    let output = Command::new("localnative-ssb-tail")
+    let output = Command::new("localnative-nodejs")
+        .arg("ssb-tail")
         .arg(id)
         .arg(gt.to_string())
         .output()
@@ -115,10 +118,11 @@ pub fn publish2(note: Note, hash: &str, markdown: &str, pubkeys: &str, size: usi
 
     // eprintln!("node_json: {}", note_json);
 
-    let mut child = Command::new("localnative-ssb-publish")
+    let mut child = Command::new("localnative-nodejs")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
+        .arg("ssb-publish")
         .arg(pubkeys)
         .spawn()
         .expect("failed to execute process");

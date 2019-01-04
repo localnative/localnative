@@ -7,10 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {
-    "localnative-ssb-tail": "./tail.js",
-    "localnative-ssb-whoami": "./whoami.js",
-    "localnative-ssb-publish": "./publish.js",
-    "localnative-ssbify": "./ssbify.js"
+    "localnative-nodejs": "./main.js"
   },
   "keywords": [
     "localnative"
