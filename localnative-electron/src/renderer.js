@@ -5,7 +5,7 @@ let neon = require('localnative-neon');
 
 function statusMessage(text) {
   document.getElementById('status').innerHTML = '';
-  document.getElementById('status').insertAdjacentHTML('beforeend', Sanitizer.escapeHTML`${neon.dir}<p>${text}</p>`);
+  document.getElementById('status').insertAdjacentHTML('beforeend', Sanitizer.escapeHTML`${text}`);
 }
 
 function onNativeMessage(message) {
