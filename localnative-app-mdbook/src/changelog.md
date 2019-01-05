@@ -1,9 +1,9 @@
 # Changelog
 
 ## v0.3.3
-- package web host inside electron and setup manifest
+- package web host and nodejs cli inside electron and setup manifest
 - change path to ~/LocalNative
-- consolidate localnative-nodejs into only one binary
+- consolidate localnative-nodejs cli into only one binary
 
 ## v0.3.2-appimage
 - electron gnu/linux desktop build

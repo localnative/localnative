@@ -12,7 +12,7 @@
 |--------------|-----|
 | web extension host | [https://crates.io/crates/localnative_cli](https://crates.io/crates/localnative_cli) | 
 | core lib | [https://crates.io/crates/localnative_core](https://crates.io/crates/localnative_core) |
-| ssb lib | [https://crates.io/crates/localnative_core](https://crates.io/crates/localnative_ssb) |
+| ssb lib | [https://crates.io/crates/localnative_ssb](https://crates.io/crates/localnative_ssb) |
 
 ## Installer packages
 [https://gitlab.com/yiwang/localnative-release](https://gitlab.com/yiwang/localnative-release)

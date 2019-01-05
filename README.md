@@ -44,4 +44,3 @@ localnative-sql: sql snippet
 
 [iOS video](https://youtu.be/3dhB5gTtXNM)
 
-<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/3dhB5gTtXNM" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
