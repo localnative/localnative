@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.3.5 goal
+- sync with another sqlite3 file
+
+## v0.3.4 WIP
+- simplify release script 
+- better iOS layout, flex box?
+- better multiple word text search
+- explict ssb sync command
+
 ## v0.3.3
 - package web host and nodejs cli inside electron and setup manifest
 - change path to ~/LocalNative
