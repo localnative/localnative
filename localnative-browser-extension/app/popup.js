@@ -1,9 +1,10 @@
-function statusMessage(text) {
-  document.getElementById('status').innerHTML = '';
-  document.getElementById('status').insertAdjacentHTML('beforeend', Sanitizer.escapeHTML`<p>${text}</p>`);
+function requestMessage(text) {
+  document.getElementById('request-text').innerHTML = Sanitizer.escapeHTML`${text}`;
 }
 
 function onNativeMessage(message) {
+  let resp = "<< " +  JSON.stringify(message).substring(0, 90) + " ...";
+  document.getElementById('response-text').innerHTML = Sanitizer.escapeHTML`${resp}`;
   document.getElementById('notes').innerHTML = '';
   var notesHTML = message.notes.forEach(function(i){
     // render one item
@@ -58,7 +59,7 @@ function onNativeMessage(message) {
 }
 
 function onDisconnected() {
-  console.log("Disconnected: " + chrome.runtime.lastError.message);
+  // console.log("Disconnected: " + chrome.runtime.lastError.message);
 }
 
 function connect() {
@@ -132,8 +133,14 @@ document.addEventListener('DOMContentLoaded', function () {
       }else{
         cmdInsert("", false);
       }
+      document.getElementById('search-text').focus();
     }
   });
+
+  // register ssb-sync
+  document.getElementById('ssb-sync-btn').onclick = function(){
+      cmdSsbSync();
+  };
 
   // register cmdSearch
   document.getElementById('search-text').addEventListener('keyup', function (e) {
@@ -225,9 +232,17 @@ function cmdDelete(rowid) {
   cmd(message);
 }
 
+function cmdSsbSync() {
+  var message = {
+    action: "ssb-sync"
+  };
+  cmd(message);
+}
+
+
 function cmd(message){
   var part = connect();
   port.postMessage(message);
-  statusMessage(">> " + JSON.stringify(message).substring(0,180) + " ...");
+  requestMessage(">> " + JSON.stringify(message).substring(0,180) + " ...");
 }
 

@@ -1,6 +1,6 @@
 ﻿<!DOCTYPE html>
 
-<html style="min-width:600px;">
+<html style="min-width:650px; max-width:650px;">
   <head>
     <script src='./sanitizer.js'></script>
     <script src='./i18n.js'></script>
@@ -38,6 +38,9 @@ v0.3.4
         </b>
         <input type="checkbox" id='ssbify' name="ssbify" value="ssbify"> <label for="ssbify" id="label-ssbify">ssbify</label>
         <input type="checkbox" id='cb-public' name="public" value="public"> <label for="cb-public" id="label-public">public</label>
+        <button id="ssb-sync-btn" title="sync via ssb">
+          sync via ssb
+        </button>
         <span style="float: right"> <span id="label-language">language</span>
           <select id='select-language'>
             <option value="en-US">en-US English - US</option>
@@ -49,10 +52,11 @@ v0.3.4
       <input class='save-input' id='url' type='text' placeholder='url'/>
       <input class='save-input' id='tags-text' type='text' placeholder='type to add tags, enter to save, comma or space as tag seperator'/>
       <input class='save-input' id='desc-text' type='text' placeholder='description'/>
-
-
     </div>
-    <div id='status' style="max-width:600px;"></div>
+    <div style="max-width:560px; font-size:smaller;">
+      <div id='request-text'></div>
+      <div id='response-text'></div>
+    </div>
     <div>
       <input id='search-text' type='text' placeholder='type to search'/>
       <button id="search-clear-btn" title="clear search term(s)">
