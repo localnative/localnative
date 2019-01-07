@@ -164,7 +164,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 });
 
-let LIMIT = 10;
+let LIMIT = 20;
 
 function makeTags(str) {
   let s = str.replace(/,+/g, " ").trim();

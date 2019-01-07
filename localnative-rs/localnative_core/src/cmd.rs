@@ -26,7 +26,7 @@ pub fn select(conn: &Connection, query: &str) -> String {
         or url like :query
         or tags like :query
         or description like :query
-        order by created_at desc limit 15"
+        order by created_at desc limit 20"
         ).unwrap();
     let note_iter = stmt
         .query_map_named(&[(":query", &format!("%{}%", query))], |row| Note {
