@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14460.31" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="j1y-V4-xli">
-    <device id="ipad10_5" orientation="portrait">
+    <device id="ipad10_5" orientation="landscape">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14460.20"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="Stack View standard spacing" minToolsVersion="9.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
@@ -15,55 +16,94 @@
             <objects>
                 <viewController id="j1y-V4-xli" customClass="ShareViewController" customModule="share_ext" sceneMemberID="viewController">
                     <view key="view" opaque="NO" contentMode="scaleToFill" id="wbc-yd-nQP">
-                        <rect key="frame" x="0.0" y="0.0" width="834" height="1112"/>
+                        <rect key="frame" x="0.0" y="0.0" width="1112" height="834"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="uo5-q7-Sva">
-                                <rect key="frame" x="0.0" y="44" width="48" height="30"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <state key="normal" title="Cancel"/>
-                                <connections>
-                                    <action selector="cancelButtonTouchDown:" destination="j1y-V4-xli" eventType="touchDown" id="lCt-8y-Be8"/>
-                                </connections>
-                            </button>
-                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="XcQ-gx-Lsa">
-                                <rect key="frame" x="335" y="44" width="34" height="30"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <state key="normal" title="Save"/>
-                                <connections>
-                                    <action selector="saveButtonTouchDown:" destination="j1y-V4-xli" eventType="touchUpInside" id="RpC-QV-x54"/>
-                                </connections>
-                            </button>
-                            <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" fixedFrame="YES" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="hoE-3E-OYq">
-                                <rect key="frame" x="0.0" y="151" width="375" height="128"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
-                                <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
-                            </textView>
-                            <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="t65-29-vj1">
-                                <rect key="frame" x="0.0" y="67" width="375" height="80"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                <fontDescription key="fontDescription" name=".AppleSystemUIFont" family=".AppleSystemUIFont" pointSize="14"/>
-                                <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
-                            </textView>
-                            <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" fixedFrame="YES" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="3N6-M5-LZN">
-                                <rect key="frame" x="0.0" y="283" width="375" height="80"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
-                                <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
-                            </textView>
-                            <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" fixedFrame="YES" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="Ssi-AV-huc">
-                                <rect key="frame" x="0.0" y="368" width="375" height="80"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
-                                <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
-                            </textView>
+                            <stackView opaque="NO" contentMode="TopLeft" distribution="fillEqually" spacingType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="rRM-5w-irv">
+                                <rect key="frame" x="0.0" y="44" width="1112" height="30"/>
+                                <subviews>
+                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="uo5-q7-Sva">
+                                        <rect key="frame" x="0.0" y="0.0" width="552" height="30"/>
+                                        <state key="normal" title="Cancel"/>
+                                        <connections>
+                                            <action selector="cancelButtonTouchDown:" destination="j1y-V4-xli" eventType="touchDown" id="lCt-8y-Be8"/>
+                                        </connections>
+                                    </button>
+                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="XcQ-gx-Lsa">
+                                        <rect key="frame" x="560" y="0.0" width="552" height="30"/>
+                                        <state key="normal" title="Save"/>
+                                        <connections>
+                                            <action selector="saveButtonTouchDown:" destination="j1y-V4-xli" eventType="touchUpInside" id="RpC-QV-x54"/>
+                                        </connections>
+                                    </button>
+                                </subviews>
+                            </stackView>
+                            <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" distribution="equalSpacing" alignment="top" spacing="4" translatesAutoresizingMaskIntoConstraints="NO" id="a7f-iT-grd">
+                                <rect key="frame" x="0.0" y="78" width="1112" height="380"/>
+                                <subviews>
+                                    <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="t65-29-vj1">
+                                        <rect key="frame" x="0.0" y="0.0" width="1112" height="80"/>
+                                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <constraints>
+                                            <constraint firstAttribute="height" constant="80" id="GTF-Px-wR9"/>
+                                        </constraints>
+                                        <fontDescription key="fontDescription" name=".AppleSystemUIFont" family=".AppleSystemUIFont" pointSize="14"/>
+                                        <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
+                                    </textView>
+                                    <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="hoE-3E-OYq">
+                                        <rect key="frame" x="0.0" y="84" width="1112" height="128"/>
+                                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                        <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
+                                    </textView>
+                                    <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="3N6-M5-LZN">
+                                        <rect key="frame" x="0.0" y="216" width="1112" height="80"/>
+                                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <constraints>
+                                            <constraint firstAttribute="height" constant="80" id="jzK-w9-Bh3"/>
+                                        </constraints>
+                                        <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                        <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
+                                    </textView>
+                                    <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="Ssi-AV-huc">
+                                        <rect key="frame" x="0.0" y="300" width="1112" height="80"/>
+                                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <constraints>
+                                            <constraint firstAttribute="height" constant="80" id="o7N-bx-UUb"/>
+                                        </constraints>
+                                        <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                        <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
+                                    </textView>
+                                </subviews>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="380" id="4AE-aY-Zyy"/>
+                                    <constraint firstAttribute="trailing" secondItem="Ssi-AV-huc" secondAttribute="trailing" id="4lL-vb-Jqy"/>
+                                    <constraint firstItem="3N6-M5-LZN" firstAttribute="leading" secondItem="a7f-iT-grd" secondAttribute="leading" id="5m7-ff-wCx"/>
+                                    <constraint firstItem="hoE-3E-OYq" firstAttribute="leading" secondItem="a7f-iT-grd" secondAttribute="leading" id="OXQ-2q-Orm"/>
+                                    <constraint firstItem="Ssi-AV-huc" firstAttribute="leading" secondItem="a7f-iT-grd" secondAttribute="leading" id="Ou8-7R-Xrn"/>
+                                    <constraint firstAttribute="trailing" secondItem="3N6-M5-LZN" secondAttribute="trailing" id="UYG-Xa-tdM"/>
+                                    <constraint firstItem="t65-29-vj1" firstAttribute="leading" secondItem="a7f-iT-grd" secondAttribute="leading" id="g2b-l0-McT"/>
+                                    <constraint firstItem="Ssi-AV-huc" firstAttribute="top" secondItem="3N6-M5-LZN" secondAttribute="bottom" constant="4" id="kfM-WB-jsN"/>
+                                    <constraint firstAttribute="trailing" secondItem="t65-29-vj1" secondAttribute="trailing" id="ydB-4f-As1"/>
+                                    <constraint firstAttribute="trailing" secondItem="hoE-3E-OYq" secondAttribute="trailing" id="z5U-SI-T4e"/>
+                                </constraints>
+                            </stackView>
                         </subviews>
                         <color key="backgroundColor" white="0.66666666666666663" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <constraints>
+                            <constraint firstItem="a7f-iT-grd" firstAttribute="trailing" secondItem="1Xd-am-t49" secondAttribute="trailing" id="196-k7-AC2"/>
+                            <constraint firstItem="rRM-5w-irv" firstAttribute="leading" secondItem="1Xd-am-t49" secondAttribute="leading" id="2nk-pQ-T6Y"/>
+                            <constraint firstItem="rRM-5w-irv" firstAttribute="leading" secondItem="1Xd-am-t49" secondAttribute="leading" id="AGR-tr-tn2"/>
+                            <constraint firstItem="1Xd-am-t49" firstAttribute="trailing" secondItem="rRM-5w-irv" secondAttribute="trailing" id="CHe-Rw-cQp"/>
+                            <constraint firstAttribute="trailing" secondItem="rRM-5w-irv" secondAttribute="trailing" id="ECa-if-3Kl"/>
+                            <constraint firstItem="a7f-iT-grd" firstAttribute="top" secondItem="rRM-5w-irv" secondAttribute="bottom" constant="4" id="Rlt-cm-7TE"/>
+                            <constraint firstItem="a7f-iT-grd" firstAttribute="leading" secondItem="1Xd-am-t49" secondAttribute="leading" id="S6K-jO-Rj0"/>
+                            <constraint firstItem="rRM-5w-irv" firstAttribute="top" secondItem="1Xd-am-t49" secondAttribute="top" constant="24" id="XeF-QJ-azQ"/>
+                            <constraint firstItem="1Xd-am-t49" firstAttribute="trailing" secondItem="a7f-iT-grd" secondAttribute="trailing" id="aKc-Rb-BuZ"/>
+                            <constraint firstItem="a7f-iT-grd" firstAttribute="leading" secondItem="1Xd-am-t49" secondAttribute="leading" id="eWp-P8-Fq7"/>
+                            <constraint firstItem="rRM-5w-irv" firstAttribute="leading" secondItem="1Xd-am-t49" secondAttribute="leading" id="fDs-bp-QcG"/>
+                            <constraint firstItem="rRM-5w-irv" firstAttribute="trailing" secondItem="1Xd-am-t49" secondAttribute="trailing" id="man-dc-tIh"/>
+                        </constraints>
                         <viewLayoutGuide key="safeArea" id="1Xd-am-t49"/>
                     </view>
                     <toolbarItems/>
