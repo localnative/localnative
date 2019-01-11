@@ -41,7 +41,7 @@ if (!fs.existsSync(NodePkgTarget)){
   fs.copyFileSync(NodePkgSource, NodePkgTarget);
 }
 
-// create manifest
+// manifest content
 let jsonMozilla = {
   name: "app.localnative",
   description: "Local Native Host",
@@ -62,21 +62,34 @@ let jsonChrome = {
   ]
 }
 
-var pathMozilla = home + '/.mozilla/native-messaging-hosts/app.localnative.json'
-var pathChrome = home + '/.config/chromium/NativeMessagingHosts/app.localnative.json'
+// create path
+var pathMozilla = home + '/.mozilla/native-messaging-hosts'
+var pathChrome = home + '/.config/chromium/NativeMessagingHosts'
 if (platform == '-mac') {
-  pathMozilla = home + '/Library/Application Support/Mozilla/NativeMessagingHosts/app.localnative.json'
-  pathChrome = home + '/Library/Application Support/Google/Chrome/NativeMessagingHosts/app.localnative.json'
+  pathMozilla = home + '/Library/Application Support/Mozilla/NativeMessagingHosts'
+  pathChrome = home + '/Library/Application Support/Google/Chrome/NativeMessagingHosts'
 }
 if (platform == '.exe'){
   if (!fs.existsSync(dirConfig)){
     fs.mkdirSync(dirConfig, {recursive: true});
   }
-  pathMozilla = dirConfig + '/app.localnative.firefox.json'
-  pathChrome = dirConfig + '/app.localnative.chrome.json'
+  pathMozilla = dirConfig + '/mozilla'
+  pathChrome = dirConfig + '/chrome'
 }
-fs.writeFileSync(pathMozilla, JSON.stringify(jsonMozilla, null, 2))
-fs.writeFileSync(pathChrome, JSON.stringify(jsonChrome, null, 2))
+if (!fs.existsSync(pathMozilla)){
+  fs.mkdirSync(pathMozilla, {recursive: true});
+}
+if (!fs.existsSync(pathChrome)){
+  fs.mkdirSync(pathChrome, {recursive: true});
+}
+
+// create manifest file
+if (fs.existsSync(pathMozilla)){
+  fs.writeFileSync(pathMozilla + '/app.localnative.json', JSON.stringify(jsonMozilla, null, 2))
+}
+if (fs.existsSync(pathChrome)){
+  fs.writeFileSync(pathChrome + '/app.localnative.json', JSON.stringify(jsonChrome, null, 2))
+}
 
 module.exports = {
   dir: __dirname,
