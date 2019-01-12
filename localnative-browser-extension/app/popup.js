@@ -1,10 +1,14 @@
 function requestMessage(text) {
+  document.getElementById('response-text').innerHTML = '<<';
   document.getElementById('request-text').innerHTML = Sanitizer.escapeHTML`${text}`;
 }
 
 function onNativeMessage(message) {
   let resp = "<< " +  JSON.stringify(message).substring(0, 90) + " ...";
   document.getElementById('response-text').innerHTML = Sanitizer.escapeHTML`${resp}`;
+  // abort if no notes
+  if (!message.notes) return;
+
   document.getElementById('notes').innerHTML = '';
   var notesHTML = message.notes.forEach(function(i){
     // render one item
@@ -238,7 +242,6 @@ function cmdSsbSync() {
   };
   cmd(message);
 }
-
 
 function cmd(message){
   var part = connect();

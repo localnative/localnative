@@ -28,6 +28,7 @@ sed -i "3s/.*/  \"version\": \"$1\",/" localnative-neon/package.json
 sed -i "1s/.*/let version = '$1'/" localnative-neon/lib/index.js
 sed -i "3s/.*/version = \"$1\"/" localnative-neon/native/Cargo.toml
 sed -i "20s/.*/version = \"$1\"/" localnative-neon/native/Cargo.toml
+sed -i "24s/.*/version = \"$1\"/" localnative-neon/native/Cargo.toml
 
 # web-ext
 sed -i "37s/.*/v$1/" localnative-browser-extension/app/popup.html

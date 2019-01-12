@@ -36,10 +36,13 @@
     <div id='save-input'>
       <div>
         <b>
-        <a href="https://localnative.app" target="_blank">Local Native App</a>
+        <a href="https://localnative.app" target="_blank">Local Native</a>
         </b>
         <input type="checkbox" id='ssbify' name="ssbify" value="ssbify" class="hidden"> <label for="ssbify" id="label-ssbify" class="hidden">ssbify</label>
         <input type="checkbox" id='cb-public' name="public" value="public" class="hidden"> <label for="cb-public" id="label-public" class="hidden">public</label>
+        <button id="ssb-sync-btn" title="ssb sync">
+          ssb sync
+        </button>
         <span style="float: right"> <span id="label-language">language</span>
           <select id='select-language'>
             <option value="en-US">en-US English - US</option>
@@ -54,8 +57,10 @@
 
 
     </div>
-
-    <div id='status' style="max-width:600px;"></div>
+    <div style="max-width:560px; font-size:smaller;">
+      <div id='request-text'></div>
+      <div id='response-text'></div>
+    </div>
     <div>
       <input id='search-text' type='text' placeholder='type to search'/>
       <button id="search-clear-btn" title="clear search term(s)">

@@ -19,3 +19,7 @@ neon = "0.2.0"
 [dependencies.localnative_core]
 version = "0.3.4"
 path = "../../localnative-rs/localnative_core"
+
+[dependencies.localnative_ssb]
+version = "0.3.4"
+path = "../../localnative-rs/localnative_ssb"

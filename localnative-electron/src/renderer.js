@@ -3,12 +3,17 @@
 // All of the Node.js APIs are available in this process.
 let neon = require('localnative-neon');
 
-function statusMessage(text) {
-  document.getElementById('status').innerHTML = '';
-  document.getElementById('status').insertAdjacentHTML('beforeend', Sanitizer.escapeHTML`${text}`);
+function requestMessage(text) {
+  document.getElementById('response-text').innerHTML = '<<';
+  document.getElementById('request-text').innerHTML = Sanitizer.escapeHTML`${text}`;
 }
 
 function onNativeMessage(message) {
+  let resp = "<< " +  JSON.stringify(message).substring(0, 90) + " ...";
+  document.getElementById('response-text').innerHTML = Sanitizer.escapeHTML`${resp}`;
+  // abort if no notes
+  if (!message.notes) return;
+
   document.getElementById('notes').innerHTML = '';
   var notesHTML = message.notes.forEach(function(i){
     // render one item
@@ -123,6 +128,11 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
+  // register ssb-sync
+  document.getElementById('ssb-sync-btn').onclick = function(){
+      cmdSsbSync();
+  };
+
   // register cmdSearch
   document.getElementById('search-text').addEventListener('keyup', function (e) {
       cmdSearch();
@@ -215,9 +225,16 @@ function cmdDelete(rowid) {
   cmd(message);
 }
 
+function cmdSsbSync() {
+  var message = {
+    action: "ssb-sync"
+  };
+  cmd(message);
+}
+
 function cmd(message){
   let input = JSON.stringify(message);
-  statusMessage(">> " + input.substring(0,180) + " ...");
+  requestMessage(">> " + input.substring(0,180) + " ...");
   var resp = JSON.parse(neon.run(input));
   onNativeMessage(resp);
 }

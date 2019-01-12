@@ -5,6 +5,8 @@ use std::str;
 extern crate localnative_core;
 extern crate localnative_ssb;
 use localnative_core::exe::run;
+use localnative_core::serde_json;
+use localnative_core::Cmd;
 use localnative_ssb as ssb;
 
 fn main() -> io::Result<()> {
@@ -25,13 +27,25 @@ fn main() -> io::Result<()> {
     let text = str::from_utf8(&text_buf).expect("not utf8 string");
     eprintln!("text_buf {:?}", text);
 
-    let response = run(text);
-    eprintln!("responset {:?}", response);
-    match send_message(&response) {
-        Ok(_) => (),
-        Err(err) => eprintln!("Error: {:?}", err),
-    };
-    ssb::run_sync();
+    if let Ok(cmd) = serde_json::from_str::<Cmd>(text) {
+        match cmd.action.as_ref() {
+            "ssb-sync" => {
+                ssb::run_sync();
+                match send_message(r#"{"run_sync": "done"}"#) {
+                    Ok(_) => (),
+                    Err(err) => eprintln!("Error: {:?}", err),
+                };
+            }
+            _ => {
+                let response = run(text);
+                eprintln!("responset {:?}", response);
+                match send_message(&response) {
+                    Ok(_) => (),
+                    Err(err) => eprintln!("Error: {:?}", err),
+                };
+            }
+        }
+    }
     Ok(())
 }
 
