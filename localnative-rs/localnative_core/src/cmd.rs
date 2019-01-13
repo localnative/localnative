@@ -18,7 +18,7 @@ pub fn count(conn: &Connection, tbl: &str) -> i64 {
     rs
 }
 
-pub fn select(conn: &Connection, query: &str) -> String {
+pub fn search(conn: &Connection, query: &str, limit: &u32, offset: &u32) -> String {
     let mut stmt = conn.prepare(
         "SELECT rowid, title, url, tags, description, comments, annotations, created_at, is_public
         FROM note
@@ -26,20 +26,63 @@ pub fn select(conn: &Connection, query: &str) -> String {
         or url like :query
         or tags like :query
         or description like :query
-        order by created_at desc limit 20"
+        order by created_at desc limit :limit offset :offset"
         ).unwrap();
     let note_iter = stmt
-        .query_map_named(&[(":query", &format!("%{}%", query))], |row| Note {
-            rowid: row.get(0),
-            title: row.get(1),
-            url: row.get(2),
-            tags: row.get(3),
-            description: row.get(4),
-            comments: row.get(5),
-            annotations: "".to_string(), //row.get(6),
-            created_at: row.get(7),
-            is_public: row.get(8),
-        })
+        .query_map_named(
+            &[
+                (":query", &format!("%{}%", query)),
+                (":limit", limit as &ToSql),
+                (":offset", offset as &ToSql),
+            ],
+            |row| Note {
+                rowid: row.get(0),
+                title: row.get(1),
+                url: row.get(2),
+                tags: row.get(3),
+                description: row.get(4),
+                comments: row.get(5),
+                annotations: "".to_string(), //row.get(6),
+                created_at: row.get(7),
+                is_public: row.get(8),
+            },
+        )
+        .unwrap();
+
+    let mut j = "[ ".to_owned();
+    for note in note_iter {
+        let mut note = note.unwrap();
+        note.tags = make_tags(&note.tags);
+        //eprintln!("Found note {:?}", note);
+        j.push_str(&serde_json::to_string(&note).unwrap());
+        j.push_str(",");
+    }
+    j.pop();
+    j.push_str("]");
+    j
+}
+
+pub fn select(conn: &Connection, limit: &u32, offset: &u32) -> String {
+    let mut stmt = conn.prepare(
+        "SELECT rowid, title, url, tags, description, comments, annotations, created_at, is_public
+        FROM note
+        order by created_at desc limit :limit offset :offset"
+        ).unwrap();
+    let note_iter = stmt
+        .query_map_named(
+            &[(":limit", limit as &ToSql), (":offset", offset as &ToSql)],
+            |row| Note {
+                rowid: row.get(0),
+                title: row.get(1),
+                url: row.get(2),
+                tags: row.get(3),
+                description: row.get(4),
+                comments: row.get(5),
+                annotations: "".to_string(), //row.get(6),
+                created_at: row.get(7),
+                is_public: row.get(8),
+            },
+        )
         .unwrap();
 
     let mut j = "[ ".to_owned();

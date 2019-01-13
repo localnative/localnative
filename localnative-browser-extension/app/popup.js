@@ -137,6 +137,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }else{
         cmdInsert("", false);
       }
+      document.getElementById('search-text').value ='';
       document.getElementById('search-text').focus();
     }
   });

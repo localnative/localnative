@@ -3,7 +3,7 @@ extern crate rusqlite;
 extern crate serde_json;
 extern crate time;
 
-use cmd::{create, delete, insert, select};
+use cmd::{create, delete, insert, search, select};
 use rusqlite::Connection;
 use std::fs;
 use std::path::Path;
@@ -73,7 +73,7 @@ fn process(cmd: Cmd, text: &str) -> String {
                 if i.is_public {
                     eprintln!("is_public")
                 }
-                do_select(&conn, "")
+                do_select(&conn, &i.limit, &i.offset)
             } else {
                 r#"{"error":"cmd insert json error"}"#.to_string()
             }
@@ -81,21 +81,21 @@ fn process(cmd: Cmd, text: &str) -> String {
         "delete" => {
             if let Ok(s) = serde_json::from_str::<CmdDelete>(text) {
                 delete(&conn, s.rowid);
-                do_select(&conn, &s.query)
+                do_search(&conn, &s.query, &s.limit, &s.offset)
             } else {
                 r#"{"error":"cmd delete json error"}"#.to_string()
             }
         }
         "select" => {
-            if let Ok(_s) = serde_json::from_str::<CmdSelect>(text) {
-                do_select(&conn, "")
+            if let Ok(s) = serde_json::from_str::<CmdSelect>(text) {
+                do_select(&conn, &s.limit, &s.offset)
             } else {
                 r#"{"error":"cmd select json error"}"#.to_string()
             }
         }
         "search" => {
             if let Ok(s) = serde_json::from_str::<CmdSearch>(text) {
-                do_select(&conn, &s.query)
+                do_search(&conn, &s.query, &s.limit, &s.offset)
             } else {
                 r#"{"error":"cmd search json error"}"#.to_string()
             }
@@ -104,8 +104,15 @@ fn process(cmd: Cmd, text: &str) -> String {
     }
 }
 
-fn do_select(conn: &Connection, query: &str) -> String {
-    let j = select(&conn, query);
+fn do_search(conn: &Connection, query: &str, limit: &u32, offset: &u32) -> String {
+    let j = search(&conn, query, limit, offset);
+    let msg = format!("{{\"notes\":{}}}", j);
+    eprintln!("msg {}", msg);
+    msg
+}
+
+fn do_select(conn: &Connection, limit: &u32, offset: &u32) -> String {
+    let j = select(&conn, limit, offset);
     let msg = format!("{{\"notes\":{}}}", j);
     eprintln!("msg {}", msg);
     msg
