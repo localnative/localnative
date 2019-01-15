@@ -1,10 +1,11 @@
 # Local Native App
 <script defer src="https://use.fontawesome.com/releases/v5.6.3/js/all.js" integrity="sha384-EIHISlAOj4zgYieurP0SdoiBYfGJKkgWedPHH4jCzpCXLmzVsw1ouK59MuUtP4a1" crossorigin="anonymous"></script>
 
-## Installer
-| ios | android | firefox<br>addon | chrome<br>extension | gnu<br>linux | mac | 
-|-----|---------|------------------|---------------------|--------------|-----|
-| [<i class="fab fa-apple fa-3x"></i>](https://itunes.apple.com/us/app/local-native/id1443968309) | [<i class="fab fa-android fa-3x"></i>](https://play.google.com/store/apps/details?id=app.localnative) | [<i class="fab fa-firefox fa-3x"></i>](https://addons.mozilla.org/en-US/firefox/addon/localnative/) | [<i class="fab fa-chrome fa-3x"></i>](https://chrome.google.com/webstore/detail/local-native/oclkmkeameccmgnajgogjlhdjeaconnb) | [<i class="fab fa-linux fa-3x"></i>](https://gitlab.com/yiwang/localnative-release/tree/master/v0.3.3/gnu-linux) | [<i class="fab fa-app-store fa-3x"></i>](https://gitlab.com/yiwang/localnative-release/tree/master/v0.3.3/mac) |
+## Installers
+|            | ios | android | | firefox<br>addon | chrome<br>extension | | gnu<br>linux | mac | 
+|------------|-----|---------|-|----------------- |---------------------|-|--------------|-----|
+| <b>mobile</b> | [<i class="fab fa-apple fa-3x"></i>](https://itunes.apple.com/us/app/local-native/id1443968309) | [<i class="fab fa-android fa-3x"></i>](https://play.google.com/store/apps/details?id=app.localnative) | <b>browser<br>extension</b> | [<i class="fab fa-firefox fa-3x"></i>](https://addons.mozilla.org/en-US/firefox/addon/localnative/) | [<i class="fab fa-chrome fa-3x"></i>](https://chrome.google.com/webstore/detail/local-native/oclkmkeameccmgnajgogjlhdjeaconnb) | <b>desktop</b> | [<i class="fab fa-linux fa-3x"></i>](https://gitlab.com/yiwang/localnative-release/tree/master/v0.3.4/gnu-linux) | [<i class="fab fa-app-store fa-3x"></i>](https://gitlab.com/yiwang/localnative-release/tree/master/v0.3.4/mac) |
+
 
 [iOS video](https://youtu.be/3dhB5gTtXNM)
 <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/3dhB5gTtXNM" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>

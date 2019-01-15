@@ -3,11 +3,12 @@
 ## v0.3.5 goal
 - sync with another sqlite3 file
 
-## v0.3.4 WIP
-- simplify release script 
-- better iOS layout, flex box?
+## v0.3.4
+- simplify release script
+- better iOS layout, add constraint for width
 - better multiple word text search
 - explict ssb sync command
+- bring back note deletion
 
 ## v0.3.3
 - package web host and nodejs cli inside electron and setup manifest
