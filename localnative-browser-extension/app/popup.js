@@ -1,5 +1,5 @@
 function requestMessage(text) {
-  document.getElementById('response-text').innerHTML = '<<';
+  document.getElementById('response-text').innerHTML = '<< running or failed :-( run <a href="https://localnative.app" target="_blank">desktop app</a> to finish setup browser extension! run ssb-server for ssb sync :-)';
   document.getElementById('request-text').innerHTML = Sanitizer.escapeHTML`${text}`;
 }
 
@@ -20,8 +20,8 @@ function onNativeMessage(message) {
         rowid ${i.rowid}
         <span class="note-tags" id="note-tags-rowid-${i.rowid}">
         </span>
-        <button id="btn-delete-rowid-${i.rowid}" title="delete" style="display: none">
-        X
+        <button id="btn-delete-rowid-${i.rowid}" title="delete" style="color: red; float:right;">
+        Delete
         </button>
       </div>
 
