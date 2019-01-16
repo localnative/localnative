@@ -10,7 +10,7 @@ script/pkg-nodejs $1
 echo "release electron version" $1
 
 cd localnative-electron
-rm package-lock.json
+rm -f package-lock.json
 rm -rf node_modules
 npm i
 rm -rf node_modules/localnative-neon/native/target
