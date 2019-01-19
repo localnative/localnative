@@ -2,6 +2,7 @@
 
 ## v0.3.5 goal
 - sync with another sqlite3 file
+- search result pagination
 
 ## v0.3.4
 - simplify release script

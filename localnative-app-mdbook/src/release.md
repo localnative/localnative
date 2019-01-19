@@ -1,12 +1,9 @@
 # Release
 
-## Libraries
-### nodejs npm
-| description  | url |
-|--------------|-----|
-| nodejs binary | [https://www.npmjs.com/package/localnative](https://www.npmjs.com/package/localnative) |
-| nodejs to rust bridge | [https://www.npmjs.com/package/localnative-neon](https://www.npmjs.com/package/localnative-neon) |
+## Installer packages
+[https://gitlab.com/yiwang/localnative-release](https://gitlab.com/yiwang/localnative-release)
 
+## Libraries
 ### rust crates
 | description  | url |
 |--------------|-----|
@@ -14,5 +11,9 @@
 | core lib | [https://crates.io/crates/localnative_core](https://crates.io/crates/localnative_core) |
 | ssb lib | [https://crates.io/crates/localnative_ssb](https://crates.io/crates/localnative_ssb) |
 
-## Installer packages
-[https://gitlab.com/yiwang/localnative-release](https://gitlab.com/yiwang/localnative-release)
+### nodejs npm
+| description  | url |
+|--------------|-----|
+| nodejs binary | [https://www.npmjs.com/package/localnative](https://www.npmjs.com/package/localnative) |
+| nodejs to rust bridge | [https://www.npmjs.com/package/localnative-neon](https://www.npmjs.com/package/localnative-neon) |
+

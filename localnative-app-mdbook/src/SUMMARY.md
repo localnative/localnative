@@ -1,6 +1,7 @@
 # Summary
 
-[Local Native App](./localnative-app.md)
+[Local Native](./index.md)
+- [Quick Start](./quick-start.md)
 - [Release](./release.md)
 - [Changelog](./changelog.md)
 - [Source Code](./source-code.md)
