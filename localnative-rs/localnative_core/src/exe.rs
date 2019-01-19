@@ -23,7 +23,8 @@ pub fn get_sqlite_connection() -> Connection {
 
 fn sqlite3_db_location() -> String {
     if cfg!(target_os = "android") {
-        return "/sdcard/localnative.sqlite3".to_string();
+        fs::create_dir_all("/sdcard/LocalNative").unwrap();
+        return "/sdcard/LocalNative/localnative.sqlite3".to_string();
     }
     let mut dir_name = "LocalNative";
     if cfg!(target_os = "ios") {
