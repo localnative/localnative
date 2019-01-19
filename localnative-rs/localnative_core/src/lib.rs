@@ -132,6 +132,11 @@ pub struct CmdInsert {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+pub struct CmdSyncViaAttach {
+    pub uri: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct CmdSearch {
     pub query: String,
 

@@ -133,6 +133,10 @@ document.addEventListener('DOMContentLoaded', function () {
       cmdSsbSync();
   };
 
+  document.getElementById('sync-via-attach-btn').onclick = function(){
+      cmdSyncViaAttach("/home/e/Documents/localnative.sqlite3");
+  };
+
   // register cmdSearch
   document.getElementById('search-text').addEventListener('keyup', function (e) {
       cmdSearch();
@@ -228,6 +232,14 @@ function cmdDelete(rowid) {
 function cmdSsbSync() {
   var message = {
     action: "ssb-sync"
+  };
+  cmd(message);
+}
+
+function cmdSyncViaAttach(uri) {
+  var message = {
+    action: "sync-via-attach",
+    uri: uri
   };
   cmd(message);
 }

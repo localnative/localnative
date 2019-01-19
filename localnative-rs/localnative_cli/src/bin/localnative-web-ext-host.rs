@@ -31,14 +31,14 @@ fn main() -> io::Result<()> {
         match cmd.action.as_ref() {
             "ssb-sync" => {
                 ssb::run_sync();
-                match send_message(r#"{"run_sync": "done"}"#) {
+                match send_message(r#"{"ssb-sync": "done"}"#) {
                     Ok(_) => (),
                     Err(err) => eprintln!("Error: {:?}", err),
                 };
             }
             _ => {
                 let response = run(text);
-                eprintln!("responset {:?}", response);
+                eprintln!("response {:?}", response);
                 match send_message(&response) {
                     Ok(_) => (),
                     Err(err) => eprintln!("Error: {:?}", err),

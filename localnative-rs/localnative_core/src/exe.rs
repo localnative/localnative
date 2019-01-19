@@ -3,7 +3,7 @@ extern crate rusqlite;
 extern crate serde_json;
 extern crate time;
 
-use cmd::{create, delete, insert, search, select};
+use cmd::{create, delete, insert, search, select, sync_via_attach};
 use rusqlite::Connection;
 use std::fs;
 use std::path::Path;
@@ -12,6 +12,7 @@ use CmdDelete;
 use CmdInsert;
 use CmdSearch;
 use CmdSelect;
+use CmdSyncViaAttach;
 use Note;
 
 pub fn get_sqlite_connection() -> Connection {
@@ -54,6 +55,13 @@ fn process(cmd: Cmd, text: &str) -> String {
     create(&conn);
 
     match cmd.action.as_ref() {
+        "sync-via-attach" => {
+            if let Ok(s) = serde_json::from_str::<CmdSyncViaAttach>(text) {
+                sync_via_attach(&conn, &s.uri)
+            } else {
+                r#"{"error":"cmd sync-via-attach error"}"#.to_string()
+            }
+        }
         "insert" => {
             if let Ok(i) = serde_json::from_str::<CmdInsert>(text) {
                 let created_at =

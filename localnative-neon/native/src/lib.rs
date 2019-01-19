@@ -20,7 +20,7 @@ fn run(mut cx: FunctionContext) -> JsResult<JsString> {
             }
             _ => {
                 let response = ln_run(&text);
-                eprintln!("responset {:?}", response);
+                eprintln!("response {:?}", response);
                 return Ok(cx.string(response));
             }
         }

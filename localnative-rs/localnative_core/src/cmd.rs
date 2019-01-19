@@ -6,9 +6,31 @@ extern crate serde_json;
 use self::linked_hash_set::LinkedHashSet;
 use self::regex::Regex;
 use self::rusqlite::types::ToSql;
+use self::rusqlite::Result;
 use self::rusqlite::{Connection, NO_PARAMS};
 use super::Note;
 use std::iter::FromIterator;
+
+pub fn sync_via_attach(conn: &Connection, uri: &str) -> String {
+    if let Ok(_) = conn.execute("attach ? as 'other'", &[uri]) {
+        let r: Result<String> =
+            conn.query_row("SELECT * FROM other.note", &[] as &[&ToSql], |row| {
+                row.get(2)
+            });
+        match r {
+            Ok(f) => {
+                eprintln!("Ok {:?}", f);
+                format!(r#"{{"sync-via-attach": "{}"}}"#, uri)
+            }
+            Err(err) => {
+                eprintln!("Err {:?}", err);
+                format!(r#"{{"error": "{}"}}"#, err.to_string())
+            }
+        }
+    } else {
+        format!("can not attach {}", uri)
+    }
+}
 
 pub fn count(conn: &Connection, tbl: &str) -> i64 {
     let mut stmt = conn
