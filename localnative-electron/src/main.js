@@ -1,4 +1,4 @@
-const version = "0.3.4"
+const version = "0.3.5"
 // Modules to control application life and create native browser window
 const {app, BrowserWindow} = require('electron')
 

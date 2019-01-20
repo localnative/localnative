@@ -1,4 +1,4 @@
-let version = '0.3.4'
+let version = '0.3.5'
 
 var platform = "-gnu-linux"
 switch(process.platform){
