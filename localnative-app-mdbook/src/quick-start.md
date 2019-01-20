@@ -20,5 +20,5 @@ Add the pubkey (other peers you want to sync with) as `author` in `ssb` table, s
 You can use [DB Browser for SQLite](http://sqlitebrowser.org/) to explore the database.
 
 ## Note
-Windows currently does not have a desktop UI due to an upstream [issue](https://github.com/neon-bindings/neon/issues/357).
+Windows currently does not have a standalone desktop app due to an upstream [issue](https://github.com/neon-bindings/neon/issues/357).
 

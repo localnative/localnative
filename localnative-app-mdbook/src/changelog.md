@@ -3,6 +3,8 @@
 ## v0.3.5 goal
 - sync with another sqlite3 file
 - search result pagination
+- desktop app setup Chrome native messaging manifest json file
+- change android path to /sdcard/LocalNative
 
 ## v0.3.4
 - simplify release script

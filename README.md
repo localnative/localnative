@@ -3,6 +3,7 @@
 
 A note/bookmark taking tool to save your notes in a local sqlite database, could synced with other devices via [ssb](https://ssbc.github.io/secure-scuttlebutt/) [protocal](https://ssbc.github.io/scuttlebutt-protocol-guide/).
 
+[Why Local Native?](https://chuanyan.live/why-local-native/)
 
 # Sub-directories
 
