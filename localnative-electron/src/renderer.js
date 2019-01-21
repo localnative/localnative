@@ -2,6 +2,9 @@
 // be executed in the renderer process for that window.
 // All of the Node.js APIs are available in this process.
 let neon = require('localnative-neon');
+let LIMIT = 10;
+let offset = 0;
+let count = 0;
 
 function requestMessage(text) {
   document.getElementById('response-text').innerHTML = '<< running or failed :-( run ssb-server like <a href="https://github.com/ssbc/patchwork/releases">Patchwork</a> or <a href="https://github.com/ssbc/patchbay/releases">Patchbay</a> for ssb sync :-)';
@@ -13,6 +16,13 @@ function onNativeMessage(message) {
   document.getElementById('response-text').innerHTML = Sanitizer.escapeHTML`${resp}`;
   // abort if no notes
   if (!message.notes) return;
+
+  // show count
+  if (Number(message.count) >=0 ) {
+    count = message.count;
+    let pages = Math.ceil(count / LIMIT);
+    document.getElementById('page-of').innerHTML = 'of ' + pages;
+  }
 
   document.getElementById('notes').innerHTML = '';
   var notesHTML = message.notes.forEach(function(i){
@@ -59,7 +69,9 @@ function onNativeMessage(message) {
         // tag search
         document.getElementById('note-tags-rowid-' + i.rowid + '-tag-' + tag).onclick = function(){
           document.getElementById('search-text').value = tag;
+          offset = 0;
           cmdSearch();
+          document.getElementById('page-idx-input').value = 1;
         }
       });
     }
@@ -128,6 +140,22 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
+  // register prev and next
+  document.getElementById('prev-btn').onclick = function(){
+    if(offset - LIMIT >= 0){
+      offset -= LIMIT;
+      cmdSearch();
+      document.getElementById('page-idx-input').value = Number(document.getElementById('page-idx-input').value) - 1;
+    }
+  };
+  document.getElementById('next-btn').onclick = function(){
+    if(offset + LIMIT <= count){
+      offset += LIMIT;
+      cmdSearch();
+      document.getElementById('page-idx-input').value = Number(document.getElementById('page-idx-input').value) + 1;
+    }
+  };
+
   // register ssb-sync
   document.getElementById('ssb-sync-btn').onclick = function(){
       cmdSsbSync();
@@ -139,16 +167,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // register cmdSearch
   document.getElementById('search-text').addEventListener('keyup', function (e) {
+      offset = 0;
+      document.getElementById('page-idx-input').value = 1;
       cmdSearch();
   });
 
   document.getElementById('search-clear-btn').onclick = function(){
     document.getElementById('search-text').value = '';
+    offset = 0;
+    document.getElementById('page-idx-input').value = 1;
     cmdSearch();
   };
 
   // initial query
   cmdSelect();
+  document.getElementById('page-idx-input').value = 1;
 
   // Open all links in external browser
   let shell = require('electron').shell
@@ -160,8 +193,6 @@ document.addEventListener('DOMContentLoaded', function () {
   })
 
 });
-
-let LIMIT = 20;
 
 function makeTags(str) {
   let s = str.replace(/,+/g, " ").trim();
@@ -189,7 +220,7 @@ function cmdInsert(annotations, is_public) {
     annotations: annotations,
 
     limit: LIMIT,
-    offset: 0,
+    offset: offset,
     is_public: is_public
   };
   console.log(message);
@@ -203,7 +234,7 @@ function cmdSearch() {
 
     query: document.getElementById('search-text').value,
     limit: LIMIT,
-    offset: 0
+    offset: offset
   };
   cmd(message);
 }
@@ -212,7 +243,7 @@ function cmdSelect() {
   var message = {
     action: "select",
     limit: LIMIT,
-    offset: 0
+    offset: offset
   };
   cmd(message);
 }
@@ -224,7 +255,7 @@ function cmdDelete(rowid) {
     query: document.getElementById('search-text').value,
     rowid: rowid,
     limit: LIMIT,
-    offset: 0
+    offset: offset
   };
   cmd(message);
 }

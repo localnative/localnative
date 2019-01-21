@@ -1,6 +1,8 @@
+// global state
 let LIMIT = 10;
 let offset = 0;
 let count = 0;
+
 function requestMessage(text) {
   document.getElementById('response-text').innerHTML = '<< running or failed :-( run <a href="https://localnative.app" target="_blank">desktop app</a> to finish setup browser extension! run ssb-server for ssb sync :-)';
   document.getElementById('request-text').innerHTML = Sanitizer.escapeHTML`${text}`;
@@ -12,7 +14,8 @@ function onNativeMessage(message) {
   // abort if no notes
   if (!message.notes) return;
 
-  if (message.count) {
+  // show count
+  if (Number(message.count) >=0 ) {
     count = message.count;
     let pages = Math.ceil(count / LIMIT);
     document.getElementById('page-of').innerHTML = 'of ' + pages;
@@ -63,7 +66,9 @@ function onNativeMessage(message) {
         // tag search
         document.getElementById('note-tags-rowid-' + i.rowid + '-tag-' + tag).onclick = function(){
           document.getElementById('search-text').value = tag;
+          offset = 0;
           cmdSearch();
+          document.getElementById('page-idx-input').value = 1;
         }
       });
     }
@@ -226,7 +231,7 @@ function cmdInsert(annotations, is_public) {
     annotations: annotations,
 
     limit: LIMIT,
-    offset: 0,
+    offset: offset,
     is_public: is_public
   };
   console.log(message);

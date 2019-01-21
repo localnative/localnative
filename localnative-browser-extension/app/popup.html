@@ -39,19 +39,17 @@
         <a href="https://localnative.app" target="_blank">Local Native</a>
 v0.3.5
         </b>
+        <input type="checkbox" id='ssbify' name="ssbify" value="ssbify"> <label for="ssbify" id="label-ssbify">ssbify</label>
+        <input type="checkbox" id='cb-public' name="public" value="public"> <label for="cb-public" id="label-public">public</label>
+        <button id="ssb-sync-btn" title="ssb sync">
+          ssb sync
+        </button>
         <span style="float: right"> <span id="label-language">language</span>
           <select id='select-language'>
             <option value="en-US">en-US English - US</option>
             <option value="zh-CN">zh-CN 中文简体 - 大陆</option>
           </select>
         </span>
-      </div>
-      <div>
-        <input type="checkbox" id='ssbify' name="ssbify" value="ssbify"> <label for="ssbify" id="label-ssbify">ssbify</label>
-        <input type="checkbox" id='cb-public' name="public" value="public"> <label for="cb-public" id="label-public">public</label>
-        <button id="ssb-sync-btn" title="ssb sync">
-          ssb sync
-        </button>
       </div>
       <input class='save-input' id='title' type='text' placeholder='title'/>
       <input class='save-input' id='url' type='text' placeholder='url'/>
@@ -69,7 +67,9 @@ v0.3.5
       </button>
       <button id="prev-btn"> prev </button>
       <button id="next-btn"> next </button>
-      page <input id="page-idx-input" type="text" style="width:50px;" disabled=true> <span id="page-of">of</span>
+      <span style="float: right">
+        page <input id="page-idx-input" type="text" style="width:50px;" disabled=true> <span id="page-of">of</span>
+      </span>
     </div>
     <div>
       <div id='notes'></div>
