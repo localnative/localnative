@@ -1,3 +1,6 @@
+let LIMIT = 10;
+let offset = 0;
+let count = 0;
 function requestMessage(text) {
   document.getElementById('response-text').innerHTML = '<< running or failed :-( run <a href="https://localnative.app" target="_blank">desktop app</a> to finish setup browser extension! run ssb-server for ssb sync :-)';
   document.getElementById('request-text').innerHTML = Sanitizer.escapeHTML`${text}`;
@@ -8,6 +11,12 @@ function onNativeMessage(message) {
   document.getElementById('response-text').innerHTML = Sanitizer.escapeHTML`${resp}`;
   // abort if no notes
   if (!message.notes) return;
+
+  if (message.count) {
+    count = message.count;
+    let pages = Math.ceil(count / LIMIT);
+    document.getElementById('page-of').innerHTML = 'of ' + pages;
+  }
 
   document.getElementById('notes').innerHTML = '';
   var notesHTML = message.notes.forEach(function(i){
@@ -142,6 +151,22 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
+  // register prev and next
+  document.getElementById('prev-btn').onclick = function(){
+    if(offset - LIMIT >= 0){
+      offset -= LIMIT;
+      cmdSearch();
+      document.getElementById('page-idx-input').value = Number(document.getElementById('page-idx-input').value) - 1;
+    }
+  };
+  document.getElementById('next-btn').onclick = function(){
+    if(offset + LIMIT <= count){
+      offset += LIMIT;
+      cmdSearch();
+      document.getElementById('page-idx-input').value = Number(document.getElementById('page-idx-input').value) + 1;
+    }
+  };
+
   // register ssb-sync
   document.getElementById('ssb-sync-btn').onclick = function(){
       cmdSsbSync();
@@ -149,16 +174,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // register cmdSearch
   document.getElementById('search-text').addEventListener('keyup', function (e) {
+      offset = 0;
+      document.getElementById('page-idx-input').value = 1;
       cmdSearch();
   });
 
   document.getElementById('search-clear-btn').onclick = function(){
     document.getElementById('search-text').value = '';
+    offset = 0;
+    document.getElementById('page-idx-input').value = 1;
     cmdSearch();
   };
 
   // initial query
   cmdSelect();
+  document.getElementById('page-idx-input').value = 1;
 
   chrome.tabs.query({'active': true, 'lastFocusedWindow': true}, function (tabs) {
     var title = tabs[0].title;
@@ -169,7 +199,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
 });
 
-let LIMIT = 20;
 
 function makeTags(str) {
   let s = str.replace(/,+/g, " ").trim();
@@ -211,7 +240,7 @@ function cmdSearch() {
 
     query: document.getElementById('search-text').value,
     limit: LIMIT,
-    offset: 0
+    offset: offset
   };
   cmd(message);
 }
@@ -220,7 +249,7 @@ function cmdSelect() {
   var message = {
     action: "select",
     limit: LIMIT,
-    offset: 0
+    offset: offset
   };
   cmd(message);
 }
@@ -232,7 +261,7 @@ function cmdDelete(rowid) {
     query: document.getElementById('search-text').value,
     rowid: rowid,
     limit: LIMIT,
-    offset: 0
+    offset: offset
   };
   cmd(message);
 }
