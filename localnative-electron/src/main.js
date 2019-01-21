@@ -1,6 +1,20 @@
 const version = "0.3.5"
 // Modules to control application life and create native browser window
-const {app, BrowserWindow} = require('electron')
+const {app, BrowserWindow, ipcMain, dialog} = require('electron')
+
+ipcMain.on('open-file-dialog', (event) => {
+  dialog.showOpenDialog({
+    title: 'Choose another LocalNative sqlite3 file to sync with',
+    properties: ['openFile'],
+    filters: [
+      { name: 'sqlite3 Files', extensions: ['sqlite3'] },
+    ]
+  }, (files) => {
+    if (files) {
+      event.sender.send('selected-directory', files)
+    }
+  })
+})
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.

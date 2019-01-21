@@ -1,7 +1,9 @@
 // This file is required by the index.html file and will
 // be executed in the renderer process for that window.
 // All of the Node.js APIs are available in this process.
-let neon = require('localnative-neon');
+const neon = require('localnative-neon');
+const {ipcRenderer} = require('electron');
+
 let LIMIT = 10;
 let offset = 0;
 let count = 0;
@@ -161,9 +163,13 @@ document.addEventListener('DOMContentLoaded', function () {
       cmdSsbSync();
   };
 
+  // sync-via-attach
   document.getElementById('sync-via-attach-btn').onclick = function(){
-      cmdSyncViaAttach("/home/e/Documents/localnative.sqlite3");
+    ipcRenderer.send('open-file-dialog');
   };
+  ipcRenderer.on('selected-directory', (event, path) => {
+    cmdSyncViaAttach(path[0]);
+  });
 
   // register cmdSearch
   document.getElementById('search-text').addEventListener('keyup', function (e) {
