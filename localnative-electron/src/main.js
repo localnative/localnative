@@ -3,7 +3,8 @@ const version = "0.3.5"
 const {app, BrowserWindow, ipcMain, dialog} = require('electron')
 
 ipcMain.on('open-file-dialog', (event) => {
-  dialog.showOpenDialog({
+  const win = BrowserWindow.fromWebContents(event.sender)
+  dialog.showOpenDialog(win, {
     title: 'Choose another LocalNative sqlite3 file to sync with',
     properties: ['openFile'],
     filters: [
