@@ -62,33 +62,72 @@ let jsonChrome = {
   ]
 }
 
-// create path
+// assign path value, default platform
 var pathMozilla = home + '/.mozilla/native-messaging-hosts'
-var pathChrome = home + '/.config/chromium/NativeMessagingHosts'
+var pathChromium = home + '/.config/chromium/NativeMessagingHosts'
+var pathChrome = home + '/.config/google-chrome/NativeMessagingHosts'
 if (platform == '-mac') {
   pathMozilla = home + '/Library/Application Support/Mozilla/NativeMessagingHosts'
+  pathChromium = home + '/Library/Application Support/Chromium/NativeMessagingHosts'
   pathChrome = home + '/Library/Application Support/Google/Chrome/NativeMessagingHosts'
 }
 if (platform == '.exe'){
   if (!fs.existsSync(dirConfig)){
-    fs.mkdirSync(dirConfig, {recursive: true});
+    try{
+      fs.mkdirSync(dirConfig, {recursive: true});
+    }catch(error){
+      console.error(error);
+    }
   }
   pathMozilla = dirConfig + '/mozilla'
   pathChrome = dirConfig + '/chrome'
 }
+
+// create directory
 if (!fs.existsSync(pathMozilla)){
-  fs.mkdirSync(pathMozilla, {recursive: true});
+  try{
+    fs.mkdirSync(pathMozilla, {recursive: true});
+  }catch(error){
+    console.error(error);
+  }
+}
+// windows seems not have chromium
+if (platform != '.exe' && !fs.existsSync(pathChromium)){
+  try{
+    fs.mkdirSync(pathChromium, {recursive: true});
+  }catch(error){
+    console.error(error);
+  }
 }
 if (!fs.existsSync(pathChrome)){
-  fs.mkdirSync(pathChrome, {recursive: true});
+  try{
+    fs.mkdirSync(pathChrome, {recursive: true});
+  }catch(error){
+    console.error(error);
+  }
 }
 
 // create manifest file
 if (fs.existsSync(pathMozilla)){
-  fs.writeFileSync(pathMozilla + '/app.localnative.json', JSON.stringify(jsonMozilla, null, 2))
+  try{
+    fs.writeFileSync(pathMozilla + '/app.localnative.json', JSON.stringify(jsonMozilla, null, 2))
+  }catch(error){
+    console.error(error);
+  }
+}
+if (fs.existsSync(pathChromium)){
+  try{
+    fs.writeFileSync(pathChromium + '/app.localnative.json', JSON.stringify(jsonChrome, null, 2))
+  }catch(error){
+    console.error(error);
+  }
 }
 if (fs.existsSync(pathChrome)){
-  fs.writeFileSync(pathChrome + '/app.localnative.json', JSON.stringify(jsonChrome, null, 2))
+  try{
+    fs.writeFileSync(pathChrome + '/app.localnative.json', JSON.stringify(jsonChrome, null, 2))
+  }catch(error){
+    console.error(error);
+  }
 }
 
 module.exports = {
