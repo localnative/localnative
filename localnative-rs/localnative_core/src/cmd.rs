@@ -13,22 +13,65 @@ use std::iter::FromIterator;
 
 pub fn sync_via_attach(conn: &Connection, uri: &str) -> String {
     if let Ok(_) = conn.execute("attach ? as 'other'", &[uri]) {
-        let r: Result<String> =
-            conn.query_row("SELECT * FROM other.note", &[] as &[&ToSql], |row| {
-                row.get(2)
-            });
-        match r {
-            Ok(f) => {
-                eprintln!("Ok {:?}", f);
-                format!(r#"{{"sync-via-attach": "{}"}}"#, uri)
+        match conn.execute_batch("BEGIN;
+        insert into note (title, url, tags, description, comments, annotations, created_at, is_public)
+        select title, url, tags, description, comments, annotations, created_at, is_public
+from other.note
+        where not exists (
+            select 1 from note
+            where note.title = other.note.title
+            and note.url = other.note.url
+            and note.tags = other.note.tags
+            and note.description = other.note.description
+            and note.comments = other.note.comments
+            and note.annotations= other.note.annotations
+            and note.created_at = other.note.created_at
+            and note.is_public = other.note.is_public
+        );
+        COMMIT;
+        BEGIN;
+        insert into other.note (title, url, tags, description, comments, annotations, created_at, is_public)
+        select title, url, tags, description, comments, annotations, created_at, is_public
+from note
+        where not exists (
+            select 1 from other.note
+            where other.note.title = note.title
+            and other.note.url = note.url
+            and other.note.tags = note.tags
+            and other.note.description = note.description
+            and other.note.comments = note.comments
+            and other.note.annotations= note.annotations
+            and other.note.created_at = note.created_at
+            and other.note.is_public = note.is_public
+        );
+        COMMIT;
+        detach database other;
+        "){
+            Ok(_) => {
+                format!(r#"{{"sync-via-attach-done": "{}"}}"#, uri)
             }
             Err(err) => {
                 eprintln!("Err {:?}", err);
                 format!(r#"{{"error": "{}"}}"#, err.to_string())
             }
         }
+
+    // let r: Result<String> =
+    //     conn.query_row("SELECT * FROM other.note", NO_PARAMS, |row| {
+    //         row.get(2)
+    //     });
+    // match r {
+    //     Ok(f) => {
+    //         eprintln!("Ok {:?}", f);
+    //         format!(r#"{{"sync-via-attach": "{}"}}"#, uri)
+    //     }
+    //     Err(err) => {
+    //         eprintln!("Err {:?}", err);
+    //         format!(r#"{{"error": "{}"}}"#, err.to_string())
+    //     }
+    // }
     } else {
-        format!("can not attach {}", uri)
+        format!(r#"{{"error": "can not attach {}"}}"#, uri)
     }
 }
 

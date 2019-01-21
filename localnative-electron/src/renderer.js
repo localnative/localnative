@@ -168,6 +168,7 @@ document.addEventListener('DOMContentLoaded', function () {
     ipcRenderer.send('open-file-dialog');
   };
   ipcRenderer.on('selected-directory', (event, path) => {
+
     cmdSyncViaAttach(path[0]);
   });
 
