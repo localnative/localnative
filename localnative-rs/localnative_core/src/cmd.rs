@@ -40,6 +40,67 @@ pub fn count(conn: &Connection, tbl: &str) -> i64 {
     rs
 }
 
+pub fn search_count(conn: &Connection, query: &str) -> u32 {
+    let re1 = Regex::new(r"\s+").unwrap();
+    let s1 = re1.replace_all(query, " ");
+    let words = s1
+        .trim()
+        .split(" ")
+        .map(|w| format!("%{}%", w))
+        .collect::<Vec<String>>();
+    if words.len() == 1 && words.get(0).unwrap().is_empty() {
+        return select_count(conn);
+    }
+    let num_words = words.len();
+    eprintln!("{} words {:?}", num_words, words);
+
+    let r: Vec<String> = (0..num_words)
+        .map(|i| {
+            format!(
+                "(
+        title like :w{}
+        or url like :w{}
+        or tags like :w{}
+        or description like :w{}
+        )",
+                i.to_string(),
+                i.to_string(),
+                i.to_string(),
+                i.to_string()
+            )
+        })
+        .collect();
+
+    let sql = format!(
+        "SELECT count(1)
+        FROM note where
+        {}",
+        r.join(" and ")
+    );
+
+    eprintln!("sql {}", sql);
+
+    let mut stmt = conn.prepare(&sql).unwrap();
+
+    let keys: Vec<String> = (0..num_words)
+        .map(|i| ":w".to_string() + &i.to_string())
+        .collect();
+
+    let mut params: Vec<(&str, &ToSql)> = vec![];
+    for i in 0..num_words {
+        params.push((&keys.get(i).unwrap(), words.get(i).unwrap() as &ToSql));
+    }
+
+    eprintln!("params {:?}", params.len());
+
+    let rs = stmt.query_map_named(&params, |row| row.get(0)).unwrap();
+    let mut c: u32 = 0;
+    for r in rs {
+        c = r.unwrap();
+    }
+    c
+}
+
 pub fn search(conn: &Connection, query: &str, limit: &u32, offset: &u32) -> String {
     let re1 = Regex::new(r"\s+").unwrap();
     let s1 = re1.replace_all(query, " ");
@@ -121,6 +182,12 @@ pub fn search(conn: &Connection, query: &str, limit: &u32, offset: &u32) -> Stri
     j.pop();
     j.push_str("]");
     j
+}
+
+pub fn select_count(conn: &Connection) -> u32 {
+    let mut stmt = conn.prepare("SELECT count(1) FROM note").unwrap();
+    let rs = stmt.query_row(NO_PARAMS, |row| row.get(0)).unwrap();
+    rs
 }
 
 pub fn select(conn: &Connection, limit: &u32, offset: &u32) -> String {

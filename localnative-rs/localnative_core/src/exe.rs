@@ -3,7 +3,7 @@ extern crate rusqlite;
 extern crate serde_json;
 extern crate time;
 
-use cmd::{create, delete, insert, search, select, sync_via_attach};
+use cmd::{create, delete, insert, search, search_count, select, select_count, sync_via_attach};
 use rusqlite::Connection;
 use std::fs;
 use std::path::Path;
@@ -114,15 +114,17 @@ fn process(cmd: Cmd, text: &str) -> String {
 }
 
 fn do_search(conn: &Connection, query: &str, limit: &u32, offset: &u32) -> String {
+    let c = search_count(&conn, query);
     let j = search(&conn, query, limit, offset);
-    let msg = format!("{{\"notes\":{}}}", j);
+    let msg = format!(r#"{{"count": {}, "notes":{}}}"#, c, j);
     eprintln!("msg {}", msg);
     msg
 }
 
 fn do_select(conn: &Connection, limit: &u32, offset: &u32) -> String {
+    let c = select_count(&conn);
     let j = select(&conn, limit, offset);
-    let msg = format!("{{\"notes\":{}}}", j);
+    let msg = format!(r#"{{"count": {}, "notes":{}}}"#, c, j);
     eprintln!("msg {}", msg);
     msg
 }
