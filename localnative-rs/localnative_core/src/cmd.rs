@@ -34,15 +34,15 @@ from other.note
         select title, url, tags, description, comments, annotations, created_at, is_public
 from note
         where not exists (
-            select 1 from other.note
-            where other.note.title = note.title
-            and other.note.url = note.url
-            and other.note.tags = note.tags
-            and other.note.description = note.description
-            and other.note.comments = note.comments
-            and other.note.annotations= note.annotations
-            and other.note.created_at = note.created_at
-            and other.note.is_public = note.is_public
+            select 1 from other.note as o
+            where o.title = note.title
+            and o.url = note.url
+            and o.tags = note.tags
+            and o.description = note.description
+            and o.comments = note.comments
+            and o.annotations= note.annotations
+            and o.created_at = note.created_at
+            and o.is_public = note.is_public
         );
         COMMIT;
         detach database other;
