@@ -10,6 +10,10 @@ locales['zh-CN'] = i18n.create({
     "url": 'url 链接',
     "type to add tags, enter to save, comma or space as tag seperator": '输入标签，回车保存，半角逗号或空格为标签的分隔符',
     "type to search": '输入搜索',
-    "clear search term(s)": '清除搜索框'
+    "clear search term(s)": '清除搜索框',
+    "prev": '上页',
+    "next": '下页',
+    "ssb sync": 'ssb 同步',
+    "sync via attach file": '文件同步'
   }
 });

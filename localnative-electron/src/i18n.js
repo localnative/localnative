@@ -1,4 +1,4 @@
-
+let lc;
 function i18nRefresh() {
   document.getElementById('label-ssbify').innerHTML = Sanitizer.escapeHTML`${lc('ssbify')}`;
   document.getElementById('label-public').innerHTML = Sanitizer.escapeHTML`${lc('public')}`;
@@ -9,6 +9,12 @@ function i18nRefresh() {
   document.getElementById('desc-text').placeholder = lc('description');
   document.getElementById('search-text').placeholder = lc('type to search');
   document.getElementById('search-clear-btn').title = lc("clear search term(s)");
+
+  document.getElementById('prev-btn').innerHTML = lc("prev");
+  document.getElementById('next-btn').innerHTML = lc("next");
+  document.getElementById('ssb-sync-btn').innerHTML = lc("ssb sync");
+  document.getElementById('sync-via-attach-btn').innerHTML = lc("sync via attach file");
+
 }
 
 document.addEventListener('DOMContentLoaded', function () {
