@@ -2,6 +2,7 @@
 
 [Local Native](./index.md)
 - [Quick Start](./quick-start.md)
+- [Videos](./videos.md)
 - [Release](./release.md)
 - [Changelog](./changelog.md)
 - [Source Code](./source-code.md)
