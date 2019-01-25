@@ -18,7 +18,7 @@ function onNativeMessage(message) {
   if (Number(message.count) >=0 ) {
     count = message.count;
     let pages = Math.ceil(count / LIMIT);
-    document.getElementById('page-of').innerHTML = 'of ' + pages;
+    document.getElementById('total-page').innerHTML = Sanitizer.escapeHTML`${pages}`;
   }
 
   document.getElementById('notes').innerHTML = '';

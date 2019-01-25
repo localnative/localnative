@@ -10,9 +10,12 @@ function i18nRefresh() {
   document.getElementById('search-text').placeholder = lc('type to search');
   document.getElementById('search-clear-btn').title = lc("clear search term(s)");
 
-  document.getElementById('prev-btn').innerHTML = lc("prev");
-  document.getElementById('next-btn').innerHTML = lc("next");
-  document.getElementById('ssb-sync-btn').innerHTML = lc("ssb sync");
+  document.getElementById('prev-btn').innerHTML = Sanitizer.escapeHTML`${lc("prev")}`;
+  document.getElementById('next-btn').innerHTML = Sanitizer.escapeHTML`${lc("next")}`;
+  document.getElementById('page').innerHTML = Sanitizer.escapeHTML`${lc("page")}`;
+  document.getElementById('page-of').innerHTML = Sanitizer.escapeHTML`${lc("of")}`;
+
+  document.getElementById('ssb-sync-btn').innerHTML = Sanitizer.escapeHTML`${lc("ssb sync")}`;
 }
 
 document.addEventListener('DOMContentLoaded', function () {

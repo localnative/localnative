@@ -13,6 +13,8 @@ locales['zh-CN'] = i18n.create({
     "clear search term(s)": '清除搜索框',
     "prev": '上页',
     "next": '下页',
+    "page": '页',
+    "of": '共',
     "ssb sync": 'ssb 同步',
     "sync via attach file": '文件同步'
   }

@@ -12,8 +12,12 @@ function i18nRefresh() {
 
   document.getElementById('prev-btn').innerHTML = lc("prev");
   document.getElementById('next-btn').innerHTML = lc("next");
+  document.getElementById('page').innerHTML = Sanitizer.escapeHTML`${lc("page")}`;
+  document.getElementById('page-of').innerHTML = Sanitizer.escapeHTML`${lc("of")}`;
+
   document.getElementById('ssb-sync-btn').innerHTML = lc("ssb sync");
   document.getElementById('sync-via-attach-btn').innerHTML = lc("sync via attach file");
+
 
 }
 
