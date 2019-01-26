@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /*
 Copyright (c) 2018 Kristoffer Ström <kristoffer@rymdkoloni.se>, dust <du5t@multiplexed.be>, Yi Wang
 
