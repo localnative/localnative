@@ -54,8 +54,8 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             """
         )
         let data = txt.data(using: .utf8)!
-        if let jsonNotes = try? JSONSerialization.jsonObject(with: data) as? [String: NSArray] {
-            notes =  jsonNotes!["notes"]!
+        if let jsonNotes = try? JSONSerialization.jsonObject(with: data) as? [String: NSObject] {
+            notes =  jsonNotes!["notes"] as! NSArray
         }
         self.tableView.reloadData()
     }
