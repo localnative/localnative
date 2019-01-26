@@ -1,11 +1,26 @@
+/*
+    Local Native
+    Copyright (C) 2018-2019  Yi Wang
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
+
+    You should have received a copy of the GNU Affero General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
 //
 //  ShareViewController.swift
 //  share-ext
 //
 //  Created by Yi Wang on 9/16/18.
-//  Copyright © 2018 Yi Wang. All rights reserved.
 //
-//  some inital code from https://hackernoon.com/how-to-build-an-ios-share-extension-in-swift-4a2019935b2e
 //
 
 import MobileCoreServices
@@ -74,7 +89,7 @@ class ShareViewController: UIViewController {
         tagsText.placeholder = "type to add tags, enter to save, comma or space as tag seperator"
         descriptionText.placeholder = "description"
         tagsText.becomeFirstResponder()
-
+        // https://hackernoon.com/how-to-build-an-ios-share-extension-in-swift-4a2019935b2e
         let extensionItem = extensionContext?.inputItems.first as! NSExtensionItem
         let itemProvider = extensionItem.attachments?.first as! NSItemProvider
         let propertyList = String(kUTTypePropertyList)
