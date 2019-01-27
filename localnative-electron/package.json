@@ -5,6 +5,7 @@
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",
+    "dev": "electron . --debug",
     "build": "electron-build-env neon build localnative-neon --release"
   },
   "keywords": [
@@ -14,6 +15,7 @@
   "author": "Yi Wang",
   "license": "AGPL-3.0",
   "devDependencies": {
+    "devtron": "^1.4.0",
     "electron": "^4.0.0",
     "electron-build-env": "^0.2.0",
     "neon-cli": "^0.2.0"

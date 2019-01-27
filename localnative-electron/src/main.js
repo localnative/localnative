@@ -18,6 +18,7 @@
 const version = "0.3.5"
 // Modules to control application life and create native browser window
 const {app, BrowserWindow, ipcMain, dialog} = require('electron')
+const debug = /--debug/.test(process.argv[2])
 
 ipcMain.on('open-file-dialog', (event) => {
   const win = BrowserWindow.fromWebContents(event.sender)
@@ -55,8 +56,12 @@ function createWindow () {
   // and load the index.html of the app.
   mainWindow.loadFile('src/index.html')
 
-  // Open the DevTools.
-  // mainWindow.webContents.openDevTools()
+  // Launch fullscreen with DevTools open, usage: npm run debug
+  if (debug) {
+    mainWindow.webContents.openDevTools()
+    mainWindow.maximize()
+    require('devtron').install()
+  }
 
   // Emitted when the window is closed.
   mainWindow.on('closed', function () {
