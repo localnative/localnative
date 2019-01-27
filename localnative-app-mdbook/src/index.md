@@ -1,12 +1,12 @@
-![Local Native](img/icon_64x64.png)
+![Local Native](img/icon_64x64.png) <b style="margin-top: 20px;font-size:120%; float: right">Organize your information and make it locally accessible and useful.</b>
 <script defer src="https://use.fontawesome.com/releases/v5.6.3/js/all.js" integrity="sha384-EIHISlAOj4zgYieurP0SdoiBYfGJKkgWedPHH4jCzpCXLmzVsw1ouK59MuUtP4a1" crossorigin="anonymous"></script>
 
 |            | ios | android | | firefox<br>addon | chrome<br>extension | | gnu<br>linux | mac | 
 |------------|-----|---------|-|----------------- |---------------------|-|--------------|-----|
-| <b>mobile</b> | [<i class="fab fa-apple fa-3x"></i>](https://itunes.apple.com/us/app/local-native/id1443968309) | [<i class="fab fa-android fa-3x"></i>](https://play.google.com/store/apps/details?id=app.localnative) | <b>browser extension</b> | [<i class="fab fa-firefox fa-3x"></i>](https://addons.mozilla.org/en-US/firefox/addon/localnative/) | [<i class="fab fa-chrome fa-3x"></i>](https://chrome.google.com/webstore/detail/local-native/oclkmkeameccmgnajgogjlhdjeaconnb) | <b>desktop</b> | [<i class="fab fa-linux fa-3x"></i>](https://gitlab.com/yiwang/localnative-release/tree/master/v0.3.4/gnu-linux) | [<i class="fab fa-app-store fa-3x"></i>](https://gitlab.com/yiwang/localnative-release/tree/master/v0.3.4/mac) |
+| <b>mobile</b> | [<i class="fab fa-apple fa-3x"></i>](https://itunes.apple.com/us/app/local-native/id1443968309) | [<i class="fab fa-android fa-3x"></i>](https://play.google.com/store/apps/details?id=app.localnative) | <b>browser extension</b> | [<i class="fab fa-firefox fa-3x"></i>](https://addons.mozilla.org/en-US/firefox/addon/localnative/) | [<i class="fab fa-chrome fa-3x"></i>](https://chrome.google.com/webstore/detail/local-native/oclkmkeameccmgnajgogjlhdjeaconnb) | <b>desktop</b> | [<i class="fab fa-linux fa-3x"></i>](https://gitlab.com/yiwang/localnative-release/tree/master/v0.3.5/gnu-linux) | [<i class="fab fa-app-store fa-3x"></i>](https://gitlab.com/yiwang/localnative-release/tree/master/v0.3.5/mac) |
 
 
-<b>Local Native</b> [Quick Start](quick-start.md)
+<b>Local Native</b> [Quick Start](quick-start.md) and [Videos](videos.md).
 <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/3dhB5gTtXNM" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 ## Own your data on your device

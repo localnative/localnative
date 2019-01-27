@@ -1,10 +1,11 @@
 # Changelog
 
-## v0.3.5 goal
-- sync with another sqlite3 file
+## v0.3.5
+- desktop app: sync via attach with another sqlite3 file
 - search result pagination
 - desktop app setup Chrome native messaging manifest json file
 - change android path to /sdcard/LocalNative
+- add license header to source files
 
 ## v0.3.4
 - simplify release script
