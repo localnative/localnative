@@ -15,7 +15,7 @@
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-let version = '0.3.5'
+let version = '0.3.6'
 
 var platform = "-gnu-linux"
 switch(process.platform){

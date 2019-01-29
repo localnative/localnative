@@ -14,7 +14,7 @@ rm -f package-lock.json
 rm -rf node_modules
 npm i
 rm -rf node_modules/localnative-neon/native/target
-electron-builder .
+electron-builder
 
 DIR="../../localnative-release/v$1/mac/"
 mkdir -p $DIR

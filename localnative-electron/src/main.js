@@ -15,10 +15,15 @@
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-const version = "0.3.5"
+const version = "0.3.6"
 // Modules to control application life and create native browser window
 const {app, BrowserWindow, ipcMain, dialog} = require('electron')
 const debug = /--debug/.test(process.argv[2])
+
+const path = require('path')
+const glob = require('glob')
+const files = glob.sync(path.join(__dirname, 'main-process/**/*.js'))
+files.forEach((file) => { require(file) })
 
 ipcMain.on('open-file-dialog', (event) => {
   const win = BrowserWindow.fromWebContents(event.sender)
