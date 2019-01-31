@@ -22,3 +22,4 @@ You can use [DB Browser for SQLite](http://sqlitebrowser.org/) to explore the da
 ## Note
 Windows currently does not have a standalone desktop app due to an upstream [issue](https://github.com/neon-bindings/neon/issues/357).
 
+There is a Mac App Store version of Local Native but due to sandbox nature, it is NOT usable because node.js `fs.mkdirSync` call got permission denied to create the above directories (and most likely permission issue for those browser extension manifest file as well). I am curious if there is a way to do so.
