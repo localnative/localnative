@@ -23,58 +23,75 @@
     <script>let i18n = require('roddeh-i18n')</script>
     <script src='./locales/zh-CN.js'></script>
     <script src='./locales/en-US.js'></script>
-    <link rel="stylesheet" href="assets/css/note.css">
+    <link rel="stylesheet" href="assets/css/global.css">
+    <link rel="stylesheet" href="assets/css/nav.css">
+    <link rel="stylesheet" href="assets/css/chart.css">
+    <link rel="stylesheet" href="assets/css/list.css">
   </head>
   <body>
-    <!-- All of the Node.js APIs are available in this renderer process. -->
-    <div id='save-input'>
-      <div>
-        <b>
+    <nav>
+      <header>
+      <b>
         <a href="https://localnative.app" target="_blank">Local Native</a>
-        </b>
-        <input type="checkbox" id='ssbify' name="ssbify" value="ssbify" class="hidden"> <label for="ssbify" id="label-ssbify" class="hidden">ssbify</label>
-        <input type="checkbox" id='cb-public' name="public" value="public" class="hidden"> <label for="cb-public" id="label-public" class="hidden">public</label>
-        <button id="ssb-sync-btn" title="ssb sync">
-          ssb sync
+      </b>
+      </header>
+
+      <div id='save-input'>
+
+        <div>
+          <input type="checkbox" id='ssbify' name="ssbify" value="ssbify" class="hidden"> <label for="ssbify" id="label-ssbify" class="hidden">ssbify</label>
+          <input type="checkbox" id='cb-public' name="public" value="public" class="hidden"> <label for="cb-public" id="label-public" class="hidden">public</label>
+
+          <button id="ssb-sync-btn" title="ssb sync">
+            ssb sync
+          </button>
+          <button id="sync-via-attach-btn" title="sync via attach file">
+            sync via attach file
+          </button>
+
+        </div>
+
+        <input class='save-input hidden' id='title' type='text' placeholder='title'/>
+        <input class='save-input hidden' id='url' type='text' placeholder='url'/>
+        <input class='save-input hidden' id='tags-text' type='text' placeholder='type to add tags, enter to save, comma or space as tag seperator'/>
+        <input class='save-input hidden' id='desc-text' type='text' placeholder='description'/>
+
+
+      </div>
+          <div> <span id="label-language">language</span>
+            <select id='select-language'>
+              <option value="en-US">en-US English - US</option>
+              <option value="zh-CN">zh-CN 中文简体 - 大陆</option>
+            </select>
+          </div>
+      <footer>
+        <div style="max-width:560px; font-size:smaller;">
+          <div id='request-text'></div>
+          <div id='response-text'></div>
+        </div>
+      </footer>
+    </nav>
+    <section class="chart">
+    </section>
+    <section class="list">
+      <div>
+        <input id='search-text' type='text' placeholder='type to search'/>
+        <button id="search-clear-btn" title="clear search term(s)">
+          X
         </button>
-        <button id="sync-via-attach-btn" title="sync via attach file">
-          sync via attach file
-        </button>
-        <span style="float: right"> <span id="label-language">language</span>
-          <select id='select-language'>
-            <option value="en-US">en-US English - US</option>
-            <option value="zh-CN">zh-CN 中文简体 - 大陆</option>
-          </select>
+        <button id="prev-btn"> prev </button>
+        <button id="next-btn"> next </button>
+        <span style="float: right">
+          <span id="page">page</span>
+          <input id="page-idx-input" type="text" style="width:30px;" disabled=true>
+          <span id="page-of">of</span>
+          <span id="total-page">0</span>
         </span>
       </div>
-      <input class='save-input hidden' id='title' type='text' placeholder='title'/>
-      <input class='save-input hidden' id='url' type='text' placeholder='url'/>
-      <input class='save-input hidden' id='tags-text' type='text' placeholder='type to add tags, enter to save, comma or space as tag seperator'/>
-      <input class='save-input hidden' id='desc-text' type='text' placeholder='description'/>
-
-
-    </div>
-    <div style="max-width:560px; font-size:smaller;">
-      <div id='request-text'></div>
-      <div id='response-text'></div>
-    </div>
-    <div>
-      <input id='search-text' type='text' placeholder='type to search'/>
-      <button id="search-clear-btn" title="clear search term(s)">
-        X
-      </button>
-      <button id="prev-btn"> prev </button>
-      <button id="next-btn"> next </button>
-      <span style="float: right">
-        <span id="page">page</span>
-        <input id="page-idx-input" type="text" style="width:30px;" disabled=true>
-        <span id="page-of">of</span>
-        <span id="total-page">0</span>
-      </span>
-    </div>
-    <div>
-      <div id='notes'></div>
-    </div>
+      <div>
+        <div id='notes'></div>
+      </div>
+    </section>
     <script>
       // You can also require other files to run in this process
       require('./renderer.js')
