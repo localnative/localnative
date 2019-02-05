@@ -25,6 +25,7 @@
     <script src='./locales/en-US.js'></script>
     <link rel="stylesheet" href="assets/css/global.css">
     <link rel="stylesheet" href="assets/css/nav.css">
+    <link rel="stylesheet" type="text/css" href="../node_modules/dc/dc.css"/>
     <link rel="stylesheet" href="assets/css/chart.css">
     <link rel="stylesheet" href="assets/css/list.css">
   </head>
@@ -71,9 +72,14 @@
         </div>
       </footer>
     </nav>
+
     <section class="chart">
-    </section>
-    <section class="list">
+      <div class="container">
+            <div id="ln-monthly-volume-chart">
+            </div>
+            <p class="muted pull-right" style="margin-right: 15px;">select a time range to zoom in</p>
+      </div>
+
       <div>
         <input id='search-text' type='text' placeholder='type to search'/>
         <button id="search-clear-btn" title="clear search term(s)">
@@ -93,7 +99,6 @@
       </div>
     </section>
     <script>
-      // You can also require other files to run in this process
       require('./renderer.js')
       require('./i18n.js')
     </script>

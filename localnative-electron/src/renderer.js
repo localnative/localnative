@@ -20,6 +20,7 @@
 // All of the Node.js APIs are available in this process.
 const neon = require('localnative-neon');
 const {ipcRenderer} = require('electron');
+const {cmdChart} = require('./chart');
 
 let LIMIT = 10;
 let offset = 0;
@@ -280,5 +281,6 @@ function cmd(message){
   requestMessage(">> " + input.substring(0,180) + " ...");
   var resp = JSON.parse(neon.run(input));
   onNativeMessage(resp);
+  cmdChart(message);
 }
 

@@ -16,6 +16,9 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 .chart {
-  width: 400px;
+  width: 800px;
   /* overflow-y: auto; */
+}
+#ln-monthly-volume-chart g.y {
+  /* display: none; */
 }
