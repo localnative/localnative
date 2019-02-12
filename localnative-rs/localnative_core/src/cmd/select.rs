@@ -21,9 +21,9 @@ extern crate rusqlite;
 extern crate serde;
 extern crate serde_json;
 use self::rusqlite::types::ToSql;
-use super::Note;
 use self::rusqlite::{Connection, NO_PARAMS};
 use super::make_tags;
+use super::Note;
 
 pub fn select_count(conn: &Connection) -> u32 {
     let mut stmt = conn.prepare("SELECT count(1) FROM note").unwrap();

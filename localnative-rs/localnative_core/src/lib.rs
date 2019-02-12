@@ -154,6 +154,16 @@ pub struct CmdSyncViaAttach {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+pub struct CmdFilter {
+    pub query: String,
+
+    pub limit: u32,
+    pub offset: u32,
+    pub from: String,
+    pub to: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct CmdSearch {
     pub query: String,
 

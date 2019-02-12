@@ -15,9 +15,6 @@
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-// This file is required by the index.html file and will
-// be executed in the renderer process for that window.
-// All of the Node.js APIs are available in this process.
 const neon = require('localnative-neon');
 const {ipcRenderer} = require('electron');
 const {cmdChart} = require('./chart');

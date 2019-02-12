@@ -28,8 +28,8 @@ use super::Note;
 use std::iter::FromIterator;
 mod search;
 mod select;
-pub use self::search::{search_count, search};
-pub use self::select::{select_count, select};
+pub use self::search::{search, search_count};
+pub use self::select::{select, select_count};
 
 pub fn sync_via_attach(conn: &Connection, uri: &str) -> String {
     if let Ok(_) = conn.execute("attach ? as 'other'", &[uri]) {
@@ -85,8 +85,6 @@ pub fn count(conn: &Connection, tbl: &str) -> i64 {
     let rs = stmt.query_row(NO_PARAMS, |row| row.get(0)).unwrap();
     rs
 }
-
-
 
 pub fn delete(conn: &Connection, rowid: i64) {
     conn.execute("delete from note where rowid = ?1", &[&rowid])

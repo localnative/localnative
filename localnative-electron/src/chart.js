@@ -1,9 +1,26 @@
-var exports = module.exports = {};
-let _ = require('underscore');
+/*
+    Local Native
+    Copyright (C) 2018-2019  Yi Wang
 
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
+
+    You should have received a copy of the GNU Affero General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+var exports = module.exports = {};
+const _ = require('underscore');
 const neon = require('localnative-neon');
-crossfilter = require('crossfilter2');
-dc = require('dc');
+const crossfilter = require('crossfilter2');
+const dc = require('dc');
+const cmd = require('./cmd');
 
 exports.cmdChart = _.debounce(cmdChartImp, 500);
 
@@ -50,6 +67,10 @@ function makeChart(resp){
       .round(d3.timeMonth.round)
       .alwaysUseRounding(true)
       .xUnits(d3.timeMonths);
+
+  lnVolumeChart.on('filtered', function(chart, filter){
+    cmd.filter(filter[0].toUTCString(), filter[1].toUTCString())
+  });
 
   dc.renderAll();
 }

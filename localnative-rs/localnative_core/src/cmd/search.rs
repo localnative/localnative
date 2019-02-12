@@ -22,10 +22,10 @@ extern crate serde;
 extern crate serde_json;
 use self::regex::Regex;
 use self::rusqlite::types::ToSql;
-use super::Note;
-use self::rusqlite::{Connection};
-use super::select::{select, select_count};
+use self::rusqlite::Connection;
 use super::make_tags;
+use super::select::{select, select_count};
+use super::Note;
 
 pub fn search_count(conn: &Connection, query: &str) -> u32 {
     let re1 = Regex::new(r"\s+").unwrap();

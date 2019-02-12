@@ -26,6 +26,7 @@ use std::fs;
 use std::path::Path;
 use Cmd;
 use CmdDelete;
+use CmdFilter;
 use CmdInsert;
 use CmdSearch;
 use CmdSelect;
@@ -126,6 +127,13 @@ fn process(cmd: Cmd, text: &str) -> String {
                 r#"{"error":"cmd search json error"}"#.to_string()
             }
         }
+        "filter" => {
+            if let Ok(s) = serde_json::from_str::<CmdFilter>(text) {
+                do_filter(&conn, &s.query, &s.limit, &s.offset, &s.from, &s.to)
+            } else {
+                r#"{"error":"cmd filter json error"}"#.to_string()
+            }
+        }
         _ => r#"{"error": "cmd no match"}"#.to_string(),
     }
 }
@@ -141,6 +149,21 @@ fn do_search(conn: &Connection, query: &str, limit: &u32, offset: &u32) -> Strin
 fn do_select(conn: &Connection, limit: &u32, offset: &u32) -> String {
     let c = select_count(&conn);
     let j = select(&conn, limit, offset);
+    let msg = format!(r#"{{"count": {}, "notes":{}}}"#, c, j);
+    eprintln!("msg {}", msg);
+    msg
+}
+
+fn do_filter(
+    conn: &Connection,
+    query: &str,
+    limit: &u32,
+    offset: &u32,
+    from: &str,
+    to: &str,
+) -> String {
+    let c = search_count(&conn, query);
+    let j = search(&conn, query, limit, offset);
     let msg = format!(r#"{{"count": {}, "notes":{}}}"#, c, j);
     eprintln!("msg {}", msg);
     msg
