@@ -21,8 +21,11 @@ const neon = require('localnative-neon');
 const LIMIT = 10;
 
 exports.filter = _.debounce(filterImp, 500);
+exports.cmdSelect = cmdSelect;
+exports.cmdInsert = cmdInsert;
 exports.cmdSearch = cmdSearch;
 exports.cmdDelete = cmdDelete;
+exports.cmd = cmd;
 exports.LIMIT = LIMIT;
 
 const {onNativeMessage} = require('./ctrl');
@@ -88,3 +91,85 @@ function requestMessage(text) {
   document.getElementById('response-text').innerHTML = '<< running or failed :-( run ssb-server like <a href="https://github.com/ssbc/patchwork/releases">Patchwork</a> or <a href="https://github.com/ssbc/patchbay/releases">Patchbay</a> for ssb sync :-)';
   document.getElementById('request-text').innerHTML = Sanitizer.escapeHTML`${text}`;
 }
+
+function makeTags(str) {
+  let s = str.replace(/,+/g, " ").trim();
+  let l = s.replace(/\s+/g, ",").split(",");
+  var set = {};
+  l.forEach(function(tag){
+    set[tag] = 1;
+  });
+  var arr = []
+  for (var key in set){
+    if(set.hasOwnProperty(key)) arr.push(key);
+  }
+  return arr.join(",");
+}
+
+function cmdInsert(annotations, is_public) {
+  var message = {
+    action: "insert",
+
+    title: document.getElementById('title').value,
+    url: document.getElementById('url').value,
+    tags: makeTags(document.getElementById('tags-text').value),
+    description: document.getElementById('desc-text').value,
+    comments: "",
+    annotations: annotations,
+
+    limit: LIMIT,
+    offset: offset,
+    is_public: is_public
+  };
+  console.log(message);
+  cmd(message);
+}
+
+function cmdSearch() {
+  document.getElementById('search-text').focus();
+  var message = {
+    action: "search",
+
+    query: document.getElementById('search-text').value,
+    limit: LIMIT,
+    offset: offset
+  };
+  cmd(message);
+}
+
+function cmdSelect() {
+  var message = {
+    action: "select",
+    limit: LIMIT,
+    offset: offset
+  };
+  cmd(message);
+}
+
+function cmdDelete(rowid) {
+  var message = {
+    action: "delete",
+
+    query: document.getElementById('search-text').value,
+    rowid: rowid,
+    limit: LIMIT,
+    offset: offset
+  };
+  cmd(message);
+}
+
+function cmdSsbSync() {
+  var message = {
+    action: "ssb-sync"
+  };
+  cmd(message);
+}
+
+function cmdSyncViaAttach(uri) {
+  var message = {
+    action: "sync-via-attach",
+    uri: uri
+  };
+  cmd(message);
+}
+
