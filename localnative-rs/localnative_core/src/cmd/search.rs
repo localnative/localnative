@@ -28,36 +28,14 @@ use super::select::{select, select_count};
 use super::Note;
 
 pub fn search_count(conn: &Connection, query: &str) -> u32 {
-    let re1 = Regex::new(r"\s+").unwrap();
-    let s1 = re1.replace_all(query, " ");
-    let words = s1
-        .trim()
-        .split(" ")
-        .map(|w| format!("%{}%", w))
-        .collect::<Vec<String>>();
+    let words = make_words(query);
     if words.len() == 1 && words.get(0).unwrap().is_empty() {
         return select_count(conn);
     }
     let num_words = words.len();
     eprintln!("{} words {:?}", num_words, words);
 
-    let r: Vec<String> = (0..num_words)
-        .map(|i| {
-            format!(
-                "(
-        title like :w{}
-        or url like :w{}
-        or tags like :w{}
-        or description like :w{}
-        )",
-                i.to_string(),
-                i.to_string(),
-                i.to_string(),
-                i.to_string()
-            )
-        })
-        .collect();
-
+    let r: Vec<String> = where_vec(num_words);
     let sql = format!(
         "SELECT count(1)
         FROM note where
@@ -68,10 +46,7 @@ pub fn search_count(conn: &Connection, query: &str) -> u32 {
     eprintln!("sql {}", sql);
 
     let mut stmt = conn.prepare(&sql).unwrap();
-
-    let keys: Vec<String> = (0..num_words)
-        .map(|i| ":w".to_string() + &i.to_string())
-        .collect();
+    let keys: Vec<String> = make_keys(num_words);
 
     let mut params: Vec<(&str, &ToSql)> = vec![];
     for i in 0..num_words {
@@ -89,36 +64,14 @@ pub fn search_count(conn: &Connection, query: &str) -> u32 {
 }
 
 pub fn search(conn: &Connection, query: &str, limit: &u32, offset: &u32) -> String {
-    let re1 = Regex::new(r"\s+").unwrap();
-    let s1 = re1.replace_all(query, " ");
-    let words = s1
-        .trim()
-        .split(" ")
-        .map(|w| format!("%{}%", w))
-        .collect::<Vec<String>>();
+    let words = make_words(query);
     if words.len() == 1 && words.get(0).unwrap().is_empty() {
         return select(conn, limit, offset);
     }
     let num_words = words.len();
     eprintln!("{} words {:?}", num_words, words);
 
-    let r: Vec<String> = (0..num_words)
-        .map(|i| {
-            format!(
-                "(
-        title like :w{}
-        or url like :w{}
-        or tags like :w{}
-        or description like :w{}
-        )",
-                i.to_string(),
-                i.to_string(),
-                i.to_string(),
-                i.to_string()
-            )
-        })
-        .collect();
-
+    let r: Vec<String> = where_vec(num_words);
     let sql = format!(
         "SELECT rowid, title, url, tags, description, comments, annotations, created_at, is_public
         FROM note where
@@ -130,10 +83,7 @@ pub fn search(conn: &Connection, query: &str, limit: &u32, offset: &u32) -> Stri
     eprintln!("sql {}", sql);
 
     let mut stmt = conn.prepare(&sql).unwrap();
-
-    let keys: Vec<String> = (0..num_words)
-        .map(|i| ":w".to_string() + &i.to_string())
-        .collect();
+    let keys: Vec<String> = make_keys(num_words);
 
     let mut params: Vec<(&str, &ToSql)> =
         vec![(":limit", limit as &ToSql), (":offset", offset as &ToSql)];
@@ -169,4 +119,38 @@ pub fn search(conn: &Connection, query: &str, limit: &u32, offset: &u32) -> Stri
     j.pop();
     j.push_str("]");
     j
+}
+
+fn make_words(query: &str) -> Vec<String> {
+    let re1 = Regex::new(r"\s+").unwrap();
+    let s1 = re1.replace_all(query, " ");
+    s1.trim()
+        .split(" ")
+        .map(|w| format!("%{}%", w))
+        .collect::<Vec<String>>()
+}
+
+fn make_keys(num_words: usize) -> Vec<String> {
+    (0..num_words)
+        .map(|i| ":w".to_string() + &i.to_string())
+        .collect()
+}
+
+fn where_vec(num_words: usize) -> Vec<String> {
+    (0..num_words)
+        .map(|i| {
+            format!(
+                "(
+        title like :w{}
+        or url like :w{}
+        or tags like :w{}
+        or description like :w{}
+        )",
+                i.to_string(),
+                i.to_string(),
+                i.to_string(),
+                i.to_string()
+            )
+        })
+        .collect()
 }
