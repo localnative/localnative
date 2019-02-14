@@ -15,7 +15,6 @@
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-extern crate linked_hash_set;
 extern crate regex;
 extern crate rusqlite;
 extern crate serde;
@@ -24,8 +23,52 @@ use self::regex::Regex;
 use self::rusqlite::types::ToSql;
 use self::rusqlite::Connection;
 use super::make_tags;
-use super::select::{select, select_count};
-use super::Note;
+use super::select::{select, select_by_day, select_count};
+use super::{ByDay, Note};
+
+pub fn search_by_day(conn: &Connection, query: &str) -> String {
+    let words = make_words(query);
+    if words.len() == 1 && words.get(0).unwrap().is_empty() {
+        return select_by_day(conn);
+    }
+    let num_words = words.len();
+    let r: Vec<String> = where_vec(num_words);
+    let sql = format!(
+        "SELECT substr(created_at, 0, 11) as dt, count(1) as n
+        FROM note where
+        {}
+        group by dt
+        order by dt",
+        r.join(" and ")
+    );
+
+    eprintln!("sql {}", sql);
+
+    let mut stmt = conn.prepare(&sql).unwrap();
+    let keys: Vec<String> = make_keys(num_words);
+
+    let mut params: Vec<(&str, &ToSql)> = vec![];
+    for i in 0..num_words {
+        params.push((&keys.get(i).unwrap(), words.get(i).unwrap() as &ToSql));
+    }
+
+    let result_iter = stmt
+        .query_map_named(&params, |row| ByDay {
+            dt: row.get(0),
+            n: row.get(1),
+        })
+        .unwrap();
+
+    let mut d = "[ ".to_owned();
+    for r in result_iter {
+        let mut r = r.unwrap();
+        d.push_str(&serde_json::to_string(&r).unwrap());
+        d.push_str(",");
+    }
+    d.pop();
+    d.push_str("]");
+    d
+}
 
 pub fn search_count(conn: &Connection, query: &str) -> u32 {
     let words = make_words(query);

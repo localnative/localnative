@@ -102,7 +102,6 @@ function cmd(message){
   requestMessage(">> " + input.substring(0,180) + " ...");
   var resp = JSON.parse(neon.run(input));
   onNativeMessage(resp);
-  // cmdChart(message);
 }
 
 function requestMessage(text) {

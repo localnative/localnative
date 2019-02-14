@@ -20,28 +20,17 @@ const _ = require('underscore');
 const neon = require('localnative-neon');
 const crossfilter = require('crossfilter2');
 const dc = require('dc');
-const cmd = require('./cmd');
 
-exports.cmdChart = _.debounce(cmdChartImp, 500);
-
-function cmdChartImp(message){
-  message.limit = 20000;
-  let input = JSON.stringify(message);
-  global.resp = JSON.parse(neon.run(input));
-  makeChart(resp);
-}
-
-function makeChart(resp){
+exports.refreshChart = function(days){
   let d3 = require('d3');
-  var dateFormatSpecifier = '%Y-%m-%d %H:%M:%S';
+  var dateFormatSpecifier = '%Y-%m-%d';
   var dateFormat = d3.timeFormat(dateFormatSpecifier);
   var dateFormatParser = d3.timeParse(dateFormatSpecifier);
-  let notes = resp.notes;
-  notes.forEach(function(d){
-    d.dd = dateFormatParser(d.created_at.substr(0, 19))
+  days.forEach(function(d){
+    d.dd = dateFormatParser(d.dt)
     d.month = d3.timeMonth(d.dd);
   });
-  var ln = crossfilter(notes);
+  var ln = crossfilter(days);
   var all = ln.groupAll();
 
   // Dimension by full date
@@ -74,3 +63,5 @@ function makeChart(resp){
 
   dc.renderAll();
 }
+
+const cmd = require('./cmd');

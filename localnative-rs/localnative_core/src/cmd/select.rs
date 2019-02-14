@@ -23,7 +23,34 @@ extern crate serde_json;
 use self::rusqlite::types::ToSql;
 use self::rusqlite::{Connection, NO_PARAMS};
 use super::make_tags;
-use super::Note;
+use super::{ByDay, Note};
+
+pub fn select_by_day(conn: &Connection) -> String {
+    let mut stmt = conn
+        .prepare(
+            "SELECT substr(created_at, 0, 11) as dt, count(1) as n
+        FROM note
+        group by dt
+        order by dt",
+        )
+        .unwrap();
+    let result_iter = stmt
+        .query_map(NO_PARAMS, |row| ByDay {
+            dt: row.get(0),
+            n: row.get(1),
+        })
+        .unwrap();
+
+    let mut d = "[ ".to_owned();
+    for r in result_iter {
+        let mut r = r.unwrap();
+        d.push_str(&serde_json::to_string(&r).unwrap());
+        d.push_str(",");
+    }
+    d.pop();
+    d.push_str("]");
+    d
+}
 
 pub fn select_count(conn: &Connection) -> u32 {
     let mut stmt = conn.prepare("SELECT count(1) FROM note").unwrap();

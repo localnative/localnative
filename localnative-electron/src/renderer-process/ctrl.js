@@ -1,6 +1,24 @@
+/*
+    Local Native
+    Copyright (C) 2018-2019  Yi Wang
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
+
+    You should have received a copy of the GNU Affero General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
 var exports = module.exports = {};
 exports.onNativeMessage = onNativeMessage;
 const {LIMIT, cmdDelete, cmdSearch, setOffset, setCount} = require('./cmd')
+const {refreshChart} = require('./chart')
 
 function onNativeMessage(message) {
   let resp = "<< " +  JSON.stringify(message).substring(0, 90) + " ...";
@@ -8,16 +26,20 @@ function onNativeMessage(message) {
   // abort if no notes
   if (!message.notes) return;
 
-  // show count
+  // show page count
   if (Number(message.count) >=0 ) {
     let count = message.count;
     setCount(count);
     let pages = Math.ceil(count / LIMIT);
     document.getElementById('total-page').innerHTML = Sanitizer.escapeHTML`${pages}`;
   }
+  refreshNotes(message.notes);
+  refreshChart(message.days);
+}
 
+function refreshNotes(notes){
   document.getElementById('notes').innerHTML = '';
-  var notesHTML = message.notes.forEach(function(i){
+  notes.forEach(function(i){
     // render one item
     document.getElementById('notes').insertAdjacentHTML('beforeend', Sanitizer.escapeHTML`
     <div class="note-sep"></div>
