@@ -16,12 +16,10 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-offset = 0;
-count = 0;
 const neon = require('localnative-neon');
 const {ipcRenderer} = require('electron');
 const {cmdChart} = require('./chart');
-const {LIMIT, cmdSyncViaAttach, cmdSelect, cmdInsert, cmdSearch} = require('./cmd');
+const {LIMIT, cmdSyncViaAttach, cmdSelect, cmdInsert, cmdSearch, getOffset, setOffset, getCount} = require('./cmd');
 
 document.addEventListener('DOMContentLoaded', function () {
   // focus on tags
@@ -62,15 +60,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // register prev and next
   document.getElementById('prev-btn').onclick = function(){
+    let offset = getOffset();
     if(offset - LIMIT >= 0){
-      offset -= LIMIT;
+      setOffset( offset - LIMIT);
       cmdSearch();
       document.getElementById('page-idx-input').value = Number(document.getElementById('page-idx-input').value) - 1;
     }
   };
   document.getElementById('next-btn').onclick = function(){
-    if(offset + LIMIT <= count){
-      offset += LIMIT;
+    let offset = getOffset();
+    if(offset + LIMIT <= getCount()){
+      setOffset( offset + LIMIT);
       cmdSearch();
       document.getElementById('page-idx-input').value = Number(document.getElementById('page-idx-input').value) + 1;
     }
@@ -92,14 +92,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // register cmdSearch
   document.getElementById('search-text').addEventListener('keyup', function (e) {
-      offset = 0;
+      setOffset(0);
       document.getElementById('page-idx-input').value = 1;
       cmdSearch();
   });
 
   document.getElementById('search-clear-btn').onclick = function(){
     document.getElementById('search-text').value = '';
-    offset = 0;
+    setOffset(0);
     document.getElementById('page-idx-input').value = 1;
     cmdSearch();
   };

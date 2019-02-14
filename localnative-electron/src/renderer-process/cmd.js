@@ -18,15 +18,33 @@
 var exports = module.exports = {};
 const _ = require('underscore');
 const neon = require('localnative-neon');
-const LIMIT = 10;
 
+const LIMIT = 10;
+exports.LIMIT = LIMIT;
 exports.filter = _.debounce(filterImp, 500);
 exports.cmdSelect = cmdSelect;
 exports.cmdInsert = cmdInsert;
 exports.cmdSearch = cmdSearch;
 exports.cmdDelete = cmdDelete;
 exports.cmd = cmd;
-exports.LIMIT = LIMIT;
+
+// count
+var count = 0;
+exports.getCount = function(){
+  return count;
+}
+exports.setCount = function(val){
+  count = val;
+}
+
+// offset
+var offset = 0;
+exports.getOffset = function(){
+  return offset;
+}
+exports.setOffset = function(val){
+  offset = val;
+}
 
 const {onNativeMessage} = require('./ctrl');
 

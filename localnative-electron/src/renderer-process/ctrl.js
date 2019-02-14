@@ -1,6 +1,6 @@
 var exports = module.exports = {};
 exports.onNativeMessage = onNativeMessage;
-const {LIMIT, cmdDelete, cmdSearch} = require('./cmd')
+const {LIMIT, cmdDelete, cmdSearch, setOffset, setCount} = require('./cmd')
 
 function onNativeMessage(message) {
   let resp = "<< " +  JSON.stringify(message).substring(0, 90) + " ...";
@@ -10,7 +10,8 @@ function onNativeMessage(message) {
 
   // show count
   if (Number(message.count) >=0 ) {
-    count = message.count;
+    let count = message.count;
+    setCount(count);
     let pages = Math.ceil(count / LIMIT);
     document.getElementById('total-page').innerHTML = Sanitizer.escapeHTML`${pages}`;
   }
@@ -60,7 +61,7 @@ function onNativeMessage(message) {
         // tag search
         document.getElementById('note-tags-rowid-' + i.rowid + '-tag-' + tag).onclick = function(){
           document.getElementById('search-text').value = tag;
-          offset = 0;
+          setOffset(0);
           cmdSearch();
           document.getElementById('page-idx-input').value = 1;
         }
