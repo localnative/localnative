@@ -26,9 +26,12 @@ exports.refreshChart = function(days){
   var dateFormatSpecifier = '%Y-%m-%d';
   var dateFormat = d3.timeFormat(dateFormatSpecifier);
   var dateFormatParser = d3.timeParse(dateFormatSpecifier);
+  var dtMin = dtMax = days[0].dt;
   days.forEach(function(d){
-    d.dd = dateFormatParser(d.dt)
+    d.dd = dateFormatParser(d.dt);
     d.month = d3.timeMonth(d.dd);
+    dtMin = d.dt < dtMin ? d.dt : dtMin;
+    dtMax = d.dt > dtMax ? d.dt : dtMax;
   });
   var ln = crossfilter(days);
   var all = ln.groupAll();
@@ -45,14 +48,14 @@ exports.refreshChart = function(days){
 
   global.lnVolumeChart = dc.barChart('#ln-monthly-volume-chart');
 
-  lnVolumeChart.width(400)
-      .height(200)
+  lnVolumeChart.width(800)
+      .height(100)
       .margins({top: 10, right: 50, bottom: 20, left: 40})
       .dimension(months)
       .group(monthsGroup)
       .centerBar(true)
       .gap(1)
-      .x(d3.scaleTime().domain([new Date(2008, 0, 1), new Date(2019, 11, 31)]))
+      .x(d3.scaleTime().domain([new Date(dtMin), new Date(dtMax)]))
       .round(d3.timeMonth.round)
       .alwaysUseRounding(true)
       .xUnits(d3.timeMonths);
