@@ -17,7 +17,7 @@
 */
 var exports = module.exports = {};
 exports.onNativeMessage = onNativeMessage;
-const {LIMIT, cmdDelete, cmdSearch, setOffset, setCount} = require('./cmd')
+const {LIMIT, cmdDelete, cmdSearch, getOffset, setOffset, setCount} = require('./cmd')
 const {refreshChart} = require('./chart')
 
 function onNativeMessage(message) {
@@ -34,7 +34,12 @@ function onNativeMessage(message) {
     document.getElementById('total-page').innerHTML = Sanitizer.escapeHTML`${pages}`;
   }
   refreshNotes(message.notes);
-  refreshChart(message.days);
+
+  if (message.days // filter result has no days field
+    && getOffset() == 0 // only first page refresh chart
+  ){
+    refreshChart(message.days);
+  }
 }
 
 function refreshNotes(notes){
