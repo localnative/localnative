@@ -21,7 +21,7 @@ const neon = require('localnative-neon');
 
 const LIMIT = 10;
 exports.LIMIT = LIMIT;
-exports.filter = _.debounce(filterImp, 500);
+exports.cmdFilter = _.debounce(filterImp, 500);
 exports.cmdSelect = cmdSelect;
 exports.cmdInsert = cmdInsert;
 exports.cmdSearch = cmdSearch;
@@ -48,20 +48,16 @@ exports.setOffset = function(val){
 
 const {onNativeMessage} = require('./ctrl');
 
-function filterImp(from, to) {
+function filterImp(from, to, offset) {
   let message = {
     action: 'filter',
     query: document.getElementById('search-text').value,
     limit: LIMIT,
-    offset: 0,
+    offset: offset,
     from: from,
     to: to
   };
-  console.log(message);
-  let input = JSON.stringify(message);
-  let resp = JSON.parse(neon.run(input));
-  console.log(resp);
-  onNativeMessage(resp);
+  cmd(message);
 }
 
 function cmdSearch() {
@@ -152,6 +148,7 @@ function cmdSearch() {
     offset: offset
   };
   cmd(message);
+
 }
 
 function cmdSelect() {

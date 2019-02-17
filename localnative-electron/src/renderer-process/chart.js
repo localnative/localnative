@@ -61,7 +61,9 @@ exports.refreshChart = function(days){
       .xUnits(d3.timeMonths);
 
   lnVolumeChart.on('filtered', function(chart, filter){
-    cmd.filter(filter[0].toISOString().substr(0,10), filter[1].toISOString().substr(0,10));
+    cmd.cmdFilter(filter[0].toISOString().substr(0,10)
+      , filter[1].toISOString().substr(0,10)
+      , 0);
   });
 
   dc.renderAll();
