@@ -26,8 +26,10 @@ use self::rusqlite::types::ToSql;
 use self::rusqlite::{Connection, NO_PARAMS};
 use super::{ByDay, Note};
 use std::iter::FromIterator;
+mod filter;
 mod search;
 mod select;
+pub use self::filter::{filter, filter_count};
 pub use self::search::{search, search_by_day, search_count};
 pub use self::select::{select, select_by_day, select_count};
 
