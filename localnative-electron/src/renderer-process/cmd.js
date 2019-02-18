@@ -109,8 +109,8 @@ function cmdDelete(rowid) {
 }
 
 function cmd(message){
-  let input = JSON.stringify(message);
-  requestMessage(">> " + input.substring(0,180) + " ...");
+  let input = JSON.stringify(message, null, 2);
+  requestMessage(">> " + input);
   var resp = JSON.parse(neon.run(input));
   onNativeMessage(resp);
 }

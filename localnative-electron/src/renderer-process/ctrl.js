@@ -19,9 +19,11 @@ var exports = module.exports = {};
 exports.onNativeMessage = onNativeMessage;
 const {LIMIT, cmdDelete, cmdSearch, getOffset, setOffset, setCount} = require('./cmd')
 const {refreshChart} = require('./chart')
+const _ = require('underscore')
 
 function onNativeMessage(message) {
-  let resp = "<< " +  JSON.stringify(message).substring(0, 90) + " ...";
+  let msg = _.omit(message, 'days', 'notes');
+  let resp = "<< " +  JSON.stringify(msg, null, 2);
   document.getElementById('response-text').innerHTML = Sanitizer.escapeHTML`${resp}`;
   // abort if no notes
   if (!message.notes) return;
