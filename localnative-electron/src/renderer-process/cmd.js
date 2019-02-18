@@ -25,6 +25,7 @@ exports.cmdFilter = _.debounce(filterImp, 500);
 exports.cmdSelect = cmdSelect;
 exports.cmdInsert = cmdInsert;
 exports.cmdSearch = cmdSearch;
+exports.cmdSearchOrFilter = cmdSearchOrFilter;
 exports.cmdDelete = cmdDelete;
 exports.cmd = cmd;
 
@@ -48,7 +49,17 @@ exports.setOffset = function(val){
 
 const {onNativeMessage} = require('./ctrl');
 
-function filterImp(from, to, offset) {
+var isFilter =  false;
+function cmdSearchOrFilter(){
+  if (isFilter){
+    filterImp(range.from, range.to);
+  } else {
+    cmdSearch();
+  }
+}
+
+var range = {};
+function filterImp(from, to) {
   let message = {
     action: 'filter',
     query: document.getElementById('search-text').value,
@@ -57,10 +68,14 @@ function filterImp(from, to, offset) {
     from: from,
     to: to
   };
+  range.from = from;
+  range.to = to;
   cmd(message);
+  isFilter = true;
 }
 
 function cmdSearch() {
+  isFilter = false;
   document.getElementById('search-text').focus();
   var message = {
     action: "search",

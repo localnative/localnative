@@ -19,7 +19,7 @@
 const neon = require('localnative-neon');
 const {ipcRenderer} = require('electron');
 const {cmdChart} = require('./chart');
-const {LIMIT, cmdSyncViaAttach, cmdSelect, cmdInsert, cmdSearch, getOffset, setOffset, getCount} = require('./cmd');
+const {LIMIT, cmdSyncViaAttach, cmdSelect, cmdInsert, cmdSearch, cmdSearchOrFilter, getOffset, setOffset, getCount} = require('./cmd');
 
 document.addEventListener('DOMContentLoaded', function () {
   // focus on tags
@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let offset = getOffset();
     if(offset - LIMIT >= 0){
       setOffset( offset - LIMIT);
-      cmdSearch();
+      cmdSearchOrFilter();
       document.getElementById('page-idx-input').value = Number(document.getElementById('page-idx-input').value) - 1;
     }
   };
@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let offset = getOffset();
     if(offset + LIMIT <= getCount()){
       setOffset( offset + LIMIT);
-      cmdSearch();
+      cmdSearchOrFilter();
       document.getElementById('page-idx-input').value = Number(document.getElementById('page-idx-input').value) + 1;
     }
   };
