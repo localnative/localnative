@@ -49,7 +49,7 @@ exports.setOffset = function(val){
 
 const {onNativeMessage} = require('./ctrl');
 
-var isFilter =  false;
+let isFilter =  false;
 function cmdSearchOrFilter(){
   if (isFilter){
     filterImp(range.from, range.to);
@@ -85,9 +85,11 @@ function cmdSearch() {
     offset: offset
   };
   cmd(message);
+  console.error("isFilter", isFilter);
 }
 
 function cmdSelect() {
+  isFilter = false;
   var message = {
     action: "select",
     limit: LIMIT,
