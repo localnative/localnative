@@ -81,6 +81,17 @@ pub extern "C" fn localnative_free(s: *mut c_char) {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+pub struct KVStringI64 {
+    pub k: String,
+    pub v: i64,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Tags {
+    pub tags: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ByDay {
     pub dt: String,
     pub n: i64,

@@ -24,14 +24,14 @@ use self::linked_hash_set::LinkedHashSet;
 use self::regex::Regex;
 use self::rusqlite::types::ToSql;
 use self::rusqlite::{Connection, NO_PARAMS};
-use super::{ByDay, Note};
+use super::{ByDay, KVStringI64, Note};
 use std::iter::FromIterator;
 mod filter;
 mod search;
 mod select;
 pub use self::filter::{filter, filter_count};
 pub use self::search::{search, search_by_day, search_count};
-pub use self::select::{select, select_by_day, select_count};
+pub use self::select::{select, select_by_day, select_by_tag, select_count};
 
 pub fn sync_via_attach(conn: &Connection, uri: &str) -> String {
     if let Ok(_) = conn.execute("attach ? as 'other'", &[uri]) {

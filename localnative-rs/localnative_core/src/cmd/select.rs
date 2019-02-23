@@ -21,9 +21,9 @@ extern crate rusqlite;
 extern crate serde;
 extern crate serde_json;
 use self::rusqlite::types::ToSql;
-use self::rusqlite::{Connection, NO_PARAMS};
+use self::rusqlite::{Connection, MappedRows, NO_PARAMS};
 use super::make_tags;
-use super::{ByDay, Note};
+use {ByDay, KVStringI64, Note, Tags};
 
 pub fn select_by_day(conn: &Connection) -> String {
     let mut stmt = conn
@@ -45,6 +45,59 @@ pub fn select_by_day(conn: &Connection) -> String {
     for r in result_iter {
         let mut r = r.unwrap();
         d.push_str(&serde_json::to_string(&r).unwrap());
+        d.push_str(",");
+    }
+    d.pop();
+    d.push_str("]");
+    d
+}
+
+// fn make_json_array_string<T>(result_iter : MappedRows<T> ) -> String {
+//     let mut d = "[ ".to_owned();
+//     for r in result_iter {
+//         let mut r = r.unwrap();
+//         d.push_str(&serde_json::to_string(&r).unwrap());
+//         d.push_str(",");
+//     }
+//     d.pop();
+//     d.push_str("]");
+//     d
+// }
+use std::collections::HashMap;
+
+pub fn select_by_tag(conn: &Connection) -> String {
+    let mut stmt = conn
+        .prepare(
+            "SELECT tags
+        FROM note",
+        )
+        .unwrap();
+
+    let mut tag_count_map: HashMap<String, i64> = HashMap::new();
+
+    let result_iter = stmt
+        .query_map(NO_PARAMS, |row| Tags { tags: row.get(0) })
+        .unwrap();
+
+    for r in result_iter {
+        let r = r.unwrap();
+        let tag_set = r.tags.split(',');
+        for t in tag_set {
+            if let Some(&v) = &tag_count_map.get(t) {
+                tag_count_map.insert(t.to_string(), v + 1);
+            } else {
+                tag_count_map.insert(t.to_string(), 1);
+            }
+        }
+    }
+
+    let mut d = "[ ".to_owned();
+    for (tag, &count) in &tag_count_map {
+        let item = KVStringI64 {
+            k: tag.to_string(),
+            v: count,
+        };
+        d.push_str(&serde_json::to_string(&item).unwrap());
         d.push_str(",");
     }
     d.pop();

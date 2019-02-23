@@ -22,7 +22,7 @@ extern crate time;
 
 use cmd::{
     create, delete, filter, filter_count, insert, search, search_by_day, search_count, select,
-    select_by_day, select_count, sync_via_attach,
+    select_by_day, select_by_tag, select_count, sync_via_attach,
 };
 use rusqlite::Connection;
 use std::fs;
@@ -154,7 +154,11 @@ fn do_select(conn: &Connection, limit: &u32, offset: &u32) -> String {
     let c = select_count(&conn);
     let j = select(&conn, limit, offset);
     let d = select_by_day(&conn);
-    let msg = format!(r#"{{"count": {}, "notes":{}, "days": {} }}"#, c, j, d);
+    let t = select_by_tag(&conn);
+    let msg = format!(
+        r#"{{"count": {}, "notes":{}, "days": {}, "tags": {} }}"#,
+        c, j, d, t
+    );
     eprintln!("msg {}", msg);
     msg
 }
