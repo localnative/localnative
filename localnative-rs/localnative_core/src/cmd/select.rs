@@ -23,6 +23,7 @@ extern crate serde_json;
 use self::rusqlite::types::ToSql;
 use self::rusqlite::{Connection, MappedRows, NO_PARAMS};
 use super::make_tags;
+use std::collections::HashMap;
 use {KVStringI64, Note, Tags};
 
 pub fn select_by_day(conn: &Connection) -> String {
@@ -63,7 +64,6 @@ pub fn select_by_day(conn: &Connection) -> String {
 //     d.push_str("]");
 //     d
 // }
-use std::collections::HashMap;
 
 pub fn select_by_tag(conn: &Connection) -> String {
     let mut stmt = conn

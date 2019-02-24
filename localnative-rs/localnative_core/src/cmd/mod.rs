@@ -30,7 +30,7 @@ mod filter;
 mod search;
 mod select;
 pub use self::filter::{filter, filter_count};
-pub use self::search::{search, search_by_day, search_count};
+pub use self::search::{search, search_by_day, search_by_tag, search_count};
 pub use self::select::{select, select_by_day, select_by_tag, select_count};
 
 pub fn sync_via_attach(conn: &Connection, uri: &str) -> String {

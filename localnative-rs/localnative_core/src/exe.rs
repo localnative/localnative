@@ -21,8 +21,8 @@ extern crate serde_json;
 extern crate time;
 
 use cmd::{
-    create, delete, filter, filter_count, insert, search, search_by_day, search_count, select,
-    select_by_day, select_by_tag, select_count, sync_via_attach,
+    create, delete, filter, filter_count, insert, search, search_by_day, search_by_tag,
+    search_count, select, select_by_day, select_by_tag, select_count, sync_via_attach,
 };
 use rusqlite::Connection;
 use std::fs;
@@ -145,7 +145,11 @@ fn do_search(conn: &Connection, query: &str, limit: &u32, offset: &u32) -> Strin
     let c = search_count(&conn, query);
     let j = search(&conn, query, limit, offset);
     let d = search_by_day(&conn, query);
-    let msg = format!(r#"{{"count": {}, "notes":{}, "days": {} }}"#, c, j, d);
+    let t = search_by_tag(&conn, query);
+    let msg = format!(
+        r#"{{"count": {}, "notes":{}, "days": {}, "tags": {} }}"#,
+        c, j, d, t
+    );
     eprintln!("msg {}", msg);
     msg
 }
