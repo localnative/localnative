@@ -84,9 +84,9 @@ pub fn select_by_tag(conn: &Connection) -> String {
         let tag_set = r.tags.split(',');
         for t in tag_set {
             if let Some(&v) = &tag_count_map.get(t) {
-                tag_count_map.insert(t.to_string(), v + 1);
+                tag_count_map.insert(t.to_lowercase(), v + 1);
             } else {
-                tag_count_map.insert(t.to_string(), 1);
+                tag_count_map.insert(t.to_lowercase(), 1);
             }
         }
     }
