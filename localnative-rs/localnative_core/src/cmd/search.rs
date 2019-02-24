@@ -24,7 +24,7 @@ use self::rusqlite::types::ToSql;
 use self::rusqlite::Connection;
 use super::make_tags;
 use super::select::{select, select_by_day, select_count};
-use super::{ByDay, Note};
+use {KVStringI64, Note};
 
 pub fn search_by_day(conn: &Connection, query: &str) -> String {
     let words = make_words(query);
@@ -53,9 +53,9 @@ pub fn search_by_day(conn: &Connection, query: &str) -> String {
     }
 
     let result_iter = stmt
-        .query_map_named(&params, |row| ByDay {
-            dt: row.get(0),
-            n: row.get(1),
+        .query_map_named(&params, |row| KVStringI64 {
+            k: row.get(0),
+            v: row.get(1),
         })
         .unwrap();
 

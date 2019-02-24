@@ -23,7 +23,7 @@ extern crate serde_json;
 use self::rusqlite::types::ToSql;
 use self::rusqlite::{Connection, MappedRows, NO_PARAMS};
 use super::make_tags;
-use {ByDay, KVStringI64, Note, Tags};
+use {KVStringI64, Note, Tags};
 
 pub fn select_by_day(conn: &Connection) -> String {
     let mut stmt = conn
@@ -35,9 +35,9 @@ pub fn select_by_day(conn: &Connection) -> String {
         )
         .unwrap();
     let result_iter = stmt
-        .query_map(NO_PARAMS, |row| ByDay {
-            dt: row.get(0),
-            n: row.get(1),
+        .query_map(NO_PARAMS, |row| KVStringI64 {
+            k: row.get(0),
+            v: row.get(1),
         })
         .unwrap();
 

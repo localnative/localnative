@@ -92,12 +92,6 @@ pub struct Tags {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct ByDay {
-    pub dt: String,
-    pub n: i64,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
 pub struct Ssbify {
     pub hash: String,
     pub markdown: String,

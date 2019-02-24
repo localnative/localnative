@@ -24,7 +24,7 @@ use self::rusqlite::types::ToSql;
 use self::rusqlite::Connection;
 use super::make_tags;
 use super::select::{select, select_by_day, select_count};
-use super::{ByDay, Note};
+use {KVStringI64, Note};
 
 pub fn filter_count(conn: &Connection, query: &str, from: &str, to: &str) -> u32 {
     let words = make_words(query);

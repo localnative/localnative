@@ -21,17 +21,23 @@ const neon = require('localnative-neon');
 const crossfilter = require('crossfilter2');
 const dc = require('dc');
 
+Date.prototype.addDays = function(days) {
+    var date = new Date(this.valueOf());
+    date.setDate(date.getDate() + days);
+    return date;
+}
+
 exports.refreshChart = function(days){
   let d3 = require('d3');
   var dateFormatSpecifier = '%Y-%m-%d';
   var dateFormat = d3.timeFormat(dateFormatSpecifier);
   var dateFormatParser = d3.timeParse(dateFormatSpecifier);
-  var dtMin = dtMax = days[0].dt;
+  var dtMin = dtMax = days[0].k;
   days.forEach(function(d){
-    d.dd = dateFormatParser(d.dt);
+    d.dd = dateFormatParser(d.k);
     d.month = d3.timeMonth(d.dd);
-    dtMin = d.dt < dtMin ? d.dt : dtMin;
-    dtMax = d.dt > dtMax ? d.dt : dtMax;
+    dtMin = d.k < dtMin ? d.k : dtMin;
+    dtMax = d.k > dtMax ? d.k : dtMax;
   });
   var ln = crossfilter(days);
   var all = ln.groupAll();
@@ -55,7 +61,7 @@ exports.refreshChart = function(days){
       .group(monthsGroup)
       .centerBar(true)
       .gap(1)
-      .x(d3.scaleTime().domain([new Date(dtMin), new Date(dtMax)]))
+      .x(d3.scaleTime().domain([(new Date(dtMin)).addDays(-31), (new Date(dtMax)).addDays(31)]))
       .round(d3.timeMonth.round)
       .alwaysUseRounding(true)
       .xUnits(d3.timeMonths);
