@@ -29,7 +29,7 @@ use {KVStringI64, Note};
 mod filter;
 mod search;
 mod select;
-pub use self::filter::{filter, filter_count};
+pub use self::filter::{filter, filter_by_tag, filter_count};
 pub use self::search::{search, search_by_day, search_by_tag, search_count};
 pub use self::select::{select, select_by_day, select_by_tag, select_count};
 
