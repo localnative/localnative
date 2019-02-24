@@ -22,8 +22,9 @@ const {refreshChart} = require('./chart')
 const _ = require('underscore')
 
 function onNativeMessage(message) {
-  let msg = _.omit(message, 'days', 'notes');
+  let msg = _.omit(message, 'days', 'notes', 'tags');
   let resp = "<< " +  JSON.stringify(msg, null, 2);
+  refreshTags(message);
   document.getElementById('response-text').innerHTML = Sanitizer.escapeHTML`${resp}`;
   // abort if no notes
   if (!message.notes) return;
@@ -41,6 +42,20 @@ function onNativeMessage(message) {
     && getOffset() == 0 // only first page refresh chart
   ){
     refreshChart(message.days);
+  }
+}
+
+function refreshTags(message){
+  if(message.tags){
+    let tags = _.sortBy(message.tags, 'v').reverse();
+    let dom = document.getElementById('tags');
+    dom.innerHTML = '';
+    tags.forEach(function(t){
+      // render one item
+      dom.insertAdjacentHTML('beforeend', Sanitizer.escapeHTML`
+      <li>${t.k}  ${t.v}</li>
+      `);
+    });
   }
 }
 
