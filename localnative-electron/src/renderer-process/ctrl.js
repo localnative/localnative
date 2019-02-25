@@ -45,6 +45,7 @@ function onNativeMessage(message) {
   }
 }
 
+
 function refreshTags(message){
   if(message.tags){
     let tags = _.sortBy(message.tags, 'v').reverse();
@@ -53,8 +54,16 @@ function refreshTags(message){
     tags.forEach(function(t){
       // render one item
       dom.insertAdjacentHTML('beforeend', Sanitizer.escapeHTML`
-      <li>${t.k}  ${t.v}</li>
+      <li><button id="tag-${t.k}">${t.k}</button>  ${t.v}</li>
       `);
+
+      document.getElementById('tag-'+t.k).onclick = function() {
+        document.getElementById('search-text').value = t.k;
+        setOffset(0);
+        cmdSearch();
+        document.getElementById('page-idx-input').value = 1;
+      }
+
     });
   }
 }
