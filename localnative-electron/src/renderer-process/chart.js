@@ -19,7 +19,7 @@ var exports = module.exports = {};
 const _ = require('underscore');
 const neon = require('localnative-neon');
 const crossfilter = require('crossfilter2');
-const dc = require('dc');
+global.dc = require('dc');
 
 Date.prototype.addDays = function(days) {
     var date = new Date(this.valueOf());
@@ -42,9 +42,12 @@ exports.refreshChart = function(days){
   var ln = crossfilter(days);
   var all = ln.groupAll();
 
-  // Dimension by full date
-  var dateDimension = ln.dimension(function (d) {
-      return d.dd;
+  // Dimensions
+  var daysDimension = ln.dimension(function (d) {
+    return d.dd;
+  });
+  var daysGroup = daysDimension.group().reduceSum(function(d){
+    return d.v;
   });
 
   var months = ln.dimension(function (d) {
@@ -52,9 +55,32 @@ exports.refreshChart = function(days){
   });
   var monthsGroup = months.group()
 
-  global.lnVolumeChart = dc.barChart('#ln-monthly-volume-chart');
+  global.lnDayChart = dc.barChart('#ln-day-chart');
+  global.lnMonthChart = dc.barChart('#ln-month-chart');
 
-  lnVolumeChart.width(800)
+  lnDayChart.width(800)
+      .height(200)
+      .transitionDuration(1000)
+      .margins({top: 10, right: 50, bottom: 20, left: 40})
+      // .dimension(daysDimension)
+      .dimension(months)
+      // .centerBar(true)
+      // .gap(1)
+      .mouseZoomable(true)
+      .rangeChart(lnMonthChart)
+      .x(d3.scaleTime().domain([(new Date(dtMin)).addDays(-31), (new Date(dtMax)).addDays(31)]))
+      .brushOn(false)
+      // .group(monthsGroup)
+      .group(daysGroup)
+      .elasticY(true)
+      .renderHorizontalGridLines(true)
+      // .round(d3.timeMonth.round)
+      // .alwaysUseRounding(true)
+      // .xUnits(d3.timeMonths);
+
+
+
+  lnMonthChart.width(800)
       .height(100)
       .margins({top: 10, right: 50, bottom: 20, left: 40})
       .dimension(months)
@@ -64,13 +90,16 @@ exports.refreshChart = function(days){
       .x(d3.scaleTime().domain([(new Date(dtMin)).addDays(-31), (new Date(dtMax)).addDays(31)]))
       .round(d3.timeMonth.round)
       .alwaysUseRounding(true)
-      .xUnits(d3.timeMonths);
+      .xUnits(d3.timeMonths)
+      .renderHorizontalGridLines(true)
 
-  lnVolumeChart.on('filtered', function(chart, filter){
-    cmd.setOffset(0);
-    cmd.cmdFilter(filter[0].toISOString().substr(0,10)
-      , filter[1].toISOString().substr(0,10)
-    );
+  lnMonthChart.on('filtered', function(chart, filter){
+    if (filter){
+      cmd.setOffset(0);
+      cmd.cmdFilter(filter[0].toISOString().substr(0,10)
+        , filter[1].toISOString().substr(0,10)
+      );
+    }
   });
 
   dc.renderAll();
