@@ -27,6 +27,9 @@ Date.prototype.addDays = function(days) {
     return date;
 }
 
+global.lnDayChart = dc.barChart('#ln-day-chart');
+global.lnMonthChart = dc.barChart('#ln-month-chart');
+
 exports.refreshChart = function(days){
   let d3 = require('d3');
   var dateFormatSpecifier = '%Y-%m-%d';
@@ -55,30 +58,26 @@ exports.refreshChart = function(days){
   });
   var monthsGroup = months.group()
 
-  global.lnDayChart = dc.barChart('#ln-day-chart');
-  global.lnMonthChart = dc.barChart('#ln-month-chart');
 
-  lnDayChart.width(800)
-      .height(200)
+  lnDayChart
+      .width(800)
+      .height(150)
       .transitionDuration(1000)
       .margins({top: 10, right: 50, bottom: 20, left: 40})
       // .dimension(daysDimension)
       .dimension(months)
-      // .centerBar(true)
-      // .gap(1)
+      .centerBar(true)
+      .gap(1)
       .mouseZoomable(true)
       .rangeChart(lnMonthChart)
       .x(d3.scaleTime().domain([(new Date(dtMin)).addDays(-31), (new Date(dtMax)).addDays(31)]))
-      .brushOn(false)
-      // .group(monthsGroup)
-      .group(daysGroup)
+      .round(d3.timeMonth.round)
+      // .alwaysUseRounding(true)
+      .xUnits(d3.timeMonths)
       .elasticY(true)
       .renderHorizontalGridLines(true)
-      // .round(d3.timeMonth.round)
-      // .alwaysUseRounding(true)
-      // .xUnits(d3.timeMonths);
-
-
+      .brushOn(false)
+      .group(daysGroup)
 
   lnMonthChart.width(800)
       .height(100)
@@ -88,13 +87,16 @@ exports.refreshChart = function(days){
       .centerBar(true)
       .gap(1)
       .x(d3.scaleTime().domain([(new Date(dtMin)).addDays(-31), (new Date(dtMax)).addDays(31)]))
+      .y(d3.scaleLinear().domain([0, 31]))
       .round(d3.timeMonth.round)
       .alwaysUseRounding(true)
       .xUnits(d3.timeMonths)
       .renderHorizontalGridLines(true)
+      .yAxis().tickValues([0, 5, 10, 15, 20, 25, 30])
 
   lnMonthChart.on('filtered', function(chart, filter){
     if (filter){
+      lnDayChart.focus(filter)
       cmd.setOffset(0);
       cmd.cmdFilter(filter[0].toISOString().substr(0,10)
         , filter[1].toISOString().substr(0,10)
