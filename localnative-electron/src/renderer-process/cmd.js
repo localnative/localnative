@@ -24,7 +24,7 @@ exports.LIMIT = LIMIT;
 exports.cmdFilter = _.debounce(filterImp, 500);
 exports.cmdSelect = cmdSelect;
 exports.cmdInsert = cmdInsert;
-exports.cmdSearch = cmdSearch;
+exports.cmdSearch = _.debounce(cmdSearchImp, 300);
 exports.cmdSearchOrFilter = cmdSearchOrFilter;
 exports.cmdDelete = cmdDelete;
 exports.cmd = cmd;
@@ -155,7 +155,7 @@ function cmdInsert(annotations, is_public) {
   cmd(message);
 }
 
-function cmdSearch() {
+function cmdSearchImp() {
   document.getElementById('search-text').focus();
   var message = {
     action: "search",
