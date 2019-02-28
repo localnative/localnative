@@ -35,7 +35,10 @@ exports.refreshChart = function(days){
   var dateFormatSpecifier = '%Y-%m-%d';
   var dateFormat = d3.timeFormat(dateFormatSpecifier);
   var dateFormatParser = d3.timeParse(dateFormatSpecifier);
-  var dtMin = dtMax = days[0].k;
+  var dtMin = dtMax = (new Date()).toISOString().substr(0,10);
+  if (days.length){
+    dtMin = dtMax = days[0].k;
+  }
   days.forEach(function(d){
     d.dd = dateFormatParser(d.k);
     d.month = d3.timeMonth(d.dd);
