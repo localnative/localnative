@@ -33,6 +33,8 @@ locales['zh-CN'] = i18n.create({
     "page": '页',
     "of": '共',
     "ssb sync": 'ssb 同步',
-    "sync via attach file": '文件同步'
+    "Tags": '标签',
+    "Timeseries Charts": '时间序列图',
+    "select a time range to zoom in": '选择要放大的时间范围'
   }
 });

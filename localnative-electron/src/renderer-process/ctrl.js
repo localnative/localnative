@@ -54,7 +54,7 @@ function refreshTags(message){
     tags.forEach(function(t){
       // render one item
       dom.insertAdjacentHTML('beforeend', Sanitizer.escapeHTML`
-      <li><button id="tag-${t.k}">${t.k}</button>  ${t.v}</li>
+      <span><button id="tag-${t.k}">${t.k}</button>${t.v>1?t.v:''}</span>
       `);
 
       document.getElementById('tag-'+t.k).onclick = function() {

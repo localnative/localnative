@@ -34,8 +34,9 @@ function i18nRefresh() {
 
   document.getElementById('ssb-sync-btn').innerHTML = lc("ssb sync");
   document.getElementById('sync-via-attach-btn').innerHTML = lc("sync via attach file");
-
-
+  document.getElementById('title-charts').innerHTML = lc("Timeseries Charts");
+  document.getElementById('title-tags').innerHTML = lc("Tags");
+  document.getElementById('select-range-prompt').innerHTML = lc("select a time range to zoom in");
 }
 
 document.addEventListener('DOMContentLoaded', function () {
