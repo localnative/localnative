@@ -26,6 +26,7 @@ exports.cmdSelect = cmdSelect;
 exports.cmdInsert = cmdInsert;
 exports.cmdSearch = _.debounce(cmdSearchImp, 300);
 exports.cmdSearchOrFilter = cmdSearchOrFilter;
+exports.cmdSsbSync = cmdSsbSync;
 exports.cmdDelete = cmdDelete;
 exports.cmd = cmd;
 

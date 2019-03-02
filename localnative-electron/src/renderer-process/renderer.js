@@ -19,7 +19,7 @@
 const neon = require('localnative-neon');
 const {ipcRenderer} = require('electron');
 const {cmdChart} = require('./chart');
-const {LIMIT, cmdSyncViaAttach, cmdSelect, cmdInsert, cmdSearch, cmdSearchOrFilter, getOffset, setOffset, getCount} = require('./cmd');
+const {LIMIT, cmdSsbSync, cmdSyncViaAttach, cmdSelect, cmdInsert, cmdSearch, cmdSearchOrFilter, getOffset, setOffset, getCount} = require('./cmd');
 
 document.addEventListener('DOMContentLoaded', function () {
   // focus on tags
