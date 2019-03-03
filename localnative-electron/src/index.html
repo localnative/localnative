@@ -56,15 +56,20 @@
         <input class='save-input hidden' id='url' type='text' placeholder='url'/>
         <input class='save-input hidden' id='tags-text' type='text' placeholder='type to add tags, enter to save, comma or space as tag seperator'/>
         <input class='save-input hidden' id='desc-text' type='text' placeholder='description'/>
-
-
       </div>
+
+      <div class="demo-controls">
+        <button id="screenshot-btn">screenshot</button>
+        <span id="screenshot-text"></span>
+      </div>
+
       <div> <span id="label-language">language</span>
         <select id='select-language'>
           <option value="en-US">en-US English - US</option>
           <option value="zh-CN">zh-CN 中文简体 - 大陆</option>
         </select>
       </div>
+
       <div>
         <div style="max-width:560px; font-size:smaller;">
           <div id='request-text'></div>
@@ -114,6 +119,7 @@
     <script>
       require('./renderer-process/renderer.js')
       require('./i18n.js')
+      require('./renderer-process/screen-capturer.js')
     </script>
   </body>
 </html>

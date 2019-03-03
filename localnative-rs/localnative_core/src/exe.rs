@@ -20,6 +20,7 @@ extern crate rusqlite;
 extern crate serde_json;
 extern crate time;
 
+use cmd;
 use cmd::{
     create, delete, filter, filter_by_tag, filter_count, insert, search, search_by_day,
     search_by_tag, search_count, select, select_by_day, select_by_tag, select_count,
@@ -82,6 +83,31 @@ fn process(cmd: Cmd, text: &str) -> String {
                 sync_via_attach(&conn, &s.uri)
             } else {
                 r#"{"error":"cmd sync-via-attach error"}"#.to_string()
+            }
+        }
+        "insert-image" => {
+            if let Ok(i) = serde_json::from_str::<CmdInsert>(text) {
+                let created_at =
+                    time::strftime("%Y-%m-%d %H:%M:%S:%f UTC", &time::now_utc()).unwrap();
+                //eprintln!("created_at {}", created_at);
+                let note = Note {
+                    rowid: 0i64,
+                    title: i.title,
+                    url: i.url,
+                    tags: i.tags,
+                    description: i.description,
+                    comments: i.comments,
+                    annotations: i.annotations,
+                    created_at,
+                    is_public: i.is_public,
+                };
+                cmd::image::insert_image(note);
+                if i.is_public {
+                    eprintln!("is_public")
+                }
+                do_select(&conn, &i.limit, &i.offset)
+            } else {
+                r#"{"error":"cmd insert json error"}"#.to_string()
             }
         }
         "insert" => {
@@ -151,7 +177,7 @@ fn do_search(conn: &Connection, query: &str, limit: &u32, offset: &u32) -> Strin
         r#"{{"count": {}, "notes":{}, "days": {}, "tags": {} }}"#,
         c, j, d, t
     );
-    eprintln!("msg {}", msg);
+    // eprintln!("msg {}", msg);
     msg
 }
 
@@ -164,7 +190,7 @@ fn do_select(conn: &Connection, limit: &u32, offset: &u32) -> String {
         r#"{{"count": {}, "notes":{}, "days": {}, "tags": {} }}"#,
         c, j, d, t
     );
-    eprintln!("msg {}", msg);
+    // eprintln!("msg {}", msg);
     msg
 }
 
@@ -180,6 +206,6 @@ fn do_filter(
     let j = filter(&conn, query, from, to, limit, offset);
     let t = filter_by_tag(&conn, query, from, to);
     let msg = format!(r#"{{"count": {}, "notes":{}, "tags": {} }}"#, c, j, t);
-    eprintln!("msg {}", msg);
+    // eprintln!("msg {}", msg);
     msg
 }

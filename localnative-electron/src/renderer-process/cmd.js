@@ -24,11 +24,30 @@ exports.LIMIT = LIMIT;
 exports.cmdFilter = _.debounce(filterImp, 500);
 exports.cmdSelect = cmdSelect;
 exports.cmdInsert = cmdInsert;
+exports.cmdInsertImage = cmdInsertImage;
 exports.cmdSearch = _.debounce(cmdSearchImp, 300);
 exports.cmdSearchOrFilter = cmdSearchOrFilter;
 exports.cmdSsbSync = cmdSsbSync;
 exports.cmdDelete = cmdDelete;
 exports.cmd = cmd;
+
+function cmdInsertImage(dataURL){
+  let message = {
+    action: "insert-image",
+
+    title: "Screenshot_" + (new Date()).toISOString(),
+    url: "mime://image/png",
+    tags: "screenshot",
+    description: "",
+    comments: "",
+    annotations: dataURL,
+
+    limit: LIMIT,
+    offset: offset,
+    is_public: false
+  };
+  cmd(message);
+}
 
 // count
 var count = 0;

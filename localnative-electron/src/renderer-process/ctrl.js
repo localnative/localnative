@@ -94,7 +94,7 @@ function refreshNotes(notes){
       <div class="note-desc">
         ${i.description}
       </div>
-
+      <img src="${i.annotations}" style="width:400px">
     </div>
       `);
 

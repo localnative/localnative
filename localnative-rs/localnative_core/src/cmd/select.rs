@@ -20,7 +20,7 @@ extern crate regex;
 extern crate rusqlite;
 extern crate serde;
 extern crate serde_json;
-use self::rusqlite::types::ToSql;
+use self::rusqlite::types::{FromSql, ToSql};
 use self::rusqlite::{Connection, MappedRows, NO_PARAMS};
 use super::make_tags;
 use std::collections::HashMap;
@@ -112,11 +112,15 @@ pub fn select_count(conn: &Connection) -> u32 {
 }
 
 pub fn select(conn: &Connection, limit: &u32, offset: &u32) -> String {
-    let mut stmt = conn.prepare(
-        "SELECT rowid, title, url, tags, description, comments, annotations, created_at, is_public
+    let mut stmt = conn
+        .prepare(
+            "SELECT rowid, title, url, tags, description, comments
+        , hex(annotations)
+        , created_at, is_public
         FROM note
-        order by created_at desc limit :limit offset :offset"
-        ).unwrap();
+        order by created_at desc limit :limit offset :offset",
+        )
+        .unwrap();
     let note_iter = stmt
         .query_map_named(
             &[(":limit", limit as &ToSql), (":offset", offset as &ToSql)],
@@ -127,7 +131,7 @@ pub fn select(conn: &Connection, limit: &u32, offset: &u32) -> String {
                 tags: row.get(3),
                 description: row.get(4),
                 comments: row.get(5),
-                annotations: "".to_string(), //row.get(6),
+                annotations: super::utils::make_data_url(row),
                 created_at: row.get(7),
                 is_public: row.get(8),
             },

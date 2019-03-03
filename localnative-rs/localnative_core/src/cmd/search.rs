@@ -173,7 +173,9 @@ pub fn search(conn: &Connection, query: &str, limit: &u32, offset: &u32) -> Stri
 
     let r: Vec<String> = where_vec(num_words);
     let sql = format!(
-        "SELECT rowid, title, url, tags, description, comments, annotations, created_at, is_public
+        "SELECT rowid, title, url, tags, description, comments
+        , hex(annotations)
+        , created_at, is_public
         FROM note where
         {}
         order by created_at desc limit :limit offset :offset",
@@ -202,7 +204,7 @@ pub fn search(conn: &Connection, query: &str, limit: &u32, offset: &u32) -> Stri
             tags: row.get(3),
             description: row.get(4),
             comments: row.get(5),
-            annotations: "".to_string(), //row.get(6),
+            annotations: super::utils::make_data_url(row),
             created_at: row.get(7),
             is_public: row.get(8),
         })

@@ -142,7 +142,9 @@ pub fn filter(
 
     let r: Vec<String> = where_vec(num_words);
     let sql = format!(
-        "SELECT rowid, title, url, tags, description, comments, annotations, created_at, is_public
+        "SELECT rowid, title, url, tags, description, comments
+        , hex(annotations)
+        , created_at, is_public
         FROM note where
         substr(created_at, 0, 11) >= :from
         and substr(created_at, 0, 11) <= :to
@@ -177,7 +179,7 @@ pub fn filter(
             tags: row.get(3),
             description: row.get(4),
             comments: row.get(5),
-            annotations: "".to_string(), //row.get(6),
+            annotations: super::utils::make_data_url(row),
             created_at: row.get(7),
             is_public: row.get(8),
         })
