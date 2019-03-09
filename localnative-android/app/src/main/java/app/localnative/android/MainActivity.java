@@ -19,10 +19,6 @@ package app.localnative.android;
 
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.appcompat.widget.SearchView;
-import androidx.appcompat.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -30,9 +26,15 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.MenuItemCompat;
+import androidx.recyclerview.widget.RecyclerView;
 import app.localnative.R;
 
-import static app.localnative.android.Permission.*;
+import static app.localnative.android.Permission.OnPermissonGrantedListenr;
+import static app.localnative.android.Permission.invoke_WRITE_EXTERNAL_STORAGE;
 
 public class MainActivity extends AppCompatActivity implements SearchView.OnQueryTextListener,
         NoteListFragment.OnListFragmentInteractionListener,
@@ -45,7 +47,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         getMenuInflater().inflate(R.menu.toolbar, menu);
         MenuItem searchItem = menu.findItem(R.id.toolbar_search);
         SearchView searchView =
-                (SearchView) searchItem.getActionView();
+                (SearchView) MenuItemCompat.getActionView(searchItem);
         //searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
         searchView.setIconifiedByDefault(false);
         if (searchView != null) {

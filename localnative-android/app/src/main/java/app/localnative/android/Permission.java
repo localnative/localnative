@@ -18,12 +18,13 @@
 package app.localnative.android;
 
 import android.Manifest;
-import android.app.Activity;
 import android.content.pm.PackageManager;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import android.util.Log;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 
 public class Permission {
@@ -32,8 +33,8 @@ public class Permission {
             + "must be allowed to access\n"
             + "/sdcard/localnative.sqlite3 file.";
 
-    public static void invoke_WRITE_EXTERNAL_STORAGE(Activity activity,
-                              String str
+    public static void invoke_WRITE_EXTERNAL_STORAGE(AppCompatActivity activity,
+                                                     String str
                               ) {
         if (ContextCompat.checkSelfPermission(activity,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE)
