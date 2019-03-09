@@ -120,7 +120,8 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         String s = RustBridge.run(cmd);
         Log.d("doSearchResult", s);
         NoteListFragment noteListFragment = (NoteListFragment) getSupportFragmentManager().findFragmentById(R.id.notes_recycler_view);
-        String paginationText = NoteContent.refresh(s);
+        Long count = NoteContent.refresh(s);
+        String paginationText = AppState.makePaginationText(count);
         noteListFragment.mViewAdpater.notifyDataSetChanged();
         ((TextView)findViewById(R.id.pagination_text)).setText(paginationText);
     }
