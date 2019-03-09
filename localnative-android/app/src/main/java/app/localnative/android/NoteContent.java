@@ -19,6 +19,8 @@ package app.localnative.android;
 
 import android.util.Log;
 
+import com.android.volley.toolbox.JsonObjectRequest;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -39,9 +41,12 @@ public class NoteContent {
      */
     public static final Map<Integer, NoteItem> ITEM_MAP = new HashMap<Integer, NoteItem>();
 
-    public static void refresh(String s){
+    public static String refresh(String s){
+        Long count = null;
         try{
-            JSONArray notes = new JSONObject(s).getJSONArray("notes");
+            JSONObject j = new JSONObject(s);
+            count = j.getLong("count");
+            JSONArray notes = j.getJSONArray("notes");
             ITEMS.clear();
             for (int i = 0; i < notes.length(); i++ ){
                 JSONObject note = notes.getJSONObject(i);
@@ -61,6 +66,7 @@ public class NoteContent {
         }catch (Exception e){
             Log.d("JSON Parse Exception", e.toString());
         }
+        return count.toString();
     }
 
     private static void addItem(NoteItem item) {

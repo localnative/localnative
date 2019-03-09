@@ -26,6 +26,9 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
 
 import app.localnative.R;
 
@@ -33,7 +36,7 @@ import static app.localnative.android.Permission.*;
 
 public class MainActivity extends AppCompatActivity implements SearchView.OnQueryTextListener,
         NoteListFragment.OnListFragmentInteractionListener,
-        OnPermissonGrantedListenr {
+        OnPermissonGrantedListenr, View.OnClickListener {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -78,6 +81,27 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         doSearch("");
+
+        Button prevButton = (Button)findViewById(R.id.prev_button);
+        prevButton.setOnClickListener(this);
+        Button nextButton = (Button)findViewById(R.id.next_button);
+        nextButton.setOnClickListener(this);
+    }
+
+    // button click events handler
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case  R.id.prev_button: {
+                Log.d("click", "prev");
+                break;
+            }
+
+            case R.id.next_button: {
+                Log.d("click", "next");
+                break;
+            }
+        }
     }
 
 
@@ -96,8 +120,9 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         String s = RustBridge.run(cmd);
         Log.d("doSearchResult", s);
         NoteListFragment noteListFragment = (NoteListFragment) getSupportFragmentManager().findFragmentById(R.id.notes_recycler_view);
-        NoteContent.refresh(s);
+        String paginationText = NoteContent.refresh(s);
         noteListFragment.mViewAdpater.notifyDataSetChanged();
+        ((TextView)findViewById(R.id.pagination_text)).setText(paginationText);
     }
 
     @Override
