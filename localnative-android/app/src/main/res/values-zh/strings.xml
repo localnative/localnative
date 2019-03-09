@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">LN</string>
+    <string name="prev_button_text">上页</string>
+    <string name="next_button_text">下页</string>
+    <string name="search_hint">输入搜索</string>
+</resources>
