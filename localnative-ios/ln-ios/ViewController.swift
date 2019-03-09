@@ -25,10 +25,20 @@
 import UIKit
 let ln = RustLocalNative()
 
-class ViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UISearchBarDelegate {
+class ViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UISearchBarDelegate, UIToolbarDelegate {
     @IBOutlet weak var searchInput: UISearchBar!
     @IBOutlet weak var tableView: UITableView!
+    @IBOutlet weak var prevButton: UIBarButtonItem!
+    @IBOutlet weak var nextButton: UIBarButtonItem!
     var notes : NSArray = []
+    
+    @IBAction func prevButtonTouchDown(_ sender: Any){
+        print("prev")
+    }
+    @IBAction func nextButtonTouchDown(_ sender: Any){
+        print("next")
+    }
+
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return notes.count
