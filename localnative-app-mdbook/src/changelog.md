@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.3.7
+- desktop: timeseries chart, tag cloud and screenshot
+- android: pagination
+
 ## v0.3.6-mas-pkg
 - mas build got accepted but sandbox cause file location errors
 
