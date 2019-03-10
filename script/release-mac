@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -e
-
+n 10
 cd `dirname $0`/..
 
 script/set-version $1
@@ -13,8 +13,9 @@ cd localnative-electron
 rm -f package-lock.json
 rm -rf node_modules
 npm i
+npm run build
 rm -rf node_modules/localnative-neon/native/target
-electron-builder
+electron-builder .
 
 DIR="../../localnative-release/v$1/mac/"
 mkdir -p $DIR
