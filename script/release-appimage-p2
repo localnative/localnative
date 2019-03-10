@@ -1,0 +1,29 @@
+#!/bin/bash
+
+set -e
+
+cd `dirname $0`/..
+
+script/set-version $1
+# script/release-web-ext-host $1
+# script/pkg-nodejs $1
+echo "release electron version" $1
+n 10
+
+cd localnative-electron
+rm -f package-lock.json
+rm -rf node_modules
+npm i
+npm run build
+rm -rf node_modules/localnative-neon/native/target
+electron-builder .
+
+DIR="../../localnative-release/v$1/gnu-linux/"
+mkdir -p $DIR
+FILE="Local Native $1.AppImage"
+cp "release/$FILE" $DIR/
+cd $DIR
+sha256sum "$FILE" > "$FILE.sha256"
+md5sum "$FILE" > "$FILE.md5"
+
+./"$FILE"
