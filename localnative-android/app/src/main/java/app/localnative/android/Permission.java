@@ -34,7 +34,8 @@ public class Permission {
             + "/sdcard/localnative.sqlite3 file.";
 
     public static void invoke_WRITE_EXTERNAL_STORAGE(AppCompatActivity activity,
-                                                     String str
+                                                     String str,
+                                                     Long offset
                               ) {
         if (ContextCompat.checkSelfPermission(activity,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -62,12 +63,12 @@ public class Permission {
             }
         } else {
             // Permission has already been granted
-            ((OnPermissonGrantedListenr)activity).onPermissonGranted(str);
+            ((OnPermissonGrantedListenr)activity).onPermissonGranted(str, offset);
         }
     }
 
     public interface OnPermissonGrantedListenr{
-        void onPermissonGranted(String str);
+        void onPermissonGranted(String str, Long offset);
     }
 
 }

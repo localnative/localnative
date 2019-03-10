@@ -56,7 +56,7 @@ class ShareActivity : AppCompatActivity(), Permission.OnPermissonGrantedListenr 
 
             val cmd = j.toString()
             Log.d("CmdInsert", cmd)
-            Permission.invoke_WRITE_EXTERNAL_STORAGE(this, cmd)
+            Permission.invoke_WRITE_EXTERNAL_STORAGE(this, cmd, 0)
         }
         when {
             intent?.action == Intent.ACTION_SEND -> {
@@ -72,7 +72,7 @@ class ShareActivity : AppCompatActivity(), Permission.OnPermissonGrantedListenr 
         }
     }
 
-    override fun onPermissonGranted(cmd: String?) {
+    override fun onPermissonGranted(cmd: String?, offset :Long) {
         val s = RustBridge.run(cmd)
         Log.d("CmdInsertResult", s)
         finish()

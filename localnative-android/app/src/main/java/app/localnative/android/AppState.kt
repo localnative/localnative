@@ -19,7 +19,9 @@ package app.localnative.android
 
 object AppState {
     const val LIMIT = 10
-    var offset : Long = 0
+    private var offset : Long = 0
+    private var count : Long = 0
+    private var query : String = ""
     @JvmStatic
     fun makePaginationText(count: Long): String {
         val start = if (count > 0) offset + 1 else 0
@@ -29,5 +31,34 @@ object AppState {
         val z = Math.ceil((count + 0.0) / LIMIT).toLong()
         return "page: $p of $z\nnote: $start-$end of $count"
     }
-
+    @JvmStatic
+    fun getQuery():String {
+        return this.query
+    }
+    @JvmStatic
+    fun setQuery(query: String) {
+        this.query = query
+    }
+    @JvmStatic
+    fun setCount(count: Long) {
+        this.count = count
+    }
+    @JvmStatic
+    fun incOffset(): Long {
+        if(offset + LIMIT < count) {
+            offset += LIMIT
+        }
+        return offset
+    }
+    @JvmStatic
+    fun decOffset(): Long {
+        if(offset - LIMIT >=0) {
+            offset -= LIMIT
+        }
+        return offset
+    }
+    @JvmStatic
+    fun clearOffset() {
+        offset = 0
+    }
 }

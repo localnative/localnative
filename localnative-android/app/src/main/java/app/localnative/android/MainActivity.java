@@ -68,7 +68,8 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     @Override
     public boolean onQueryTextChange(String query) {
         Log.d("onQueryTextChange", query);
-        doSearch(query);
+        AppState.clearOffset();
+        doSearch(query, 0L);
         return false;
     }
 
@@ -82,7 +83,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        doSearch("");
+        doSearch("", 0L);
 
         Button prevButton = (Button)findViewById(R.id.prev_button);
         prevButton.setOnClickListener(this);
@@ -96,33 +97,41 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         switch (v.getId()) {
             case  R.id.prev_button: {
                 Log.d("click", "prev");
+                Long offset = AppState.decOffset();
+                doSearch(AppState.getQuery(), offset);
                 break;
             }
 
             case R.id.next_button: {
                 Log.d("click", "next");
+                Long offset = AppState.incOffset();
+                doSearch(AppState.getQuery(), offset);
                 break;
             }
         }
     }
 
 
-    private void doSearch(String query) {
-        Log.d("doSearch", query);
+    private void doSearch(String query, Long offset) {
+        AppState.setQuery(query);
+        Log.d("doSearch", query + offset);
         // request allow write to storage permission
-        invoke_WRITE_EXTERNAL_STORAGE(this, query);
+        invoke_WRITE_EXTERNAL_STORAGE(this, query, offset);
     }
 
     @Override
-    public void onPermissonGranted (String query) {
+    public void onPermissonGranted (String query, Long offset) {
         String cmd = "{\"action\": \"search\", \"query\": \""
                 + query
-                +"\", \"limit\":10, \"offset\":0}";
+                +"\", \"limit\":10, \"offset\":" +
+                offset.toString() +
+                "}";
         Log.d("doSearchCmd", cmd);
         String s = RustBridge.run(cmd);
         Log.d("doSearchResult", s);
         NoteListFragment noteListFragment = (NoteListFragment) getSupportFragmentManager().findFragmentById(R.id.notes_recycler_view);
         Long count = NoteContent.refresh(s);
+        AppState.setCount(count);
         String paginationText = AppState.makePaginationText(count);
         noteListFragment.mViewAdpater.notifyDataSetChanged();
         ((TextView)findViewById(R.id.pagination_text)).setText(paginationText);

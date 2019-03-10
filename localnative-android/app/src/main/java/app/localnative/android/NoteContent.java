@@ -40,7 +40,7 @@ public class NoteContent {
     public static final Map<Integer, NoteItem> ITEM_MAP = new HashMap<Integer, NoteItem>();
 
     public static Long refresh(String s){
-        Long count = null;
+        Long count = 0L;
         try{
             JSONObject j = new JSONObject(s);
             count = j.getLong("count");
