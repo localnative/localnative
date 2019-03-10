@@ -30,13 +30,14 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var prevButton: UIBarButtonItem!
     @IBOutlet weak var nextButton: UIBarButtonItem!
+    @IBOutlet weak var paginationButton: UIBarButtonItem!
     var notes : NSArray = []
     
     @IBAction func prevButtonTouchDown(_ sender: Any){
-        print("prev")
+        paginationButton.title = "prev"
     }
     @IBAction func nextButtonTouchDown(_ sender: Any){
-        print("next")
+        paginationButton.title = "next"
     }
 
     
