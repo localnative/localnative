@@ -63,7 +63,7 @@ class ShareViewController: UIViewController {
             "comments": "",
             "annotations": "",
             
-            "limit": 15,
+            "limit": 10,
             "offset": 0,
             "is_public": false
         ]

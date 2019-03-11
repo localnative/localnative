@@ -34,10 +34,12 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     var notes : NSArray = []
     
     @IBAction func prevButtonTouchDown(_ sender: Any){
-        paginationButton.title = "prev"
+        let offset = AppState.decOffset()
+        search(input: AppState.getQuery(), offset: offset)
     }
     @IBAction func nextButtonTouchDown(_ sender: Any){
-        paginationButton.title = "next"
+        let offset = AppState.incOffset()
+        search(input: AppState.getQuery(), offset: offset)
     }
 
     
@@ -60,19 +62,24 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     }
     
     func searchBar(_ searchInput: UISearchBar, textDidChange searchText: String) {
+        AppState.clearOffset()
+        search(input: searchText, offset: 0)
+    }
+    
+    func search(input: String, offset: Int64){
+        AppState.setQuery(query: input)
         let txt = ln.run(json_input:"""
-            {"action":"search","query":"\(searchText)","limit":10,"offset":0}
+            {"action":"search","query":"\(input)","limit":10,"offset":\(offset)}
             """
         )
         let data = txt.data(using: .utf8)!
-        if let jsonNotes = try? JSONSerialization.jsonObject(with: data) as? [String: NSObject] {
-            notes =  jsonNotes!["notes"] as! NSArray
+        if let jsonObject = try? JSONSerialization.jsonObject(with: data) as? [String: NSObject] {
+            notes =  jsonObject!["notes"] as! NSArray
+            let count = jsonObject!["count"] as! Int64
+            AppState.setCount(count: count)
+            paginationButton.title = AppState.makePaginationText()
         }
         self.tableView.reloadData()
-    }
-    
-    func search(input: String){
-        searchBar(searchInput, textDidChange: input)
     }
     
     override func viewDidLoad() {
@@ -83,7 +90,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         tableView.dataSource = self
         searchInput.delegate = self
         // search with empty string first to show content
-        search(input: "")
+        search(input: "", offset: 0)
     }
 
     override func didReceiveMemoryWarning() {

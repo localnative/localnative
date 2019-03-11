@@ -132,7 +132,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         NoteListFragment noteListFragment = (NoteListFragment) getSupportFragmentManager().findFragmentById(R.id.notes_recycler_view);
         Long count = NoteContent.refresh(s);
         AppState.setCount(count);
-        String paginationText = AppState.makePaginationText(count);
+        String paginationText = AppState.makePaginationText();
         noteListFragment.mViewAdpater.notifyDataSetChanged();
         ((TextView)findViewById(R.id.pagination_text)).setText(paginationText);
     }

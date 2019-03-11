@@ -23,7 +23,7 @@ object AppState {
     private var count : Long = 0
     private var query : String = ""
     @JvmStatic
-    fun makePaginationText(count: Long): String {
+    fun makePaginationText(): String {
         val start = if (count > 0) offset + 1 else 0
         val end : Long = if (offset + LIMIT > count) count else offset + LIMIT
 

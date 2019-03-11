@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		008F18EBC0088A26F9BB04E9 /* Pods_share_ext.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CDC691A4062A9BEDF25BC7DE /* Pods_share_ext.framework */; };
 		043C48A02BF3545E960D022D /* Pods_localnative_ios.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C854A0CED883ADC4AEAB3E0D /* Pods_localnative_ios.framework */; };
+		04BCEDA22235E3970098122F /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04BCEDA12235E3970098122F /* AppState.swift */; };
 		3C0891792179799000A333DE /* NoteTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C0891782179799000A333DE /* NoteTableViewCell.swift */; };
 		3C25951D21A1C187005BB947 /* libresolv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C3B492A216EF91D000B6349 /* libresolv.tbd */; };
 		3C25952021A1C2B3005BB947 /* liblocalnative_core.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C25951E21A1C1A0005BB947 /* liblocalnative_core.a */; };
@@ -72,6 +73,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		04BCEDA12235E3970098122F /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		1EA952423F4362019D7EC1F6 /* Pods_localnative_iosTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_localnative_iosTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		2902ADB65AA7B32ED3111FC7 /* Pods_localnative_iosUITests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_localnative_iosUITests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		3227086ED156D0C32559C0FA /* Pods-localnative-ios.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-localnative-ios.debug.xcconfig"; path = "Pods/Target Support Files/Pods-localnative-ios/Pods-localnative-ios.debug.xcconfig"; sourceTree = "<group>"; };
@@ -196,6 +198,7 @@
 		3C6A5F2E214F40BA008C36F9 /* ln-ios */ = {
 			isa = PBXGroup;
 			children = (
+				04BCEDA12235E3970098122F /* AppState.swift */,
 				3C6A5F2F214F40BA008C36F9 /* AppDelegate.swift */,
 				3C6A5F31214F40BA008C36F9 /* ViewController.swift */,
 				3C6A5F33214F40BB008C36F9 /* Main.storyboard */,
@@ -548,6 +551,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				3C25952821A1CA5F005BB947 /* RustLocalNative.swift in Sources */,
+				04BCEDA22235E3970098122F /* AppState.swift in Sources */,
 				3C6A5F32214F40BA008C36F9 /* ViewController.swift in Sources */,
 				3C6A5F30214F40BA008C36F9 /* AppDelegate.swift in Sources */,
 				3C0891792179799000A333DE /* NoteTableViewCell.swift in Sources */,
