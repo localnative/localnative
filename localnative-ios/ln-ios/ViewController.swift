@@ -54,11 +54,18 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             cell.contentText.text = (note["tags"] as! String)
                 + "\n" + (note["created_at"] as! String) + " rowid " + (note["rowid"] as! NSNumber).stringValue
                 + "\n" + (note["title"] as! String)
-                + "\n" + (note["description"] as! String)
-                + "\n" + (note["annotations"] as! String)
+                + newLineOrEmptyString(str: note["description"] as! String)
+                + newLineOrEmptyString(str: note["annotations"] as! String)
             cell.urlText.text = (note["url"] as! String)
         }
         return cell;
+    }
+    func newLineOrEmptyString(str: String) -> String{
+        if(str == ""){
+            return ""
+        }else{
+            return "\n" + str
+        }
     }
     
     func searchBar(_ searchInput: UISearchBar, textDidChange searchText: String) {
@@ -86,6 +93,8 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
         /* Setup delegates */
+        tableView.rowHeight = UITableView.automaticDimension
+        tableView.estimatedRowHeight = 600
         tableView.delegate = self
         tableView.dataSource = self
         searchInput.delegate = self

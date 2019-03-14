@@ -33,9 +33,9 @@ class AppState {
         let start = count > 0 ? offset + 1 : 0
         let end : Int64 = offset + LIMIT > count ? count : offset + LIMIT
         
-        let p: Int64 = Int64(ceil((0.0 + Double(end)) / Double(LIMIT)))
-        let z: Int64 = Int64(ceil((Double(count) + 0.0) / Double(LIMIT)))
-        return "page:\(p)/\(z) note:\(start)-\(end)/\(count)"
+//        let p: Int64 = Int64(ceil((0.0 + Double(end)) / Double(LIMIT)))
+//        let z: Int64 = Int64(ceil((Double(count) + 0.0) / Double(LIMIT)))
+        return "note:\(start)-\(end)/\(count)"
     }
     static func getQuery() -> String{
         return query

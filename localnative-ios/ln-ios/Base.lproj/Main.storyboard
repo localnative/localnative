@@ -38,22 +38,16 @@
                                             <rect key="frame" x="0.0" y="0.0" width="414" height="245.66666666666666"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                             <subviews>
-                                                <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="TopLeft" editable="NO" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="B0M-0y-rn3" userLabel="Content Text">
-                                                    <rect key="frame" x="0.0" y="0.0" width="414" height="177"/>
+                                                <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="TopLeft" ambiguous="YES" scrollEnabled="NO" editable="NO" translatesAutoresizingMaskIntoConstraints="NO" id="B0M-0y-rn3" userLabel="Content Text">
+                                                    <rect key="frame" x="0.0" y="0.0" width="414" height="183.33333333333334"/>
                                                     <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                                    <constraints>
-                                                        <constraint firstAttribute="height" constant="177" id="kYT-ke-b3F"/>
-                                                    </constraints>
-                                                    <string key="text">Lorem ipsum dolor sit er elit lamet, consectetaur cillium adipisicing pecu, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Nam liber te conscient to factor tum poen legum odioque civiuda.</string>
-                                                    <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                                    <string key="text">Lorem ipsum dolor sit er elit lamet, consectetaur cillium adipisicing pecu, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Nam liber te conscient to factor tum poen legum</string>
+                                                    <fontDescription key="fontDescription" name=".AppleSystemUIFont" family=".AppleSystemUIFont" pointSize="14"/>
                                                     <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
                                                 </textView>
-                                                <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="TopLeft" editable="NO" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="mQf-M4-vYJ">
-                                                    <rect key="frame" x="0.0" y="182" width="414" height="59.333333333333314"/>
+                                                <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="TopLeft" ambiguous="YES" scrollEnabled="NO" editable="NO" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="mQf-M4-vYJ">
+                                                    <rect key="frame" x="0.0" y="177" width="414" height="68.666666666666686"/>
                                                     <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                                    <constraints>
-                                                        <constraint firstAttribute="height" constant="59.240000000000002" id="fkx-4p-Kld"/>
-                                                    </constraints>
                                                     <string key="text">Lorem ipsum dolor sit er elit lamet, consectetaur cillium adipisicing pecu, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Nam liber te conscient to factor tum poen legum odioque civiuda.</string>
                                                     <fontDescription key="fontDescription" type="system" pointSize="14"/>
                                                     <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
@@ -61,12 +55,14 @@
                                                 </textView>
                                             </subviews>
                                             <constraints>
-                                                <constraint firstItem="mQf-M4-vYJ" firstAttribute="top" secondItem="B0M-0y-rn3" secondAttribute="bottom" constant="5" id="7Zg-zc-aK2"/>
-                                                <constraint firstItem="B0M-0y-rn3" firstAttribute="leading" secondItem="Lje-TM-gVQ" secondAttribute="leading" id="7t2-6K-XaS"/>
-                                                <constraint firstItem="mQf-M4-vYJ" firstAttribute="leading" secondItem="Lje-TM-gVQ" secondAttribute="leading" id="ljX-dU-rT1"/>
-                                                <constraint firstAttribute="trailing" secondItem="B0M-0y-rn3" secondAttribute="trailing" id="qbp-wA-ZTb"/>
-                                                <constraint firstItem="B0M-0y-rn3" firstAttribute="top" secondItem="Lje-TM-gVQ" secondAttribute="top" id="tBb-Sj-NT5"/>
-                                                <constraint firstAttribute="trailing" secondItem="mQf-M4-vYJ" secondAttribute="trailing" id="wPN-p0-0bQ"/>
+                                                <constraint firstItem="mQf-M4-vYJ" firstAttribute="leading" secondItem="Lje-TM-gVQ" secondAttribute="leading" id="3Go-af-0DH"/>
+                                                <constraint firstAttribute="trailing" secondItem="mQf-M4-vYJ" secondAttribute="trailing" id="HIW-sw-8ui"/>
+                                                <constraint firstItem="B0M-0y-rn3" firstAttribute="top" secondItem="Lje-TM-gVQ" secondAttribute="top" id="LS6-UU-d14"/>
+                                                <constraint firstItem="mQf-M4-vYJ" firstAttribute="top" secondItem="B0M-0y-rn3" secondAttribute="bottom" id="Rja-Nu-W1f"/>
+                                                <constraint firstItem="mQf-M4-vYJ" firstAttribute="top" secondItem="B0M-0y-rn3" secondAttribute="bottom" id="YIk-mc-FFx"/>
+                                                <constraint firstAttribute="bottom" secondItem="mQf-M4-vYJ" secondAttribute="bottom" id="YiC-Lh-sQT"/>
+                                                <constraint firstItem="B0M-0y-rn3" firstAttribute="leading" secondItem="Lje-TM-gVQ" secondAttribute="leading" id="hHQ-5H-Dde"/>
+                                                <constraint firstAttribute="trailing" secondItem="B0M-0y-rn3" secondAttribute="trailing" id="w1S-Rh-7J2"/>
                                             </constraints>
                                         </tableViewCellContentView>
                                         <connections>
@@ -86,7 +82,9 @@
                                         </connections>
                                     </barButtonItem>
                                     <barButtonItem style="plain" systemItem="flexibleSpace" id="f36-vV-zKi"/>
-                                    <barButtonItem title="page: note:" id="TZq-br-zxW"/>
+                                    <barButtonItem title="note" id="TZq-br-zxW" userLabel="note range">
+                                        <color key="tintColor" white="0.33333333329999998" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                    </barButtonItem>
                                     <barButtonItem style="plain" systemItem="flexibleSpace" id="0aG-Gy-E6p"/>
                                     <barButtonItem title="Next" id="wU5-qY-BSH">
                                         <connections>
