@@ -19,6 +19,7 @@ var exports = module.exports = {};
 const _ = require('underscore');
 const neon = require('localnative-neon');
 const crossfilter = require('crossfilter2');
+const appState = require('./app-state');
 global.dc = require('dc');
 
 Date.prototype.addDays = function(days) {
@@ -100,7 +101,7 @@ exports.refreshChart = function(days){
   lnMonthChart.on('filtered', function(chart, filter){
     if (filter){
       lnDayChart.focus(filter)
-      cmd.setOffset(0);
+      appState.clearOffset();
       cmd.cmdFilter(filter[0].toISOString().substr(0,10)
         , filter[1].toISOString().substr(0,10)
       );

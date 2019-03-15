@@ -18,8 +18,9 @@
 var exports = module.exports = {};
 const _ = require('underscore');
 const neon = require('localnative-neon');
+const appState = require('./app-state');
 
-const LIMIT = 10;
+let LIMIT = appState.getLIMIT();
 exports.LIMIT = LIMIT;
 exports.cmdFilter = _.debounce(filterImp, 500);
 exports.cmdSelect = cmdSelect;
@@ -29,7 +30,6 @@ exports.cmdSearch = _.debounce(cmdSearchImp, 300);
 exports.cmdSearchOrFilter = cmdSearchOrFilter;
 exports.cmdSsbSync = cmdSsbSync;
 exports.cmdDelete = cmdDelete;
-exports.cmd = cmd;
 
 function cmdInsertImage(dataURL){
   let message = {
@@ -43,30 +43,11 @@ function cmdInsertImage(dataURL){
     annotations: dataURL,
 
     limit: LIMIT,
-    offset: offset,
+    offset: appState.getOffset(),
     is_public: false
   };
   cmd(message);
 }
-
-// count
-var count = 0;
-exports.getCount = function(){
-  return count;
-}
-exports.setCount = function(val){
-  count = val;
-}
-
-// offset
-var offset = 0;
-exports.getOffset = function(){
-  return offset;
-}
-exports.setOffset = function(val){
-  offset = val;
-}
-
 const {onNativeMessage} = require('./ctrl');
 
 let isFilter =  false;
@@ -84,7 +65,7 @@ function filterImp(from, to) {
     action: 'filter',
     query: document.getElementById('search-text').value,
     limit: LIMIT,
-    offset: offset,
+    offset: appState.getOffset(),
     from: from,
     to: to
   };
@@ -102,7 +83,7 @@ function cmdSearch() {
 
     query: document.getElementById('search-text').value,
     limit: LIMIT,
-    offset: offset
+    offset: appState.getOffset()
   };
   cmd(message);
   console.error("isFilter", isFilter);
@@ -113,7 +94,7 @@ function cmdSelect() {
   var message = {
     action: "select",
     limit: LIMIT,
-    offset: offset
+    offset: appState.getOffset()
   };
   cmd(message);
 }
@@ -125,7 +106,7 @@ function cmdDelete(rowid) {
     query: document.getElementById('search-text').value,
     rowid: rowid,
     limit: LIMIT,
-    offset: offset
+    offset: appState.getOffset()
   };
   cmd(message);
 }
@@ -133,7 +114,11 @@ function cmdDelete(rowid) {
 function cmd(message){
   let input = JSON.stringify(message, null, 2);
   requestMessage(">> " + input);
-  var resp = JSON.parse(neon.run(input));
+  let resp = JSON.parse(neon.run(input));
+  if (resp.count){
+    appState.setCount(resp.count);
+  }
+  console.log(appState);
   onNativeMessage(resp);
 }
 
@@ -168,7 +153,7 @@ function cmdInsert(annotations, is_public) {
     annotations: annotations,
 
     limit: LIMIT,
-    offset: offset,
+    offset: appState.getOffset(),
     is_public: is_public
   };
   console.log(message);
@@ -182,7 +167,7 @@ function cmdSearchImp() {
 
     query: document.getElementById('search-text').value,
     limit: LIMIT,
-    offset: offset
+    offset: appState.getOffset()
   };
   cmd(message);
 
@@ -192,7 +177,7 @@ function cmdSelect() {
   var message = {
     action: "select",
     limit: LIMIT,
-    offset: offset
+    offset: appState.getOffset()
   };
   cmd(message);
 }
@@ -204,7 +189,7 @@ function cmdDelete(rowid) {
     query: document.getElementById('search-text').value,
     rowid: rowid,
     limit: LIMIT,
-    offset: offset
+    offset: appState.getOffset()
   };
   cmd(message);
 }

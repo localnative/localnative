@@ -19,7 +19,9 @@
 const neon = require('localnative-neon');
 const {ipcRenderer} = require('electron');
 const {cmdChart} = require('./chart');
-const {LIMIT, cmdSsbSync, cmdSyncViaAttach, cmdSelect, cmdInsert, cmdSearch, cmdSearchOrFilter, getOffset, setOffset, getCount} = require('./cmd');
+const appState = require('./app-state');
+const cmd = require('./cmd');
+const {LIMIT, cmdSsbSync, cmdSyncViaAttach, cmdSelect, cmdInsert, cmdSearch, cmdSearchOrFilter} = require('./cmd');
 
 document.addEventListener('DOMContentLoaded', function () {
   // focus on tags
@@ -60,20 +62,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // register prev and next
   document.getElementById('prev-btn').onclick = function(){
-    let offset = getOffset();
-    if(offset - LIMIT >= 0){
-      setOffset( offset - LIMIT);
-      cmdSearchOrFilter();
-      document.getElementById('page-idx-input').value = Number(document.getElementById('page-idx-input').value) - 1;
-    }
+    let offset = appState.decOffset();
+    cmdSearchOrFilter();
   };
+
   document.getElementById('next-btn').onclick = function(){
-    let offset = getOffset();
-    if(offset + LIMIT <= getCount()){
-      setOffset( offset + LIMIT);
-      cmdSearchOrFilter();
-      document.getElementById('page-idx-input').value = Number(document.getElementById('page-idx-input').value) + 1;
-    }
+    let offset = appState.incOffset();
+    cmdSearchOrFilter();
   };
 
   // register ssb-sync
@@ -92,21 +87,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // register cmdSearch
   document.getElementById('search-text').addEventListener('keyup', function (e) {
-      setOffset(0);
-      document.getElementById('page-idx-input').value = 1;
+      appState.clearOffset();
       cmdSearch();
   });
 
   document.getElementById('search-clear-btn').onclick = function(){
     document.getElementById('search-text').value = '';
-    setOffset(0);
-    document.getElementById('page-idx-input').value = 1;
+    appState.clearOffset();
     cmdSearch();
   };
 
   // initial query
   cmdSelect();
-  document.getElementById('page-idx-input').value = 1;
 
   // Open all links in external browser
   let shell = require('electron').shell

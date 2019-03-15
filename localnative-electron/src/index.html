@@ -72,8 +72,8 @@
 
       <div>
         <div style="max-width:560px; font-size:smaller;">
-          <div id='request-text'></div>
-          <div id='response-text'></div>
+          <div id='request-text' style="overflow:auto"></div>
+          <div id='response-text' style="overflow:auto"></div>
         </div>
       </div>
     </nav>
@@ -100,11 +100,8 @@
         </button>
         <button id="prev-btn"> prev </button>
         <button id="next-btn"> next </button>
-        <span style="float: right">
-          <span id="page">page</span>
-          <input id="page-idx-input" type="text" style="width:30px;" disabled=true>
-          <span id="page-of">of</span>
-          <span id="total-page">0</span>
+        <span id="pagination-text">
+          /
         </span>
       </div>
       <div>

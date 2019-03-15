@@ -17,7 +17,8 @@
 */
 var exports = module.exports = {};
 exports.onNativeMessage = onNativeMessage;
-const {LIMIT, cmdDelete, cmdSearch, getOffset, setOffset, setCount} = require('./cmd')
+const appState =  require('./app-state');
+const {LIMIT, cmdDelete, cmdSearch} = require('./cmd')
 const {refreshChart} = require('./chart')
 const _ = require('underscore')
 
@@ -29,17 +30,15 @@ function onNativeMessage(message) {
   // abort if no notes
   if (!message.notes) return;
 
+  console.log(appState);
   // show page count
   if (Number(message.count) >=0 ) {
-    let count = message.count;
-    setCount(count);
-    let pages = Math.ceil(count / LIMIT);
-    document.getElementById('total-page').innerHTML = Sanitizer.escapeHTML`${pages}`;
+    document.getElementById('pagination-text').innerHTML = appState.makePaginationText();
   }
   refreshNotes(message.notes);
 
   if (message.days // filter result has no days field
-    && getOffset() == 0 // only first page refresh chart
+    && appState.getOffset() == 0 // only first page refresh chart
   ){
     refreshChart(message.days);
   }
@@ -59,9 +58,8 @@ function refreshTags(message){
 
       document.getElementById('tag-'+t.k).onclick = function() {
         document.getElementById('search-text').value = t.k;
-        setOffset(0);
+        appState.clearOffset();
         cmdSearch();
-        document.getElementById('page-idx-input').value = 1;
       }
 
     });
@@ -89,7 +87,7 @@ function refreshNotes(notes){
         ${i.title}
       </div>
 
-      <div class="note-url"><a target="_blank" href="${i.url}">${i.url}</a></div>
+      <div class="note-url" style="overflow-x:auto"><a target="_blank" href="${i.url}">${i.url}</a></div>
 
       <div class="note-desc">
         ${i.description}
@@ -114,9 +112,8 @@ function refreshNotes(notes){
         // tag search
         document.getElementById('note-tags-rowid-' + i.rowid + '-tag-' + tag).onclick = function(){
           document.getElementById('search-text').value = tag;
-          setOffset(0);
+          appState.clearOffset();
           cmdSearch();
-          document.getElementById('page-idx-input').value = 1;
         }
       });
     }
