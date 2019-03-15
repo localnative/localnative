@@ -1,21 +1,27 @@
 # TODO
 
+## feature
+- add non url text note, db table for draft note item
+- manage people / contact
+- safe network
+
+## performance
+- async load image data
+- db index?
+
 ## desktop platform
-- Flatpak
+- Flatpak?
 - windows
   - installer
 
 ## mobile
 - android
-  - pagination
   - click on tag text to search
   - ProGuard to shrink size?
   - screenshot
   - OCR
 - ios
-  - pagination
   - click on tag text to search
-  - UI tunning for ipad, notch
   - screenshot
   - OCR
 - purism
@@ -26,3 +32,5 @@
 ## db
 - encryption?
 
+## ssb
+- deal with image data in annotation
