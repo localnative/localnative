@@ -18,6 +18,7 @@
 
 var exports = module.exports = {};
 const LIMIT = 10
+let range = null
 let offset = 0
 let count = 0
 let query = ""
@@ -64,4 +65,14 @@ exports.getOffset = function() {
 
 exports.clearOffset = function() {
   offset = 0
+}
+
+exports.getRange = function() {
+  return range
+}
+exports.setRange = function(r) {
+  range = r
+}
+exports.clearRange = function() {
+  range = null
 }

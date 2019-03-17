@@ -50,16 +50,15 @@ function cmdInsertImage(dataURL){
 }
 const {onNativeMessage} = require('./ctrl');
 
-let isFilter =  false;
 function cmdSearchOrFilter(){
-  if (isFilter){
-    filterImp(range.from, range.to);
+  let range =  appState.getRange();
+  if (range){
+    filterImp(range[0], range[1]);
   } else {
     cmdSearch();
   }
 }
 
-var range = {};
 function filterImp(from, to) {
   let message = {
     action: 'filter',
@@ -69,14 +68,11 @@ function filterImp(from, to) {
     from: from,
     to: to
   };
-  range.from = from;
-  range.to = to;
   cmd(message);
-  isFilter = true;
 }
 
 function cmdSearch() {
-  isFilter = false;
+  appState.clearRange();
   document.getElementById('search-text').focus();
   var message = {
     action: "search",
@@ -86,11 +82,10 @@ function cmdSearch() {
     offset: appState.getOffset()
   };
   cmd(message);
-  console.error("isFilter", isFilter);
 }
 
 function cmdSelect() {
-  isFilter = false;
+  appState.clearRange();
   var message = {
     action: "select",
     limit: LIMIT,

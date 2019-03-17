@@ -88,12 +88,14 @@ document.addEventListener('DOMContentLoaded', function () {
   // register cmdSearch
   document.getElementById('search-text').addEventListener('keyup', function (e) {
       appState.clearOffset();
+      appState.clearRange();
       cmdSearch();
   });
 
   document.getElementById('search-clear-btn').onclick = function(){
     document.getElementById('search-text').value = '';
     appState.clearOffset();
+    appState.clearRange();
     cmdSearch();
   };
 

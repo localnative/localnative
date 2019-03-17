@@ -102,9 +102,10 @@ exports.refreshChart = function(days){
     if (filter){
       lnDayChart.focus(filter)
       appState.clearOffset();
-      cmd.cmdFilter(filter[0].toISOString().substr(0,10)
-        , filter[1].toISOString().substr(0,10)
-      );
+      let range_from = filter[0].toISOString().substr(0,10)
+      let range_to = filter[1].toISOString().substr(0,10)
+      appState.setRange([range_from, range_to]);
+      cmd.cmdFilter(range_from, range_to);
     }
   });
 
