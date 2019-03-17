@@ -62,13 +62,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // register prev and next
   document.getElementById('prev-btn').onclick = function(){
-    let offset = appState.decOffset();
-    cmdSearchOrFilter();
+    appState.decOffset();
+    cmd.cmdSearchOrFilter();
   };
 
   document.getElementById('next-btn').onclick = function(){
-    let offset = appState.incOffset();
-    cmdSearchOrFilter();
+    appState.incOffset();
+    cmd.cmdSearchOrFilter();
   };
 
   // register ssb-sync
@@ -89,14 +89,18 @@ document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('search-text').addEventListener('keyup', function (e) {
       appState.clearOffset();
       appState.clearRange();
-      cmdSearch();
+      cmd.cmdSearch();
+      lnDayChart.filterAll();
+      lnMonthChart.filterAll();
   });
 
   document.getElementById('search-clear-btn').onclick = function(){
     document.getElementById('search-text').value = '';
     appState.clearOffset();
     appState.clearRange();
-    cmdSearch();
+    cmd.cmdSearch();
+    lnDayChart.filterAll();
+    lnMonthChart.filterAll();
   };
 
   // initial query

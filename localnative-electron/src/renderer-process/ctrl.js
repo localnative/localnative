@@ -18,6 +18,7 @@
 var exports = module.exports = {};
 exports.onNativeMessage = onNativeMessage;
 const appState =  require('./app-state');
+const cmd = require('./cmd')
 const {LIMIT, cmdDelete, cmdSearch} = require('./cmd')
 const {refreshChart} = require('./chart')
 const _ = require('underscore')
@@ -30,7 +31,6 @@ function onNativeMessage(message) {
   // abort if no notes
   if (!message.notes) return;
 
-  console.log(appState);
   // show page count
   if (Number(message.count) >=0 ) {
     document.getElementById('pagination-text').innerHTML = appState.makePaginationText();
@@ -58,8 +58,12 @@ function refreshTags(message){
 
       document.getElementById('tag-'+t.k).onclick = function() {
         document.getElementById('search-text').value = t.k;
+
         appState.clearOffset();
-        cmdSearch();
+        appState.clearRange();
+        cmd.cmdSearch();
+        lnDayChart.filterAll();
+        lnMonthChart.filterAll();
       }
 
     });
@@ -113,7 +117,10 @@ function refreshNotes(notes){
         document.getElementById('note-tags-rowid-' + i.rowid + '-tag-' + tag).onclick = function(){
           document.getElementById('search-text').value = tag;
           appState.clearOffset();
-          cmdSearch();
+          appState.clearRange();
+          cmd.cmdSearch();
+          lnDayChart.filterAll();
+          lnMonthChart.filterAll();
         }
       });
     }

@@ -72,7 +72,6 @@ function filterImp(from, to) {
 }
 
 function cmdSearch() {
-  appState.clearRange();
   document.getElementById('search-text').focus();
   var message = {
     action: "search",
@@ -85,7 +84,6 @@ function cmdSearch() {
 }
 
 function cmdSelect() {
-  appState.clearRange();
   var message = {
     action: "select",
     limit: LIMIT,
@@ -113,7 +111,6 @@ function cmd(message){
   if (resp.count){
     appState.setCount(resp.count);
   }
-  console.log(appState);
   onNativeMessage(resp);
 }
 
@@ -156,6 +153,8 @@ function cmdInsert(annotations, is_public) {
 }
 
 function cmdSearchImp() {
+  appState.clearOffset();
+  appState.clearRange();
   document.getElementById('search-text').focus();
   var message = {
     action: "search",
@@ -169,6 +168,8 @@ function cmdSearchImp() {
 }
 
 function cmdSelect() {
+  appState.clearOffset();
+  appState.clearRange();
   var message = {
     action: "select",
     limit: LIMIT,
