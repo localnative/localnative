@@ -40,13 +40,15 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         NoteListFragment.OnListFragmentInteractionListener,
         OnPermissonGrantedListenr, View.OnClickListener {
 
+    private SearchView searchView;
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Get the SearchView and set the searchable configuration
         // SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
         getMenuInflater().inflate(R.menu.toolbar, menu);
         MenuItem searchItem = menu.findItem(R.id.toolbar_search);
-        SearchView searchView =
+        searchView =
                 (SearchView) MenuItemCompat.getActionView(searchItem);
         //searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
         searchView.setIconifiedByDefault(false);
@@ -99,20 +101,26 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
                 Log.d("click", "prev");
                 Long offset = AppState.decOffset();
                 doSearch(AppState.getQuery(), offset);
-                break;
+                return;
             }
 
             case R.id.next_button: {
                 Log.d("click", "next");
                 Long offset = AppState.incOffset();
                 doSearch(AppState.getQuery(), offset);
-                break;
+                return;
             }
         }
+
+        // tag
+        Button btn = (Button)v;
+        searchView.setQuery(btn.getText(), true);
+//        doSearch(btn.getText().toString(), 0L);
+
     }
 
 
-    private void doSearch(String query, Long offset) {
+    public void doSearch(String query, Long offset) {
         AppState.setQuery(query);
         Log.d("doSearch", query + offset);
         // request allow write to storage permission

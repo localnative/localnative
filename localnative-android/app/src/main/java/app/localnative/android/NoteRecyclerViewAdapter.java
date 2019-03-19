@@ -18,9 +18,14 @@
 package app.localnative.android;
 
 import androidx.recyclerview.widget.RecyclerView;
+
+import android.app.Activity;
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import app.localnative.R;
@@ -34,10 +39,11 @@ import java.util.List;
  * specified {@link OnListFragmentInteractionListener}.
  * TODO: Replace the implementation with code for your data type.
  */
-public class NoteRecyclerViewAdapter extends RecyclerView.Adapter<NoteRecyclerViewAdapter.ViewHolder> {
+public class NoteRecyclerViewAdapter extends RecyclerView.Adapter<NoteRecyclerViewAdapter.ViewHolder> implements View.OnClickListener {
 
     private final List<NoteItem> mValues;
     private final OnListFragmentInteractionListener mListener;
+    private Context context;
 
     public NoteRecyclerViewAdapter(List<NoteItem> items, OnListFragmentInteractionListener listener) {
         mValues = items;
@@ -46,7 +52,8 @@ public class NoteRecyclerViewAdapter extends RecyclerView.Adapter<NoteRecyclerVi
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext())
+        context = parent.getContext();
+        View view = LayoutInflater.from(context)
                 .inflate(R.layout.fragment_note, parent, false);
         return new ViewHolder(view);
     }
@@ -55,8 +62,19 @@ public class NoteRecyclerViewAdapter extends RecyclerView.Adapter<NoteRecyclerVi
     public void onBindViewHolder(final ViewHolder holder, int position) {
         holder.mItem = mValues.get(position);
         NoteItem note = mValues.get(position);
+        String[] arr = note.tags.split(",");
+
+        for (int i = 0; i < arr.length; i++)  {
+            if (arr[i].length() > 0){
+                Button btn = new Button(context);
+                btn.setText(arr[i]);
+                holder.mTagsContainer.addView(btn);
+                btn.setOnClickListener((MainActivity)context);
+            }
+        }
+
         holder.mContentView.setText(note.created_at + " rowid: " + note.rowid + "\n"
-                + note.tags + "\n"
+//                + note.tags + "\n"
                 + note.title + "\n"
                 + note.url + "\n"
                 + note.description
@@ -79,15 +97,21 @@ public class NoteRecyclerViewAdapter extends RecyclerView.Adapter<NoteRecyclerVi
         return mValues.size();
     }
 
+    @Override
+    public void onClick(View v) {
+    }
+
     public class ViewHolder extends RecyclerView.ViewHolder {
         public final View mView;
         public final TextView mContentView;
+        public final LinearLayout mTagsContainer;
         public NoteItem mItem;
 
         public ViewHolder(View view) {
             super(view);
             mView = view;
             mContentView = (TextView) view.findViewById(R.id.content);
+            mTagsContainer = (LinearLayout) view.findViewById(R.id.tagsContainer);
         }
 
         @Override
