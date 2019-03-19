@@ -62,22 +62,23 @@ public class NoteRecyclerViewAdapter extends RecyclerView.Adapter<NoteRecyclerVi
     public void onBindViewHolder(final ViewHolder holder, int position) {
         holder.mItem = mValues.get(position);
         NoteItem note = mValues.get(position);
+        holder.mTagsContainer.removeAllViews();
         String[] arr = note.tags.split(",");
 
         for (int i = 0; i < arr.length; i++)  {
             if (arr[i].length() > 0){
                 Button btn = new Button(context);
                 btn.setText(arr[i]);
+                btn.setAllCaps(false);
                 holder.mTagsContainer.addView(btn);
                 btn.setOnClickListener((MainActivity)context);
             }
         }
 
         holder.mContentView.setText(note.created_at + " rowid: " + note.rowid + "\n"
-//                + note.tags + "\n"
                 + note.title + "\n"
-                + note.url + "\n"
-                + note.description
+                + note.description + "\n"
+                + note.url
         );
 
         holder.mView.setOnClickListener(new View.OnClickListener() {
