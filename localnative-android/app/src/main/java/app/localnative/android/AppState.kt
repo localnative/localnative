@@ -29,7 +29,7 @@ object AppState {
 
         val p: Long = Math.ceil((0.0 + end) / LIMIT).toLong()
         val z = Math.ceil((count + 0.0) / LIMIT).toLong()
-        return "page: $p of $z\nnote: $start-$end of $count"
+        return "$start-$end / $count"
     }
     @JvmStatic
     fun getQuery():String {
