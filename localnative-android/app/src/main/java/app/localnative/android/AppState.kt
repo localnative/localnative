@@ -58,6 +58,10 @@ object AppState {
         return offset
     }
     @JvmStatic
+    fun getOffset(): Long {
+        return offset
+    }
+    @JvmStatic
     fun clearOffset() {
         offset = 0
     }

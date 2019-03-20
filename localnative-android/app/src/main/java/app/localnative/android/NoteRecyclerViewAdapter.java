@@ -19,8 +19,10 @@ package app.localnative.android;
 
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.app.Activity;
 import android.content.Context;
+import android.graphics.Color;
+import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -39,7 +41,7 @@ import java.util.List;
  * specified {@link OnListFragmentInteractionListener}.
  * TODO: Replace the implementation with code for your data type.
  */
-public class NoteRecyclerViewAdapter extends RecyclerView.Adapter<NoteRecyclerViewAdapter.ViewHolder> implements View.OnClickListener {
+public class NoteRecyclerViewAdapter extends RecyclerView.Adapter<NoteRecyclerViewAdapter.ViewHolder> {
 
     private final List<NoteItem> mValues;
     private final OnListFragmentInteractionListener mListener;
@@ -61,10 +63,32 @@ public class NoteRecyclerViewAdapter extends RecyclerView.Adapter<NoteRecyclerVi
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
         holder.mItem = mValues.get(position);
-        NoteItem note = mValues.get(position);
+        final NoteItem note = mValues.get(position);
         holder.mTagsContainer.removeAllViews();
         String[] arr = note.tags.split(",");
+        Button deleteButton = new Button(context);
+        deleteButton.setText("X");
+        int height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 45, context.getResources().getDisplayMetrics());
+        int width = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 45, context.getResources().getDisplayMetrics());
+        deleteButton.setLayoutParams(new RecyclerView.LayoutParams(width, height));
+        deleteButton.setTextColor(Color.RED);
+        deleteButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                String query = AppState.getQuery();
+                Long offset = AppState.getOffset();
+                String cmd = "{\"action\": \"delete\", \"query\": \""
+                        + query
+                        + "\", \"rowid\":" + note.rowid.toString() + ", \"limit\":10, \"offset\":"
+                        + offset
+                        + "}";
+                Log.d("doSearchCmd", cmd);
+                String s = RustBridge.run(cmd);
+                ((MainActivity)context).doSearch(query, offset);
+            }
 
+        });
+        holder.mTagsContainer.addView(deleteButton);
         for (int i = 0; i < arr.length; i++)  {
             if (arr[i].length() > 0){
                 Button btn = new Button(context);
@@ -98,9 +122,6 @@ public class NoteRecyclerViewAdapter extends RecyclerView.Adapter<NoteRecyclerVi
         return mValues.size();
     }
 
-    @Override
-    public void onClick(View v) {
-    }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
         public final View mView;
