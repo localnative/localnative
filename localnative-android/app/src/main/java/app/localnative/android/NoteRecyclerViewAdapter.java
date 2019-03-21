@@ -74,7 +74,7 @@ public class NoteRecyclerViewAdapter extends RecyclerView.Adapter<NoteRecyclerVi
         String[] arr = note.tags.split(",");
         Button deleteButton = new Button(context);
         deleteButton.setText("X");
-        int height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 45, context.getResources().getDisplayMetrics());
+        int height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 36, context.getResources().getDisplayMetrics());
         int width = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 45, context.getResources().getDisplayMetrics());
         deleteButton.setLayoutParams(new RecyclerView.LayoutParams(width, height));
         deleteButton.setTextColor(Color.RED);
@@ -113,6 +113,7 @@ public class NoteRecyclerViewAdapter extends RecyclerView.Adapter<NoteRecyclerVi
                 Button btn = new Button(context);
                 btn.setText(arr[i]);
                 btn.setAllCaps(false);
+                btn.setLayoutParams(new RecyclerView.LayoutParams((int)(arr[i].length() * width * 0.2 + width * 0.5), height));
                 holder.mTagsContainer.addView(btn);
                 btn.setOnClickListener((MainActivity)context);
             }
