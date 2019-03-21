@@ -17,10 +17,16 @@
 */
 package app.localnative.android;
 
+import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Color;
+import android.os.Bundle;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
@@ -75,18 +81,31 @@ public class NoteRecyclerViewAdapter extends RecyclerView.Adapter<NoteRecyclerVi
         deleteButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
-                String query = AppState.getQuery();
-                Long offset = AppState.getOffset();
-                String cmd = "{\"action\": \"delete\", \"query\": \""
-                        + query
-                        + "\", \"rowid\":" + note.rowid.toString() + ", \"limit\":10, \"offset\":"
-                        + offset
-                        + "}";
-                Log.d("doSearchCmd", cmd);
-                String s = RustBridge.run(cmd);
-                ((MainActivity)context).doSearch(query, offset);
+                AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                builder.setMessage(R.string.dialog_delete_note)
+                        .setPositiveButton(R.string.delete, new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                String query = AppState.getQuery();
+                                Long offset = AppState.getOffset();
+                                String cmd = "{\"action\": \"delete\", \"query\": \""
+                                        + query
+                                        + "\", \"rowid\":" + note.rowid.toString() + ", \"limit\":10, \"offset\":"
+                                        + offset
+                                        + "}";
+                                Log.d("doSearchCmd", cmd);
+                                String s = RustBridge.run(cmd);
+                                ((MainActivity)context).doSearch(query, offset);
+                            }
+                        })
+                        .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                // User cancelled the dialog
+                            }
+                        });
+                // Create the AlertDialog object and return it
+                AlertDialog alert = builder.create();
+                alert.show();
             }
-
         });
         holder.mTagsContainer.addView(deleteButton);
         for (int i = 0; i < arr.length; i++)  {
@@ -142,3 +161,4 @@ public class NoteRecyclerViewAdapter extends RecyclerView.Adapter<NoteRecyclerVi
         }
     }
 }
+

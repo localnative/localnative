@@ -3,4 +3,7 @@
     <string name="search_hint">type to search</string>
     <string name="prev_button_text">Prev</string>
     <string name="next_button_text">Next</string>
+    <string name="dialog_delete_note">Delete this note?</string>
+    <string name="delete">Delete</string>
+    <string name="cancel">Cancel</string>
 </resources>
