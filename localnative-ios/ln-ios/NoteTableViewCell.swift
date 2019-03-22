@@ -26,8 +26,7 @@ import UIKit
 
 class NoteTableViewCell: UITableViewCell {
 
-    @IBOutlet weak var deleteButton: UIButton!
-    @IBOutlet weak var tagsContainer: UIStackView!
+    @IBOutlet weak var tagsContainer: UIScrollView!
     @IBOutlet weak var contentText: UITextView!
     @IBOutlet weak var urlText: UITextView!
     override func awakeFromNib() {

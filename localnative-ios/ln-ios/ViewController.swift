@@ -57,22 +57,30 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         let cell = tableView.dequeueReusableCell(withIdentifier: "NoteTableViewCell") as! NoteTableViewCell
         if(indexPath.row < notes.count){
             let note = notes[indexPath.row] as! [String:Any]
+            let rowid = note["rowid"] as! NSNumber
             for view in cell.tagsContainer.subviews {
-                if view.tag != 0 {
-                    view.removeFromSuperview()
-                }
+                view.removeFromSuperview()
             }
+            // delete button
+            let deleteButton = UIButton(type: .system)
+            deleteButton.tag = -1
+            deleteButton.frame = CGRect(x: 0, y: 0, width: 40, height: 35)
+            deleteButton.setTitle("X", for: .normal)
+            deleteButton.tintColor =  .red
+            deleteButton.addTarget(self, action: #selector(buttonClicked), for: .touchUpInside)
+            cell.tagsContainer.addSubview(deleteButton)
+            
             for (i,tag) in (note["tags"] as! String).components(separatedBy: ",").enumerated(){
                 let tagButton = UIButton(type: .system)
-                tagButton.tag = (note["rowid"] as! NSNumber).intValue
-                tagButton.frame = CGRect(x: 100*i, y: 0, width: 100, height: 35)
+                tagButton.tag = rowid.intValue
+                tagButton.frame = CGRect(x: 100*i + 40, y: 0, width: 100, height: 35)
                 tagButton.setTitle(tag, for: .normal)
                 tagButton.addTarget(self, action: #selector(buttonClicked), for: .touchUpInside)
                 cell.tagsContainer.addSubview(tagButton)
             }
+            cell.tagsContainer.setNeedsLayout()
             
-            //(note["tags"] as! String)
-            cell.contentText.text = (note["created_at"] as! String) + " rowid " + (note["rowid"] as! NSNumber).stringValue
+            cell.contentText.text = (note["created_at"] as! String) + " rowid " + rowid.stringValue
                 + "\n" + (note["title"] as! String)
                 + newLineOrEmptyString(str: note["description"] as! String)
                 + newLineOrEmptyString(str: note["annotations"] as! String)

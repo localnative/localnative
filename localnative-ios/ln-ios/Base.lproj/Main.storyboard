@@ -41,29 +41,12 @@
                                                 <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" translatesAutoresizingMaskIntoConstraints="NO" id="PEC-Ug-wwZ">
                                                     <rect key="frame" x="0.0" y="0.0" width="414" height="245.66666666666666"/>
                                                     <subviews>
-                                                        <stackView opaque="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="wq5-L3-JQZ">
+                                                        <scrollView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="KrT-SW-PLs">
                                                             <rect key="frame" x="0.0" y="0.0" width="414" height="25"/>
-                                                            <subviews>
-                                                                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="leading" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" hasAttributedTitle="YES" translatesAutoresizingMaskIntoConstraints="NO" id="pWg-Yl-VaJ">
-                                                                    <rect key="frame" x="0.0" y="0.0" width="414" height="25"/>
-                                                                    <state key="normal">
-                                                                        <attributedString key="attributedTitle">
-                                                                            <fragment content="  X  ">
-                                                                                <attributes>
-                                                                                    <color key="NSBackgroundColor" red="0.99999600649999998" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                                                                    <color key="NSColor" red="1" green="0.14913141730000001" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                                                                    <font key="NSFont" size="15" name=".AppleSystemUIFont"/>
-                                                                                    <paragraphStyle key="NSParagraphStyle" alignment="natural" lineBreakMode="wordWrapping" baseWritingDirection="natural" tighteningFactorForTruncation="0.0"/>
-                                                                                </attributes>
-                                                                            </fragment>
-                                                                        </attributedString>
-                                                                    </state>
-                                                                </button>
-                                                            </subviews>
                                                             <constraints>
-                                                                <constraint firstAttribute="height" constant="25" id="8Qk-Wc-KQP"/>
+                                                                <constraint firstAttribute="height" constant="25" id="T1d-mX-5bF"/>
                                                             </constraints>
-                                                        </stackView>
+                                                        </scrollView>
                                                         <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="TopLeft" ambiguous="YES" scrollEnabled="NO" editable="NO" translatesAutoresizingMaskIntoConstraints="NO" id="B0M-0y-rn3" userLabel="Content Text">
                                                             <rect key="frame" x="0.0" y="25" width="414" height="166.66666666666666"/>
                                                             <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
@@ -81,9 +64,9 @@
                                                         </textView>
                                                     </subviews>
                                                     <constraints>
-                                                        <constraint firstItem="wq5-L3-JQZ" firstAttribute="top" secondItem="PEC-Ug-wwZ" secondAttribute="top" id="3ju-Kk-3ZK"/>
-                                                        <constraint firstAttribute="trailing" secondItem="wq5-L3-JQZ" secondAttribute="trailing" id="a0g-R5-UvW"/>
-                                                        <constraint firstItem="wq5-L3-JQZ" firstAttribute="leading" secondItem="PEC-Ug-wwZ" secondAttribute="leading" id="rSM-7v-hTt"/>
+                                                        <constraint firstAttribute="trailing" secondItem="KrT-SW-PLs" secondAttribute="trailing" id="5ak-xm-wID"/>
+                                                        <constraint firstItem="KrT-SW-PLs" firstAttribute="leading" secondItem="PEC-Ug-wwZ" secondAttribute="leading" id="CTW-WI-cHo"/>
+                                                        <constraint firstItem="KrT-SW-PLs" firstAttribute="top" secondItem="PEC-Ug-wwZ" secondAttribute="top" id="TIt-l3-fVe"/>
                                                     </constraints>
                                                 </stackView>
                                             </subviews>
@@ -96,8 +79,7 @@
                                         </tableViewCellContentView>
                                         <connections>
                                             <outlet property="contentText" destination="B0M-0y-rn3" id="yiO-P2-oS1"/>
-                                            <outlet property="deleteButton" destination="pWg-Yl-VaJ" id="bT4-M3-iT7"/>
-                                            <outlet property="tagsContainer" destination="wq5-L3-JQZ" id="jEu-Jn-3kl"/>
+                                            <outlet property="tagsContainer" destination="KrT-SW-PLs" id="MZ9-RQ-mHT"/>
                                             <outlet property="urlText" destination="mQf-M4-vYJ" id="wlE-Ed-bs3"/>
                                         </connections>
                                     </tableViewCell>
