@@ -47,12 +47,32 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         return notes.count
     }
     
+    @objc func buttonClicked(sender : UIButton){
+        let alert = UIAlertController(title: "Clicked", message: "You have clicked on the button", preferredStyle: .alert)
+        
+        //self.present(alert, animated: true, completion: nil)
+    }
+    
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "NoteTableViewCell") as! NoteTableViewCell
         if(indexPath.row < notes.count){
             let note = notes[indexPath.row] as! [String:Any]
-            cell.contentText.text = (note["tags"] as! String)
-                + "\n" + (note["created_at"] as! String) + " rowid " + (note["rowid"] as! NSNumber).stringValue
+            for view in cell.tagsContainer.subviews {
+                if view.tag != 0 {
+                    view.removeFromSuperview()
+                }
+            }
+            for (i,tag) in (note["tags"] as! String).components(separatedBy: ",").enumerated(){
+                let tagButton = UIButton(type: .system)
+                tagButton.tag = (note["rowid"] as! NSNumber).intValue
+                tagButton.frame = CGRect(x: 100*i, y: 0, width: 100, height: 35)
+                tagButton.setTitle(tag, for: .normal)
+                tagButton.addTarget(self, action: #selector(buttonClicked), for: .touchUpInside)
+                cell.tagsContainer.addSubview(tagButton)
+            }
+            
+            //(note["tags"] as! String)
+            cell.contentText.text = (note["created_at"] as! String) + " rowid " + (note["rowid"] as! NSNumber).stringValue
                 + "\n" + (note["title"] as! String)
                 + newLineOrEmptyString(str: note["description"] as! String)
                 + newLineOrEmptyString(str: note["annotations"] as! String)
@@ -60,8 +80,9 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         }
         return cell;
     }
+    
     func newLineOrEmptyString(str: String) -> String{
-        if(str == ""){
+        if(str.trimmingCharacters(in: .whitespacesAndNewlines) == ""){
             return ""
         }else{
             return "\n" + str

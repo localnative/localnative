@@ -42,10 +42,10 @@
                                                     <rect key="frame" x="0.0" y="0.0" width="414" height="245.66666666666666"/>
                                                     <subviews>
                                                         <stackView opaque="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="wq5-L3-JQZ">
-                                                            <rect key="frame" x="0.0" y="0.0" width="414" height="35"/>
+                                                            <rect key="frame" x="0.0" y="0.0" width="414" height="25"/>
                                                             <subviews>
                                                                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="leading" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" hasAttributedTitle="YES" translatesAutoresizingMaskIntoConstraints="NO" id="pWg-Yl-VaJ">
-                                                                    <rect key="frame" x="0.0" y="0.0" width="414" height="35"/>
+                                                                    <rect key="frame" x="0.0" y="0.0" width="414" height="25"/>
                                                                     <state key="normal">
                                                                         <attributedString key="attributedTitle">
                                                                             <fragment content="  X  ">
@@ -61,18 +61,18 @@
                                                                 </button>
                                                             </subviews>
                                                             <constraints>
-                                                                <constraint firstAttribute="height" constant="35" id="8Qk-Wc-KQP"/>
+                                                                <constraint firstAttribute="height" constant="25" id="8Qk-Wc-KQP"/>
                                                             </constraints>
                                                         </stackView>
                                                         <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="TopLeft" ambiguous="YES" scrollEnabled="NO" editable="NO" translatesAutoresizingMaskIntoConstraints="NO" id="B0M-0y-rn3" userLabel="Content Text">
-                                                            <rect key="frame" x="0.0" y="35" width="414" height="166.66666666666666"/>
+                                                            <rect key="frame" x="0.0" y="25" width="414" height="166.66666666666666"/>
                                                             <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                                             <string key="text">Lorem ipsum dolor sit er elit lamet, consectetaur cillium adipisicing pecu, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Nam liber te conscient to factor tum poen legum</string>
                                                             <fontDescription key="fontDescription" name=".AppleSystemUIFont" family=".AppleSystemUIFont" pointSize="14"/>
                                                             <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
                                                         </textView>
                                                         <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="TopLeft" ambiguous="YES" scrollEnabled="NO" editable="NO" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="mQf-M4-vYJ">
-                                                            <rect key="frame" x="0.0" y="201.66666666666666" width="414" height="44"/>
+                                                            <rect key="frame" x="0.0" y="191.66666666666666" width="414" height="54"/>
                                                             <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                                             <string key="text">Lorem ipsum dolor sit er elit lamet, consectetaur cillium adipisicing pecu, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Nam liber te conscient to factor tum poen legum odioque civiuda.</string>
                                                             <fontDescription key="fontDescription" type="system" pointSize="14"/>
@@ -96,6 +96,8 @@
                                         </tableViewCellContentView>
                                         <connections>
                                             <outlet property="contentText" destination="B0M-0y-rn3" id="yiO-P2-oS1"/>
+                                            <outlet property="deleteButton" destination="pWg-Yl-VaJ" id="bT4-M3-iT7"/>
+                                            <outlet property="tagsContainer" destination="wq5-L3-JQZ" id="jEu-Jn-3kl"/>
                                             <outlet property="urlText" destination="mQf-M4-vYJ" id="wlE-Ed-bs3"/>
                                         </connections>
                                     </tableViewCell>
