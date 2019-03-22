@@ -2,6 +2,8 @@
 
 ## v0.3.8
 - desktop: fix pagination
+- android: add button for deletion and tags
+- ios: add button for deletion and tags
 
 ## v0.3.7
 - desktop: timeseries chart, tag cloud and screenshot
