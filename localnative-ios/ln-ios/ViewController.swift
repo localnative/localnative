@@ -53,7 +53,14 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     
     @objc func deleteButtonClicked(sender : UIButton){
         let alert = UIAlertController(title: "Do you really want to delete this item?", message: "", preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "Delete", style: UIAlertAction.Style.destructive, handler: nil))
+        alert.addAction(UIAlertAction(title: "Delete", style: UIAlertAction.Style.destructive, handler: {
+            action in
+            ln.run(json_input:"""
+                {"action":"delete","rowid":\(sender.tag),"query":"\(AppState.getQuery())","limit":10,"offset":\(AppState.getOffset())}
+                """
+            )
+            self.search(input: AppState.getQuery(), offset: AppState.getOffset())
+        }))
         alert.addAction(UIAlertAction(title: "Cancel", style: UIAlertAction.Style.cancel, handler: nil))
         self.present(alert, animated: true, completion: nil)
     }
@@ -75,7 +82,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             // delete button
             let deleteButton = UIButton(type: .system)
             deleteButton.tag = rowid.intValue
-            deleteButton.frame = CGRect(x: 0, y: 0, width: 40, height: 35)
+            deleteButton.frame = CGRect(x: 0, y: 0, width: 40, height: 25)
             deleteButton.setTitle("X", for: .normal)
             deleteButton.tintColor =  .red
             deleteButton.addTarget(self, action: #selector(deleteButtonClicked), for: .touchUpInside)
@@ -83,7 +90,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             
             for (i,tag) in (note["tags"] as! String).components(separatedBy: ",").enumerated(){
                 let tagButton = UIButton(type: .system)
-                tagButton.frame = CGRect(x: 100*i + 40, y: 0, width: 100, height: 35)
+                tagButton.frame = CGRect(x: 50*i + 40, y: 0, width: 50, height: 25)
                 tagButton.setTitle(tag, for: .normal)
                 tagButton.addTarget(self, action: #selector(tagButtonClicked), for: .touchUpInside)
                 cell.tagsContainer.addSubview(tagButton)
