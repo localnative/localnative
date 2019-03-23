@@ -13,6 +13,7 @@ cd localnative-electron
 rm -f package-lock.json
 rm -rf node_modules
 npm i
+npm run build
 rm -rf node_modules/localnative-neon/native/target
 electron-builder .
 

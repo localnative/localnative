@@ -16,12 +16,10 @@
 
 ## mobile
 - android
-  - click on tag text to search
   - ProGuard to shrink size?
   - screenshot
   - OCR
 - ios
-  - click on tag text to search
   - screenshot
   - OCR
 - purism
