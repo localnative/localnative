@@ -30,7 +30,7 @@ fn get_ssb_cli_path() -> String {
     format!(
         "{}/LocalNative/bin/localnative-nodejs-{}",
         dirs::home_dir().unwrap().to_str().unwrap(),
-        "0.3.8"
+        "0.3.9"
     )
 }
 

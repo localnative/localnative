@@ -1,6 +1,6 @@
 {
   "name": "localnative-neon",
-  "version": "0.3.8",
+  "version": "0.3.9",
   "description": "localnative native node.js modeuls",
   "main": "lib/index.js",
   "author": "Yi Wang",
