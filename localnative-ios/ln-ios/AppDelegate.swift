@@ -38,6 +38,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 if let vc = self.window?.rootViewController as? ViewController {
                     vc.searchInput.text = ""
+                    AppState.clearOffset()
                     vc.search(input: "", offset: 0)
                 }
             }

@@ -68,6 +68,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     @objc func tagButtonClicked(sender : UIButton){
         let query = sender.currentTitle!
         searchInput.text = query
+        AppState.clearOffset()
         search(input: query, offset: 0)
     }
     
