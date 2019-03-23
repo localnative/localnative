@@ -47,10 +47,21 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         return notes.count
     }
     
-    @objc func buttonClicked(sender : UIButton){
-        let alert = UIAlertController(title: "Clicked", message: "You have clicked on the button", preferredStyle: .alert)
-        
-        //self.present(alert, animated: true, completion: nil)
+    @objc func delete(rowid : Int64){
+        search(input: AppState.getQuery(), offset: AppState.getOffset())
+    }
+    
+    @objc func deleteButtonClicked(sender : UIButton){
+        let alert = UIAlertController(title: "Do you really want to delete this item?", message: "", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Delete", style: UIAlertAction.Style.destructive, handler: nil))
+        alert.addAction(UIAlertAction(title: "Cancel", style: UIAlertAction.Style.cancel, handler: nil))
+        self.present(alert, animated: true, completion: nil)
+    }
+    
+    @objc func tagButtonClicked(sender : UIButton){
+        let query = sender.currentTitle!
+        searchInput.text = query
+        search(input: query, offset: 0)
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -63,19 +74,18 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             }
             // delete button
             let deleteButton = UIButton(type: .system)
-            deleteButton.tag = -1
+            deleteButton.tag = rowid.intValue
             deleteButton.frame = CGRect(x: 0, y: 0, width: 40, height: 35)
             deleteButton.setTitle("X", for: .normal)
             deleteButton.tintColor =  .red
-            deleteButton.addTarget(self, action: #selector(buttonClicked), for: .touchUpInside)
+            deleteButton.addTarget(self, action: #selector(deleteButtonClicked), for: .touchUpInside)
             cell.tagsContainer.addSubview(deleteButton)
             
             for (i,tag) in (note["tags"] as! String).components(separatedBy: ",").enumerated(){
                 let tagButton = UIButton(type: .system)
-                tagButton.tag = rowid.intValue
                 tagButton.frame = CGRect(x: 100*i + 40, y: 0, width: 100, height: 35)
                 tagButton.setTitle(tag, for: .normal)
-                tagButton.addTarget(self, action: #selector(buttonClicked), for: .touchUpInside)
+                tagButton.addTarget(self, action: #selector(tagButtonClicked), for: .touchUpInside)
                 cell.tagsContainer.addSubview(tagButton)
             }
             cell.tagsContainer.setNeedsLayout()

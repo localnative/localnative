@@ -37,6 +37,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         if message == "insert" {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 if let vc = self.window?.rootViewController as? ViewController {
+                    vc.searchInput.text = ""
                     vc.search(input: "", offset: 0)
                 }
             }

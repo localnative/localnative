@@ -62,4 +62,8 @@ class AppState {
     static func clearOffset() {
         offset = 0
     }
+    
+    static func getOffset() -> Int64 {
+        return offset
+    }
 }
