@@ -1,7 +1,10 @@
 # Changelog
 
+## v0.3.9
+- ios: fix offset issue after note insertion
+
 ## v0.3.8
-- desktop: fix pagination
+- desktop: fix pagination with time range inconsistency
 - android: add button for deletion and tags
 - ios: add button for deletion and tags
 
