@@ -30,6 +30,7 @@ exports.cmdSearch = _.debounce(cmdSearchImp, 300);
 exports.cmdSearchOrFilter = cmdSearchOrFilter;
 exports.cmdSsbSync = cmdSsbSync;
 exports.cmdDelete = cmdDelete;
+exports.cmdSyncViaAttach = cmdSyncViaAttach;
 
 function cmdInsertImage(dataURL){
   let message = {
