@@ -174,7 +174,7 @@ function findReopenMenuItem () {
 }
 
 if (process.platform === 'darwin') {
-  const name = app.getName()
+  const name = "Local Native"
   template.unshift({
     label: name,
     submenu: [{
