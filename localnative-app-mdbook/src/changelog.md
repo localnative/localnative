@@ -1,6 +1,7 @@
 # Changelog
 
 ## v0.3.9
+- desktop: fix sync via attach file, About, Hide menu item
 - ios: fix offset issue after note insertion
 
 ## v0.3.8
