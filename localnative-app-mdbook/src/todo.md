@@ -1,5 +1,8 @@
 # TODO
 
+## bug
+- click on `"` tag crashes on ios
+
 ## feature
 - add non url text note, db table for draft note item
 - manage people / contact
@@ -20,6 +23,7 @@
   - screenshot
   - OCR
 - ios
+  - horizontal scroll for tags 
   - screenshot
   - OCR
 - purism
