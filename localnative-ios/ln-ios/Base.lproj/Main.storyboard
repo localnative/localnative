@@ -123,5 +123,58 @@
             </objects>
             <point key="canvasLocation" x="134.78260869565219" y="89.673913043478265"/>
         </scene>
+        <!--Code View Controller-->
+        <scene sceneID="EaI-4B-4Z2">
+            <objects>
+                <viewController storyboardIdentifier="qrCode" id="RyK-5t-MUs" customClass="QRCodeViewController" customModule="localnative_ios" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="Ejg-tN-4f3">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="736"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" translatesAutoresizingMaskIntoConstraints="NO" id="4tp-IN-Fjg">
+                                <rect key="frame" x="0.0" y="20" width="414" height="716"/>
+                                <subviews>
+                                    <toolbar opaque="NO" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="63p-Hv-ULx">
+                                        <rect key="frame" x="0.0" y="0.0" width="414" height="35.333333333333336"/>
+                                        <constraints>
+                                            <constraint firstAttribute="height" constant="35.329999999999998" id="jcw-ti-kF4"/>
+                                        </constraints>
+                                        <items>
+                                            <barButtonItem title="Back" id="ff3-Bv-mf5">
+                                                <connections>
+                                                    <action selector="backButtonTouchDown:" destination="RyK-5t-MUs" id="iTg-rp-eYS"/>
+                                                </connections>
+                                            </barButtonItem>
+                                        </items>
+                                    </toolbar>
+                                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="UOL-xu-u79">
+                                        <rect key="frame" x="0.0" y="35.333333333333314" width="414" height="680.66666666666674"/>
+                                    </imageView>
+                                </subviews>
+                                <constraints>
+                                    <constraint firstItem="63p-Hv-ULx" firstAttribute="leading" secondItem="4tp-IN-Fjg" secondAttribute="leading" id="Gyo-3R-GGy"/>
+                                    <constraint firstItem="63p-Hv-ULx" firstAttribute="top" secondItem="4tp-IN-Fjg" secondAttribute="top" id="HM3-LJ-6Mw"/>
+                                    <constraint firstAttribute="trailing" secondItem="63p-Hv-ULx" secondAttribute="trailing" id="kw4-fI-rD9"/>
+                                </constraints>
+                            </stackView>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <constraints>
+                            <constraint firstItem="ky3-oY-BqW" firstAttribute="bottom" secondItem="4tp-IN-Fjg" secondAttribute="bottom" id="BNJ-0s-eSD"/>
+                            <constraint firstItem="4tp-IN-Fjg" firstAttribute="top" secondItem="ky3-oY-BqW" secondAttribute="top" id="Dmb-Ja-rae"/>
+                            <constraint firstItem="4tp-IN-Fjg" firstAttribute="leading" secondItem="ky3-oY-BqW" secondAttribute="leading" id="E8i-0r-Ssi"/>
+                            <constraint firstItem="ky3-oY-BqW" firstAttribute="trailing" secondItem="4tp-IN-Fjg" secondAttribute="trailing" id="q8E-Ma-jLC"/>
+                        </constraints>
+                        <viewLayoutGuide key="safeArea" id="ky3-oY-BqW"/>
+                    </view>
+                    <connections>
+                        <outlet property="backButton" destination="ff3-Bv-mf5" id="Otl-fd-VGl"/>
+                        <outlet property="qrImage" destination="UOL-xu-u79" id="Kw8-lN-0DK"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="ET4-YX-tw9" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="855" y="90"/>
+        </scene>
     </scenes>
 </document>

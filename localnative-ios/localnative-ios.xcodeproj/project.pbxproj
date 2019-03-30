@@ -19,6 +19,7 @@
 		3C25952A21A1CA5F005BB947 /* RustLocalNative.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C25952721A1CA5F005BB947 /* RustLocalNative.swift */; };
 		3C25952B21A1CA5F005BB947 /* RustLocalNative.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C25952721A1CA5F005BB947 /* RustLocalNative.swift */; };
 		3C3B492B216EF91D000B6349 /* libresolv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C3B492A216EF91D000B6349 /* libresolv.tbd */; };
+		3C5D1448225011610095FA8C /* QRCodeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C5D1447225011610095FA8C /* QRCodeViewController.swift */; };
 		3C6A5F30214F40BA008C36F9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C6A5F2F214F40BA008C36F9 /* AppDelegate.swift */; };
 		3C6A5F32214F40BA008C36F9 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C6A5F31214F40BA008C36F9 /* ViewController.swift */; };
 		3C6A5F35214F40BB008C36F9 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3C6A5F33214F40BB008C36F9 /* Main.storyboard */; };
@@ -83,6 +84,7 @@
 		3C25952721A1CA5F005BB947 /* RustLocalNative.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RustLocalNative.swift; sourceTree = SOURCE_ROOT; };
 		3C3B492A216EF91D000B6349 /* libresolv.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libresolv.tbd; path = usr/lib/libresolv.tbd; sourceTree = SDKROOT; };
 		3C3B492D216F00B4000B6349 /* LocalNative-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "LocalNative-Bridging-Header.h"; sourceTree = "<group>"; };
+		3C5D1447225011610095FA8C /* QRCodeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRCodeViewController.swift; sourceTree = "<group>"; };
 		3C6A5F2C214F40BA008C36F9 /* localnative-ios.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "localnative-ios.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3C6A5F2F214F40BA008C36F9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		3C6A5F31214F40BA008C36F9 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -201,6 +203,7 @@
 				04BCEDA12235E3970098122F /* AppState.swift */,
 				3C6A5F2F214F40BA008C36F9 /* AppDelegate.swift */,
 				3C6A5F31214F40BA008C36F9 /* ViewController.swift */,
+				3C5D1447225011610095FA8C /* QRCodeViewController.swift */,
 				3C6A5F33214F40BB008C36F9 /* Main.storyboard */,
 				3C0891782179799000A333DE /* NoteTableViewCell.swift */,
 				3C6A5F36214F40BC008C36F9 /* Assets.xcassets */,
@@ -550,6 +553,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3C5D1448225011610095FA8C /* QRCodeViewController.swift in Sources */,
 				3C25952821A1CA5F005BB947 /* RustLocalNative.swift in Sources */,
 				04BCEDA22235E3970098122F /* AppState.swift in Sources */,
 				3C6A5F32214F40BA008C36F9 /* ViewController.swift in Sources */,

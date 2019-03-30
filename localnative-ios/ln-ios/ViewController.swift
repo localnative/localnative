@@ -65,6 +65,13 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         self.present(alert, animated: true, completion: nil)
     }
     
+    @objc func qrCodeButtonClicked(sender : UIButton){
+        let vc = self.storyboard?.instantiateViewController(withIdentifier: "qrCode")
+        self.present(vc as! UIViewController, animated: true, completion: nil)
+        let note = notes[sender.tag] as! [String:Any]
+        (vc as! QRCodeViewController).createQRFromString(note["url"] as! String)
+    }
+    
     @objc func tagButtonClicked(sender : UIButton){
         let query = sender.currentTitle!
         searchInput.text = query
@@ -89,9 +96,20 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             deleteButton.addTarget(self, action: #selector(deleteButtonClicked), for: .touchUpInside)
             cell.tagsContainer.addSubview(deleteButton)
             
+            // QR code button
+            let qrCodeButton = UIButton(type: .system)
+            qrCodeButton.tag = indexPath.row
+            qrCodeButton.frame = CGRect(x: 40, y: 0, width: 40, height: 25)
+            qrCodeButton.setTitle("QR", for: .normal)
+            qrCodeButton.tintColor =  .white
+            qrCodeButton.backgroundColor = .black
+            qrCodeButton.addTarget(self, action: #selector(qrCodeButtonClicked), for: .touchUpInside)
+            cell.tagsContainer.addSubview(qrCodeButton)
+            
+            // tags
             for (i,tag) in (note["tags"] as! String).components(separatedBy: ",").enumerated(){
                 let tagButton = UIButton(type: .system)
-                tagButton.frame = CGRect(x: 50*i + 40, y: 0, width: 50, height: 25)
+                tagButton.frame = CGRect(x: 50*i + 80, y: 0, width: 50, height: 25)
                 tagButton.setTitle(tag, for: .normal)
                 tagButton.addTarget(self, action: #selector(tagButtonClicked), for: .touchUpInside)
                 cell.tagsContainer.addSubview(tagButton)
