@@ -4,6 +4,7 @@
 - click on `"` tag crashes on ios
 
 ## feature
+- share via QR code
 - add non url text note, db table for draft note item
 - manage people / contact
 - safe network
