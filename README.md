@@ -36,6 +36,8 @@ localnative-sql: sql snippet
 [todo list](https://localnative.app/todo.html)
 
 ## Screenshot
+### Desktop application
+![Local Native desktop application](./localnative-app-mdbook/src/img/localnative-desktop-v0.3.8.png)
 
 ### Web extension
 ![Local Native web extension popup screenshot](./localnative-app-mdbook/src/img/localnative-web-ext-popup.png)

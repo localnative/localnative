@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.3.10
+- mobile: QR code for url
+
 ## v0.3.9
 - desktop: fix sync via attach file, About, Hide menu item
 - ios: fix offset issue after note insertion
