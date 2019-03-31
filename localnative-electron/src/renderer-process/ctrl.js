@@ -22,6 +22,8 @@ const cmd = require('./cmd')
 const {LIMIT, cmdDelete, cmdSearch} = require('./cmd')
 const {refreshChart} = require('./chart')
 const _ = require('underscore')
+const ZXing = require('@zxing/library')
+const codeWriter = new ZXing.BrowserQRCodeSvgWriter();
 
 function onNativeMessage(message) {
   let msg = _.omit(message, 'days', 'notes', 'tags');
@@ -80,12 +82,16 @@ function refreshNotes(notes){
       <div class="note-created-at">
         ${i.created_at}
         rowid ${i.rowid}
+        <button id="btn-qrcode-rowid-${i.rowid}" title="QR" style="color: gray;">
+        QR
+        </button>
         <span class="note-tags" id="note-tags-rowid-${i.rowid}">
         </span>
         <button id="btn-delete-rowid-${i.rowid}" title="delete" style="color: red; float:right;">
         Delete
         </button>
       </div>
+      <div id="qr-code-${i.rowid}"></div>
 
       <div class="note-title">
         ${i.title}
@@ -99,6 +105,16 @@ function refreshNotes(notes){
       <img src="${i.annotations}" style="width:400px">
     </div>
       `);
+
+    // qrcode toggle button
+    document.getElementById('btn-qrcode-rowid-' + i.rowid).onclick = function(){
+      let qr = document.getElementById(`qr-code-${i.rowid}`);
+      if (qr.innerHTML.length > 0){
+        qr.innerHTML = '';
+      } else {
+        codeWriter.writeToDom(`#qr-code-${i.rowid}`, i.url, 300, 300);
+      }
+    };
 
     // delete button
     document.getElementById('btn-delete-rowid-' + i.rowid).onclick = function(){

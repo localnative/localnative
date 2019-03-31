@@ -3,7 +3,7 @@
 
 |            | ios | android | | firefox<br>addon | chrome<br>extension | | gnu<br>linux | mac | 
 |------------|-----|---------|-|----------------- |---------------------|-|--------------|-----|
-| <b>mobile</b> | [<i class="fab fa-apple fa-3x"></i>](https://itunes.apple.com/us/app/local-native/id1443968309) | [<i class="fab fa-android fa-3x"></i>](https://play.google.com/store/apps/details?id=app.localnative) | <b>browser extension</b> | [<i class="fab fa-firefox fa-3x"></i>](https://addons.mozilla.org/en-US/firefox/addon/localnative/) | [<i class="fab fa-chrome fa-3x"></i>](https://chrome.google.com/webstore/detail/local-native/oclkmkeameccmgnajgogjlhdjeaconnb) | <b>desktop</b> | [<i class="fab fa-linux fa-3x"></i>](https://gitlab.com/yiwang/localnative-release/tree/master/v0.3.9/gnu-linux) | [<i class="fab fa-app-store fa-3x"></i>](https://gitlab.com/yiwang/localnative-release/tree/master/v0.3.9/mac) |
+| <b>mobile</b> | [<i class="fab fa-apple fa-3x"></i>](https://itunes.apple.com/us/app/local-native/id1443968309) | [<i class="fab fa-android fa-3x"></i>](https://play.google.com/store/apps/details?id=app.localnative) | <b>browser extension</b> | [<i class="fab fa-firefox fa-3x"></i>](https://addons.mozilla.org/en-US/firefox/addon/localnative/) | [<i class="fab fa-chrome fa-3x"></i>](https://chrome.google.com/webstore/detail/local-native/oclkmkeameccmgnajgogjlhdjeaconnb) | <b>desktop</b> | [<i class="fab fa-linux fa-3x"></i>](https://gitlab.com/yiwang/localnative-release/tree/master/v0.3.10/gnu-linux) | [<i class="fab fa-app-store fa-3x"></i>](https://gitlab.com/yiwang/localnative-release/tree/master/v0.3.10/mac) |
 
 
 <b>Local Native</b> [Quick Start](quick-start.md) and [Videos](videos.md).
@@ -21,7 +21,7 @@ By default, note is your private message in ssb, you can also publish public not
 
 ## Screenshot
 ### Desktop application
-![Local Native desktop application](./img/localnative-desktop-v0.3.8.png)
+![Local Native desktop application](./img/localnative-desktop-0.3.10-qrcode.jpg)
 
 ### Web extension
 ![Local Native web extension popup screenshot](./img/localnative-web-ext-popup.png)

@@ -1,7 +1,7 @@
 # Changelog
 
 ## v0.3.10
-- mobile: QR code for url
+- desktop and mobile: display QR code for url
 
 ## v0.3.9
 - desktop: fix sync via attach file, About, Hide menu item
