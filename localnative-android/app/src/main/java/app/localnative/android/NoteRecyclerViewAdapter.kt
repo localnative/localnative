@@ -95,7 +95,7 @@ class NoteRecyclerViewAdapter(private val mValues: List<NoteItem>, private val m
         qrCodeButton.text = "QR"
         qrCodeButton.layoutParams = RecyclerView.LayoutParams(width, height)
         qrCodeButton.setTextColor(Color.WHITE)
-        qrCodeButton.setBackgroundColor(Color.BLACK)
+//        qrCodeButton.setBackgroundColor(Color.BLACK)
         qrCodeButton.setOnClickListener {
             val intent = Intent(context, QRCodeActivity::class.java)
             (context as AppCompatActivity).startActivity(intent)

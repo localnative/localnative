@@ -21,7 +21,6 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
-import android.view.MenuItem
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
@@ -116,7 +115,7 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener, NoteLi
         AppState.setQuery(query)
         Log.d("doSearch", query + offset!!)
         // request allow write to storage permission
-        Permission.invoke_WRITE_EXTERNAL_STORAGE(this, query, offset)
+        invoke_WRITE_EXTERNAL_STORAGE(this, query, offset)
     }
 
     override fun onPermissonGranted(query: String, offset: Long?) {
