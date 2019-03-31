@@ -101,8 +101,8 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             qrCodeButton.tag = indexPath.row
             qrCodeButton.frame = CGRect(x: 40, y: 0, width: 40, height: 25)
             qrCodeButton.setTitle("QR", for: .normal)
-            qrCodeButton.tintColor =  .white
-            qrCodeButton.backgroundColor = .black
+            qrCodeButton.tintColor =  .gray
+            // qrCodeButton.backgroundColor = .black
             qrCodeButton.addTarget(self, action: #selector(qrCodeButtonClicked), for: .touchUpInside)
             cell.tagsContainer.addSubview(qrCodeButton)
             
