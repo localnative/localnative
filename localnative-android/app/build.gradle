@@ -8,8 +8,8 @@ android {
         applicationId "app.localnative"
         minSdkVersion 14
         targetSdkVersion 27
-        versionCode 8
-        versionName "0.3.8"
+        versionCode 9
+        versionName "0.3.10"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
     }
@@ -37,4 +37,5 @@ dependencies {
     implementation 'com.google.android.material:material:1.1.0-alpha05'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'com.android.volley:volley:1.1.1'
+    implementation 'com.journeyapps:zxing-android-embedded:3.6.0'
 }

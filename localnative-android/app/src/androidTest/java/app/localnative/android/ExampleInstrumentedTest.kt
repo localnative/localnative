@@ -15,20 +15,29 @@
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-package app.localnative.android;
+package app.localnative.android
 
-import org.junit.jupiter.api.Test;
+import android.content.Context
+import androidx.test.InstrumentationRegistry
+import androidx.test.runner.AndroidJUnit4
 
-import static org.junit.Assert.*;
+import org.junit.Test
+import org.junit.runner.RunWith
+
+import org.junit.Assert.*
 
 /**
- * Example local unit test, which will execute on the development machine (host).
+ * Instrumented test, which will execute on an Android device.
  *
- * @see <a href="http://d.android.com/tools/testing">Testing documentation</a>
+ * @see [Testing documentation](http://d.android.com/tools/testing)
  */
-public class ExampleUnitTest {
+@RunWith(AndroidJUnit4::class)
+class ExampleInstrumentedTest {
     @Test
-    public void addition_isCorrect() {
-        assertEquals(4, 2 + 2);
+    fun useAppContext() {
+        // Context of the app under test.
+        val appContext = InstrumentationRegistry.getTargetContext()
+
+        assertEquals("app.localnative", appContext.packageName)
     }
 }

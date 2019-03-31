@@ -22,6 +22,16 @@ object AppState {
     private var offset : Long = 0
     private var count : Long = 0
     private var query : String = ""
+    private var currentUrl : String = ""
+    @JvmStatic
+    fun getCurrentUrl(): String {
+        return currentUrl
+    }
+    @JvmStatic
+    fun setCurrentUrl(value: String) {
+        currentUrl = value
+    }
+
     @JvmStatic
     fun makePaginationText(): String {
         val start = if (count > 0) offset + 1 else 0
