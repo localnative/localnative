@@ -15,14 +15,15 @@
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-package app.localnative.android;
+package app.localnative.android
 
-public class RustBridge {
-    static {
-        System.loadLibrary("localnative_core");
+object RustBridge {
+    init {
+        System.loadLibrary("localnative_core")
     }
-    private static native String localnativeRun(final String pattern);
-    public static String run(String input) {
-        return localnativeRun(input);
+
+    private external fun localnativeRun(pattern: String): String
+    fun run(input: String): String {
+        return localnativeRun(input)
     }
 }

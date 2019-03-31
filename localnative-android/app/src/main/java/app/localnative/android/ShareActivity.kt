@@ -29,7 +29,6 @@ import com.android.volley.toolbox.Volley
 import kotlinx.android.synthetic.main.activity_share.*
 import org.json.JSONObject
 import android.text.method.ScrollingMovementMethod
-import java.net.URLDecoder
 
 class ShareActivity : AppCompatActivity(), Permission.OnPermissonGrantedListenr {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -72,7 +71,7 @@ class ShareActivity : AppCompatActivity(), Permission.OnPermissonGrantedListenr 
         }
     }
 
-    override fun onPermissonGranted(cmd: String?, offset :Long) {
+    override fun onPermissonGranted(cmd: String, offset: Long?) {
         val s = RustBridge.run(cmd)
         Log.d("CmdInsertResult", s)
         finish()

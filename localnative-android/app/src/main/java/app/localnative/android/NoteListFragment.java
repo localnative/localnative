@@ -85,7 +85,7 @@ public class NoteListFragment extends Fragment {
             } else {
                 recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
             }
-            mViewAdpater = new NoteRecyclerViewAdapter(NoteContent.ITEMS, mListener);
+            mViewAdpater = new NoteRecyclerViewAdapter(NoteContent.INSTANCE.getITEMS(), mListener);
             recyclerView.setAdapter(mViewAdpater);
         }
         return view;
