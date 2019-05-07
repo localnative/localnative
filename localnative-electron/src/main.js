@@ -46,7 +46,11 @@ let mainWindow
 
 function createWindow () {
   // Create the browser window.
-  mainWindow = new BrowserWindow({width: 800, height: 600})
+  mainWindow = new BrowserWindow({
+    webPreferences: {
+        nodeIntegration: true
+    },
+    width: 800, height: 600})
 
   // set title
   let title = "Local Native v" + version +
