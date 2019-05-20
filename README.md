@@ -3,7 +3,12 @@
 
 A cross-platform tool to save and sync your notes in local SQLite database without going through any centralized service.
 
+# Videos
+[Local Native YouTube Channel](https://www.youtube.com/channel/UCO3qFIyK0eSmqvMknsslWRw)
+
 ## Articles
+[Updates](https://chuanyan.live/tags/localnative)
+
 [Local Native v0.3.8 发布](https://chuanyan.live/2019-03-localnative-v0-3-8-release)
 
 [Why Local Native?](https://chuanyan.live/2019-01-why-local-native)
@@ -93,5 +98,3 @@ using your real name (sorry, no pseudonyms or anonymous contributions.)
 ### Search your notes in patchbay
 ![Local Native patchbay screenshot](./localnative-app-mdbook/src/img/localnative-ssb-patchbay.png)
 
-# Videos
-[Local Native YouTube Channel](https://www.youtube.com/channel/UCO3qFIyK0eSmqvMknsslWRw)

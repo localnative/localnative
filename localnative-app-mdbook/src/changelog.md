@@ -1,4 +1,5 @@
 # Changelog
+[Updates](https://chuanyan.live/tags/localnative)
 
 ## v0.3.10
 - desktop and mobile: display QR code for url

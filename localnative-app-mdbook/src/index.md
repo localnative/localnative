@@ -12,14 +12,10 @@
 ## Own your data on your device
 [Local Native](https://localnative.app) is a cross-platform tool to save and sync your notes in local SQLite database without going through any centralized service.
 
-You can copy the SQLite database file from mobile device to desktop device via [File Sharing](https://support.apple.com/en-us/HT201301) and vice versa.
-
-### sync via ssb
-On desktop, with proper setup, you can replicate your data with other devices via [ssb](https://www.scuttlebutt.nz) [protocal](https://ssbc.github.io/scuttlebutt-protocol-guide/).
-
-By default, note is your private message in ssb, you can also publish public note to ssb if you explicitly choose so.
 
 ## Articles
+[Updates](https://chuanyan.live/tags/localnative)
+
 [Local Native v0.3.8 发布](https://chuanyan.live/2019-03-localnative-v0-3-8-release)
 
 [Why Local Native?](https://chuanyan.live/2019-01-why-local-native)
