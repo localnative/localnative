@@ -1,9 +1,12 @@
 # Local Native
 [localnative.app](https://localnative.app)
 
-A note/bookmark taking tool to save your notes in a local sqlite database, could synced with other devices via [ssb](https://ssbc.github.io/secure-scuttlebutt/) [protocal](https://ssbc.github.io/scuttlebutt-protocol-guide/).
+A cross-platform tool to save and sync your notes in local SQLite database without going through any centralized service.
 
-[Why Local Native?](https://chuanyan.live/why-local-native/)
+## Articles
+[Local Native v0.3.8 发布](https://chuanyan.live/2019-03-localnative-v0-3-8-release)
+
+[Why Local Native?](https://chuanyan.live/2019-01-why-local-native)
 
 # Sub-directories
 
