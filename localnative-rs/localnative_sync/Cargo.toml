@@ -1,0 +1,9 @@
+[package]
+name = "localnative_sync"
+description = "localnative sync lib"
+homepage = "https://localnative.app"
+authors = ["Yi Wang"]
+version = "0.3.10"
+license = "AGPL-3.0"
+
+[dependencies]
