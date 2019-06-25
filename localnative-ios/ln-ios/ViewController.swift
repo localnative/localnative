@@ -145,7 +145,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             """
         )
         let data = txt.data(using: .utf8)!
-        if let jsonObject = try? JSONSerialization.jsonObject(with: data) as? [String: NSObject] {
+        if let jsonObject = ((try? JSONSerialization.jsonObject(with: data) as? [String: NSObject]) as [String : NSObject]??) {
             notes =  jsonObject!["notes"] as! NSArray
             let count = jsonObject!["count"] as! Int64
             AppState.setCount(count: count)
