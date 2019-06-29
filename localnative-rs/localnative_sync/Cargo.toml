@@ -3,7 +3,7 @@ name = "localnative_sync"
 description = "localnative sync lib"
 homepage = "https://localnative.app"
 authors = ["Yi Wang"]
-version = "0.3.10"
+version = "0.4.0"
 license = "AGPL-3.0"
 
 [dependencies.rusqlite]
