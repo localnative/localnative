@@ -1,1 +1,3 @@
-pub fn migrate() {}
+pub fn upgrade() {
+    println!("upgrade")
+}

@@ -23,10 +23,10 @@ use self::rustc_serialize::base64::{self, ToBase64};
 use self::rustc_serialize::hex::FromHex;
 
 pub fn make_data_url(row: &rusqlite::Row) -> String {
-    let url = row.get::<_, String>(2);
+    let url = row.get::<_, String>(2).unwrap();
     eprintln!("url: {}", url);
     if url == "mime://image/png" {
-        let hex = row.get::<_, String>(6);
+        let hex = row.get::<_, String>(6).unwrap();
         let result = hex
             .from_hex()
             .unwrap()

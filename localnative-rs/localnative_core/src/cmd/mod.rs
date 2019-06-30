@@ -25,7 +25,7 @@ use self::regex::Regex;
 use self::rusqlite::types::ToSql;
 use self::rusqlite::{Connection, NO_PARAMS};
 use std::iter::FromIterator;
-use {KVStringI64, Note};
+use Note;
 mod filter;
 pub mod image;
 mod search;

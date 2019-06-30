@@ -38,16 +38,16 @@ pub fn get_pubkeys(conn: &Connection) -> String {
         )
         .unwrap();
     let ssb_iter = stmt
-        .query_map(NO_PARAMS, |row| Ssb {
-            note_rowid: row.get(0),
-            author: row.get(1),
+        .query_map(NO_PARAMS, |row| Ok(Ssb {
+            note_rowid: row.get(0)?,
+            author: row.get(1)?,
             is_active_author: false, //row.get(2),
             is_last_note: false,     // row.get(3),
-            seq: row.get(4),
-            ts: row.get(5),
-            key: row.get(6),
-            prev: row.get(7),
-        })
+            seq: row.get(4)?,
+            ts: row.get(5)?,
+            key: row.get(6)?,
+            prev: row.get(7)?,
+        }))
         .unwrap();
 
     let mut j = "[ ".to_owned();
@@ -80,17 +80,17 @@ pub fn get_note_to_publish(conn: &Connection) -> Result<Note, rusqlite::Error> {
         limit 1",
         )
         .unwrap();
-    stmt.query_row(NO_PARAMS, |row| Note {
-        rowid: row.get(0),
-        title: row.get(1),
-        url: row.get(2),
-        tags: row.get(3),
-        description: row.get(4),
-        comments: row.get(5),
-        annotations: row.get(6),
-        created_at: row.get(7),
-        is_public: row.get(8),
-    })
+    stmt.query_row(NO_PARAMS, |row| Ok(Note {
+        rowid: row.get(0)?,
+        title: row.get(1)?,
+        url: row.get(2)?,
+        tags: row.get(3)?,
+        description: row.get(4)?,
+        comments: row.get(5)?,
+        annotations: row.get(6)?,
+        created_at: row.get(7)?,
+        is_public: row.get(8)?,
+    }))
 }
 
 pub fn sync_to_ssb(conn: &Connection) {
@@ -171,16 +171,16 @@ pub fn get_authors() -> Vec<String> {
         )
         .unwrap();
     let ssb_iter = stmt
-        .query_map(NO_PARAMS, |row| Ssb {
-            note_rowid: row.get(0),
-            author: row.get(1),
+        .query_map(NO_PARAMS, |row| Ok(Ssb {
+            note_rowid: row.get(0)?,
+            author: row.get(1)?,
             is_active_author: false, //row.get(2),
             is_last_note: false,     // row.get(3),
-            seq: row.get(4),
-            ts: row.get(5),
-            key: row.get(6),
-            prev: row.get(7),
-        })
+            seq: row.get(4)?,
+            ts: row.get(5)?,
+            key: row.get(6)?,
+            prev: row.get(7)?,
+        }))
         .unwrap();
     let mut v = Vec::new();
     for ssb in ssb_iter {
@@ -293,16 +293,16 @@ pub fn get_ssb_active(conn: &Connection) -> Ssb {
         )
         .unwrap();
     let rs = stmt
-        .query_row(NO_PARAMS, |row| Ssb {
-            note_rowid: row.get(0),
-            author: row.get(1),
-            is_active_author: row.get(2),
-            is_last_note: row.get(3),
-            seq: row.get(4),
-            ts: row.get(5),
-            key: row.get(6),
-            prev: row.get(7),
-        })
+        .query_row(NO_PARAMS, |row| Ok(Ssb {
+            note_rowid: row.get(0)?,
+            author: row.get(1)?,
+            is_active_author: row.get(2)?,
+            is_last_note: row.get(3)?,
+            seq: row.get(4)?,
+            ts: row.get(5)?,
+            key: row.get(6)?,
+            prev: row.get(7)?,
+        }))
         .unwrap();
     rs
 }
@@ -323,16 +323,16 @@ pub fn get_ssb(conn: &Connection, author: &str) -> Ssb {
         ))
         .unwrap();
     let rs = stmt
-        .query_row(NO_PARAMS, |row| Ssb {
-            note_rowid: row.get(0),
-            author: row.get(1),
-            is_active_author: row.get(2),
-            is_last_note: row.get(3),
-            seq: row.get(4),
-            ts: row.get(5),
-            key: row.get(6),
-            prev: row.get(7),
-        })
+        .query_row(NO_PARAMS, |row| Ok(Ssb {
+            note_rowid: row.get(0)?,
+            author: row.get(1)?,
+            is_active_author: row.get(2)?,
+            is_last_note: row.get(3)?,
+            seq: row.get(4)?,
+            ts: row.get(5)?,
+            key: row.get(6)?,
+            prev: row.get(7)?,
+        }))
         .unwrap();
     rs
 }

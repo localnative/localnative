@@ -23,7 +23,7 @@ use self::regex::Regex;
 use self::rusqlite::types::ToSql;
 use self::rusqlite::Connection;
 use super::make_tags;
-use super::select::{select, select_by_day, select_by_tag, select_count};
+use super::select::{select, select_by_tag, select_count};
 use std::collections::HashMap;
 use {KVStringI64, Note, Tags};
 
@@ -58,8 +58,7 @@ pub fn filter_by_tag(conn: &Connection, query: &str, from: &str, to: &str) -> St
     let mut tag_count_map: HashMap<String, i64> = HashMap::new();
 
     let result_iter = stmt
-        .query_map_named(&params, |row| Tags { tags: row.get(0) })
-        .unwrap();
+        .query_map_named(&params, |row| Ok(Tags { tags: row.get(0)? })).unwrap();
 
     for r in result_iter {
         let r = r.unwrap();
@@ -172,18 +171,17 @@ pub fn filter(
     eprintln!("params {:?}", params.len());
 
     let note_iter = stmt
-        .query_map_named(&params, |row| Note {
-            rowid: row.get(0),
-            title: row.get(1),
-            url: row.get(2),
-            tags: row.get(3),
-            description: row.get(4),
-            comments: row.get(5),
+        .query_map_named(&params, |row| Ok(Note {
+            rowid: row.get(0)?,
+            title: row.get(1)?,
+            url: row.get(2)?,
+            tags: row.get(3)?,
+            description: row.get(4)?,
+            comments: row.get(5)?,
             annotations: super::utils::make_data_url(row),
-            created_at: row.get(7),
-            is_public: row.get(8),
-        })
-        .unwrap();
+            created_at: row.get(7)?,
+            is_public: row.get(8)?,
+        })).unwrap();
 
     let mut j = "[ ".to_owned();
     for note in note_iter {

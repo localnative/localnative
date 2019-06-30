@@ -16,7 +16,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 extern crate base64;
-use self::base64::{decode, encode};
+use self::base64::{decode};
 use self::rusqlite::types::ToSql;
 use self::rusqlite::NO_PARAMS;
 use super::make_tags;

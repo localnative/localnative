@@ -91,7 +91,7 @@ pub fn whoami() -> String {
 
     assert!(output.status.success());
     String::from_utf8_lossy(&output.stdout)
-        .trim_right()
+        .trim_end()
         .to_string()
 }
 

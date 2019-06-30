@@ -20,8 +20,8 @@ extern crate regex;
 extern crate rusqlite;
 extern crate serde;
 extern crate serde_json;
-use self::rusqlite::types::{FromSql, ToSql};
-use self::rusqlite::{Connection, MappedRows, NO_PARAMS};
+use self::rusqlite::types::{ToSql};
+use self::rusqlite::{Connection, NO_PARAMS};
 use super::make_tags;
 use std::collections::HashMap;
 use {KVStringI64, Note, Tags};
@@ -36,10 +36,10 @@ pub fn select_by_day(conn: &Connection) -> String {
         )
         .unwrap();
     let result_iter = stmt
-        .query_map(NO_PARAMS, |row| KVStringI64 {
-            k: row.get(0),
-            v: row.get(1),
-        })
+        .query_map(NO_PARAMS, |row| Ok(KVStringI64 {
+            k: row.get(0)?,
+            v: row.get(1)?,
+        }))
         .unwrap();
 
     let mut d = "[ ".to_owned();
@@ -76,7 +76,7 @@ pub fn select_by_tag(conn: &Connection) -> String {
     let mut tag_count_map: HashMap<String, i64> = HashMap::new();
 
     let result_iter = stmt
-        .query_map(NO_PARAMS, |row| Tags { tags: row.get(0) })
+        .query_map(NO_PARAMS, |row| Ok(Tags { tags: row.get(0)? }))
         .unwrap();
 
     for r in result_iter {
@@ -124,18 +124,18 @@ pub fn select(conn: &Connection, limit: &u32, offset: &u32) -> String {
     let note_iter = stmt
         .query_map_named(
             &[(":limit", limit as &ToSql), (":offset", offset as &ToSql)],
-            |row| Note {
-                rowid: row.get(0),
-                title: row.get(1),
-                url: row.get(2),
-                tags: row.get(3),
-                description: row.get(4),
-                comments: row.get(5),
+            |row| Ok(Note {
+                rowid: row.get(0)?,
+                title: row.get(1)?,
+                url: row.get(2)?,
+                tags: row.get(3)?,
+                description: row.get(4)?,
+                comments: row.get(5)?,
                 annotations: super::utils::make_data_url(row),
-                created_at: row.get(7),
-                is_public: row.get(8),
+                created_at: row.get(7)?,
+                is_public: row.get(8)?,
             },
-        )
+        ))
         .unwrap();
 
     let mut j = "[ ".to_owned();

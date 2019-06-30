@@ -78,6 +78,9 @@ fn process(cmd: Cmd, text: &str) -> String {
     create(&conn);
 
     match cmd.action.as_ref() {
+        "upgrade" => {
+            r#"{"error":"cmd upgrade error"}"#.to_string()
+        }
         "sync-via-attach" => {
             if let Ok(s) = serde_json::from_str::<CmdSyncViaAttach>(text) {
                 sync_via_attach(&conn, &s.uri)

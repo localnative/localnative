@@ -54,7 +54,7 @@ pub fn search_by_tag(conn: &Connection, query: &str) -> String {
     let mut tag_count_map: HashMap<String, i64> = HashMap::new();
 
     let result_iter = stmt
-        .query_map_named(&params, |row| Tags { tags: row.get(0) })
+        .query_map_named(&params, |row| Ok(Tags { tags: row.get(0)? }))
         .unwrap();
 
     for r in result_iter {
@@ -110,10 +110,10 @@ pub fn search_by_day(conn: &Connection, query: &str) -> String {
     }
 
     let result_iter = stmt
-        .query_map_named(&params, |row| KVStringI64 {
-            k: row.get(0),
-            v: row.get(1),
-        })
+        .query_map_named(&params, |row| Ok(KVStringI64 {
+            k: row.get(0)?,
+            v: row.get(1)?,
+        }))
         .unwrap();
 
     let mut d = "[ ".to_owned();
@@ -197,17 +197,17 @@ pub fn search(conn: &Connection, query: &str, limit: &u32, offset: &u32) -> Stri
     eprintln!("params {:?}", params.len());
 
     let note_iter = stmt
-        .query_map_named(&params, |row| Note {
-            rowid: row.get(0),
-            title: row.get(1),
-            url: row.get(2),
-            tags: row.get(3),
-            description: row.get(4),
-            comments: row.get(5),
+        .query_map_named(&params, |row| Ok(Note {
+            rowid: row.get(0)?,
+            title: row.get(1)?,
+            url: row.get(2)?,
+            tags: row.get(3)?,
+            description: row.get(4)?,
+            comments: row.get(5)?,
             annotations: super::utils::make_data_url(row),
-            created_at: row.get(7),
-            is_public: row.get(8),
-        })
+            created_at: row.get(7)?,
+            is_public: row.get(8)?,
+        }))
         .unwrap();
 
     let mut j = "[ ".to_owned();
