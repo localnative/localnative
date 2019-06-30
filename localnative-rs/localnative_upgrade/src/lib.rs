@@ -18,7 +18,6 @@
 
 extern crate rusqlite;
 extern crate semver;
-use rusqlite::types::ToSql;
 use rusqlite::{Connection, NO_PARAMS};
 use semver::Version;
 use std::io;
@@ -36,15 +35,19 @@ pub fn upgrade(conn: &Connection) -> Result<&str, io::Error> {
 
 fn check_version(conn: &Connection) -> String {
     if check_table_exist(conn, "meta") {
-        eprintln!("0.4.0");
-        "0.4.0".to_string()
+        let mut stmt = conn
+            .prepare("SELECT meta_value FROM meta where meta_key = 'version' ")
+            .unwrap();
+        let version = stmt
+            .query_row(NO_PARAMS, |row| Ok(OneString { s: row.get(0)? }))
+            .unwrap()
+            .s;
+        eprintln!("version {}", version);
+        version
     } else {
-        eprintln!("0.3.0");
+        eprintln!("version 0.3.10");
         "0.3.10".to_string()
     }
-    //    let mut stmt = conn.prepare("SELECT version FROM meta").unwrap();
-    //    let version = match stmt.query_row(NO_PARAMS, |row| Ok( row.get(0)?)).unwrap();
-    //    version
 }
 
 fn check_table_exist(conn: &Connection, table_name: &str) -> bool {
