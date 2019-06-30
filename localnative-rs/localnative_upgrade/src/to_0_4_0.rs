@@ -16,41 +16,113 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+extern crate rusqlite;
+extern crate uuid;
+use self::uuid::Uuid;
+use super::utils;
+use rusqlite::{Connection, Result, ToSql, NO_PARAMS};
+
+// insert each record to note from _note_0_3 with newly generated uuid4 value
+pub fn migrate_note(conn: &Connection) -> Result<()> {
+    eprintln!("to_0_4_0 migrate_note");
+    if utils::check_table_exist(conn, "_note_0_3") {
+        eprintln!("to_0_4_0 _note_0_3 exists");
+        let mut stmt = conn
+            .prepare(
+                "SELECT rowid, title, url, tags, description, comments
+        , annotations
+        , created_at, is_public
+        FROM _note_0_3
+        order by rowid",
+            )
+            .unwrap();
+        let note_iter = stmt
+            .query_map(NO_PARAMS, |row| {
+                Ok(Note {
+                    rowid: row.get(0)?,
+                    uuid4: Uuid::new_v4().to_string(),
+                    title: row.get(1)?,
+                    url: row.get(2)?,
+                    tags: row.get(3)?,
+                    description: row.get(4)?,
+                    comments: row.get(5)?,
+                    annotations: row.get(6)?,
+                    created_at: row.get(7)?,
+                    is_public: row.get(8)?,
+                })
+            })
+            .unwrap();
+
+        for note in note_iter {
+            let mut note = note.unwrap();
+            conn.execute(
+                "INSERT INTO note (uuid4, title, url, tags, description, comments
+        , annotations
+        , created_at, is_public)
+                  VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+                &[
+                    &note.uuid4,
+                    &note.title,
+                    &note.url,
+                    &note.tags,
+                    &note.description,
+                    &note.comments,
+                    &note.annotations,
+                    &note.created_at,
+                    &note.is_public as &ToSql,
+                ],
+            )
+            .unwrap();
+        }
+        eprintln!("to_0_4_0 drop _note_0_3");
+        conn.execute("drop table _note_0_3;", NO_PARAMS).unwrap();
+    }
+    Ok(())
+}
+
 // rename note to _note_0_3
 // create new note table with new uuid4 column
-// insert each record to note from _note_0_3 with newly generated uuid4 value
 // create meta table
 // set version 0.4.0
-
-extern crate rusqlite;
-use rusqlite::{params, Connection, Result};
-
-pub fn run(conn: &Connection) -> Result<()> {
-    create_meta_table(conn)?;
-    set_version(conn)?;
-    Ok(())
+pub fn migrate_schema(conn: &Connection) -> Result<()> {
+    eprintln!("to_0_4_0 migrate_schema");
+    conn.execute_batch(
+        "BEGIN;
+    ALTER TABLE note RENAME TO _note_0_3;
+CREATE TABLE note (
+rowid          INTEGER PRIMARY KEY AUTOINCREMENT,
+uuid4          TEXT NOT NULL UNIQUE,
+title          TEXT NOT NULL,
+url            TEXT NOT NULL,
+tags           TEXT NOT NULL,
+description    TEXT NOT NULL,
+comments       TEXT NOT NULL,
+annotations    TEXT NOT NULL,
+created_at     TEXT NOT NULL,
+is_public      BOOLEAN NOT NULL default 0
+);
+CREATE TABLE meta (
+meta_key        TEXT PRIMARY KEY,
+meta_value      TEXT NOT NULL
+);
+INSERT INTO meta (
+    meta_key,
+    meta_value
+)
+VALUES('version','0.4.0');
+COMMIt;",
+    )
 }
 
-fn create_meta_table(conn: &Connection) -> Result<()> {
-    conn.execute(
-        "CREATE TABLE meta (
-                  meta_key        TEXT PRIMARY KEY,
-                  meta_value      TEXT NOT NULL
-                  )",
-        params![],
-    )?;
-    Ok(())
-}
-
-fn set_version(conn: &Connection) -> Result<()> {
-    conn.execute(
-        "INSERT INTO meta (
-                  meta_key,
-                  meta_value
-                  )
-                  VALUES('version','0.4.0')
-                  ",
-        params![],
-    )?;
-    Ok(())
+pub struct Note {
+    pub rowid: i64,
+    pub uuid4: String,
+    pub title: String,
+    pub url: String,
+    pub tags: String,
+    pub description: String,
+    pub comments: String,
+    pub annotations: String,
+    pub created_at: String,
+    pub is_public: bool,
 }

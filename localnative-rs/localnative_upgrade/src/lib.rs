@@ -18,23 +18,29 @@
 
 extern crate rusqlite;
 extern crate semver;
+
 use rusqlite::{Connection, NO_PARAMS};
 use semver::Version;
 use std::io;
 // version to upgrade to
 const VERSION: &'static str = "0.4.0";
 mod to_0_4_0;
+mod utils;
+use utils::OneString;
 
 pub fn upgrade(conn: &Connection) -> Result<&str, io::Error> {
-    if Version::parse(&check_version(conn)) < Version::parse("0.4.0") {
-        to_0_4_0::run(conn);
+    if Version::parse(&get_meta_version(conn)) < Version::parse("0.4.0") {
+        to_0_4_0::migrate_schema(conn).unwrap();
+    }
+    if Version::parse(&get_meta_version(conn)) == Version::parse("0.4.0") {
+        to_0_4_0::migrate_note(conn).unwrap();
     }
     eprintln!("upgraded to {}", VERSION);
     Ok(VERSION)
 }
 
-fn check_version(conn: &Connection) -> String {
-    if check_table_exist(conn, "meta") {
+fn get_meta_version(conn: &Connection) -> String {
+    if utils::check_table_exist(conn, "meta") {
         let mut stmt = conn
             .prepare("SELECT meta_value FROM meta where meta_key = 'version' ")
             .unwrap();
@@ -42,26 +48,10 @@ fn check_version(conn: &Connection) -> String {
             .query_row(NO_PARAMS, |row| Ok(OneString { s: row.get(0)? }))
             .unwrap()
             .s;
-        eprintln!("version {}", version);
+        eprintln!("check existing version {}", version);
         version
     } else {
-        eprintln!("version 0.3.10");
+        eprintln!("no meta table, default to earliest version 0.3.10");
         "0.3.10".to_string()
     }
-}
-
-fn check_table_exist(conn: &Connection, table_name: &str) -> bool {
-    let mut stmt = conn
-        .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name= :table_name")
-        .unwrap();
-    match stmt.query_row_named(&[(":table_name", &table_name)], |row| {
-        Ok(OneString { s: row.get(0)? })
-    }) {
-        Ok(rs) => true,
-        Err(_) => false,
-    }
-}
-
-pub struct OneString {
-    pub s: String,
 }
