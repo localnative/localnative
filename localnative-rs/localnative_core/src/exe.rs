@@ -78,6 +78,13 @@ fn process(cmd: Cmd, text: &str) -> String {
     let conn = get_sqlite_connection();
     create(&conn);
 
+    // always run upgrade first
+    if let Ok(version) = localnative_upgrade::upgrade(&conn) {
+        eprintln!(r#"{{"upgrade-done": "{}"}}"#, version)
+    } else {
+        return r#"{"error":"upgrade error"}"#.to_string();
+    }
+
     match cmd.action.as_ref() {
         "upgrade" => {
             if let Ok(version) = localnative_upgrade::upgrade(&conn) {
