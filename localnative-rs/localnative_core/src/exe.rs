@@ -16,6 +16,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 extern crate dirs;
+extern crate localnative_upgrade;
 extern crate rusqlite;
 extern crate serde_json;
 extern crate time;
@@ -78,7 +79,13 @@ fn process(cmd: Cmd, text: &str) -> String {
     create(&conn);
 
     match cmd.action.as_ref() {
-        "upgrade" => r#"{"error":"cmd upgrade error"}"#.to_string(),
+        "upgrade" => {
+            if let Ok(version) = localnative_upgrade::upgrade(&conn) {
+                format!(r#"{{"upgrade-done": "{}"}}"#, version)
+            } else {
+                r#"{"error":"cmd upgrade error"}"#.to_string()
+            }
+        }
         "sync-via-attach" => {
             if let Ok(s) = serde_json::from_str::<CmdSyncViaAttach>(text) {
                 sync_via_attach(&conn, &s.uri)
