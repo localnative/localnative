@@ -8,6 +8,7 @@ echo "set version to" $1
 
 
 # rs
+sed -i "6s/.*/version = \"$1\"/" localnative-rs/localnative_upgrade/Cargo.toml
 sed -i "6s/.*/version = \"$1\"/" localnative-rs/localnative_sync/Cargo.toml
 sed -i "6s/.*/version = \"$1\"/" localnative-rs/localnative_core/Cargo.toml
 
