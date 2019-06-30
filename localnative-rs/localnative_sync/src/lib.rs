@@ -1,7 +1,7 @@
 mod session;
-pub fn create_session(){}
+pub fn create_session() {}
 
-pub fn send_data(){}
+pub fn send_data() {}
 
 #[cfg(test)]
 mod tests {

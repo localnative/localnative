@@ -110,10 +110,12 @@ pub fn search_by_day(conn: &Connection, query: &str) -> String {
     }
 
     let result_iter = stmt
-        .query_map_named(&params, |row| Ok(KVStringI64 {
-            k: row.get(0)?,
-            v: row.get(1)?,
-        }))
+        .query_map_named(&params, |row| {
+            Ok(KVStringI64 {
+                k: row.get(0)?,
+                v: row.get(1)?,
+            })
+        })
         .unwrap();
 
     let mut d = "[ ".to_owned();
@@ -197,17 +199,19 @@ pub fn search(conn: &Connection, query: &str, limit: &u32, offset: &u32) -> Stri
     eprintln!("params {:?}", params.len());
 
     let note_iter = stmt
-        .query_map_named(&params, |row| Ok(Note {
-            rowid: row.get(0)?,
-            title: row.get(1)?,
-            url: row.get(2)?,
-            tags: row.get(3)?,
-            description: row.get(4)?,
-            comments: row.get(5)?,
-            annotations: super::utils::make_data_url(row),
-            created_at: row.get(7)?,
-            is_public: row.get(8)?,
-        }))
+        .query_map_named(&params, |row| {
+            Ok(Note {
+                rowid: row.get(0)?,
+                title: row.get(1)?,
+                url: row.get(2)?,
+                tags: row.get(3)?,
+                description: row.get(4)?,
+                comments: row.get(5)?,
+                annotations: super::utils::make_data_url(row),
+                created_at: row.get(7)?,
+                is_public: row.get(8)?,
+            })
+        })
         .unwrap();
 
     let mut j = "[ ".to_owned();

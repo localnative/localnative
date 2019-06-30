@@ -19,7 +19,5 @@
 extern crate localnative_core;
 use localnative_core::exe::run;
 fn main() {
-    run(
-    r#"{"action":"upgrade"}"#
-    );
+    run(r#"{"action":"upgrade"}"#);
 }
