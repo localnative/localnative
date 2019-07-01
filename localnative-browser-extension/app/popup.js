@@ -46,6 +46,7 @@ function onNativeMessage(message) {
     <div class="note">
       <div class="note-created-at">
         ${i.created_at}
+        ${i.uuid4.substring(0,5)}
         rowid ${i.rowid}
         <span class="note-tags" id="note-tags-rowid-${i.rowid}">
         </span>
