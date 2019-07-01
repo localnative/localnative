@@ -28,30 +28,52 @@ mod to_0_4_0;
 mod utils;
 use utils::OneString;
 
-pub fn upgrade(conn: &Connection) -> Result<&str, io::Error> {
-    if Version::parse(&get_meta_version(conn)) < Version::parse("0.4.0") {
-        to_0_4_0::migrate_schema(conn).unwrap();
+pub fn upgrade(conn: &Connection) -> Result<&str, &str> {
+    if get_meta_is_upgrading(conn) {
+        eprintln!("is_upgrading");
+        Err("is_upgrading")
+    } else {
+        if Version::parse(&get_meta_version(conn)) < Version::parse("0.4.0") {
+            to_0_4_0::migrate_schema(conn).unwrap();
+        }
+        if Version::parse(&get_meta_version(conn)) == Version::parse("0.4.0") {
+            to_0_4_0::migrate_note(conn).unwrap();
+        }
+        eprintln!("upgraded to {}", VERSION);
+        Ok(VERSION)
     }
-    if Version::parse(&get_meta_version(conn)) == Version::parse("0.4.0") {
-        to_0_4_0::migrate_note(conn).unwrap();
+}
+
+fn get_meta_is_upgrading(conn: &Connection) -> bool {
+    let mut stmt = conn
+        .prepare("SELECT meta_value FROM meta where meta_key = 'is_upgrading' ")
+        .unwrap();
+    match stmt.query_row(NO_PARAMS, |row| Ok(OneString { s: row.get(0)? })) {
+        Ok(is_upgrading) => {
+            if is_upgrading.s == "1" {
+                eprintln!("get_meta_is_upgrading: true");
+                true
+            } else {
+                eprintln!("get_meta_is_upgrading: false");
+                false
+            }
+        }
+        Err(_) => false,
     }
-    eprintln!("upgraded to {}", VERSION);
-    Ok(VERSION)
 }
 
 fn get_meta_version(conn: &Connection) -> String {
-    if utils::check_table_exist(conn, "meta") {
-        let mut stmt = conn
-            .prepare("SELECT meta_value FROM meta where meta_key = 'version' ")
-            .unwrap();
-        let version = stmt
-            .query_row(NO_PARAMS, |row| Ok(OneString { s: row.get(0)? }))
-            .unwrap()
-            .s;
-        eprintln!("check existing version {}", version);
-        version
-    } else {
-        eprintln!("no meta table, default to earliest version 0.3.10");
-        "0.3.10".to_string()
+    let mut stmt = conn
+        .prepare("SELECT meta_value FROM meta where meta_key = 'version' ")
+        .unwrap();
+    match stmt.query_row(NO_PARAMS, |row| Ok(OneString { s: row.get(0)? })) {
+        Ok(version) => {
+            eprintln!("get_meta_version {}", version.s);
+            version.s
+        }
+        Err(_) => {
+            eprintln!("get_meta_version: no meta table, default to earliest version 0.3.10");
+            "0.3.10".to_string()
+        }
     }
 }

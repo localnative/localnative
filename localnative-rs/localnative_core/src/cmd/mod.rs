@@ -177,6 +177,12 @@ pub fn create(conn: &Connection) {
          key                TEXT    NOT NULL,
          prev               TEXT    NOT NULL
          ) WITHOUT ROWID;
+
+         CREATE TABLE IF NOT EXISTS meta (
+         meta_key        TEXT PRIMARY KEY,
+         meta_value      TEXT NOT NULL
+         );
+
          COMMIT;",
     )
     .unwrap();

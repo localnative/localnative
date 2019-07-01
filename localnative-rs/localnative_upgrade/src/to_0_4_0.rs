@@ -26,7 +26,7 @@ use rusqlite::{Connection, Result, ToSql, NO_PARAMS};
 pub fn migrate_note(conn: &Connection) -> Result<()> {
     eprintln!("to_0_4_0 migrate_note");
     if utils::check_table_exist(conn, "_note_0_3") {
-        eprintln!("to_0_4_0 _note_0_3 exists");
+        eprintln!("to_0_4_0 _note_0_3 exists, looping each record");
         let mut stmt = conn
             .prepare(
                 "SELECT rowid, title, url, tags, description, comments
@@ -75,7 +75,14 @@ pub fn migrate_note(conn: &Connection) -> Result<()> {
             .unwrap();
         }
         eprintln!("to_0_4_0 drop _note_0_3");
-        conn.execute("drop table _note_0_3;", NO_PARAMS).unwrap();
+        conn.execute_batch(
+            "BEGIN;
+        drop table _note_0_3;
+        UPDATE meta SET meta_value = '0'
+        WHERE meta_key = 'is_upgrading';
+        COMMIT;",
+        )
+        .unwrap();
     }
     Ok(())
 }
@@ -101,15 +108,13 @@ annotations    TEXT NOT NULL,
 created_at     TEXT NOT NULL,
 is_public      BOOLEAN NOT NULL default 0
 );
-CREATE TABLE meta (
-meta_key        TEXT PRIMARY KEY,
-meta_value      TEXT NOT NULL
-);
 INSERT INTO meta (
     meta_key,
     meta_value
 )
-VALUES('version','0.4.0');
+VALUES
+('version','0.4.0'),
+('is_upgrading', '1');
 COMMIt;",
     )
 }
