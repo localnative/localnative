@@ -142,7 +142,7 @@ pub fn filter(
 
     let r: Vec<String> = where_vec(num_words);
     let sql = format!(
-        "SELECT rowid, title, url, tags, description, comments
+        "SELECT rowid, uuid4, title, url, tags, description, comments
         , hex(annotations)
         , created_at, is_public
         FROM note where
@@ -175,14 +175,15 @@ pub fn filter(
         .query_map_named(&params, |row| {
             Ok(Note {
                 rowid: row.get(0)?,
-                title: row.get(1)?,
-                url: row.get(2)?,
-                tags: row.get(3)?,
-                description: row.get(4)?,
-                comments: row.get(5)?,
+                uuid4: row.get(1)?,
+                title: row.get(2)?,
+                url: row.get(3)?,
+                tags: row.get(4)?,
+                description: row.get(5)?,
+                comments: row.get(6)?,
                 annotations: super::utils::make_data_url(row),
-                created_at: row.get(7)?,
-                is_public: row.get(8)?,
+                created_at: row.get(8)?,
+                is_public: row.get(9)?,
             })
         })
         .unwrap();

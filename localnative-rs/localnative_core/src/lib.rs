@@ -130,6 +130,7 @@ pub struct Ssb {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Note {
     pub rowid: i64,
+    pub uuid4: String,
     pub title: String,
     pub url: String,
     pub tags: String,

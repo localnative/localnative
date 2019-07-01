@@ -116,7 +116,7 @@ pub fn select_count(conn: &Connection) -> u32 {
 pub fn select(conn: &Connection, limit: &u32, offset: &u32) -> String {
     let mut stmt = conn
         .prepare(
-            "SELECT rowid, title, url, tags, description, comments
+            "SELECT rowid, uuid4, title, url, tags, description, comments
         , hex(annotations)
         , created_at, is_public
         FROM note
@@ -129,14 +129,15 @@ pub fn select(conn: &Connection, limit: &u32, offset: &u32) -> String {
             |row| {
                 Ok(Note {
                     rowid: row.get(0)?,
-                    title: row.get(1)?,
-                    url: row.get(2)?,
-                    tags: row.get(3)?,
-                    description: row.get(4)?,
-                    comments: row.get(5)?,
+                    uuid4: row.get(1)?,
+                    title: row.get(2)?,
+                    url: row.get(3)?,
+                    tags: row.get(4)?,
+                    description: row.get(5)?,
+                    comments: row.get(6)?,
                     annotations: super::utils::make_data_url(row),
-                    created_at: row.get(7)?,
-                    is_public: row.get(8)?,
+                    created_at: row.get(8)?,
+                    is_public: row.get(9)?,
                 })
             },
         )

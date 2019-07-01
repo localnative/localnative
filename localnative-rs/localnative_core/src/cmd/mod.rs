@@ -34,6 +34,8 @@ mod utils;
 pub use self::filter::{filter, filter_by_tag, filter_count};
 pub use self::search::{search, search_by_day, search_by_tag, search_count};
 pub use self::select::{select, select_by_day, select_by_tag, select_count};
+extern crate uuid;
+use self::uuid::Uuid;
 
 pub fn sync_via_attach(conn: &Connection, uri: &str) -> String {
     if let Ok(_) = conn.execute("attach ? as 'other'", &[uri]) {
@@ -118,11 +120,12 @@ pub fn insert(note: Note) {
     {
         tx.execute(
             "
-        INSERT INTO note (title, url, tags, description, comments, annotations, created_at, is_public)
-        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8);
+        INSERT INTO note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public)
+        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9);
 
         ",
             &[
+                &Uuid::new_v4().to_string() as &ToSql,
                 &note.title,
                 &note.url,
                 &make_tags(&note.tags),
@@ -153,6 +156,7 @@ pub fn create(conn: &Connection) {
         "BEGIN;
         CREATE TABLE IF NOT EXISTS note (
          rowid          INTEGER PRIMARY KEY AUTOINCREMENT,
+         uuid4          TEXT NOT NULL UNIQUE,
          title          TEXT NOT NULL,
          url            TEXT NOT NULL,
          tags           TEXT NOT NULL,

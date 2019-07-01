@@ -18,6 +18,7 @@
 extern crate localnative_core;
 extern crate localnative_ssb;
 extern crate time;
+extern crate uuid;
 use localnative_core::cmd::{clear, count, create, delete, insert, select};
 use localnative_core::exe::get_sqlite_connection;
 use localnative_core::rusqlite;
@@ -28,6 +29,7 @@ use localnative_ssb::sync::{
 };
 use localnative_ssb::{publish, tail, whoami};
 use rusqlite::Connection;
+use uuid::Uuid;
 
 fn prepare_test_db() -> Connection {
     let conn = get_sqlite_connection();
@@ -55,6 +57,7 @@ fn test_whoami() {
 fn test_insert() {
     let note = Note {
         rowid: -1,
+        uuid4: Uuid::new_v4().to_string(),
         title: "title test insert".to_string(),
         url: "http://www.example.com".to_string(),
         tags: "tag1,tag2".to_string(),
@@ -84,6 +87,7 @@ fn test_get_note_to_publish() {
 fn test_publish() {
     let note = Note {
         rowid: -1,
+        uuid4: Uuid::new_v4().to_string(),
         title: "test_publish".to_string(),
         url: "http://www.example.com".to_string(),
         tags: "tag1,tag2".to_string(),

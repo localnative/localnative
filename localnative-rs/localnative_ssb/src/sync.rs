@@ -85,14 +85,15 @@ pub fn get_note_to_publish(conn: &Connection) -> Result<Note, rusqlite::Error> {
     stmt.query_row(NO_PARAMS, |row| {
         Ok(Note {
             rowid: row.get(0)?,
-            title: row.get(1)?,
-            url: row.get(2)?,
-            tags: row.get(3)?,
-            description: row.get(4)?,
-            comments: row.get(5)?,
-            annotations: row.get(6)?,
-            created_at: row.get(7)?,
-            is_public: row.get(8)?,
+            uuid4: row.get(1)?,
+            title: row.get(2)?,
+            url: row.get(3)?,
+            tags: row.get(4)?,
+            description: row.get(5)?,
+            comments: row.get(6)?,
+            annotations: row.get(7)?,
+            created_at: row.get(8)?,
+            is_public: row.get(9)?,
         })
     })
 }

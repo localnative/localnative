@@ -20,6 +20,8 @@ extern crate localnative_upgrade;
 extern crate rusqlite;
 extern crate serde_json;
 extern crate time;
+extern crate uuid;
+use self::uuid::Uuid;
 
 use cmd;
 use cmd::{
@@ -107,6 +109,7 @@ fn process(cmd: Cmd, text: &str) -> String {
                 //eprintln!("created_at {}", created_at);
                 let note = Note {
                     rowid: 0i64,
+                    uuid4: Uuid::new_v4().to_string(),
                     title: i.title,
                     url: i.url,
                     tags: i.tags,
@@ -132,6 +135,7 @@ fn process(cmd: Cmd, text: &str) -> String {
                 //eprintln!("created_at {}", created_at);
                 let note = Note {
                     rowid: 0i64,
+                    uuid4: Uuid::new_v4().to_string(),
                     title: i.title,
                     url: i.url,
                     tags: i.tags,
