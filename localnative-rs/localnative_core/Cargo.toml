@@ -26,12 +26,8 @@ rustc-serialize = "0.3.24"
 uuid = "0.7.4"
 
 [dependencies.localnative_upgrade]
-# version = "0.4.0"
+version = "0.4.0"
 path = "../localnative_upgrade"
-
-[dependencies.localnative_sync]
-# version = "0.4.0"
-path = "../localnative_sync"
 
 [lib]
 name = "localnative_core"
