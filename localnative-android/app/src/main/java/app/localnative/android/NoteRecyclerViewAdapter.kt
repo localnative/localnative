@@ -115,7 +115,8 @@ class NoteRecyclerViewAdapter(private val mValues: List<NoteItem>, private val m
             }
         }
 
-        holder.mContentView.text = (note.created_at + " rowid: " + note.rowid + "\n"
+        holder.mContentView.text = (note.created_at.substring(0,19) + " uuid "
+                + note.uuid4.substring(0,5) + ".. rowid " + note.rowid + "\n"
                 + note.title + "\n"
                 + note.description + "\n"
                 + note.url)

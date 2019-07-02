@@ -48,6 +48,7 @@ object NoteContent {
                 val note = notes.getJSONObject(i)
                 val noteItem = NoteItem(
                         note.getInt("rowid"),
+                        note.getString("uuid4"),
                         note.getString("title"),
                         note.getString("url"),
                         note.getString("tags"),
@@ -74,7 +75,7 @@ object NoteContent {
     /**
      * Note item representing a note.
      */
-    class NoteItem(val rowid: Int?, val title: String, val url: String, val tags: String, val description: String, val comments: String, val annotations: String, val created_at: String, val is_public: Boolean?) {
+    class NoteItem(val rowid: Int?, val uuid4: String, val title: String, val url: String, val tags: String, val description: String, val comments: String, val annotations: String, val created_at: String, val is_public: Boolean?) {
 
         override fun toString(): String {
             return title

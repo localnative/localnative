@@ -32,6 +32,6 @@ path = "../localnative_upgrade"
 [lib]
 name = "localnative_core"
 # android only need this
-crate-type = ["dylib"]
-# apple works as below
+crate-type = ["cdylib"]
+# ios works as below
 #crate-type = ["staticlib","lib","dylib"]
