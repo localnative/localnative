@@ -23,7 +23,7 @@ serde_json = "1.0.33"
 dirs = "1.0.4"
 base64 = "0.10.1"
 rustc-serialize = "0.3.24"
-uuid = "0.7.4"
+uuid = { version = "0.7.4", features = ["v4"] }
 
 [dependencies.localnative_upgrade]
 version = "0.4.0"
@@ -31,5 +31,7 @@ path = "../localnative_upgrade"
 
 [lib]
 name = "localnative_core"
-# crate-type = ["lib"]
-crate-type = ["staticlib","lib","dylib"]
+# android only need this
+crate-type = ["dylib"]
+# apple works as below
+#crate-type = ["staticlib","lib","dylib"]

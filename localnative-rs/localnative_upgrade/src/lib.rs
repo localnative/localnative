@@ -18,6 +18,7 @@
 
 extern crate rusqlite;
 extern crate semver;
+extern crate uuid;
 
 use rusqlite::{Connection, NO_PARAMS};
 use semver::Version;

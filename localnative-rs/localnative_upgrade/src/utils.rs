@@ -1,4 +1,3 @@
-extern crate rusqlite;
 use rusqlite::Connection;
 
 pub fn check_table_exist(conn: &Connection, table_name: &str) -> bool {
