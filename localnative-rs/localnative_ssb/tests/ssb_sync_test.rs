@@ -19,7 +19,7 @@ extern crate localnative_core;
 extern crate localnative_ssb;
 extern crate time;
 extern crate uuid;
-use localnative_core::cmd::{clear, count, create, delete, insert, select};
+use localnative_core::cmd::{create, insert};
 use localnative_core::exe::get_sqlite_connection;
 use localnative_core::rusqlite;
 use localnative_core::Note;

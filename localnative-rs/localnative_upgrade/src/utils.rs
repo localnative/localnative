@@ -1,5 +1,5 @@
 extern crate rusqlite;
-use rusqlite::{Connection, NO_PARAMS};
+use rusqlite::Connection;
 
 pub fn check_table_exist(conn: &Connection, table_name: &str) -> bool {
     let mut stmt = conn
@@ -8,7 +8,16 @@ pub fn check_table_exist(conn: &Connection, table_name: &str) -> bool {
     match stmt.query_row_named(&[(":table_name", &table_name)], |row| {
         Ok(OneString { s: row.get(0)? })
     }) {
-        Ok(rs) => true,
+        Ok(rs) => {
+            if rs.s == table_name {
+                true
+            } else {
+                panic!(
+                    "check_table_exist returned table name not match: {}",
+                    table_name
+                )
+            }
+        }
         Err(_) => false,
     }
 }

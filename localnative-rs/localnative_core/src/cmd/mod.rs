@@ -34,18 +34,18 @@ mod utils;
 pub use self::filter::{filter, filter_by_tag, filter_count};
 pub use self::search::{search, search_by_day, search_by_tag, search_count};
 pub use self::select::{select, select_by_day, select_by_tag, select_count};
-extern crate uuid;
-use self::uuid::Uuid;
 
 pub fn sync_via_attach(conn: &Connection, uri: &str) -> String {
     if let Ok(_) = conn.execute("attach ? as 'other'", &[uri]) {
         match conn.execute_batch("BEGIN;
-        insert into note (title, url, tags, description, comments, annotations, created_at, is_public)
-        select title, url, tags, description, comments, annotations, created_at, is_public
+        insert into note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public)
+        select uuid4, title, url, tags, description, comments, annotations, created_at, is_public
 from other.note
         where not exists (
             select 1 from note
-            where note.title = other.note.title
+            where
+            note.uuid4 = other.note.uuid4
+            and note.title = other.note.title
             and note.url = other.note.url
             and note.tags = other.note.tags
             and note.description = other.note.description
@@ -54,12 +54,14 @@ from other.note
             and note.created_at = other.note.created_at
             and note.is_public = other.note.is_public
         );
-        insert into other.note (title, url, tags, description, comments, annotations, created_at, is_public)
-        select title, url, tags, description, comments, annotations, created_at, is_public
+        insert into other.note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public)
+        select uuid4, title, url, tags, description, comments, annotations, created_at, is_public
 from note
         where not exists (
             select 1 from other.note as o
-            where o.title = note.title
+            where
+            o.uuid4 = note.uuid4
+            and o.title = note.title
             and o.url = note.url
             and o.tags = note.tags
             and o.description = note.description
@@ -125,7 +127,7 @@ pub fn insert(note: Note) {
 
         ",
             &[
-                &Uuid::new_v4().to_string() as &ToSql,
+                &note.uuid4,
                 &note.title,
                 &note.url,
                 &make_tags(&note.tags),
@@ -184,17 +186,6 @@ pub fn create(conn: &Connection) {
          );
 
          COMMIT;",
-    )
-    .unwrap();
-}
-
-pub fn clear(conn: &Connection) {
-    conn.execute_batch(
-        "BEGIN;
-        drop TABLE IF EXISTS note;
-        drop TABLE IF EXISTS ssb;
-        COMMIT;
-        ",
     )
     .unwrap();
 }

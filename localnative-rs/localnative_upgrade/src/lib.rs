@@ -21,7 +21,6 @@ extern crate semver;
 
 use rusqlite::{Connection, NO_PARAMS};
 use semver::Version;
-use std::io;
 // version to upgrade to
 const VERSION: &'static str = "0.4.0";
 mod to_0_4_0;

@@ -31,12 +31,13 @@ pub fn insert_image(note: Note) {
     {
         tx.execute(
             "
-        INSERT INTO note (title, url, tags, description, comments, annotations, created_at, is_public)
+        INSERT INTO note (title, uuid4, url, tags, description, comments, annotations, created_at, is_public)
         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8);
 
         ",
             &[
                 &note.title,
+                &note.uuid4,
                 &note.url,
                 &make_tags(&note.tags),
                 &note.description,
