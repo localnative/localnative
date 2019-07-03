@@ -24,4 +24,4 @@ fi
 DIR=localnative-neon/lib
 FILE="localnative-web-ext-host-$1$POSTFIX"
 rm -f $DIR/localnative-web-ext-host*
-cp localnative-rs/localnative_cli/target/release/localnative-web-ext-host $DIR/$FILE
+cp localnative-rs/target/release/localnative-web-ext-host $DIR/$FILE
