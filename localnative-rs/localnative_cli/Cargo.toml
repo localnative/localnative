@@ -7,11 +7,9 @@ authors = ["Yi Wang"]
 license = "AGPL-3.0"
 
 [dependencies.localnative_core]
-version = "0.4.0"
 path = "../localnative_core"
 
 [dependencies.localnative_ssb]
-version = "0.4.0"
 path = "../localnative_ssb"
 
 
