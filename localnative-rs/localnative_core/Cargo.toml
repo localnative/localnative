@@ -13,6 +13,11 @@ features = ["bundled"]
 [target.'cfg(target_os="android")'.dependencies]
 jni = { version = "0.10.2", default-features = false }
 
+[dependencies.tarpc]
+version = "0.18.0"
+path = "../../external-libs/tarpc/tarpc"
+features = ["serde1"]
+
 [dependencies]
 linked_hash_set = "0.1.3"
 regex = "1.1.0"
@@ -25,6 +30,9 @@ base64 = "0.10.1"
 rustc-serialize = "0.3.24"
 uuid = { version = "0.7.4", features = ["v4"] }
 semver = "0.9.0"
+bincode-transport = { package = "tarpc-bincode-transport", version = "0.7", path = "../../external-libs/tarpc/bincode-transport"}
+futures-preview = { version = "=0.3.0-alpha.16", features = ["compat"] }
+tokio = "0.1"
 
 [lib]
 name = "localnative_core"

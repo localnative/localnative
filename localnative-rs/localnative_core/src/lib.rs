@@ -15,9 +15,11 @@
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
+#![feature(arbitrary_self_types, async_await, proc_macro_hygiene)]
+pub mod rpc;
+
 pub extern crate dirs;
 pub extern crate rusqlite;
-extern crate serde;
 pub extern crate serde_json;
 
 #[macro_use]
@@ -198,4 +200,14 @@ pub struct CmdDelete {
 pub struct CmdSelect {
     pub limit: u32,
     pub offset: u32,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct CmdRpcClient {
+    pub addr: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct CmdRpcServer {
+    pub addr: String,
 }

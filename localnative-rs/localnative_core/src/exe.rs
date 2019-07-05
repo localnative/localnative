@@ -15,12 +15,6 @@
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-extern crate dirs;
-extern crate rusqlite;
-extern crate serde_json;
-extern crate time;
-extern crate uuid;
-use self::uuid::Uuid;
 use crate::cmd;
 use crate::cmd::{
     create, delete, filter, filter_by_tag, filter_count, insert, search, search_by_day,
@@ -32,6 +26,8 @@ use crate::Cmd;
 use crate::CmdDelete;
 use crate::CmdFilter;
 use crate::CmdInsert;
+use crate::CmdRpcClient;
+use crate::CmdRpcServer;
 use crate::CmdSearch;
 use crate::CmdSelect;
 use crate::CmdSyncViaAttach;
@@ -39,6 +35,7 @@ use crate::Note;
 use rusqlite::Connection;
 use std::fs;
 use std::path::Path;
+use uuid::Uuid;
 
 pub fn get_sqlite_connection() -> Connection {
     let p = sqlite3_db_location();
@@ -87,6 +84,30 @@ fn process(cmd: Cmd, text: &str) -> String {
     }
 
     match cmd.action.as_ref() {
+        "server" => {
+            eprintln!(r#"{{"server": "starting"}}"#);
+            if let Ok(s) = serde_json::from_str::<CmdRpcServer>(text) {
+                if let Ok(_) = crate::rpc::server::start(&s.addr) {
+                    format!(r#"{{"server": "started"}}"#)
+                } else {
+                    r#"{"error":"server error"}"#.to_string()
+                }
+            } else {
+                r#"{"error":"cmd server error"}"#.to_string()
+            }
+        }
+        "client" => {
+            eprintln!(r#"{{"client": "starting"}}"#);
+            if let Ok(s) = serde_json::from_str::<CmdRpcClient>(text) {
+                if let Ok(resp) = crate::rpc::client::is_version_match(&s.addr) {
+                    format!(r#"{{"client": "{}"}}"#, resp)
+                } else {
+                    r#"{"error":"client error"}"#.to_string()
+                }
+            } else {
+                r#"{"error":"cmd client error"}"#.to_string()
+            }
+        }
         "upgrade" => {
             if let Ok(version) = upgrade::upgrade(&conn) {
                 format!(r#"{{"upgrade-done": "{}"}}"#, version)
