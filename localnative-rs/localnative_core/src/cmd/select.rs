@@ -15,16 +15,11 @@
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-extern crate linked_hash_set;
-extern crate regex;
-extern crate rusqlite;
-extern crate serde;
-extern crate serde_json;
-use self::rusqlite::types::ToSql;
-use self::rusqlite::{Connection, NO_PARAMS};
 use super::make_tags;
+use crate::{KVStringI64, Note, Tags};
+use rusqlite::types::ToSql;
+use rusqlite::{Connection, NO_PARAMS};
 use std::collections::HashMap;
-use {KVStringI64, Note, Tags};
 
 pub fn select_by_day(conn: &Connection) -> String {
     let mut stmt = conn

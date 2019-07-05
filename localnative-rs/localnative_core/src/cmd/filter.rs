@@ -15,17 +15,13 @@
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-extern crate regex;
-extern crate rusqlite;
-extern crate serde;
-extern crate serde_json;
-use self::regex::Regex;
-use self::rusqlite::types::ToSql;
-use self::rusqlite::Connection;
 use super::make_tags;
 use super::select::{select, select_by_tag, select_count};
+use crate::{KVStringI64, Note, Tags};
+use regex::Regex;
+use rusqlite::types::ToSql;
+use rusqlite::Connection;
 use std::collections::HashMap;
-use {KVStringI64, Note, Tags};
 
 pub fn filter_by_tag(conn: &Connection, query: &str, from: &str, to: &str) -> String {
     let words = make_words(query);

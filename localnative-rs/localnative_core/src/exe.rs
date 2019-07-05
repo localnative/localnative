@@ -21,24 +21,24 @@ extern crate serde_json;
 extern crate time;
 extern crate uuid;
 use self::uuid::Uuid;
-use cmd;
-use cmd::{
+use crate::cmd;
+use crate::cmd::{
     create, delete, filter, filter_by_tag, filter_count, insert, search, search_by_day,
     search_by_tag, search_count, select, select_by_day, select_by_tag, select_count,
     sync_via_attach,
 };
+use crate::upgrade;
+use crate::Cmd;
+use crate::CmdDelete;
+use crate::CmdFilter;
+use crate::CmdInsert;
+use crate::CmdSearch;
+use crate::CmdSelect;
+use crate::CmdSyncViaAttach;
+use crate::Note;
 use rusqlite::Connection;
 use std::fs;
 use std::path::Path;
-use upgrade;
-use Cmd;
-use CmdDelete;
-use CmdFilter;
-use CmdInsert;
-use CmdSearch;
-use CmdSelect;
-use CmdSyncViaAttach;
-use Note;
 
 pub fn get_sqlite_connection() -> Connection {
     let p = sqlite3_db_location();

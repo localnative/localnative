@@ -15,16 +15,14 @@
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-use std::io;
-use std::io::{Read, Write};
-use std::mem::transmute;
-use std::str;
-extern crate localnative_core;
-extern crate localnative_ssb;
 use localnative_core::exe::run;
 use localnative_core::serde_json;
 use localnative_core::Cmd;
 use localnative_ssb as ssb;
+use std::io;
+use std::io::{Read, Write};
+use std::mem::transmute;
+use std::str;
 
 fn main() -> io::Result<()> {
     // Read the message length (first 4 bytes).

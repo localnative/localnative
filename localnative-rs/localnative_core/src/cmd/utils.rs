@@ -15,12 +15,8 @@
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-// extern crate base64;
-extern crate rusqlite;
-// use self::base64::{decode, encode};
-extern crate rustc_serialize;
-use self::rustc_serialize::base64::{self, ToBase64};
-use self::rustc_serialize::hex::FromHex;
+use rustc_serialize::base64::{self, ToBase64};
+use rustc_serialize::hex::FromHex;
 
 pub fn make_data_url(row: &rusqlite::Row) -> String {
     let url = row.get::<_, String>(3).unwrap();

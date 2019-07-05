@@ -15,17 +15,12 @@
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-extern crate linked_hash_set;
-extern crate regex;
-extern crate rusqlite;
-extern crate serde;
-extern crate serde_json;
-use self::linked_hash_set::LinkedHashSet;
-use self::regex::Regex;
-use self::rusqlite::types::ToSql;
-use self::rusqlite::{Connection, NO_PARAMS};
+use crate::Note;
+use linked_hash_set::LinkedHashSet;
+use regex::Regex;
+use rusqlite::types::ToSql;
+use rusqlite::{Connection, NO_PARAMS};
 use std::iter::FromIterator;
-use Note;
 mod filter;
 pub mod image;
 mod search;

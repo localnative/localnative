@@ -16,7 +16,6 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-extern crate localnative_core;
 use localnative_core::exe::run;
 fn main() {
     run(r#"{"action":"upgrade"}"#);

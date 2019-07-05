@@ -15,13 +15,11 @@
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-extern crate base64;
-use self::base64::decode;
-use self::rusqlite::types::ToSql;
-use self::rusqlite::NO_PARAMS;
 use super::make_tags;
-extern crate rusqlite;
-use Note;
+use crate::Note;
+use base64::decode;
+use rusqlite::types::ToSql;
+use rusqlite::NO_PARAMS;
 
 pub fn insert_image(note: Note) {
     let data64 = note.annotations.replace("data:image/png;base64,", "");
