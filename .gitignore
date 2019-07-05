@@ -1,4 +1,6 @@
 release/*
+external-libs/*
 .idea/*
 .*
 !.gitignore
+!.mrconfig-template
