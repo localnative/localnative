@@ -24,6 +24,7 @@ pub extern crate serde_json;
 extern crate serde_derive;
 pub mod cmd;
 pub mod exe;
+mod upgrade;
 
 // JNI interface for android
 #[cfg(target_os = "android")]

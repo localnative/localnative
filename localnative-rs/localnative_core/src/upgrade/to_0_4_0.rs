@@ -16,9 +16,9 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+use super::utils;
+use super::uuid::Uuid;
 use rusqlite::{Connection, Result, ToSql, NO_PARAMS};
-use utils;
-use uuid::Uuid;
 
 // insert each record to note from _note_0_3 with newly generated uuid4 value
 pub fn migrate_note(conn: &Connection) -> Result<()> {

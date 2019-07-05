@@ -20,13 +20,13 @@ extern crate rusqlite;
 extern crate semver;
 extern crate uuid;
 
+use self::semver::Version;
 use rusqlite::{Connection, NO_PARAMS};
-use semver::Version;
 // version to upgrade to
 const VERSION: &'static str = "0.4.0";
 mod to_0_4_0;
 mod utils;
-use utils::OneString;
+use self::utils::OneString;
 
 pub fn upgrade(conn: &Connection) -> Result<&str, &str> {
     if get_meta_is_upgrading(conn) {

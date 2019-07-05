@@ -16,13 +16,11 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 extern crate dirs;
-extern crate localnative_upgrade;
 extern crate rusqlite;
 extern crate serde_json;
 extern crate time;
 extern crate uuid;
 use self::uuid::Uuid;
-
 use cmd;
 use cmd::{
     create, delete, filter, filter_by_tag, filter_count, insert, search, search_by_day,
@@ -32,6 +30,7 @@ use cmd::{
 use rusqlite::Connection;
 use std::fs;
 use std::path::Path;
+use upgrade;
 use Cmd;
 use CmdDelete;
 use CmdFilter;
@@ -81,7 +80,7 @@ fn process(cmd: Cmd, text: &str) -> String {
     create(&conn);
 
     // always run upgrade first
-    if let Ok(version) = localnative_upgrade::upgrade(&conn) {
+    if let Ok(version) = upgrade::upgrade(&conn) {
         eprintln!(r#"{{"upgrade-done": "{}"}}"#, version)
     } else {
         return r#"{"error":"upgrade error"}"#.to_string();
@@ -89,7 +88,7 @@ fn process(cmd: Cmd, text: &str) -> String {
 
     match cmd.action.as_ref() {
         "upgrade" => {
-            if let Ok(version) = localnative_upgrade::upgrade(&conn) {
+            if let Ok(version) = upgrade::upgrade(&conn) {
                 format!(r#"{{"upgrade-done": "{}"}}"#, version)
             } else {
                 r#"{"error":"cmd upgrade error"}"#.to_string()

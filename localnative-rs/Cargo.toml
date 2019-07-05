@@ -3,6 +3,5 @@
 members = [
     "localnative_cli",
     "localnative_core",
-    "localnative_ssb",
-    "localnative_upgrade"
+    "localnative_ssb"
 ]
