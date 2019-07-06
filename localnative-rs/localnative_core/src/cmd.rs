@@ -130,7 +130,7 @@ pub fn insert(note: Note) {
                 &note.comments,
                 &note.annotations,
                 &note.created_at,
-                &note.is_public as &ToSql,
+                &note.is_public as &dyn ToSql,
             ],
         ).unwrap();
     }

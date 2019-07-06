@@ -44,9 +44,10 @@ pub fn filter_by_tag(conn: &Connection, query: &str, from: &str, to: &str) -> St
     let mut stmt = conn.prepare(&sql).unwrap();
     let keys: Vec<String> = make_keys(num_words);
 
-    let mut params: Vec<(&str, &ToSql)> = vec![(":from", &from as &ToSql), (":to", &to as &ToSql)];
+    let mut params: Vec<(&str, &dyn ToSql)> =
+        vec![(":from", &from as &dyn ToSql), (":to", &to as &dyn ToSql)];
     for i in 0..num_words {
-        params.push((&keys.get(i).unwrap(), words.get(i).unwrap() as &ToSql));
+        params.push((&keys.get(i).unwrap(), words.get(i).unwrap() as &dyn ToSql));
     }
 
     eprintln!("params {:?}", params.len());
@@ -106,9 +107,10 @@ pub fn filter_count(conn: &Connection, query: &str, from: &str, to: &str) -> u32
     let mut stmt = conn.prepare(&sql).unwrap();
     let keys: Vec<String> = make_keys(num_words);
 
-    let mut params: Vec<(&str, &ToSql)> = vec![(":from", &from as &ToSql), (":to", &to as &ToSql)];
+    let mut params: Vec<(&str, &dyn ToSql)> =
+        vec![(":from", &from as &dyn ToSql), (":to", &to as &dyn ToSql)];
     for i in 0..num_words {
-        params.push((&keys.get(i).unwrap(), words.get(i).unwrap() as &ToSql));
+        params.push((&keys.get(i).unwrap(), words.get(i).unwrap() as &dyn ToSql));
     }
 
     eprintln!("params {:?}", params.len());
@@ -154,15 +156,15 @@ pub fn filter(
     let mut stmt = conn.prepare(&sql).unwrap();
     let keys: Vec<String> = make_keys(num_words);
 
-    let mut params: Vec<(&str, &ToSql)> = vec![
-        (":from", &from as &ToSql),
-        (":to", &to as &ToSql),
-        (":limit", limit as &ToSql),
-        (":offset", offset as &ToSql),
+    let mut params: Vec<(&str, &dyn ToSql)> = vec![
+        (":from", &from as &dyn ToSql),
+        (":to", &to as &dyn ToSql),
+        (":limit", limit as &dyn ToSql),
+        (":offset", offset as &dyn ToSql),
     ];
 
     for i in 0..num_words {
-        params.push((&keys.get(i).unwrap(), words.get(i).unwrap() as &ToSql));
+        params.push((&keys.get(i).unwrap(), words.get(i).unwrap() as &dyn ToSql));
     }
 
     eprintln!("params {:?}", params.len());

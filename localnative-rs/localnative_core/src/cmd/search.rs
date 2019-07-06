@@ -42,9 +42,9 @@ pub fn search_by_tag(conn: &Connection, query: &str) -> String {
     let mut stmt = conn.prepare(&sql).unwrap();
     let keys: Vec<String> = make_keys(num_words);
 
-    let mut params: Vec<(&str, &ToSql)> = vec![];
+    let mut params: Vec<(&str, &dyn ToSql)> = vec![];
     for i in 0..num_words {
-        params.push((&keys.get(i).unwrap(), words.get(i).unwrap() as &ToSql));
+        params.push((&keys.get(i).unwrap(), words.get(i).unwrap() as &dyn ToSql));
     }
 
     let mut tag_count_map: HashMap<String, i64> = HashMap::new();
@@ -100,9 +100,9 @@ pub fn search_by_day(conn: &Connection, query: &str) -> String {
     let mut stmt = conn.prepare(&sql).unwrap();
     let keys: Vec<String> = make_keys(num_words);
 
-    let mut params: Vec<(&str, &ToSql)> = vec![];
+    let mut params: Vec<(&str, &dyn ToSql)> = vec![];
     for i in 0..num_words {
-        params.push((&keys.get(i).unwrap(), words.get(i).unwrap() as &ToSql));
+        params.push((&keys.get(i).unwrap(), words.get(i).unwrap() as &dyn ToSql));
     }
 
     let result_iter = stmt
@@ -116,7 +116,7 @@ pub fn search_by_day(conn: &Connection, query: &str) -> String {
 
     let mut d = "[ ".to_owned();
     for r in result_iter {
-        let mut r = r.unwrap();
+        let r = r.unwrap();
         d.push_str(&serde_json::to_string(&r).unwrap());
         d.push_str(",");
     }
@@ -146,9 +146,9 @@ pub fn search_count(conn: &Connection, query: &str) -> u32 {
     let mut stmt = conn.prepare(&sql).unwrap();
     let keys: Vec<String> = make_keys(num_words);
 
-    let mut params: Vec<(&str, &ToSql)> = vec![];
+    let mut params: Vec<(&str, &dyn ToSql)> = vec![];
     for i in 0..num_words {
-        params.push((&keys.get(i).unwrap(), words.get(i).unwrap() as &ToSql));
+        params.push((&keys.get(i).unwrap(), words.get(i).unwrap() as &dyn ToSql));
     }
 
     eprintln!("params {:?}", params.len());
@@ -185,11 +185,13 @@ pub fn search(conn: &Connection, query: &str, limit: &u32, offset: &u32) -> Stri
     let mut stmt = conn.prepare(&sql).unwrap();
     let keys: Vec<String> = make_keys(num_words);
 
-    let mut params: Vec<(&str, &ToSql)> =
-        vec![(":limit", limit as &ToSql), (":offset", offset as &ToSql)];
+    let mut params: Vec<(&str, &dyn ToSql)> = vec![
+        (":limit", limit as &dyn ToSql),
+        (":offset", offset as &dyn ToSql),
+    ];
 
     for i in 0..num_words {
-        params.push((&keys.get(i).unwrap(), words.get(i).unwrap() as &ToSql));
+        params.push((&keys.get(i).unwrap(), words.get(i).unwrap() as &dyn ToSql));
     }
 
     eprintln!("params {:?}", params.len());

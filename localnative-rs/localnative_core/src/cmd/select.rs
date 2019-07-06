@@ -41,7 +41,7 @@ pub fn select_by_day(conn: &Connection) -> String {
 
     let mut d = "[ ".to_owned();
     for r in result_iter {
-        let mut r = r.unwrap();
+        let r = r.unwrap();
         d.push_str(&serde_json::to_string(&r).unwrap());
         d.push_str(",");
     }
@@ -120,7 +120,10 @@ pub fn select(conn: &Connection, limit: &u32, offset: &u32) -> String {
         .unwrap();
     let note_iter = stmt
         .query_map_named(
-            &[(":limit", limit as &ToSql), (":offset", offset as &ToSql)],
+            &[
+                (":limit", limit as &dyn ToSql),
+                (":offset", offset as &dyn ToSql),
+            ],
             |row| {
                 Ok(Note {
                     rowid: row.get(0)?,

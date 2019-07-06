@@ -40,10 +40,10 @@ pub fn insert_image(note: Note) {
                 &make_tags(&note.tags),
                 &note.description,
                 &note.comments,
-                &decoded as &ToSql,
+                &decoded as &dyn ToSql,
                 // &note.annotations,
                 &note.created_at,
-                &note.is_public as &ToSql,
+                &note.is_public as &dyn ToSql,
             ],
         ).unwrap();
     }

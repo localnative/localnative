@@ -52,7 +52,7 @@ pub fn migrate_note(conn: &Connection) -> Result<()> {
             .unwrap();
 
         for note in note_iter {
-            let mut note = note.unwrap();
+            let note = note.unwrap();
             conn.execute(
                 "INSERT INTO note (uuid4, title, url, tags, description, comments
         , annotations
@@ -67,7 +67,7 @@ pub fn migrate_note(conn: &Connection) -> Result<()> {
                     &note.comments,
                     &note.annotations,
                     &note.created_at,
-                    &note.is_public as &ToSql,
+                    &note.is_public as &dyn ToSql,
                 ],
             )
             .unwrap();

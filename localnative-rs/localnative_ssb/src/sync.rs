@@ -120,7 +120,7 @@ pub fn sync_to_ssb(conn: &Connection) {
                 WHERE is_active_author = 1
                 ",
                     &[
-                        &rowid as &ToSql,
+                        &rowid as &dyn ToSql,
                         &ssb_note.ts,
                         &ssb_note.key,
                         &ssb_note.prev,
@@ -237,7 +237,7 @@ pub fn insert_ssb_note_to_db(id: &str, rs: &SsbNote) {
                 &rs.note_comments,
                 &rs.note_annotations,
                 &rs.note_created_at,
-                &rs.is_public as &ToSql,
+                &rs.is_public as &dyn ToSql,
             ],
         ).unwrap();
     }
@@ -277,7 +277,7 @@ pub fn insert_ssb_note_to_db(id: &str, rs: &SsbNote) {
             );
        COMMIT;
        ",
-            &[&id, &rs.seq as &ToSql, &rs.ts, &rs.key, &rs.prev],
+            &[&id, &rs.seq as &dyn ToSql, &rs.ts, &rs.key, &rs.prev],
         )
         .unwrap();
     }
