@@ -99,3 +99,7 @@ using your real name (sorry, no pseudonyms or anonymous contributions.)
 ### Search your notes in patchbay
 ![Local Native patchbay screenshot](./localnative-app-mdbook/src/img/localnative-ssb-patchbay.png)
 
+## Support
+[Patron](https://patreon.com/localnative)
+
+[open collective](https://opencollective.com/localnative)

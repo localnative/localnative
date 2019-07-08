@@ -12,7 +12,6 @@
 ## Own your data on your device
 [Local Native](https://localnative.app) is a cross-platform tool to save and sync your notes in local SQLite database without going through any centralized service.
 
-
 ## Articles
 [Updates](https://chuanyan.live/tags/localnative)
 
@@ -29,3 +28,8 @@
 
 ### Search your notes in patchbay
 ![Local Native patchbay screenshot](./img/localnative-ssb-patchbay.png)
+
+## Support
+[Patron](https://patreon.com/localnative)
+
+[open collective](https://opencollective.com/localnative)
