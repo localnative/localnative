@@ -8,14 +8,14 @@ Below componets must all exist and correctly setup.
 
 - or from source
 ```
-git clone https://gitlab.com/yiwang/localnative.git
+git clone https://gitlab.com/localnative/localnative.git
 cd localnative-browser-extension/app
 npm i -g web-ext
 web-ext run --verbose # firefox
 ```
 
 #### Setup browser extension host binary
-- Download and run the desktop applcation from [release archive](https://gitlab.com/yiwang/localnative-release)
+- Download and run the desktop applcation from [release archive](https://gitlab.com/localnative/localnative-release)
 
     this will create `~/LocalNative/bin` directory containing the host binary
 - or use `cargo install localnative_cli`, and find the binary at `~/.cargo/bin/localnative-web-ext-host`
@@ -97,5 +97,3 @@ RUST_BACKTRACE=1 web-ext run --verbose
 ```
 
 You can use [DB Browser for SQLite](http://sqlitebrowser.org/) to explore the database, and adding other device's ssb public key as `author` in the `ssb` table.
-
-

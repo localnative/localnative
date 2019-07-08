@@ -1,9 +1,9 @@
-# Source Code 
+# Source Code
 
-[https://gitlab.com/yiwang/localnative](https://gitlab.com/yiwang/localnative)
-
-git-ssb
+[https://gitlab.com/localnative/localnative](https://gitlab.com/localnative/localnative)
+[git-ssb](https://git.scuttlebot.io/%25q13hLJchNXz%2FxZi9mjWVHyIbRnkr5VjF0Y6BfhrOV6Q%3D.sha256)
 `ssb://%q13hLJchNXz/xZi9mjWVHyIbRnkr5VjF0Y6BfhrOV6Q=.sha256`
+[https://git.sr.ht/~yiwang/localnative](https://git.sr.ht/~yiwang/localnative)
 
 ## Contribution
 [Contributor Covenant Code of Conduct](https://www.contributor-covenant.org/version/1/4/code-of-conduct)
@@ -50,5 +50,3 @@ Signed-off-by: Developer Name <name@developer.example.org>
 ```
 
 using your real name (sorry, no pseudonyms or anonymous contributions.)
-
-
