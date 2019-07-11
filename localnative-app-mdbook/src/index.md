@@ -30,6 +30,8 @@
 ![Local Native patchbay screenshot](./img/localnative-ssb-patchbay.png)
 
 ## Support
-[Patron](https://patreon.com/localnative)
+<a href="https://www.patreon.com/localnative">
+<img alt="Become a Patron!" src="https://c5.patreon.com/external/logo/become_a_patron_button.png" />
+</a>
 
-[open collective](https://opencollective.com/localnative)
+<script src="https://opencollective.com/localnative/banner.js"></script>

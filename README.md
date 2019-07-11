@@ -100,6 +100,9 @@ using your real name (sorry, no pseudonyms or anonymous contributions.)
 ![Local Native patchbay screenshot](./localnative-app-mdbook/src/img/localnative-ssb-patchbay.png)
 
 ## Support
-[Patron](https://patreon.com/localnative)
-
-[open collective](https://opencollective.com/localnative)
+<a href="https://www.patreon.com/localnative">
+<img alt="Become a Patron!" src="https://c5.patreon.com/external/logo/become_a_patron_button.png" />
+</a>
+<a href="https://opencollective.com/localnative/donate" target="_blank">
+  <img src="https://opencollective.com/localnative/donate/button@2x.png?color=blue" width=300 />
+</a>

@@ -1,6 +1,11 @@
 # Changelog
 [Updates](https://chuanyan.live/tags/localnative)
 
+## v0.4.0
+- add uuid4 field in note table
+- add upgrade code from v0.3.x to v0.4.0
+- add tarpc library
+
 ## v0.3.10
 - desktop and mobile: display QR code for url
 
@@ -66,7 +71,7 @@
 - upgrade rusqlite to 0.16.0 etc
 
 ## v0.2.4-rust
-- format and dedup tags in rust 
+- format and dedup tags in rust
 
 ## v0.2.4-android
 - insert note on android for chrome
@@ -100,7 +105,7 @@
 
 ## v0.1.3
 - recursively reduce annotation markdown size
-- ssbify None result handling 
+- ssbify None result handling
 
 ## v0.1.2
 - fix to not ssbify when empty annotations
@@ -126,4 +131,3 @@
 
 ## v0.0.1
 - basic firefox and chrome extension
-
