@@ -39,8 +39,7 @@ from other.note
         where not exists (
             select 1 from note
             where
-            note.uuid4 = other.note.uuid4
-            and note.title = other.note.title
+            note.title = other.note.title
             and note.url = other.note.url
             and note.tags = other.note.tags
             and note.description = other.note.description
@@ -48,23 +47,25 @@ from other.note
             and note.annotations= other.note.annotations
             and note.created_at = other.note.created_at
             and note.is_public = other.note.is_public
-        );
+        ) order by rowid;
+        drop table other.note;
+
+        CREATE TABLE other.note (
+         rowid          INTEGER PRIMARY KEY AUTOINCREMENT,
+         uuid4          TEXT NOT NULL UNIQUE,
+         title          TEXT NOT NULL,
+         url            TEXT NOT NULL,
+         tags           TEXT NOT NULL,
+         description    TEXT NOT NULL,
+         comments       TEXT NOT NULL,
+         annotations    TEXT NOT NULL,
+         created_at     TEXT NOT NULL,
+         is_public      BOOLEAN NOT NULL default 0
+         );
+
         insert into other.note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public)
         select uuid4, title, url, tags, description, comments, annotations, created_at, is_public
-from note
-        where not exists (
-            select 1 from other.note as o
-            where
-            o.uuid4 = note.uuid4
-            and o.title = note.title
-            and o.url = note.url
-            and o.tags = note.tags
-            and o.description = note.description
-            and o.comments = note.comments
-            and o.annotations= note.annotations
-            and o.created_at = note.created_at
-            and o.is_public = note.is_public
-        );
+from note order by rowid;
         COMMIT;
         detach database other;
         "){
@@ -73,7 +74,7 @@ from note
             }
             Err(err) => {
                 eprintln!("Err {:?}", err);
-                format!(r#"{{"error": "{}"}}"#, err.to_string())
+                format!(r#"{{"error": "{}. sync-via-attach: version may not match, upgrade both to latest version and try again."}}"#, err.to_string())
             }
         }
     } else {
