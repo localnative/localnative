@@ -80,8 +80,8 @@ function refreshNotes(notes){
     <div class="note-sep"></div>
     <div class="note">
       <div class="note-created-at">
-        ${i.created_at}
-        ${i.uuid4.substring(0,5)}
+        ${i.created_at.substring(0,19)} UTC
+        uuid ${i.uuid4.substring(0,5)}..
         rowid ${i.rowid}
         <button id="btn-qrcode-rowid-${i.rowid}" title="QR" style="color: gray;">
         QR
