@@ -116,7 +116,9 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             }
             cell.tagsContainer.setNeedsLayout()
             
-            cell.contentText.text = (note["created_at"] as! String) + " rowid " + rowid.stringValue
+            cell.contentText.text = (note["created_at"] as! String).prefix(19)
+                + " UTC uuid " + (note["uuid4"] as! String).prefix(5)
+                + ".. rowid " + rowid.stringValue
                 + "\n" + (note["title"] as! String)
                 + newLineOrEmptyString(str: note["description"] as! String)
                 + newLineOrEmptyString(str: note["annotations"] as! String)
