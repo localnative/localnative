@@ -16,7 +16,9 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+use crate::upgrade::get_meta_version;
 use futures::{compat::Executor01CompatExt, prelude::*};
+use rusqlite::Connection;
 use std::{io, net::SocketAddr};
 use tarpc::{client, context};
 
@@ -28,14 +30,14 @@ async fn call_is_version_match(addr: SocketAddr, version: String) -> io::Result<
     Ok(())
 }
 
-pub fn is_version_match(addr: &str) -> Result<bool, &'static str> {
+pub fn is_version_match(conn: &Connection, addr: &str) -> Result<bool, &'static str> {
     tarpc::init(tokio::executor::DefaultExecutor::current().compat());
 
     let server_addr = addr
         .parse()
         .unwrap_or_else(|e| panic!(r#"server_addr {} invalid: {}"#, addr, e));
 
-    let version = "0.4.0";
+    let version = get_meta_version(conn);
 
     tarpc::init(tokio::executor::DefaultExecutor::current().compat());
 

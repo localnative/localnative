@@ -16,6 +16,9 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+use crate::exe::get_sqlite_connection;
+use crate::upgrade::get_meta_version;
+
 use futures::{
     compat::Executor01CompatExt,
     future::{self, Ready},
@@ -33,7 +36,8 @@ struct LocalNativeServer;
 impl super::Service for LocalNativeServer {
     type IsVersionMatchFut = Ready<bool>;
     fn is_version_match(self, _: context::Context, version: String) -> Self::IsVersionMatchFut {
-        if version == "0.4.0" {
+        let conn = get_sqlite_connection();
+        if version == get_meta_version(&conn) {
             future::ready(true)
         } else {
             future::ready(false)

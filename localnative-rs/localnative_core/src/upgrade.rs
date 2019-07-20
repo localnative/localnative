@@ -62,7 +62,7 @@ fn get_meta_is_upgrading(conn: &Connection) -> bool {
     }
 }
 
-fn get_meta_version(conn: &Connection) -> String {
+pub fn get_meta_version(conn: &Connection) -> String {
     let mut stmt = conn
         .prepare("SELECT meta_value FROM meta where meta_key = 'version' ")
         .unwrap();
