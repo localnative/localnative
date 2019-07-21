@@ -19,6 +19,7 @@
 use crate::upgrade::get_meta_version;
 use futures::{compat::Executor01CompatExt, prelude::*};
 use rusqlite::Connection;
+use std::io::{Error, ErrorKind};
 use std::{io, net::SocketAddr};
 use tarpc::{client, context};
 
@@ -27,7 +28,11 @@ async fn call_is_version_match(addr: SocketAddr, version: String) -> io::Result<
     let mut client = super::new_stub(client::Config::default(), transport).await?;
     let response = client.is_version_match(context::current(), version).await?;
     eprintln!("call_is_version_match: {}", response);
-    Ok(())
+    if response {
+        Ok(())
+    } else {
+        Err(Error::new(ErrorKind::Other, "VERSION_NOT_MATCH"))
+    }
 }
 
 pub fn is_version_match(conn: &Connection, addr: &str) -> Result<bool, &'static str> {
