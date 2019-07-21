@@ -16,6 +16,8 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+use crate::cmd::sync::next_uuid4_candidates;
+use crate::exe::get_sqlite_connection;
 use crate::upgrade::get_meta_version;
 use futures::{compat::Executor01CompatExt, prelude::*};
 use rusqlite::Connection;
@@ -23,34 +25,74 @@ use std::io::{Error, ErrorKind};
 use std::{io, net::SocketAddr};
 use tarpc::{client, context};
 
-async fn call_is_version_match(addr: SocketAddr, version: String) -> io::Result<()> {
+async fn run_sync(addr: SocketAddr) -> io::Result<()> {
     let transport = bincode_transport::connect(&addr).await?;
     let mut client = super::new_stub(client::Config::default(), transport).await?;
-    let response = client.is_version_match(context::current(), version).await?;
-    eprintln!("call_is_version_match: {}", response);
-    if response {
-        Ok(())
-    } else {
-        Err(Error::new(ErrorKind::Other, "VERSION_NOT_MATCH"))
+    let conn = get_sqlite_connection();
+
+    // check version
+    let version = get_meta_version(&conn);
+    let is_version_match = client.is_version_match(context::current(), version).await?;
+    eprintln!("is_version_match: {}", is_version_match);
+    if !is_version_match {
+        return Err(Error::new(ErrorKind::Other, "VERSION_NOT_MATCH"));
     }
+
+    // diff uuid4
+    let diff_uuid4 = client
+        .diff_uuid4(context::current(), next_uuid4_candidates(&conn))
+        .await?;
+    eprintln!("diff_uuid4: {:?}", diff_uuid4);
+
+    Ok(())
 }
 
-pub fn is_version_match(conn: &Connection, addr: &str) -> Result<bool, &'static str> {
+pub fn sync(addr: &str) -> Result<String, String> {
     tarpc::init(tokio::executor::DefaultExecutor::current().compat());
 
     let server_addr = addr
         .parse()
         .unwrap_or_else(|e| panic!(r#"server_addr {} invalid: {}"#, addr, e));
 
-    let version = get_meta_version(conn);
-
     tarpc::init(tokio::executor::DefaultExecutor::current().compat());
 
     tokio::run(
-        call_is_version_match(server_addr, version.into())
+        run_sync(server_addr)
             .map_err(|err| eprintln!("localnative client error: {}", err))
             .boxed()
             .compat(),
     );
-    Ok(true)
+    Ok("sync ok".to_string())
 }
+
+//async fn call_is_version_match(addr: SocketAddr, version: String) -> io::Result<()> {
+//    let transport = bincode_transport::connect(&addr).await?;
+//    let mut client = super::new_stub(client::Config::default(), transport).await?;
+//    let response = client.is_version_match(context::current(), version).await?;
+//    eprintln!("call_is_version_match: {}", response);
+//    if response {
+//        Ok(())
+//    } else {
+//        Err(Error::new(ErrorKind::Other, "VERSION_NOT_MATCH"))
+//    }
+//}
+//
+//pub fn is_version_match(conn: &Connection, addr: &str) -> Result<bool, &'static str> {
+//    tarpc::init(tokio::executor::DefaultExecutor::current().compat());
+//
+//    let server_addr = addr
+//        .parse()
+//        .unwrap_or_else(|e| panic!(r#"server_addr {} invalid: {}"#, addr, e));
+//
+//    let version = get_meta_version(conn);
+//
+//    tarpc::init(tokio::executor::DefaultExecutor::current().compat());
+//
+//    tokio::run(
+//        call_is_version_match(server_addr, version.into())
+//            .map_err(|err| eprintln!("localnative client error: {}", err))
+//            .boxed()
+//            .compat(),
+//    );
+//    Ok(true)
+//}

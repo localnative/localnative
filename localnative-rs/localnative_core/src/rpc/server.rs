@@ -16,6 +16,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+use crate::cmd::sync::diff_uuid4;
 use crate::exe::get_sqlite_connection;
 use crate::upgrade::get_meta_version;
 
@@ -42,6 +43,12 @@ impl super::Service for LocalNativeServer {
         } else {
             future::ready(false)
         }
+    }
+    type DiffUuid4Fut = Ready<Vec<String>>;
+    fn diff_uuid4(self, _: context::Context, candidates: Vec<String>) -> Self::DiffUuid4Fut {
+        let conn = get_sqlite_connection();
+        let diff = diff_uuid4(&conn, candidates);
+        future::ready(diff)
     }
 }
 

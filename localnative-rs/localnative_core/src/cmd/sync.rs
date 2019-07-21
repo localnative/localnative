@@ -15,11 +15,23 @@
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
+use super::make_tags;
+use crate::{KVStringI64, Note, Tags};
+use rusqlite::types::ToSql;
+use rusqlite::{Connection, NO_PARAMS};
+use std::collections::HashMap;
 
-tarpc::service! {
-    rpc is_version_match(version: String) -> bool;
-    rpc diff_uuid4(candidates: Vec<String>) -> Vec<String> ;
+pub fn next_uuid4_candidates(conn: &Connection) -> Vec<String> {
+    vec!["1".to_string(), "2".to_string(), "3".to_string()]
 }
 
-pub mod client;
-pub mod server;
+pub fn diff_uuid4(conn: &Connection, candidates: Vec<String>) -> Vec<String> {
+    let mut r = Vec::new();
+    let mut stmt = conn.prepare("select 1 FROM note where uuid4 = ? ").unwrap();
+    for uuid4 in candidates {
+        if !(stmt.exists(&[&uuid4]).unwrap()) {
+            r.push(uuid4);
+        }
+    }
+    r
+}

@@ -25,6 +25,7 @@ mod filter;
 pub mod image;
 mod search;
 mod select;
+pub mod sync;
 mod utils;
 pub use self::filter::{filter, filter_by_tag, filter_count};
 pub use self::search::{search, search_by_day, search_by_tag, search_count};
