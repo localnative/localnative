@@ -26,7 +26,7 @@ use rusqlite::{Connection, NO_PARAMS};
 const VERSION: &'static str = "0.4.0";
 mod to_0_4_0;
 mod utils;
-use self::utils::OneString;
+use crate::OneString;
 
 pub fn upgrade(conn: &Connection) -> Result<&str, &str> {
     if get_meta_is_upgrading(conn) {

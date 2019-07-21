@@ -15,6 +15,7 @@
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
+use crate::OneString;
 use rusqlite::Connection;
 
 pub fn check_table_exist(conn: &Connection, table_name: &str) -> bool {
@@ -36,8 +37,4 @@ pub fn check_table_exist(conn: &Connection, table_name: &str) -> bool {
         }
         Err(_) => false,
     }
-}
-
-pub struct OneString {
-    pub s: String,
 }

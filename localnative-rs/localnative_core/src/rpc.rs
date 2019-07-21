@@ -15,10 +15,12 @@
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
+use crate::Note;
 
 tarpc::service! {
     rpc is_version_match(version: String) -> bool;
     rpc diff_uuid4(candidates: Vec<String>) -> Vec<String> ;
+    rpc send_note(note: Note) -> bool ;
 }
 
 pub mod client;

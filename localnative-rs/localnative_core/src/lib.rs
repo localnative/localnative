@@ -211,3 +211,8 @@ pub struct CmdRpcClient {
 pub struct CmdRpcServer {
     pub addr: String,
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct OneString {
+    pub s: String,
+}

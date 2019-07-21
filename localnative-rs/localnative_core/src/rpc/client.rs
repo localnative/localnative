@@ -16,6 +16,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+use crate::cmd::sync::get_note_by_uuid4;
 use crate::cmd::sync::next_uuid4_candidates;
 use crate::exe::get_sqlite_connection;
 use crate::upgrade::get_meta_version;
@@ -43,6 +44,11 @@ async fn run_sync(addr: SocketAddr) -> io::Result<()> {
         .diff_uuid4(context::current(), next_uuid4_candidates(&conn))
         .await?;
     eprintln!("diff_uuid4: {:?}", diff_uuid4);
+
+    // send one by one
+    for u in diff_uuid4 {
+        client.send_note(context::current(), get_note_by_uuid4(&conn, &u));
+    }
 
     Ok(())
 }

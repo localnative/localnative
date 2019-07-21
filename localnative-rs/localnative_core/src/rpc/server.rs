@@ -19,6 +19,7 @@
 use crate::cmd::sync::diff_uuid4;
 use crate::exe::get_sqlite_connection;
 use crate::upgrade::get_meta_version;
+use crate::Note;
 
 use futures::{
     compat::Executor01CompatExt,
@@ -49,6 +50,11 @@ impl super::Service for LocalNativeServer {
         let conn = get_sqlite_connection();
         let diff = diff_uuid4(&conn, candidates);
         future::ready(diff)
+    }
+    type SendNoteFut = Ready<bool>;
+    fn send_note(self, _: context::Context, note: Note) -> Self::SendNoteFut {
+        eprintln!("upsert note {:?}", note);
+        future::ready(true)
     }
 }
 
