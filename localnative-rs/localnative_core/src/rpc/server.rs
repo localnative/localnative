@@ -16,6 +16,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+use crate::cmd::insert;
 use crate::cmd::sync::diff_uuid4;
 use crate::exe::get_sqlite_connection;
 use crate::upgrade::get_meta_version;
@@ -54,6 +55,7 @@ impl super::Service for LocalNativeServer {
     type SendNoteFut = Ready<bool>;
     fn send_note(self, _: context::Context, note: Note) -> Self::SendNoteFut {
         eprintln!("upsert note {:?}", note);
+        insert(note);
         future::ready(true)
     }
 }

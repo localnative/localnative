@@ -43,7 +43,7 @@ async fn run_sync(addr: SocketAddr) -> io::Result<()> {
     let diff_uuid4 = client
         .diff_uuid4(context::current(), next_uuid4_candidates(&conn))
         .await?;
-    eprintln!("diff_uuid4: {:?}", diff_uuid4);
+    eprintln!("diff_uuid4 len: {:?}", diff_uuid4.len());
 
     // send one by one
     for u in diff_uuid4 {
@@ -51,6 +51,7 @@ async fn run_sync(addr: SocketAddr) -> io::Result<()> {
             .send_note(context::current(), get_note_by_uuid4(&conn, &u))
             .await?;
     }
+    eprintln!("send_note done");
 
     Ok(())
 }
