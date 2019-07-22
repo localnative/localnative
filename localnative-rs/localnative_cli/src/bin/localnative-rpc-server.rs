@@ -16,7 +16,18 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+use clap::{App, Arg};
 use localnative_core::exe::run;
 fn main() {
-    run(r#"{"action":"server", "addr": "127.0.0.1:2345"}"#);
+    let matches = App::new("localnative-rpc-server")
+        .arg(
+            Arg::with_name("addr")
+                .short("a")
+                .long("addr")
+                .takes_value(true),
+        )
+        .get_matches();
+    let addr = matches.value_of("addr").unwrap_or("127.0.0.1:2345");
+    eprintln!("addr: {}", addr);
+    run(&(r#"{"action":"server", "addr": ""#.to_string() + addr + r#""}"#));
 }

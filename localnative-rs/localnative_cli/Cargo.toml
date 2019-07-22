@@ -12,4 +12,7 @@ path = "../localnative_core"
 [dependencies.localnative_ssb]
 path = "../localnative_ssb"
 
+[dependencies]
+clap = "2.33.0"
+
 

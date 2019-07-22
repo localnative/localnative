@@ -47,7 +47,9 @@ async fn run_sync(addr: SocketAddr) -> io::Result<()> {
 
     // send one by one
     for u in diff_uuid4 {
-        client.send_note(context::current(), get_note_by_uuid4(&conn, &u));
+        client
+            .send_note(context::current(), get_note_by_uuid4(&conn, &u))
+            .await?;
     }
 
     Ok(())
