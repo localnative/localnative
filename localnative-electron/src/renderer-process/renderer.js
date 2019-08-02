@@ -85,6 +85,13 @@ document.addEventListener('DOMContentLoaded', function () {
     cmdSyncViaAttach(path[0]);
   });
 
+  document.getElementById('start-server-btn').onclick = function(){
+    alert("server")
+  };
+
+  document.getElementById('start-client-btn').onclick = function(){
+    alert("client")
+  };
   // register cmdSearch
   document.getElementById('search-text').addEventListener('keyup', function (e) {
       appState.clearOffset();
