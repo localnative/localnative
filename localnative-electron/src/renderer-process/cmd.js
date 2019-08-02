@@ -31,6 +31,8 @@ exports.cmdSearchOrFilter = cmdSearchOrFilter;
 exports.cmdSsbSync = cmdSsbSync;
 exports.cmdDelete = cmdDelete;
 exports.cmdSyncViaAttach = cmdSyncViaAttach;
+exports.cmdServer = cmdServer;
+exports.cmdClient = cmdClient;
 
 function cmdInsertImage(dataURL){
   let message = {
@@ -206,3 +208,18 @@ function cmdSyncViaAttach(uri) {
   cmd(message);
 }
 
+function cmdServer(){
+  var message = {
+    action: "server",
+    addr: "0.0.0.0:2345"
+  };
+  cmd(message);
+}
+
+function cmdClient(addr){
+  var message = {
+    action: "client",
+    addr: addr
+  };
+  cmd(message);
+}

@@ -21,7 +21,8 @@ const {ipcRenderer} = require('electron');
 const {cmdChart} = require('./chart');
 const appState = require('./app-state');
 const cmd = require('./cmd');
-const {LIMIT, cmdSsbSync, cmdSyncViaAttach, cmdSelect, cmdInsert, cmdSearch, cmdSearchOrFilter} = require('./cmd');
+const {LIMIT, cmdSsbSync, cmdSyncViaAttach, cmdSelect, cmdInsert, cmdSearch
+  , cmdSearchOrFilter, cmdServer, cmdClient} = require('./cmd');
 
 document.addEventListener('DOMContentLoaded', function () {
   // focus on tags
@@ -86,11 +87,11 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   document.getElementById('start-server-btn').onclick = function(){
-    alert("server")
+    cmdServer()
   };
 
   document.getElementById('start-client-btn').onclick = function(){
-    alert("client")
+    cmdClient("127.0.0.1:2345")
   };
   // register cmdSearch
   document.getElementById('search-text').addEventListener('keyup', function (e) {
