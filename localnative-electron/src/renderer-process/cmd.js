@@ -32,7 +32,8 @@ exports.cmdSsbSync = cmdSsbSync;
 exports.cmdDelete = cmdDelete;
 exports.cmdSyncViaAttach = cmdSyncViaAttach;
 exports.cmdServer = cmdServer;
-exports.cmdClient = cmdClient;
+exports.cmdClientSync = cmdClientSync;
+exports.cmdClientStopServer = cmdClientStopServer;
 
 function cmdInsertImage(dataURL){
   let message = {
@@ -216,9 +217,17 @@ function cmdServer(){
   cmd(message);
 }
 
-function cmdClient(addr){
+function cmdClientSync(addr){
   var message = {
-    action: "client",
+    action: "client-sync",
+    addr: addr
+  };
+  cmd(message);
+}
+
+function cmdClientStopServer(addr){
+  var message = {
+    action: "client-stop-server",
     addr: addr
   };
   cmd(message);

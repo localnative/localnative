@@ -22,7 +22,7 @@ const {cmdChart} = require('./chart');
 const appState = require('./app-state');
 const cmd = require('./cmd');
 const {LIMIT, cmdSsbSync, cmdSyncViaAttach, cmdSelect, cmdInsert, cmdSearch
-  , cmdSearchOrFilter, cmdServer, cmdClient} = require('./cmd');
+  , cmdSearchOrFilter, cmdServer, cmdClientSync, cmdClientStopServer} = require('./cmd');
 
 document.addEventListener('DOMContentLoaded', function () {
   // focus on tags
@@ -90,8 +90,12 @@ document.addEventListener('DOMContentLoaded', function () {
     cmdServer()
   };
 
-  document.getElementById('start-client-btn').onclick = function(){
-    cmdClient("127.0.0.1:2345")
+  document.getElementById('start-client-sync-btn').onclick = function(){
+    cmdClientSync("127.0.0.1:2345")
+  };
+
+  document.getElementById('stop-server-btn').onclick = function(){
+    cmdClientStopServer("127.0.0.1:2345")
   };
   // register cmdSearch
   document.getElementById('search-text').addEventListener('keyup', function (e) {
