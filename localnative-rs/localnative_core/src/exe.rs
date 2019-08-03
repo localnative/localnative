@@ -96,16 +96,28 @@ fn process(cmd: Cmd, text: &str) -> String {
                 r#"{"error":"cmd server error"}"#.to_string()
             }
         }
-        "client" => {
+        "client-sync" => {
+            eprintln!(r#"{{"client": "starting"}}"#);
+            if let Ok(s) = serde_json::from_str::<CmdRpcClient>(text) {
+                if let Ok(resp) = crate::rpc::client::sync(&s.addr) {
+                    format!(r#"{{"client-sync": "{}"}}"#, resp)
+                } else {
+                    r#"{"error":"client-sync error"}"#.to_string()
+                }
+            } else {
+                r#"{"error":"cmd client-sync error"}"#.to_string()
+            }
+        }
+        "client-stop-server" => {
             eprintln!(r#"{{"client": "starting"}}"#);
             if let Ok(s) = serde_json::from_str::<CmdRpcClient>(text) {
                 if let Ok(resp) = crate::rpc::client::stop_server(&s.addr) {
-                    format!(r#"{{"client": "{}"}}"#, resp)
+                    format!(r#"{{"client-stop-server": "{}"}}"#, resp)
                 } else {
-                    r#"{"error":"client error"}"#.to_string()
+                    r#"{"error":"client-stop-server error"}"#.to_string()
                 }
             } else {
-                r#"{"error":"cmd client error"}"#.to_string()
+                r#"{"error":"cmd client-stop-server error"}"#.to_string()
             }
         }
         "upgrade" => {
