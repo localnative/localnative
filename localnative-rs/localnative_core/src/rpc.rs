@@ -21,6 +21,7 @@ tarpc::service! {
     rpc is_version_match(version: String) -> bool;
     rpc diff_uuid4(candidates: Vec<String>) -> Vec<String> ;
     rpc send_note(note: Note) -> bool ;
+    rpc stop() -> bool ;
 }
 
 pub mod client;

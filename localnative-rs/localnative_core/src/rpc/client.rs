@@ -74,6 +74,42 @@ pub fn sync(addr: &str) -> Result<String, String> {
     Ok("sync ok".to_string())
 }
 
+async fn run_stop_server(addr: SocketAddr) -> io::Result<()> {
+    let transport = bincode_transport::connect(&addr).await?;
+    let mut client = super::new_stub(client::Config::default(), transport).await?;
+    let conn = get_sqlite_connection();
+
+    // check version
+    let version = get_meta_version(&conn);
+    let is_version_match = client.is_version_match(context::current(), version).await?;
+    eprintln!("is_version_match: {}", is_version_match);
+    if !is_version_match {
+        return Err(Error::new(ErrorKind::Other, "VERSION_NOT_MATCH"));
+    }
+
+    // diff uuid4
+    let is_stopped = client.stop(context::current()).await?;
+    Ok(())
+}
+
+pub fn stop_server(addr: &str) -> Result<String, String> {
+    tarpc::init(tokio::executor::DefaultExecutor::current().compat());
+
+    let server_addr = addr
+        .parse()
+        .unwrap_or_else(|e| panic!(r#"server_addr {} invalid: {}"#, addr, e));
+
+    tarpc::init(tokio::executor::DefaultExecutor::current().compat());
+
+    tokio::run(
+        run_stop_server(server_addr)
+            .map_err(|err| eprintln!("localnative client error: {}", err))
+            .boxed()
+            .compat(),
+    );
+    Ok("stop ok".to_string())
+}
+
 //async fn call_is_version_match(addr: SocketAddr, version: String) -> io::Result<()> {
 //    let transport = bincode_transport::connect(&addr).await?;
 //    let mut client = super::new_stub(client::Config::default(), transport).await?;

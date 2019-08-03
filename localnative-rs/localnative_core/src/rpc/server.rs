@@ -21,6 +21,7 @@ use crate::cmd::sync::diff_uuid4;
 use crate::exe::get_sqlite_connection;
 use crate::upgrade::get_meta_version;
 use crate::Note;
+use std::process;
 
 use futures::{
     compat::Executor01CompatExt,
@@ -56,6 +57,12 @@ impl super::Service for LocalNativeServer {
     fn send_note(self, _: context::Context, note: Note) -> Self::SendNoteFut {
         eprintln!("upsert note {:?}", note);
         insert(note);
+        future::ready(true)
+    }
+    type StopFut = Ready<bool>;
+    fn stop(self, _: context::Context) -> Self::StopFut {
+        eprintln!("server stopping");
+        process::exit(0);
         future::ready(true)
     }
 }

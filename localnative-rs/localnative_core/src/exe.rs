@@ -99,7 +99,7 @@ fn process(cmd: Cmd, text: &str) -> String {
         "client" => {
             eprintln!(r#"{{"client": "starting"}}"#);
             if let Ok(s) = serde_json::from_str::<CmdRpcClient>(text) {
-                if let Ok(resp) = crate::rpc::client::sync(&s.addr) {
+                if let Ok(resp) = crate::rpc::client::stop_server(&s.addr) {
                     format!(r#"{{"client": "{}"}}"#, resp)
                 } else {
                     r#"{"error":"client error"}"#.to_string()
