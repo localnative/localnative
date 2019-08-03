@@ -15,9 +15,10 @@
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-
+const path = require('path')
 const neon = require('localnative-neon');
 const {ipcRenderer} = require('electron');
+const {BrowserWindow, dialog} = require('electron').remote;
 const {cmdChart} = require('./chart');
 const appState = require('./app-state');
 const cmd = require('./cmd');
@@ -87,7 +88,24 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   document.getElementById('start-server-btn').onclick = function(){
-    cmdServer()
+    const serverWinPath = path.join('file://', __dirname, '../server.html')
+    let win = new BrowserWindow({
+      title: "Local Native Server",
+      width: 400,
+      height: 320,
+      webPreferences: {
+        nodeIntegration: true
+      }
+    });
+
+    // server stopped
+    win.webContents.on('crashed', () => {
+      win.close();
+    })
+
+    win.on('close', () => { win = null })
+    win.loadURL(serverWinPath)
+    win.show()
   };
 
   document.getElementById('start-client-sync-btn').onclick = function(){
