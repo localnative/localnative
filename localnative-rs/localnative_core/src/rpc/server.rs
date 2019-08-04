@@ -17,7 +17,7 @@
 */
 
 use crate::cmd::insert;
-use crate::cmd::sync::{diff_uuid4_from_server, diff_uuid4_to_server};
+use crate::cmd::sync::{diff_uuid4_from_server, diff_uuid4_to_server, get_note_by_uuid4};
 use crate::exe::get_sqlite_connection;
 use crate::upgrade::get_meta_version;
 use crate::Note;
@@ -73,11 +73,12 @@ impl super::Service for LocalNativeServer {
         insert(note);
         future::ready(true)
     }
-    type ReceiveNoteFut = Ready<bool>;
-    fn receive_note(self, _: context::Context, note: Note) -> Self::ReceiveNoteFut {
-        eprintln!("upsert note {:?}", note);
-        insert(note);
-        future::ready(true)
+    type ReceiveNoteFut = Ready<Note>;
+    fn receive_note(self, _: context::Context, uuid4: String) -> Self::ReceiveNoteFut {
+        eprintln!("receive note {:?}", uuid4);
+        let conn = get_sqlite_connection();
+        let note = get_note_by_uuid4(&conn, &uuid4);
+        future::ready(note)
     }
     type StopFut = Ready<bool>;
     fn stop(self, _: context::Context) -> Self::StopFut {

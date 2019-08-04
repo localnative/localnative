@@ -16,6 +16,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+use crate::cmd::insert;
 use crate::cmd::sync::get_note_by_uuid4;
 use crate::cmd::sync::next_uuid4_candidates;
 use crate::exe::get_sqlite_connection;
@@ -43,7 +44,7 @@ async fn run_sync_to_server(addr: SocketAddr) -> io::Result<()> {
     let diff_uuid4 = client
         .diff_uuid4_to_server(context::current(), next_uuid4_candidates(&conn))
         .await?;
-    eprintln!("diff_uuid4 len: {:?}", diff_uuid4.len());
+    eprintln!("diff_uuid4_to_server len: {:?}", diff_uuid4.len());
 
     // send one by one
     for u in diff_uuid4 {
@@ -73,15 +74,14 @@ async fn run_sync_from_server(addr: SocketAddr) -> io::Result<()> {
     let diff_uuid4 = client
         .diff_uuid4_from_server(context::current(), next_uuid4_candidates(&conn))
         .await?;
-    eprintln!("diff_uuid4 len: {:?}", diff_uuid4.len());
+    eprintln!("diff_uuid4_from_server len: {:?}", diff_uuid4.len());
 
     // send one by one
     for u in diff_uuid4 {
-        client
-            .send_note(context::current(), get_note_by_uuid4(&conn, &u))
-            .await?;
+        let note = client.receive_note(context::current(), u).await?;
+        insert(note);
     }
-    eprintln!("send_note done");
+    eprintln!("receive_note done");
 
     Ok(())
 }

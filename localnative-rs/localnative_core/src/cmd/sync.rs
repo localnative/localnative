@@ -19,7 +19,7 @@ use super::make_tags;
 use crate::{KVStringI64, Note, OneString, Tags};
 use rusqlite::types::ToSql;
 use rusqlite::{Connection, NO_PARAMS};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 //client
 pub fn get_note_by_uuid4(conn: &Connection, uuid4: &str) -> Note {
@@ -61,7 +61,7 @@ pub fn next_uuid4_candidates(conn: &Connection) -> Vec<String> {
     r
 }
 
-// server
+// to server
 pub fn diff_uuid4_to_server(conn: &Connection, candidates: Vec<String>) -> Vec<String> {
     let mut r = Vec::new();
     let mut stmt = conn.prepare("select 1 FROM note where uuid4 = ? ").unwrap();
@@ -73,13 +73,20 @@ pub fn diff_uuid4_to_server(conn: &Connection, candidates: Vec<String>) -> Vec<S
     r
 }
 
-// server
+// from server
 pub fn diff_uuid4_from_server(conn: &Connection, candidates: Vec<String>) -> Vec<String> {
+    let candidates: HashSet<_> = candidates.iter().collect();
     let mut r = Vec::new();
-    let mut stmt = conn.prepare("select 1 FROM note where uuid4 = ? ").unwrap();
-    for uuid4 in candidates {
-        if !(stmt.exists(&[&uuid4]).unwrap()) {
-            r.push(uuid4);
+    let mut stmt = conn.prepare("select uuid4 FROM note").unwrap();
+    let iter = stmt
+        .query_map(NO_PARAMS, |row| Ok(OneString { s: row.get(0)? }))
+        .unwrap();
+
+    for i in iter {
+        if let Ok(uuid4) = i {
+            if !(candidates.contains(&uuid4.s)) {
+                r.push(uuid4.s);
+            }
         }
     }
     r

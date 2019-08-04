@@ -91,8 +91,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const serverWinPath = path.join('file://', __dirname, '../server.html')
     let win = new BrowserWindow({
       title: "Local Native Server",
-      width: 400,
-      height: 320,
+      width: 600,
+      height: 400,
       webPreferences: {
         nodeIntegration: true
       }
@@ -109,7 +109,8 @@ document.addEventListener('DOMContentLoaded', function () {
   };
 
   document.getElementById('start-client-sync-btn').onclick = function(){
-    cmdClientSync("127.0.0.1:2345")
+    var addr = document.getElementById('addr').value
+    cmdClientSync(addr)
   };
 
   document.getElementById('stop-server-btn').onclick = function(){

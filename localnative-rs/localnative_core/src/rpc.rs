@@ -22,7 +22,7 @@ tarpc::service! {
     rpc diff_uuid4_to_server(candidates: Vec<String>) -> Vec<String> ;
     rpc diff_uuid4_from_server(candidates: Vec<String>) -> Vec<String> ;
     rpc send_note(note: Note) -> bool ;
-    rpc receive_note(note: Note) -> bool ;
+    rpc receive_note(uuid4: String) -> Note ;
     rpc stop() -> bool ;
 }
 
