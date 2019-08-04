@@ -62,7 +62,19 @@ pub fn next_uuid4_candidates(conn: &Connection) -> Vec<String> {
 }
 
 // server
-pub fn diff_uuid4(conn: &Connection, candidates: Vec<String>) -> Vec<String> {
+pub fn diff_uuid4_to_server(conn: &Connection, candidates: Vec<String>) -> Vec<String> {
+    let mut r = Vec::new();
+    let mut stmt = conn.prepare("select 1 FROM note where uuid4 = ? ").unwrap();
+    for uuid4 in candidates {
+        if !(stmt.exists(&[&uuid4]).unwrap()) {
+            r.push(uuid4);
+        }
+    }
+    r
+}
+
+// server
+pub fn diff_uuid4_from_server(conn: &Connection, candidates: Vec<String>) -> Vec<String> {
     let mut r = Vec::new();
     let mut stmt = conn.prepare("select 1 FROM note where uuid4 = ? ").unwrap();
     for uuid4 in candidates {

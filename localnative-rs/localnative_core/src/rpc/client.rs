@@ -26,7 +26,7 @@ use std::io::{Error, ErrorKind};
 use std::{io, net::SocketAddr};
 use tarpc::{client, context};
 
-async fn run_sync(addr: SocketAddr) -> io::Result<()> {
+async fn run_sync_to_server(addr: SocketAddr) -> io::Result<()> {
     let transport = bincode_transport::connect(&addr).await?;
     let mut client = super::new_stub(client::Config::default(), transport).await?;
     let conn = get_sqlite_connection();
@@ -41,7 +41,7 @@ async fn run_sync(addr: SocketAddr) -> io::Result<()> {
 
     // diff uuid4
     let diff_uuid4 = client
-        .diff_uuid4(context::current(), next_uuid4_candidates(&conn))
+        .diff_uuid4_to_server(context::current(), next_uuid4_candidates(&conn))
         .await?;
     eprintln!("diff_uuid4 len: {:?}", diff_uuid4.len());
 
@@ -56,6 +56,35 @@ async fn run_sync(addr: SocketAddr) -> io::Result<()> {
     Ok(())
 }
 
+async fn run_sync_from_server(addr: SocketAddr) -> io::Result<()> {
+    let transport = bincode_transport::connect(&addr).await?;
+    let mut client = super::new_stub(client::Config::default(), transport).await?;
+    let conn = get_sqlite_connection();
+
+    // check version
+    let version = get_meta_version(&conn);
+    let is_version_match = client.is_version_match(context::current(), version).await?;
+    eprintln!("is_version_match: {}", is_version_match);
+    if !is_version_match {
+        return Err(Error::new(ErrorKind::Other, "VERSION_NOT_MATCH"));
+    }
+
+    // diff uuid4
+    let diff_uuid4 = client
+        .diff_uuid4_from_server(context::current(), next_uuid4_candidates(&conn))
+        .await?;
+    eprintln!("diff_uuid4 len: {:?}", diff_uuid4.len());
+
+    // send one by one
+    for u in diff_uuid4 {
+        client
+            .send_note(context::current(), get_note_by_uuid4(&conn, &u))
+            .await?;
+    }
+    eprintln!("send_note done");
+
+    Ok(())
+}
 pub fn sync(addr: &str) -> Result<String, String> {
     tarpc::init(tokio::executor::DefaultExecutor::current().compat());
 
@@ -66,11 +95,19 @@ pub fn sync(addr: &str) -> Result<String, String> {
     tarpc::init(tokio::executor::DefaultExecutor::current().compat());
 
     tokio::run(
-        run_sync(server_addr)
+        run_sync_to_server(server_addr)
             .map_err(|err| eprintln!("localnative client error: {}", err))
             .boxed()
             .compat(),
     );
+    eprintln!("sync to server done");
+    tokio::run(
+        run_sync_from_server(server_addr)
+            .map_err(|err| eprintln!("localnative client error: {}", err))
+            .boxed()
+            .compat(),
+    );
+    eprintln!("sync from server done");
     Ok("sync ok".to_string())
 }
 

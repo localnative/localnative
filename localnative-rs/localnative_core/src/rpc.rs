@@ -19,8 +19,10 @@ use crate::Note;
 
 tarpc::service! {
     rpc is_version_match(version: String) -> bool;
-    rpc diff_uuid4(candidates: Vec<String>) -> Vec<String> ;
+    rpc diff_uuid4_to_server(candidates: Vec<String>) -> Vec<String> ;
+    rpc diff_uuid4_from_server(candidates: Vec<String>) -> Vec<String> ;
     rpc send_note(note: Note) -> bool ;
+    rpc receive_note(note: Note) -> bool ;
     rpc stop() -> bool ;
 }
 

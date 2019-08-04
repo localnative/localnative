@@ -17,7 +17,7 @@
 */
 
 use crate::cmd::insert;
-use crate::cmd::sync::diff_uuid4;
+use crate::cmd::sync::{diff_uuid4_from_server, diff_uuid4_to_server};
 use crate::exe::get_sqlite_connection;
 use crate::upgrade::get_meta_version;
 use crate::Note;
@@ -47,14 +47,34 @@ impl super::Service for LocalNativeServer {
             future::ready(false)
         }
     }
-    type DiffUuid4Fut = Ready<Vec<String>>;
-    fn diff_uuid4(self, _: context::Context, candidates: Vec<String>) -> Self::DiffUuid4Fut {
+    type DiffUuid4ToServerFut = Ready<Vec<String>>;
+    fn diff_uuid4_to_server(
+        self,
+        _: context::Context,
+        candidates: Vec<String>,
+    ) -> Self::DiffUuid4ToServerFut {
         let conn = get_sqlite_connection();
-        let diff = diff_uuid4(&conn, candidates);
+        let diff = diff_uuid4_to_server(&conn, candidates);
+        future::ready(diff)
+    }
+    type DiffUuid4FromServerFut = Ready<Vec<String>>;
+    fn diff_uuid4_from_server(
+        self,
+        _: context::Context,
+        candidates: Vec<String>,
+    ) -> Self::DiffUuid4FromServerFut {
+        let conn = get_sqlite_connection();
+        let diff = diff_uuid4_from_server(&conn, candidates);
         future::ready(diff)
     }
     type SendNoteFut = Ready<bool>;
     fn send_note(self, _: context::Context, note: Note) -> Self::SendNoteFut {
+        eprintln!("upsert note {:?}", note);
+        insert(note);
+        future::ready(true)
+    }
+    type ReceiveNoteFut = Ready<bool>;
+    fn receive_note(self, _: context::Context, note: Note) -> Self::ReceiveNoteFut {
         eprintln!("upsert note {:?}", note);
         insert(note);
         future::ready(true)
