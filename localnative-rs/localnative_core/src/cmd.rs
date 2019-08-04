@@ -34,39 +34,23 @@ pub use self::select::{select, select_by_day, select_by_tag, select_count};
 pub fn sync_via_attach(conn: &Connection, uri: &str) -> String {
     if let Ok(_) = conn.execute("attach ? as 'other'", &[uri]) {
         match conn.execute_batch("BEGIN;
-        insert into note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public)
+        insert into main.note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public)
         select uuid4, title, url, tags, description, comments, annotations, created_at, is_public
 from other.note
         where not exists (
-            select 1 from note
+            select 1 from main.note
             where
-            note.title = other.note.title
-            and note.url = other.note.url
-            and note.tags = other.note.tags
-            and note.description = other.note.description
-            and note.comments = other.note.comments
-            and note.annotations= other.note.annotations
-            and note.created_at = other.note.created_at
-            and note.is_public = other.note.is_public
-        ) order by rowid;
-        drop table other.note;
-
-        CREATE TABLE other.note (
-         rowid          INTEGER PRIMARY KEY AUTOINCREMENT,
-         uuid4          TEXT NOT NULL UNIQUE,
-         title          TEXT NOT NULL,
-         url            TEXT NOT NULL,
-         tags           TEXT NOT NULL,
-         description    TEXT NOT NULL,
-         comments       TEXT NOT NULL,
-         annotations    TEXT NOT NULL,
-         created_at     TEXT NOT NULL,
-         is_public      BOOLEAN NOT NULL default 0
-         );
+            main.note.uuid4 = other.note.uuid4
+        ) order by created_at;
 
         insert into other.note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public)
         select uuid4, title, url, tags, description, comments, annotations, created_at, is_public
-from note order by rowid;
+from main.note
+        where not exists (
+            select 1 from other.note
+            where
+            other.note.uuid4 = main.note.uuid4
+        ) order by created_at;
         COMMIT;
         detach database other;
         "){
