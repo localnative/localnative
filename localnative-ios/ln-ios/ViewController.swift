@@ -26,12 +26,18 @@ import UIKit
 let ln = RustLocalNative()
 
 class ViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UISearchBarDelegate, UIToolbarDelegate {
+    @IBOutlet weak var syncButton: UIButton!
     @IBOutlet weak var searchInput: UISearchBar!
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var prevButton: UIBarButtonItem!
     @IBOutlet weak var nextButton: UIBarButtonItem!
     @IBOutlet weak var paginationButton: UIBarButtonItem!
     var notes : NSArray = []
+    
+    @IBAction func syncButtonTownDown(_ sender: Any) {
+        let vc = self.storyboard?.instantiateViewController(withIdentifier: "clientSync")
+        self.present(vc as! UIViewController, animated: true, completion: nil)
+    }
     
     @IBAction func prevButtonTouchDown(_ sender: Any){
         let offset = AppState.decOffset()

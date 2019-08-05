@@ -1,25 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14460.31" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14490.70" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
     <device id="retina5_5" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14460.20"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14490.49"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="Stack View standard spacing" minToolsVersion="9.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
         <!--View Controller-->
         <scene sceneID="tne-QT-ifu">
             <objects>
-                <viewController id="BYZ-38-t0r" customClass="ViewController" customModule="localnative_ios" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="search" id="BYZ-38-t0r" customClass="ViewController" customModule="localnative_ios" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="8bC-Xf-vdC">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="736"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
+                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="COk-G7-dnI">
+                                <rect key="frame" x="0.0" y="44" width="44" height="56"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <state key="normal" title="Sync"/>
+                                <connections>
+                                    <action selector="syncButtonTownDown:" destination="BYZ-38-t0r" eventType="touchDown" id="ZVu-Da-eRX"/>
+                                </connections>
+                            </button>
                             <searchBar contentMode="redraw" fixedFrame="YES" placeholder="type to search" translatesAutoresizingMaskIntoConstraints="NO" id="uTH-p6-cTM">
-                                <rect key="frame" x="0.0" y="44" width="414" height="56"/>
+                                <rect key="frame" x="42" y="44" width="372" height="56"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES"/>
                                 <textInputTraits key="textInputTraits"/>
                                 <connections>
@@ -47,14 +56,14 @@
                                                                 <constraint firstAttribute="height" constant="25" id="T1d-mX-5bF"/>
                                                             </constraints>
                                                         </scrollView>
-                                                        <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="TopLeft" ambiguous="YES" scrollEnabled="NO" editable="NO" translatesAutoresizingMaskIntoConstraints="NO" id="B0M-0y-rn3" userLabel="Content Text">
+                                                        <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="TopLeft" scrollEnabled="NO" editable="NO" translatesAutoresizingMaskIntoConstraints="NO" id="B0M-0y-rn3" userLabel="Content Text">
                                                             <rect key="frame" x="0.0" y="25" width="414" height="166.66666666666666"/>
                                                             <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                                             <string key="text">Lorem ipsum dolor sit er elit lamet, consectetaur cillium adipisicing pecu, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Nam liber te conscient to factor tum poen legum</string>
                                                             <fontDescription key="fontDescription" name=".AppleSystemUIFont" family=".AppleSystemUIFont" pointSize="14"/>
                                                             <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
                                                         </textView>
-                                                        <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="TopLeft" ambiguous="YES" scrollEnabled="NO" editable="NO" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="mQf-M4-vYJ">
+                                                        <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="TopLeft" verticalCompressionResistancePriority="749" scrollEnabled="NO" editable="NO" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="mQf-M4-vYJ">
                                                             <rect key="frame" x="0.0" y="191.66666666666666" width="414" height="54"/>
                                                             <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                                             <string key="text">Lorem ipsum dolor sit er elit lamet, consectetaur cillium adipisicing pecu, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Nam liber te conscient to factor tum poen legum odioque civiuda.</string>
@@ -115,6 +124,7 @@
                         <outlet property="paginationButton" destination="TZq-br-zxW" id="JGk-tx-MCn"/>
                         <outlet property="prevButton" destination="hgl-hf-2j6" id="dND-6t-ypJ"/>
                         <outlet property="searchInput" destination="uTH-p6-cTM" id="nB2-Vx-HYk"/>
+                        <outlet property="syncButton" destination="COk-G7-dnI" id="HcL-5V-HQ5"/>
                         <outlet property="tableView" destination="bnD-GE-Yjh" id="hzU-lw-4ND"/>
                     </connections>
                 </viewController>
@@ -147,7 +157,7 @@
                                             </barButtonItem>
                                         </items>
                                     </toolbar>
-                                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="UOL-xu-u79">
+                                    <imageView userInteractionEnabled="NO" contentMode="center" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="UOL-xu-u79">
                                         <rect key="frame" x="0.0" y="35.333333333333314" width="414" height="680.66666666666674"/>
                                     </imageView>
                                 </subviews>
@@ -175,6 +185,91 @@
                 <placeholder placeholderIdentifier="IBFirstResponder" id="ET4-YX-tw9" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="855" y="90"/>
+        </scene>
+        <!--Client Sync View Controller-->
+        <scene sceneID="uIp-oQ-5Jm">
+            <objects>
+                <viewController storyboardIdentifier="clientSync" id="GiC-yp-mGZ" customClass="ClientSyncViewController" customModule="localnative_ios" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="fxj-Og-SfR">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="736"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" spacingType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="VLe-Ge-dMs">
+                                <rect key="frame" x="0.0" y="20" width="414" height="716"/>
+                                <subviews>
+                                    <toolbar opaque="NO" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Rli-SE-IYf">
+                                        <rect key="frame" x="0.0" y="0.0" width="414" height="35.333333333333336"/>
+                                        <constraints>
+                                            <constraint firstAttribute="height" constant="35.329999999999998" id="2Nh-ky-7LF"/>
+                                        </constraints>
+                                        <items>
+                                            <barButtonItem title="Cancel" id="r2R-g3-kbD">
+                                                <connections>
+                                                    <action selector="cancelTouchDown:" destination="GiC-yp-mGZ" id="ERQ-ZR-CdQ"/>
+                                                </connections>
+                                            </barButtonItem>
+                                            <barButtonItem style="plain" systemItem="flexibleSpace" id="BGR-pg-zqK"/>
+                                            <barButtonItem enabled="NO" title="Rescan QR Code" id="gfX-HL-LyN">
+                                                <connections>
+                                                    <action selector="scanTouchDown:" destination="GiC-yp-mGZ" id="5Ha-rc-rp8"/>
+                                                </connections>
+                                            </barButtonItem>
+                                            <barButtonItem style="plain" systemItem="flexibleSpace" id="aKC-kn-qjC"/>
+                                            <barButtonItem title="Start Sync" id="Ws9-1Y-1Qr">
+                                                <connections>
+                                                    <action selector="syncTouchDown:" destination="GiC-yp-mGZ" id="rYT-ap-HDx"/>
+                                                </connections>
+                                            </barButtonItem>
+                                        </items>
+                                    </toolbar>
+                                    <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="CkE-4X-PMr">
+                                        <rect key="frame" x="0.0" y="35.333333333333343" width="414" height="63"/>
+                                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <constraints>
+                                            <constraint firstAttribute="height" constant="63" id="Ne6-uJ-Yco"/>
+                                        </constraints>
+                                        <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                        <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
+                                        <userDefinedRuntimeAttributes>
+                                            <userDefinedRuntimeAttribute type="string" keyPath="placeholder" value="xxx.xxx.xxx.xxx:YYYYY input server address and port, or scan QR code"/>
+                                        </userDefinedRuntimeAttributes>
+                                    </textView>
+                                    <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" editable="NO" text="sync status" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="hBu-H7-N7k">
+                                        <rect key="frame" x="0.0" y="106.33333333333331" width="414" height="63"/>
+                                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <constraints>
+                                            <constraint firstAttribute="height" constant="63" id="Bxy-o5-c7O"/>
+                                        </constraints>
+                                        <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                        <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
+                                    </textView>
+                                    <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="9rJ-Aa-elS">
+                                        <rect key="frame" x="0.0" y="177.33333333333331" width="414" height="538.66666666666674"/>
+                                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                    </view>
+                                </subviews>
+                            </stackView>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <constraints>
+                            <constraint firstItem="VLe-Ge-dMs" firstAttribute="leading" secondItem="kz0-UI-6ST" secondAttribute="leading" id="BZ3-qs-DJu"/>
+                            <constraint firstItem="VLe-Ge-dMs" firstAttribute="top" secondItem="kz0-UI-6ST" secondAttribute="top" id="UcE-wL-UXR"/>
+                            <constraint firstItem="kz0-UI-6ST" firstAttribute="bottom" secondItem="VLe-Ge-dMs" secondAttribute="bottom" id="WyB-b1-EUY"/>
+                            <constraint firstItem="kz0-UI-6ST" firstAttribute="trailing" secondItem="VLe-Ge-dMs" secondAttribute="trailing" id="YnK-Sn-A72"/>
+                        </constraints>
+                        <viewLayoutGuide key="safeArea" id="kz0-UI-6ST"/>
+                    </view>
+                    <connections>
+                        <outlet property="addrText" destination="CkE-4X-PMr" id="dw2-V7-oWF"/>
+                        <outlet property="cancelButton" destination="r2R-g3-kbD" id="nJT-CM-e3G"/>
+                        <outlet property="qrView" destination="9rJ-Aa-elS" id="cnd-c2-7uD"/>
+                        <outlet property="scanButton" destination="gfX-HL-LyN" id="r5F-OQ-3BF"/>
+                        <outlet property="syncButton" destination="Ws9-1Y-1Qr" id="BHy-Aw-qpd"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="Bjz-aU-cxa" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="2239.130434782609" y="89.673913043478265"/>
         </scene>
     </scenes>
 </document>
