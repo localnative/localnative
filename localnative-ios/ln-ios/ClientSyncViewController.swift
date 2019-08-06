@@ -36,6 +36,7 @@ class ClientSyncViewController : UIViewController, AVCaptureMetadataOutputObject
     @IBOutlet weak var qrView: UIView!
     
     @IBOutlet weak var addrText: UITextView!
+    @IBOutlet weak var responseText: UITextView!
     @IBAction func scanTouchDown(_ sender: Any) {
         scan()
     }
@@ -45,6 +46,11 @@ class ClientSyncViewController : UIViewController, AVCaptureMetadataOutputObject
     }
     
     @IBAction func syncTouchDown(_ sender: Any) {
+        let r = ln.run(json_input: """
+            {"action":"client-sync",
+            "addr":"\(addrText.text!)"}
+            """)
+        responseText.text = r
     }
     
     override func viewDidLoad() {

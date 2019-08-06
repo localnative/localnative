@@ -263,6 +263,7 @@
                         <outlet property="addrText" destination="CkE-4X-PMr" id="dw2-V7-oWF"/>
                         <outlet property="cancelButton" destination="r2R-g3-kbD" id="nJT-CM-e3G"/>
                         <outlet property="qrView" destination="9rJ-Aa-elS" id="cnd-c2-7uD"/>
+                        <outlet property="responseText" destination="hBu-H7-N7k" id="OFd-gd-FFy"/>
                         <outlet property="scanButton" destination="gfX-HL-LyN" id="r5F-OQ-3BF"/>
                         <outlet property="syncButton" destination="Ws9-1Y-1Qr" id="BHy-Aw-qpd"/>
                     </connections>
