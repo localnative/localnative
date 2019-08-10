@@ -23,3 +23,20 @@ select *, row_number() over (PARTITION by title, url, tags, description, comment
 from _note_dedup
 ) select uuid4, title, url, tags, description, comments, annotations, created_at, is_public from a where r = 1
 order by rowid;
+
+-- append from other
+insert into main.note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public)
+select uuid4, title, url, tags, description, comments, annotations, created_at, is_public
+from other.note
+where not exists (
+    select 1 from main.note
+    where
+main.note.title = other.note.title
+and main.note.url = other.note.url
+and main.note.tags = other.note.tags
+and main.note.description = other.note.description
+and main.note.comments = other.note.comments
+and main.note.annotations = other.note.annotations
+and main.note.created_at = other.note.created_at
+and main.note.is_public = other.note.is_public
+) order by created_at;
