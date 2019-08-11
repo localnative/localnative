@@ -4,8 +4,10 @@
     <string name="prev_button_text">Prev</string>
     <string name="next_button_text">Next</string>
     <string name="dialog_delete_note">Delete this note?</string>
+    <string name="dialog_sync">Start to sync with other device?</string>
     <string name="delete">Delete</string>
     <string name="cancel">Cancel</string>
+    <string name="sync">Sync</string>
     <string name="title_activity_qrcode">QRCodeActivity</string>
     <string name="title_home">Home</string>
     <string name="title_dashboard">Dashboard</string>

@@ -17,6 +17,7 @@
 */
 package app.localnative.android
 
+import android.app.AlertDialog
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
@@ -34,6 +35,10 @@ import app.localnative.R
 
 import app.localnative.android.Permission.OnPermissonGrantedListenr
 import app.localnative.android.Permission.invoke_WRITE_EXTERNAL_STORAGE
+import com.google.zxing.integration.android.IntentIntegrator
+import android.widget.Toast
+import android.content.Intent
+
 
 class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener, NoteListFragment.OnListFragmentInteractionListener, OnPermissonGrantedListenr, View.OnClickListener {
 
@@ -77,12 +82,47 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener, NoteLi
         setContentView(R.layout.activity_main)
         val toolbar = findViewById<View>(R.id.toolbar) as Toolbar
         setSupportActionBar(toolbar)
+        toolbar.setOnClickListener { Log.d("sync", "toolbar")
+            val integrator = IntentIntegrator(this)
+            integrator.setBeepEnabled(false);
+            integrator.setCaptureActivity(QRScanActivity::class.java).initiateScan()
+        }
+
         doSearch("", 0L)
 
         val prevButton = findViewById<View>(R.id.prev_button) as Button
         prevButton.setOnClickListener(this)
         val nextButton = findViewById<View>(R.id.next_button) as Button
         nextButton.setOnClickListener(this)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        val result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data)
+        if (result != null) {
+            if (result.contents == null) {
+                Toast.makeText(this, "Cancelled Sync", Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(this, "Scanned server address and port: " + result.contents, Toast.LENGTH_LONG).show()
+                val builder = AlertDialog.Builder(this)
+                builder.setMessage(R.string.dialog_sync)
+                        .setPositiveButton(R.string.sync) { dialog, id ->
+                            val cmd = ("{\"action\": \"client-sync\", \"addr\": \""
+                                    + result.contents
+                                    + "\""
+                                    + "}")
+                            Log.d("doSearchCmd", cmd)
+                            val s = RustBridge.run(cmd)
+                        }
+                        .setNegativeButton(R.string.cancel) { dialog, id ->
+                            // User cancelled the dialog
+                        }
+                // Create the AlertDialog object and return it
+                val alert = builder.create()
+                alert.show()
+            }
+        } else {
+            super.onActivityResult(requestCode, resultCode, data)
+        }
     }
 
     // button click events handler
