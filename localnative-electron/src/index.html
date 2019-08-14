@@ -71,13 +71,13 @@
 
       <div>
         <div>
-        <span>Sync Between Devices</span><br>
+        <span id="label-sync">Sync Between Devices</span><br>
           <button id="sync-via-attach-btn" title="sync via attach file">
             sync via attach file
           </button>
         </div>
         <div>
-          <span>Server</span><br>
+          <span id="label-server">Server</span><br>
           <button id="start-server-btn" title="lan/wifi sync server">
               start server
           </button>
@@ -88,11 +88,11 @@
           </button>
         </div>
         <div>
-          <span>Client</span><br>
+          <span id="label-client">Client</span><br>
           <button id="start-client-sync-btn" title="lan/wifi sync client">
-              start client
+              start client sync
           </button>
-          <input class='' id='addr' type='text' placeholder='server address and port xxx.xxx.xxx.xxx:2345'/>
+          <textarea class='' id='addr' placeholder='xxx.xxx.xxx.xxx:2345 [server address]:[port]'></textarea>
         </div>
       </div>
 

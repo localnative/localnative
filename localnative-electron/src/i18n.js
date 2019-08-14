@@ -32,6 +32,14 @@ function i18nRefresh() {
   // document.getElementById('page').innerHTML = Sanitizer.escapeHTML`${lc("page")}`;
   // document.getElementById('page-of').innerHTML = Sanitizer.escapeHTML`${lc("of")}`;
 
+  document.getElementById('label-sync').innerHTML = lc("Sync Between Devices");
+  document.getElementById('label-server').innerHTML = lc("Server");
+  document.getElementById('start-server-btn').innerHTML = lc("start server");
+  document.getElementById('stop-server-btn').innerHTML = lc("stop server");
+
+  document.getElementById('label-client').innerHTML = lc("Client");
+  document.getElementById('start-client-sync-btn').innerHTML = lc("start client sync");
+
   document.getElementById('ssb-sync-btn').innerHTML = lc("ssb sync");
   document.getElementById('sync-via-attach-btn').innerHTML = lc("sync via attach file");
   document.getElementById('title-charts').innerHTML = lc("Timeseries Charts");
@@ -52,4 +60,3 @@ document.addEventListener('DOMContentLoaded', function () {
     localStorage.setItem('lang', lang);
   };
 })
-
