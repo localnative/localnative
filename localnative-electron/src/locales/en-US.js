@@ -19,7 +19,7 @@
   values: {
     "ssbify": 'ssbify',
     "public": 'public',
-    "language": 'language',
+    "Language": 'Language',
     "description": "description",
     "title": 'title',
     "url": 'url',

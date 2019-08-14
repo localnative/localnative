@@ -46,9 +46,7 @@
           <button class='hidden' id="ssb-sync-btn" title="ssb sync">
             ssb sync
           </button>
-          <button id="sync-via-attach-btn" title="sync via attach file">
-            sync via attach file
-          </button>
+
 
         </div>
 
@@ -63,7 +61,8 @@
         <span id="screenshot-text"></span>
       </div>
 
-      <div> <span id="label-language">language</span>
+      <div>
+        <span id="label-language">Language</span>
         <select id='select-language'>
           <option value="en-US">en-US English - US</option>
           <option value="zh-CN">zh-CN 中文简体 - 大陆</option>
@@ -71,16 +70,30 @@
       </div>
 
       <div>
+        <div>
+        <span>Sync Between Devices</span><br>
+          <button id="sync-via-attach-btn" title="sync via attach file">
+            sync via attach file
+          </button>
+        </div>
+        <div>
+          <span>Server</span><br>
           <button id="start-server-btn" title="lan/wifi sync server">
-              Start Server
+              start server
           </button>
+        </div>
+        <div>
           <button id="stop-server-btn" title="stop server">
-              Stop Server
+              stop server
           </button>
+        </div>
+        <div>
+          <span>Client</span><br>
           <button id="start-client-sync-btn" title="lan/wifi sync client">
-              Start Client
+              start client
           </button>
           <input class='' id='addr' type='text' placeholder='server address and port xxx.xxx.xxx.xxx:2345'/>
+        </div>
       </div>
 
       <div>

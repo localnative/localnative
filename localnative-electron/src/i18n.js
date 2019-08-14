@@ -19,7 +19,7 @@ let lc;
 function i18nRefresh() {
   document.getElementById('label-ssbify').innerHTML = Sanitizer.escapeHTML`${lc('ssbify')}`;
   document.getElementById('label-public').innerHTML = Sanitizer.escapeHTML`${lc('public')}`;
-  document.getElementById('label-language').innerHTML = Sanitizer.escapeHTML`${lc('language')}`;
+  document.getElementById('label-language').innerHTML = Sanitizer.escapeHTML`${lc('Language')}`;
   document.getElementById('title').placeholder = lc('title');
   document.getElementById('url').placeholder = lc('url');
   document.getElementById('tags-text').placeholder = lc("type to add tags, enter to save, comma or space as tag seperator");
