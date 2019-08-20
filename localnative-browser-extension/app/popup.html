@@ -45,7 +45,10 @@
       }
       .note-sep{
         background-color: #ffffff;
-        height: 4px
+        height: 4px;
+      }
+      .none{
+        display:none;
       }
     </style>
   </head>
@@ -56,9 +59,10 @@
         <a href="https://localnative.app" target="_blank">Local Native</a>
 v0.4.0
         </b>
-        <input type="checkbox" id='ssbify' name="ssbify" value="ssbify"> <label for="ssbify" id="label-ssbify">ssbify</label>
-        <input type="checkbox" id='cb-public' name="public" value="public"> <label for="cb-public" id="label-public">public</label>
-        <button id="ssb-sync-btn" title="ssb sync">
+        <input type="checkbox" id='ssbify' name="ssbify" value="ssbify"> <label for="ssbify" id="label-ssbify">save content</label>
+        <input class="none" type="checkbox" id='cb-public' name="public" value="public">
+        <label class="none" for="cb-public" id="label-public">public</label>
+        <button class="none" id="ssb-sync-btn" title="ssb sync">
           ssb sync
         </button>
         <span style="float: right"> <span id="label-language">language</span>

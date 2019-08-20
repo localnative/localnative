@@ -17,7 +17,7 @@
 */
 locales['en-US'] = i18n.create({
   values: {
-    "ssbify": 'ssbify',
+    "ssbify": 'save content',
     "public": 'public',
     "language": 'language',
     "description": "description",
@@ -28,4 +28,3 @@ locales['en-US'] = i18n.create({
     "clear search term(s)": 'clear search term(s)'
   }
 });
-
