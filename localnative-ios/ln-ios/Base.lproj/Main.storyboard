@@ -22,7 +22,9 @@
                             <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="COk-G7-dnI">
                                 <rect key="frame" x="0.0" y="44" width="44" height="56"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <state key="normal" title="Sync"/>
+                                <state key="normal" title="LN">
+                                    <color key="titleColor" cocoaTouchSystemColor="darkTextColor"/>
+                                </state>
                                 <connections>
                                     <action selector="syncButtonTownDown:" destination="BYZ-38-t0r" eventType="touchDown" id="ZVu-Da-eRX"/>
                                 </connections>
