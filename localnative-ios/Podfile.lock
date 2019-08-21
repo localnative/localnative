@@ -2,7 +2,7 @@ PODS:
   - MMWormhole (2.0.0):
     - MMWormhole/Core (= 2.0.0)
   - MMWormhole/Core (2.0.0)
-  - "UITextView+Placeholder (1.2.1)"
+  - "UITextView+Placeholder (1.3.1)"
 
 DEPENDENCIES:
   - MMWormhole (~> 2.0.0)
@@ -15,7 +15,7 @@ SPEC REPOS:
 
 SPEC CHECKSUMS:
   MMWormhole: 0cd3fd35a9118b2e2d762b499f54eeaace0be791
-  "UITextView+Placeholder": 0c3efd97f37ea64bde7f34cc6e90fe02e87b3909
+  "UITextView+Placeholder": f23df8592290d8d06078072ae1a663e11ee07ff4
 
 PODFILE CHECKSUM: 6653e843acb8fd736868fc1046aec6826969bfa5
 
