@@ -23,21 +23,23 @@ use crate::upgrade::get_meta_version;
 use crate::Note;
 use std::process;
 
+use super::LocalNative;
 use futures::{
-    compat::Executor01CompatExt,
     future::{self, Ready},
     prelude::*,
+    Future,
 };
 use std::{io, net::SocketAddr};
 use tarpc::{
-    context,
-    server::{Handler, Server},
+    client, context,
+    server::{self, BaseChannel, Channel, Handler},
 };
+use tokio::runtime::current_thread::Runtime;
 
 #[derive(Clone)]
 struct LocalNativeServer;
 
-impl super::Service for LocalNativeServer {
+impl LocalNative for LocalNativeServer {
     type IsVersionMatchFut = Ready<bool>;
     fn is_version_match(self, _: context::Context, version: String) -> Self::IsVersionMatchFut {
         let conn = get_sqlite_connection();
@@ -88,25 +90,28 @@ impl super::Service for LocalNativeServer {
     }
 }
 
-async fn localnative_server(addr: SocketAddr) -> io::Result<()> {
-    let transport = bincode_transport::listen(&addr)?;
-    let server = Server::default()
-        .incoming(transport)
-        .respond_with(super::serve(LocalNativeServer));
-    server.await;
+async fn start_server(addr: &SocketAddr) -> io::Result<()> {
+    let transport = bincode_transport::listen(addr)?
+        .filter_map(|r| future::ready(r.ok()))
+        .map(server::BaseChannel::with_defaults)
+        // Limit channels to 1 per IP.
+        .max_channels_per_key(1, |t| t.as_ref().peer_addr().unwrap().ip())
+        .map(|channel| channel.respond_with(LocalNativeServer.serve()).execute())
+        // Max 10 channels.
+        .buffer_unordered(10)
+        .for_each(|_| async {})
+        .await;
+
     Ok(())
 }
 
 pub fn start(addr: &str) -> Result<(), &'static str> {
-    let server_addr = addr
+    let server_addr: SocketAddr = addr
         .parse()
         .unwrap_or_else(|e| panic!(r#"server_addr {} invalid: {}"#, addr, e));
-    tarpc::init(tokio::executor::DefaultExecutor::current().compat());
-    tokio::run(
-        localnative_server(server_addr)
-            .map_err(|err| eprintln!("localnative server error: {}", err))
-            .boxed()
-            .compat(),
-    );
+    let mut rt = Runtime::new().unwrap();
+    rt.block_on(async {
+        start_server(&server_addr).await;
+    });
     Ok(())
 }

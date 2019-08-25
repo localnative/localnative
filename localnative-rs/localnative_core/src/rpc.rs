@@ -17,13 +17,14 @@
 */
 use crate::Note;
 
-tarpc::service! {
-    rpc is_version_match(version: String) -> bool;
-    rpc diff_uuid4_to_server(candidates: Vec<String>) -> Vec<String> ;
-    rpc diff_uuid4_from_server(candidates: Vec<String>) -> Vec<String> ;
-    rpc send_note(note: Note) -> bool ;
-    rpc receive_note(uuid4: String) -> Note ;
-    rpc stop() -> bool ;
+#[tarpc::service]
+pub trait LocalNative {
+    async fn is_version_match(version: String) -> bool;
+    async fn diff_uuid4_to_server(candidates: Vec<String>) -> Vec<String>;
+    async fn diff_uuid4_from_server(candidates: Vec<String>) -> Vec<String>;
+    async fn send_note(note: Note) -> bool;
+    async fn receive_note(uuid4: String) -> Note;
+    async fn stop() -> bool;
 }
 
 pub mod client;
