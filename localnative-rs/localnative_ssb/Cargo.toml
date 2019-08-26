@@ -3,7 +3,7 @@ name = "localnative_ssb"
 description = "localnative ssb lib"
 homepage = "https://localnative.app"
 authors = ["Yi Wang"]
-version = "0.4.0"
+version = "0.4.1"
 license = "AGPL-3.0"
 
 [dependencies]
