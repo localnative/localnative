@@ -18,7 +18,6 @@
 use localnative_core::exe::run;
 use localnative_core::serde_json;
 use localnative_core::Cmd;
-use localnative_ssb as ssb;
 use std::io;
 use std::io::{Read, Write};
 use std::mem::transmute;
@@ -42,25 +41,12 @@ fn main() -> io::Result<()> {
     let text = str::from_utf8(&text_buf).expect("not utf8 string");
     eprintln!("text_buf {:?}", text);
 
-    if let Ok(cmd) = serde_json::from_str::<Cmd>(text) {
-        match cmd.action.as_ref() {
-            "ssb-sync" => {
-                ssb::run_sync();
-                match send_message(r#"{"ssb-sync": "done"}"#) {
-                    Ok(_) => (),
-                    Err(err) => eprintln!("Error: {:?}", err),
-                };
-            }
-            _ => {
-                let response = run(text);
-                eprintln!("response {:?}", response);
-                match send_message(&response) {
-                    Ok(_) => (),
-                    Err(err) => eprintln!("Error: {:?}", err),
-                };
-            }
-        }
-    }
+    let response = run(text);
+    eprintln!("response {:?}", response);
+    match send_message(&response) {
+        Ok(_) => (),
+        Err(err) => eprintln!("Error: {:?}", err),
+    };
     Ok(())
 }
 
