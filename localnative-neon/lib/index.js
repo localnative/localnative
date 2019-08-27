@@ -51,12 +51,12 @@ if (!fs.existsSync(webExtTarget)){
   fs.copyFileSync(webExtSource, webExtTarget);
 }
 
-let NodePkgFileName = 'localnative-nodejs' + '-' + version;
-let NodePkgSource = __dirname + '/' + NodePkgFileName;
-let NodePkgTarget = dirBin + '/' + NodePkgFileName;
-if (!fs.existsSync(NodePkgTarget)){
-  fs.copyFileSync(NodePkgSource, NodePkgTarget);
-}
+// let NodePkgFileName = 'localnative-nodejs' + '-' + version;
+// let NodePkgSource = __dirname + '/' + NodePkgFileName;
+// let NodePkgTarget = dirBin + '/' + NodePkgFileName;
+// if (!fs.existsSync(NodePkgTarget)){
+//   fs.copyFileSync(NodePkgSource, NodePkgTarget);
+// }
 
 // manifest content
 let jsonMozilla = {
@@ -151,4 +151,3 @@ module.exports = {
   dir: __dirname,
   run: addon.run
 };
-
