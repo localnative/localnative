@@ -10,7 +10,7 @@ A cross-platform tool to save and sync your notes in local SQLite database witho
 ## Articles
 [Updates](https://chuanyan.live/tags/localnative)
 
-[Local Native v0.3.8 发布](https://chuanyan.live/2019-03-localnative-v0-3-8-release)
+[Local Native v0.4.0 发布](https://localnative.app/blog/2019/08/24/localnative-v0.4.0-release)
 
 [Why Local Native?](https://chuanyan.live/2019-01-why-local-native)
 
@@ -18,9 +18,7 @@ A cross-platform tool to save and sync your notes in local SQLite database witho
 
 localnative-android: android app
 
-localnative-app-mdbook: localnative.app website, documentation
-
-localnative-browser-extension: browser extension app and host code
+localnative-browser-extension: browser extension app and host manifest template
 
 localnative-electron: desktop app
 
@@ -28,9 +26,9 @@ localnative-ios: ios app
 
 localnative-neon: nodejs to rust bridge, used by localnative-electron
 
-localnative-nodejs: node.js executable called by rust code
+localnative-nodejs: node.js executable called by rust code, used to be ssb related, containing deprecated code
 
-localnative-rs: rust code, to build `localnative-web-ext-host` binary
+localnative-rs: rust code, to build `localnative-web-ext-host` web extension host binary, and `localnative_core`, the core native module
 
 localnative-sql: sql snippet
 
@@ -39,6 +37,9 @@ localnative-sql: sql snippet
 
 # Developer Setup
 [here](https://localnative.app/developer-setup.html)
+
+# Bounty
+[localnative-bounty](https://github.com/localnative/localnative-bounty/issues), [bountysource](https://www.bountysource.com/teams/localnative-bounty/issues)
 
 # License
 [AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.en.html)
@@ -90,14 +91,15 @@ Signed-off-by: Developer Name <name@developer.example.org>
 using your real name (sorry, no pseudonyms or anonymous contributions.)
 
 ## Screenshot
-### Desktop application
-![Local Native desktop application](./localnative-app-mdbook/src/img/localnative-desktop-0.3.10-qrcode.jpg)
 
-### Web extension
-![Local Native web extension popup screenshot](./localnative-app-mdbook/src/img/localnative-web-ext-popup.png)
+### Mobile Application
+![mobile](http://localnative.app/img/localnative-mobile-android-qr.png)
 
-### Search your notes in patchbay
-![Local Native patchbay screenshot](./localnative-app-mdbook/src/img/localnative-ssb-patchbay.png)
+### Desktop Application
+![Local Native desktop application](https://localnative.app/img/localnative-0.4.0-desktop-sync.png)
+
+### Browser Extension
+![Local Native web extension popup screenshot](https://localnative.app/img/localnative-web-ext-popup.png)
 
 ## Support
 <a href="https://www.patreon.com/localnative">
