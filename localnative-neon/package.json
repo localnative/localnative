@@ -6,7 +6,7 @@
   "author": "Yi Wang",
   "license": "AGPL-3.0",
   "dependencies": {
-    "neon-cli": "^0.2.0"
+    "neon-cli": "^0.3.1"
   },
   "scripts": {
     "install": "neon build"
