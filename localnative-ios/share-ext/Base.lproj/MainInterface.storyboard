@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14460.31" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="j1y-V4-xli">
-    <device id="ipad10_5" orientation="landscape">
-        <adaptation id="fullscreen"/>
-    </device>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="15400" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="j1y-V4-xli">
+    <device id="ipad10_5" orientation="landscape" layout="fullscreen" appearance="light"/>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14460.20"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="15404"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="Stack View standard spacing" minToolsVersion="9.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
@@ -20,7 +18,7 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <stackView opaque="NO" contentMode="TopLeft" distribution="fillEqually" spacingType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="rRM-5w-irv">
-                                <rect key="frame" x="0.0" y="44" width="1112" height="30"/>
+                                <rect key="frame" x="0.0" y="24" width="1112" height="30"/>
                                 <subviews>
                                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="uo5-q7-Sva">
                                         <rect key="frame" x="0.0" y="0.0" width="552" height="30"/>
@@ -39,34 +37,34 @@
                                 </subviews>
                             </stackView>
                             <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" distribution="equalSpacing" alignment="top" spacing="4" translatesAutoresizingMaskIntoConstraints="NO" id="a7f-iT-grd">
-                                <rect key="frame" x="0.0" y="78" width="1112" height="380"/>
+                                <rect key="frame" x="0.0" y="58" width="1112" height="280"/>
                                 <subviews>
                                     <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="t65-29-vj1">
-                                        <rect key="frame" x="0.0" y="0.0" width="1112" height="80"/>
+                                        <rect key="frame" x="0.0" y="0.0" width="1112" height="60"/>
                                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                         <constraints>
-                                            <constraint firstAttribute="height" constant="80" id="GTF-Px-wR9"/>
+                                            <constraint firstAttribute="height" constant="60" id="GTF-Px-wR9"/>
                                         </constraints>
                                         <fontDescription key="fontDescription" name=".AppleSystemUIFont" family=".AppleSystemUIFont" pointSize="14"/>
                                         <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
                                     </textView>
                                     <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="hoE-3E-OYq">
-                                        <rect key="frame" x="0.0" y="84" width="1112" height="128"/>
+                                        <rect key="frame" x="0.0" y="64" width="1112" height="68"/>
                                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                         <fontDescription key="fontDescription" type="system" pointSize="14"/>
                                         <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
                                     </textView>
                                     <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="3N6-M5-LZN">
-                                        <rect key="frame" x="0.0" y="216" width="1112" height="80"/>
+                                        <rect key="frame" x="0.0" y="136" width="1112" height="60"/>
                                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                         <constraints>
-                                            <constraint firstAttribute="height" constant="80" id="jzK-w9-Bh3"/>
+                                            <constraint firstAttribute="height" constant="60" id="jzK-w9-Bh3"/>
                                         </constraints>
                                         <fontDescription key="fontDescription" type="system" pointSize="14"/>
                                         <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
                                     </textView>
                                     <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="Ssi-AV-huc">
-                                        <rect key="frame" x="0.0" y="300" width="1112" height="80"/>
+                                        <rect key="frame" x="0.0" y="200" width="1112" height="80"/>
                                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                         <constraints>
                                             <constraint firstAttribute="height" constant="80" id="o7N-bx-UUb"/>
@@ -76,7 +74,7 @@
                                     </textView>
                                 </subviews>
                                 <constraints>
-                                    <constraint firstAttribute="height" constant="380" id="4AE-aY-Zyy"/>
+                                    <constraint firstAttribute="height" constant="280" id="4AE-aY-Zyy"/>
                                     <constraint firstAttribute="trailing" secondItem="Ssi-AV-huc" secondAttribute="trailing" id="4lL-vb-Jqy"/>
                                     <constraint firstItem="3N6-M5-LZN" firstAttribute="leading" secondItem="a7f-iT-grd" secondAttribute="leading" id="5m7-ff-wCx"/>
                                     <constraint firstItem="hoE-3E-OYq" firstAttribute="leading" secondItem="a7f-iT-grd" secondAttribute="leading" id="OXQ-2q-Orm"/>
@@ -119,7 +117,7 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="CEy-Cv-SGf" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="140" y="122.78860569715144"/>
+            <point key="canvasLocation" x="139.74820143884892" y="122.30215827338131"/>
         </scene>
     </scenes>
 </document>

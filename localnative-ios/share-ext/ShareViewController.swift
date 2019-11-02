@@ -82,13 +82,14 @@ class ShareViewController: UIViewController {
         }
 
     }
-    
+
     override func viewDidLoad() {
+        // super.viewDidLoad()
         titleText.placeholder = "title"
         urlText.placeholder = "url"
         tagsText.placeholder = "type to add tags, enter to save, comma or space as tag seperator"
         descriptionText.placeholder = "description"
-        tagsText.becomeFirstResponder()
+        // tagsText.becomeFirstResponder()
         // https://hackernoon.com/how-to-build-an-ios-share-extension-in-swift-4a2019935b2e
         let extensionItem = extensionContext?.inputItems.first as! NSExtensionItem
         let itemProvider = extensionItem.attachments?.first as! NSItemProvider
