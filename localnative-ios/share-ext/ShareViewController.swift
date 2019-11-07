@@ -87,7 +87,7 @@ class ShareViewController: UIViewController {
         // super.viewDidLoad()
         titleText.placeholder = "title"
         urlText.placeholder = "url"
-        tagsText.placeholder = "type to add tags, enter to save, comma or space as tag seperator"
+        tagsText.placeholder = "type to add tags, comma or space as tag seperator"
         descriptionText.placeholder = "description"
         // tagsText.becomeFirstResponder()
         // https://hackernoon.com/how-to-build-an-ios-share-extension-in-swift-4a2019935b2e
