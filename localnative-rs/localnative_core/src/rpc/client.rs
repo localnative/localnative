@@ -93,9 +93,9 @@ pub fn sync(addr: &str) -> Result<String, String> {
         .unwrap_or_else(|e| panic!(r#"server_addr {} invalid: {}"#, addr, e));
     let mut rt = Runtime::new().unwrap();
     rt.block_on(async {
-        run_sync_to_server(&server_addr);
+        run_sync_to_server(&server_addr).await;
         eprintln!("sync to server done");
-        run_sync_from_server(&server_addr);
+        run_sync_from_server(&server_addr).await;
         eprintln!("sync from server done");
     });
     Ok("sync ok".to_string())
