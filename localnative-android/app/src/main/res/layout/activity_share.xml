@@ -72,9 +72,9 @@
             android:enabled="true"
             android:focusable="true"
             android:longClickable="true"
-            android:textIsSelectable="true"
-            android:scrollbars = "vertical"
-            android:text="url response" />
+            android:scrollbars="vertical"
+            android:text="fetching title ..."
+            android:textIsSelectable="true" />
 
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

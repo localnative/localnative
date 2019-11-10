@@ -89,15 +89,16 @@ class ShareActivity : AppCompatActivity(), Permission.OnPermissonGrantedListenr 
             val stringRequest = StringRequest(Request.Method.GET, url,
                     Response.Listener<String> { response ->
                         val r =  response.trim()
-                        textView.text = r.substring(0, minOf(50000, r.length))
+                        //textView.text = r.substring(0, minOf(50000, r.length))
                         val re = Regex("""<(?i)(Title)>(.*?)<\\?/(?i)(title)>""")
                         re.find(r)?.let{
                             val (_, t, _)=it.destructured
                             val title =  t.trim()
                             titleText.setText(title.substring(0, minOf(500,title.length)))
+                            textView.text = "title fetched."
                         }
                     },
-                    Response.ErrorListener { textView.text = "url response error!" })
+                    Response.ErrorListener { textView.text = "can not fetch title :-( but you can still type your own title" })
 
             queue.add(stringRequest)
         }
