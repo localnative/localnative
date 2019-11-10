@@ -110,8 +110,9 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener, NoteLi
                                     + result.contents
                                     + "\""
                                     + "}")
-                            Log.d("doSearchCmd", cmd)
+                            Log.d("doClientSyncCmd", cmd)
                             val s = RustBridge.run(cmd)
+                            Log.d("doClientSyncCmdResp", s)
                         }
                         .setNegativeButton(R.string.cancel) { dialog, id ->
                             // User cancelled the dialog
