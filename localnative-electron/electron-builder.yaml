@@ -1,7 +1,7 @@
 directories:
   output: release
 appId: app.localnative.mac
-productName: 'Local Native'
+productName: 'LocalNative'
 files:
   - src/
 linux:

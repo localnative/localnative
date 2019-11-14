@@ -19,7 +19,7 @@ electron-builder .
 
 DIR="../../localnative-release/v$1/gnu-linux/"
 mkdir -p $DIR
-FILE="Local Native $1.AppImage"
+FILE="LocalNative-$1.AppImage"
 cp "release/$FILE" $DIR/
 cd $DIR
 sha256sum "$FILE" > "$FILE.sha256"

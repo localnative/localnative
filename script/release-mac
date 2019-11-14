@@ -19,7 +19,7 @@ electron-builder .
 
 DIR="../../localnative-release/v$1/mac/"
 mkdir -p $DIR
-FILE="Local Native-$1.dmg"
+FILE="LocalNative-$1.dmg"
 cp "release/$FILE" $DIR/
 cd $DIR
 shasum -a 256 "$FILE" > "$FILE.sha256"
