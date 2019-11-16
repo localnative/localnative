@@ -10,7 +10,7 @@ script/release-web-ext-host $1
 echo "release electron version" $1
 
 cd localnative-electron
-rm -f package-lock.json
+# rm -f package-lock.json
 rm -rf node_modules
 npm i
 npm run build
@@ -19,7 +19,7 @@ electron-builder .
 
 DIR="../../localnative-release/v$1/gnu-linux/"
 mkdir -p $DIR
-FILE="LocalNative-$1.AppImage"
+FILE="Local Native-$1.AppImage"
 cp "release/$FILE" $DIR/
 cd $DIR
 sha256sum "$FILE" > "$FILE.sha256"
