@@ -1,7 +1,7 @@
 directories:
   output: release
 appId: app.localnative.mac
-productName: 'LocalNative'
+productName: 'Local Native'
 files:
   - src/
 linux:
@@ -15,14 +15,16 @@ linux:
 mac:
   category: public.app-category.productivity
   entitlements: build/entitlements.mac.plist
+  darkModeSupport: false
   icon: resources/app.icns
   target:
-    - dmg
+    # - dmg
     - mas
 mas:
   type: distribution
   category: public.app-category.productivity
   entitlements: build/entitlements.mas.plist
+  darkModeSupport: false
   icon: resources/app.icns
   provisioningProfile: embedded.provisionprofile
   binaries: ["node_modules/localnative-neon/native/index.node"]
