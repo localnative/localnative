@@ -18,7 +18,7 @@ mac:
   darkModeSupport: false
   icon: resources/app.icns
   target:
-    # - dmg
+    - dmg
     - mas
 mas:
   type: distribution
