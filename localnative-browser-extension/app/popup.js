@@ -21,7 +21,7 @@ let offset = 0;
 let count = 0;
 
 function requestMessage(text) {
-  document.getElementById('response-text').innerHTML = '<< running or failed :-( run <a href="https://localnative.app" target="_blank">desktop app</a> to finish setup browser extension! run ssb-server for ssb sync :-)';
+  document.getElementById('response-text').innerHTML = '<< running or failed :-( run <a href="https://localnative.app" target="_blank">desktop app</a> to finish setup browser extension!';
   document.getElementById('request-text').innerHTML = Sanitizer.escapeHTML`${text}`;
 }
 
@@ -277,4 +277,3 @@ function cmd(message){
   port.postMessage(message);
   requestMessage(">> " + JSON.stringify(message).substring(0,180) + " ...");
 }
-
