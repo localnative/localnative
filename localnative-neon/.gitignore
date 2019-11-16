@@ -1,10 +1,8 @@
 localnative-nodejs*
 localnative-web-ext-host*
-package-lock.json
 native/target
 native/index.node
 native/artifacts.json
-native/Cargo.lock
 **/*~
 **/node_modules
 **/.DS_Store
