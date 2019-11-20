@@ -23,8 +23,6 @@
 //
 
 import UIKit
-let ln = RustLocalNative()
-
 class ViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UISearchBarDelegate, UIToolbarDelegate {
     @IBOutlet weak var syncButton: UIButton!
     @IBOutlet weak var searchInput: UISearchBar!
@@ -32,6 +30,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     @IBOutlet weak var prevButton: UIBarButtonItem!
     @IBOutlet weak var nextButton: UIBarButtonItem!
     @IBOutlet weak var paginationButton: UIBarButtonItem!
+    let ln = RustLocalNative()
     var notes : NSArray = []
     
     @IBAction func syncButtonTownDown(_ sender: Any) {
@@ -61,7 +60,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         let alert = UIAlertController(title: "Do you really want to delete this item?", message: "", preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "Delete", style: UIAlertAction.Style.destructive, handler: {
             action in
-            ln.run(json_input:"""
+            self.ln.run(json_input:"""
                 {"action":"delete","rowid":\(sender.tag),"query":"\(AppState.getQuery())","limit":10,"offset":\(AppState.getOffset())}
                 """
             )
@@ -73,7 +72,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     
     @objc func qrCodeButtonClicked(sender : UIButton){
         let vc = self.storyboard?.instantiateViewController(withIdentifier: "qrCode")
-        self.present(vc as! UIViewController, animated: true, completion: nil)
+        self.present(vc!, animated: true, completion: nil)
         let note = notes[sender.tag] as! [String:Any]
         (vc as! QRCodeViewController).createQRFromString(note["url"] as! String)
     }

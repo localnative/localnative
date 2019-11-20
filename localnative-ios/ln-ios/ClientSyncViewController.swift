@@ -29,6 +29,7 @@ import UIKit
 class ClientSyncViewController : UIViewController, AVCaptureMetadataOutputObjectsDelegate{
     var captureSession: AVCaptureSession!
     var previewLayer: AVCaptureVideoPreviewLayer!
+    let ln = RustLocalNative()
 
     @IBOutlet weak var cancelButton: UIBarButtonItem!
     @IBOutlet weak var scanButton: UIBarButtonItem!

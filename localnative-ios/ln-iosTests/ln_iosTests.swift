@@ -23,7 +23,7 @@
 //
 
 import XCTest
-@testable import ln_ios
+@testable import localnative_ios
 
 class ln_iosTests: XCTestCase {
     
