@@ -40,4 +40,4 @@ name = "localnative_core"
 # crate-type = ["cdylib"]
 # ios works as below
 #crate-type = ["staticlib","lib","dylib"]
-crate-type = ["staticlib"]
+#crate-type = ["staticlib"]
