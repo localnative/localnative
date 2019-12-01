@@ -1,11 +1,9 @@
 #[macro_use]
 extern crate neon;
 extern crate localnative_core;
-extern crate localnative_ssb;
 use localnative_core::exe::run as ln_run;
 use localnative_core::serde_json;
 use localnative_core::Cmd;
-use localnative_ssb as ssb;
 
 use neon::prelude::*;
 
@@ -15,7 +13,7 @@ fn run(mut cx: FunctionContext) -> JsResult<JsString> {
     if let Ok(cmd) = serde_json::from_str::<Cmd>(&text) {
         match cmd.action.as_ref() {
             "ssb-sync" => {
-                ssb::run_sync();
+                // ssb::run_sync();
                 return Ok(cx.string(r#"{"run_sync": "done"}"#));
             }
             _ => {

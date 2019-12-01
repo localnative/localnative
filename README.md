@@ -26,14 +26,12 @@ localnative-ios: ios app
 
 localnative-neon: nodejs to rust bridge, used by localnative-electron
 
-localnative-nodejs: node.js executable called by rust code, used to be ssb related, containing deprecated code
-
 localnative-rs: rust code, to build `localnative-web-ext-host` web extension host binary, and `localnative_core`, the core native module
 
 localnative-sql: sql snippet
 
 # TODO
-[todo list](https://localnative.app/todo.html)
+[todo list](https://localnative.app/docs/todo.html)
 
 # Developer Setup
 [here](https://localnative.app/developer-setup.html)

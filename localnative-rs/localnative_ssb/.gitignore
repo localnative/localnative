@@ -1,5 +1,0 @@
-localnative-test.sqlite3
-
-Cargo.lock
-/target
-**/*.rs.bk

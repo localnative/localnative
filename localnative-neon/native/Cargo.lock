@@ -479,7 +479,6 @@ name = "localnative-neon"
 version = "0.4.1"
 dependencies = [
  "localnative_core 0.4.1",
- "localnative_ssb 0.4.1",
  "neon 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "neon-build 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -504,15 +503,6 @@ dependencies = [
  "tarpc-bincode-transport 0.7.0",
  "time 0.1.42 (registry+https://github.com/rust-lang/crates.io-index)",
  "tokio 0.2.0-alpha.6 (registry+https://github.com/rust-lang/crates.io-index)",
- "uuid 0.7.4 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "localnative_ssb"
-version = "0.4.1"
-dependencies = [
- "localnative_core 0.4.1",
- "serde_json 1.0.41 (registry+https://github.com/rust-lang/crates.io-index)",
  "uuid 0.7.4 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
