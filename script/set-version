@@ -9,12 +9,7 @@ echo "set version to" $1
 
 # rs
 sed -i "6s/.*/version = \"$1\"/" localnative-rs/localnative_core/Cargo.toml
-
-sed -i "6s/.*/version = \"$1\"/" localnative-rs/localnative_ssb/Cargo.toml
-
 sed -i "5s/.*/version = \"$1\"/" localnative-rs/localnative_cli/Cargo.toml
-
-sed -i "33s/.*/        \"$1\"/" localnative-rs/localnative_ssb/src/lib.rs
 
 # electron
 sed -i "3s/.*/  \"version\": \"$1\",/" localnative-electron/package.json
@@ -30,6 +25,3 @@ sed -i "24s/.*/version = \"$1\"/" localnative-neon/native/Cargo.toml
 # web-ext
 sed -i "60s/.*/v$1/" localnative-browser-extension/app/popup.html
 sed -i "3s/.*/  \"version\": \"$1\",/" localnative-browser-extension/app/manifest.json
-
-# nodejs
-sed -i "3s/.*/  \"version\": \"$1\",/" localnative-nodejs/package.json
