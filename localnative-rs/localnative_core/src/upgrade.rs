@@ -28,11 +28,14 @@ mod to_0_4_0;
 mod utils;
 use crate::OneString;
 
-fn set_meta_version(conn: &Connection, version: &str){
-    conn.execute("
+fn set_meta_version(conn: &Connection, version: &str) {
+    conn.execute(
+        "
         UPDATE meta SET meta_value = ?1
         WHERE meta_key = 'version';",
-    &[version],).unwrap();
+        &[version],
+    )
+    .unwrap();
 }
 
 pub fn upgrade(conn: &Connection) -> Result<&str, &str> {
