@@ -21,7 +21,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
         // Create the SwiftUI view that provides the window contents.
         
-        let contentView = ContentView()//.environmentObject(AppState.getEnv())
+        let contentView = ContentView().environmentObject(AppState.getEnv())
         
         // Use a UIHostingController as window root view controller.
         
@@ -32,7 +32,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             window.makeKeyAndVisible()
         }
         
-        //AppState.search(input: "", offset: 0)
+        AppState.search(input: "", offset: 0)
 
     }
 

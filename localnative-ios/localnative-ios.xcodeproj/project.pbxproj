@@ -30,6 +30,7 @@
 		3CAA968D22F7BE9700503D94 /* ClientSyncViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CAA968C22F7BE9700503D94 /* ClientSyncViewController.swift */; };
 		3CABE33A2443F52B004BEB8F /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CABE3392443F52B004BEB8F /* SceneDelegate.swift */; };
 		3CABE3412443FB1F004BEB8F /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CABE3402443FB1F004BEB8F /* ContentView.swift */; };
+		3CABE3432443FE86004BEB8F /* NoteRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CABE3422443FE86004BEB8F /* NoteRowView.swift */; };
 		3CD0459A214F4A38005E3D05 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CD04599214F4A38005E3D05 /* ShareViewController.swift */; };
 		3CD0459D214F4A38005E3D05 /* MainInterface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3CD0459B214F4A38005E3D05 /* MainInterface.storyboard */; };
 		3CD045A1214F4A38005E3D05 /* share-ext.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 3CD04597214F4A38005E3D05 /* share-ext.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -104,6 +105,7 @@
 		3CAA968C22F7BE9700503D94 /* ClientSyncViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientSyncViewController.swift; sourceTree = "<group>"; };
 		3CABE3392443F52B004BEB8F /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		3CABE3402443FB1F004BEB8F /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		3CABE3422443FE86004BEB8F /* NoteRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteRowView.swift; sourceTree = "<group>"; };
 		3CD04597214F4A38005E3D05 /* share-ext.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "share-ext.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3CD04599214F4A38005E3D05 /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
 		3CD0459C214F4A38005E3D05 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/MainInterface.storyboard; sourceTree = "<group>"; };
@@ -218,6 +220,7 @@
 				3C6A5F3B214F40BC008C36F9 /* Info.plist */,
 				3CABE3392443F52B004BEB8F /* SceneDelegate.swift */,
 				3CABE3402443FB1F004BEB8F /* ContentView.swift */,
+				3CABE3422443FE86004BEB8F /* NoteRowView.swift */,
 			);
 			path = "ln-ios";
 			sourceTree = "<group>";
@@ -562,6 +565,7 @@
 				3C6A5F32214F40BA008C36F9 /* ViewController.swift in Sources */,
 				3CABE3412443FB1F004BEB8F /* ContentView.swift in Sources */,
 				3C6A5F30214F40BA008C36F9 /* AppDelegate.swift in Sources */,
+				3CABE3432443FE86004BEB8F /* NoteRowView.swift in Sources */,
 				3C0891792179799000A333DE /* NoteTableViewCell.swift in Sources */,
 				3CABE33A2443F52B004BEB8F /* SceneDelegate.swift in Sources */,
 			);
