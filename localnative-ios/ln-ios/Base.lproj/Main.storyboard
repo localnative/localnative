@@ -131,7 +131,7 @@
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
-                <searchDisplayController id="B5L-zc-T4m"/>
+<!--                <searchDisplayController id="B5L-zc-T4m"/>-->
             </objects>
             <point key="canvasLocation" x="134.78260869565219" y="89.673913043478265"/>
         </scene>
