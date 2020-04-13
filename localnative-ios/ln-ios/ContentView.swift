@@ -21,30 +21,30 @@ struct ContentView: View {
                     NoteRowView(note: note)
 
                 }.navigationBarTitle(Text("Local Native"))
-                Button(action:{
-                    let ln = RustLocalNative()
-                    let txt = "txt"
-                    let tags = "tags"
-                    let resp = ln.run(json_input:"""
-                        {"action":"insert",
-                        "title":"\(txt)",
-                        "url": "https://localnative.app",
-                        "tags":"\(tags)",
-
-                        "description": "desc",
-                        "comments": "",
-                        "annotations": "",
-                        
-                        "limit": 10,
-                        "offset": 0,
-                        "is_public": false
-                        }
-                        """
-                    )
-                    print(resp)
-                }){
-                    Text("New Note")
-                }
+//                Button(action:{
+//                    let ln = RustLocalNative()
+//                    let txt = "txt"
+//                    let tags = "tags"
+//                    let resp = ln.run(json_input:"""
+//                        {"action":"insert",
+//                        "title":"\(txt)",
+//                        "url": "https://localnative.app",
+//                        "tags":"\(tags)",
+//
+//                        "description": "desc",
+//                        "comments": "",
+//                        "annotations": "",
+//                        
+//                        "limit": 10,
+//                        "offset": 0,
+//                        "is_public": false
+//                        }
+//                        """
+//                    )
+//                    print(resp)
+//                }){
+//                    Text("New Note")
+//                }
             }
         }
     }
