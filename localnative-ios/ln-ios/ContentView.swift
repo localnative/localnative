@@ -16,35 +16,31 @@ struct ContentView: View {
         NavigationView {
             VStack {
                 SearchBar(text: $searchText, placeholder: "type to search")
+                HStack{
+                    Button(action:{
+                        let offset = AppState.decOffset()
+                        AppState.search(input: AppState.getQuery(), offset: offset)
+                    }){
+                        Text("Prev")
+                    }
+                    Text(env.paginationText)
+                    Button(action:{
+                        let offset = AppState.incOffset()
+                        AppState.search(input: AppState.getQuery(), offset: offset)
+                    }){
+                        Text("Next")
+                    }
+                }
                 List (env.notes){
                     note in
                     NoteRowView(note: note)
 
                 }.navigationBarTitle(Text("Local Native"))
-//                Button(action:{
-//                    let ln = RustLocalNative()
-//                    let txt = "txt"
-//                    let tags = "tags"
-//                    let resp = ln.run(json_input:"""
-//                        {"action":"insert",
-//                        "title":"\(txt)",
-//                        "url": "https://localnative.app",
-//                        "tags":"\(tags)",
-//
-//                        "description": "desc",
-//                        "comments": "",
-//                        "annotations": "",
-//                        
-//                        "limit": 10,
-//                        "offset": 0,
-//                        "is_public": false
-//                        }
-//                        """
-//                    )
-//                    print(resp)
-//                }){
-//                    Text("New Note")
-//                }
+                Button(action:{
+                    print("sync")
+                }){
+                    Text("Sync")
+                }
             }
         }
     }
