@@ -11,7 +11,19 @@ import SwiftUI
 struct NoteRowView: View {
     var note: Note
     var body: some View {
-        Text("\(note.id) \(note.title) \(note.url) \(note.tags) \(note.created_at)")
+        VStack(alignment: .leading){
+            HStack{
+                Button(action:{
+                    print("X")
+                }){
+                    Text("X")
+                }
+                Text("\(note.tags)")
+            }
+            Text("\(note.created_at) rowid \(note.id)")
+            Text(note.title)
+            Text(note.url)
+        }
     }
 }
 

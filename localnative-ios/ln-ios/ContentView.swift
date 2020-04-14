@@ -15,6 +15,7 @@ struct ContentView: View {
     var body: some View {
         NavigationView {
             VStack {
+                Text("Own your bookmarks on your device.")
                 SearchBar(text: $searchText, placeholder: "type to search")
                 HStack{
                     Button(action:{
