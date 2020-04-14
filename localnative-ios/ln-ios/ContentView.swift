@@ -15,33 +15,38 @@ struct ContentView: View {
     var body: some View {
         NavigationView {
             VStack {
-                Text("Own your bookmarks on your device.")
+                HStack{
+                    Text("   Own your bookmarks on your device.")
+                    Spacer()
+                    Button(action:{
+                        print("sync")
+                    }){
+                        Text("Sync   ")
+                    }
+                }
                 SearchBar(text: $searchText, placeholder: "type to search")
                 HStack{
                     Button(action:{
                         let offset = AppState.decOffset()
                         AppState.search(input: AppState.getQuery(), offset: offset)
                     }){
-                        Text("Prev")
-                    }
+                        Text("   Prev")
+                    }//.padding()
+                    Spacer()
                     Text(env.paginationText)
+                    Spacer()
                     Button(action:{
                         let offset = AppState.incOffset()
                         AppState.search(input: AppState.getQuery(), offset: offset)
                     }){
-                        Text("Next")
-                    }
+                        Text("Next   ")
+                    }//.padding()
                 }
                 List (env.notes){
                     note in
                     NoteRowView(note: note)
 
                 }.navigationBarTitle(Text("Local Native"))
-                Button(action:{
-                    print("sync")
-                }){
-                    Text("Sync")
-                }
             }
         }
     }
