@@ -45,7 +45,6 @@ struct ContentView: View {
                 List (env.notes){
                     note in
                     NoteRowView(note: note)
-
                 }.navigationBarTitle(Text("Local Native"))
             }
         }

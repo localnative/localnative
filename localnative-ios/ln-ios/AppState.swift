@@ -99,6 +99,8 @@ struct Note: Codable, Identifiable {
     var title: String
     var url: String
     var tags: String
+    var description: String
+    var annotations: String
     var created_at: String
     private enum CodingKeys: String, CodingKey {
         case id = "rowid"
@@ -106,6 +108,8 @@ struct Note: Codable, Identifiable {
         case title
         case url
         case tags
+        case description
+        case annotations
         case created_at
     }
 }
