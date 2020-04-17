@@ -10,12 +10,28 @@ import SwiftUI
 
 struct NoteRowView: View {
     var note: Note
+    @State private var showingAlert = false
     var body: some View {
         VStack(alignment: .leading){
             HStack{
-                Text("X").onTapGesture {
-                        print("X")
-                }.foregroundColor(.red)
+                Button(action:{
+                    self.showingAlert = true
+                }){
+                    Text("X")
+                }.alert(isPresented: $showingAlert) {
+                    Alert(
+                        title: Text("Do you really want to delete this item \(note.id)?"),
+                        message: Text("There is no undo"),
+                        primaryButton: .destructive(Text("Delete")){
+                            AppState.ln.run(json_input:"""
+                                {"action":"delete","rowid":\(self.note.id),"query":"\(AppState.getQuery())","limit":10,"offset":\(AppState.getOffset())}
+                                """
+                            )
+                            AppState.search(input: AppState.getQuery(), offset: AppState.getOffset())
+                        },
+                        secondaryButton: .cancel()
+                    )
+                }.foregroundColor(.red).buttonStyle(BorderlessButtonStyle())
                 ForEach(note.tags.split(separator: ","), id:\.self){
                     tag in
                     Text(tag).onTapGesture {
