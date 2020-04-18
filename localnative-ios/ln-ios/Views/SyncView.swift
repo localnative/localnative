@@ -39,17 +39,21 @@ struct SyncView: View {
             Text("Sync status:")
             Text(syncStatus)
             
-            CodeScannerView(codeTypes: [.qr], simulatedData: "0.0.0.0:2345") { result in
-                switch result {
-                case .success(let code):
-                    print("Found code: \(code)")
-                    self.scanResult = code
-                    self.foundResult = true
-                case .failure(let error):
-                    self.foundResult = false
-                    print(error.localizedDescription)
+            if !foundResult {
+                CodeScannerView(codeTypes: [.qr], simulatedData: "0.0.0.0:2345") { result in
+                    switch result {
+                    case .success(let code):
+                        print("Found code: \(code)")
+                        self.scanResult = code
+                        self.foundResult = true
+                    case .failure(let error):
+                        self.foundResult = false
+                        print(error.localizedDescription)
+                    }
                 }
             }
+            Spacer()
+
         }.padding()
     }
 }
