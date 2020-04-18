@@ -13,20 +13,18 @@ struct ContentView: View {
     @EnvironmentObject var env : Env
     @State private var showingSync = false
     var body: some View {
-        NavigationView {
             VStack {
                 HStack{
-                    Text("   Own your bookmarks on your device.")
-                    Spacer()
+                    Text("   LN")
+                    SearchBar(text: $searchText, placeholder: "type to search")
                     Button(action:{
                         self.showingSync.toggle()
                     }){
                         Text("Sync   ")
                     }.sheet(isPresented: $showingSync){
-                        SyncView()
+                     SyncView()
                     }
                 }
-                SearchBar(text: $searchText, placeholder: "type to search")
                 HStack{
                     Button(action:{
                         let offset = AppState.decOffset()
@@ -47,9 +45,10 @@ struct ContentView: View {
                 List (env.notes){
                     note in
                     NoteRowView(note: note, query: self.$searchText)
-                }.navigationBarTitle(Text("Local Native"))
+                }
+                Text("Own your bookmarks on your device.")
             }
-        }
+        
     }
 }
 

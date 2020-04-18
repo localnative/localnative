@@ -23,7 +23,7 @@ struct NoteRowView: View {
                     Text("X")
                 }.alert(isPresented: $showingAlert) {
                     Alert(
-                        title: Text("Do you really want to delete this item \(note.id)?"),
+                        title: Text("Do you really want to delete this item \(String(note.uuid4.prefix(5))).. \(String(note.id))?"),
                         message: Text("There is no undo"),
                         primaryButton: .destructive(Text("Delete")){
                             AppState.ln.run(json_input:"""

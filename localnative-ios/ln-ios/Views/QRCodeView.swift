@@ -26,7 +26,7 @@ struct QRCodeView: View {
             Image(uiImage: image).interpolation(.none)
             .resizable()
             .aspectRatio(contentMode: .fit)
-            //Spacer()
+            Spacer()
         }.padding()
     }
     func makeText(note: Note) -> String{
