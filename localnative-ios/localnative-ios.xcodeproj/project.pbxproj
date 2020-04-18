@@ -10,7 +10,6 @@
 		008F18EBC0088A26F9BB04E9 /* Pods_share_ext.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CDC691A4062A9BEDF25BC7DE /* Pods_share_ext.framework */; };
 		043C48A02BF3545E960D022D /* Pods_localnative_ios.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C854A0CED883ADC4AEAB3E0D /* Pods_localnative_ios.framework */; };
 		04BCEDA22235E3970098122F /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04BCEDA12235E3970098122F /* AppState.swift */; };
-		3C0891792179799000A333DE /* NoteTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C0891782179799000A333DE /* NoteTableViewCell.swift */; };
 		3C11512422C9C06300590EDB /* liblocalnative_core.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C11512222C9BD3E00590EDB /* liblocalnative_core.a */; };
 		3C11512522C9C0D800590EDB /* liblocalnative_core.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C11512222C9BD3E00590EDB /* liblocalnative_core.a */; };
 		3C25951D21A1C187005BB947 /* libresolv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C3B492A216EF91D000B6349 /* libresolv.tbd */; };
@@ -19,15 +18,11 @@
 		3C25952A21A1CA5F005BB947 /* RustLocalNative.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C25952721A1CA5F005BB947 /* RustLocalNative.swift */; };
 		3C25952B21A1CA5F005BB947 /* RustLocalNative.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C25952721A1CA5F005BB947 /* RustLocalNative.swift */; };
 		3C3B492B216EF91D000B6349 /* libresolv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C3B492A216EF91D000B6349 /* libresolv.tbd */; };
-		3C5D1448225011610095FA8C /* QRCodeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C5D1447225011610095FA8C /* QRCodeViewController.swift */; };
 		3C6A5F30214F40BA008C36F9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C6A5F2F214F40BA008C36F9 /* AppDelegate.swift */; };
-		3C6A5F32214F40BA008C36F9 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C6A5F31214F40BA008C36F9 /* ViewController.swift */; };
-		3C6A5F35214F40BB008C36F9 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3C6A5F33214F40BB008C36F9 /* Main.storyboard */; };
 		3C6A5F37214F40BC008C36F9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3C6A5F36214F40BC008C36F9 /* Assets.xcassets */; };
 		3C6A5F3A214F40BC008C36F9 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3C6A5F38214F40BC008C36F9 /* LaunchScreen.storyboard */; };
 		3C6A5F45214F40BC008C36F9 /* ln_iosTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C6A5F44214F40BC008C36F9 /* ln_iosTests.swift */; };
 		3C6A5F50214F40BC008C36F9 /* ln_iosUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C6A5F4F214F40BC008C36F9 /* ln_iosUITests.swift */; };
-		3CAA968D22F7BE9700503D94 /* ClientSyncViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CAA968C22F7BE9700503D94 /* ClientSyncViewController.swift */; };
 		3CABE33A2443F52B004BEB8F /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CABE3392443F52B004BEB8F /* SceneDelegate.swift */; };
 		3CABE3412443FB1F004BEB8F /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CABE3402443FB1F004BEB8F /* ContentView.swift */; };
 		3CABE3432443FE86004BEB8F /* NoteRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CABE3422443FE86004BEB8F /* NoteRowView.swift */; };
@@ -85,17 +80,13 @@
 		1EA952423F4362019D7EC1F6 /* Pods_localnative_iosTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_localnative_iosTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		2902ADB65AA7B32ED3111FC7 /* Pods_localnative_iosUITests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_localnative_iosUITests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		3227086ED156D0C32559C0FA /* Pods-localnative-ios.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-localnative-ios.debug.xcconfig"; path = "Pods/Target Support Files/Pods-localnative-ios/Pods-localnative-ios.debug.xcconfig"; sourceTree = "<group>"; };
-		3C0891782179799000A333DE /* NoteTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteTableViewCell.swift; sourceTree = "<group>"; };
 		3C11512222C9BD3E00590EDB /* liblocalnative_core.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = liblocalnative_core.a; path = "../../localnative-rs/target/universal/release/liblocalnative_core.a"; sourceTree = "<group>"; };
 		3C25952521A1C6D4005BB947 /* localnative-core.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "localnative-core.h"; path = "../localnative-rs/localnative_core/src/localnative-core.h"; sourceTree = "<group>"; };
 		3C25952721A1CA5F005BB947 /* RustLocalNative.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RustLocalNative.swift; sourceTree = SOURCE_ROOT; };
 		3C3B492A216EF91D000B6349 /* libresolv.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libresolv.tbd; path = usr/lib/libresolv.tbd; sourceTree = SDKROOT; };
 		3C3B492D216F00B4000B6349 /* LocalNative-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "LocalNative-Bridging-Header.h"; sourceTree = "<group>"; };
-		3C5D1447225011610095FA8C /* QRCodeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRCodeViewController.swift; sourceTree = "<group>"; };
 		3C6A5F2C214F40BA008C36F9 /* localnative-ios.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "localnative-ios.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3C6A5F2F214F40BA008C36F9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		3C6A5F31214F40BA008C36F9 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
-		3C6A5F34214F40BB008C36F9 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		3C6A5F36214F40BC008C36F9 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		3C6A5F39214F40BC008C36F9 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		3C6A5F3B214F40BC008C36F9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -105,7 +96,6 @@
 		3C6A5F4B214F40BC008C36F9 /* localnative-iosUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "localnative-iosUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3C6A5F4F214F40BC008C36F9 /* ln_iosUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ln_iosUITests.swift; sourceTree = "<group>"; };
 		3C6A5F51214F40BC008C36F9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		3CAA968C22F7BE9700503D94 /* ClientSyncViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientSyncViewController.swift; sourceTree = "<group>"; };
 		3CABE3392443F52B004BEB8F /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		3CABE3402443FB1F004BEB8F /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		3CABE3422443FE86004BEB8F /* NoteRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteRowView.swift; sourceTree = "<group>"; };
@@ -218,7 +208,6 @@
 				3CABE3392443F52B004BEB8F /* SceneDelegate.swift */,
 				3CE6CFDC244AA3AB00F09C7A /* Models */,
 				3CE6CFDD244AA3DB00F09C7A /* Views */,
-				3CE6CFDB244AA2F400F09C7A /* Legacy-0.4.0 */,
 				3C6A5F38214F40BC008C36F9 /* LaunchScreen.storyboard */,
 				3C6A5F3B214F40BC008C36F9 /* Info.plist */,
 				3C6A5F36214F40BC008C36F9 /* Assets.xcassets */,
@@ -254,18 +243,6 @@
 				3CFE7C2D2193B19C00AF0C26 /* GetURL.js */,
 			);
 			path = "share-ext";
-			sourceTree = "<group>";
-		};
-		3CE6CFDB244AA2F400F09C7A /* Legacy-0.4.0 */ = {
-			isa = PBXGroup;
-			children = (
-				3C6A5F31214F40BA008C36F9 /* ViewController.swift */,
-				3CAA968C22F7BE9700503D94 /* ClientSyncViewController.swift */,
-				3C5D1447225011610095FA8C /* QRCodeViewController.swift */,
-				3C6A5F33214F40BB008C36F9 /* Main.storyboard */,
-				3C0891782179799000A333DE /* NoteTableViewCell.swift */,
-			);
-			path = "Legacy-0.4.0";
 			sourceTree = "<group>";
 		};
 		3CE6CFDC244AA3AB00F09C7A /* Models */ = {
@@ -449,7 +426,6 @@
 			files = (
 				3C6A5F3A214F40BC008C36F9 /* LaunchScreen.storyboard in Resources */,
 				3C6A5F37214F40BC008C36F9 /* Assets.xcassets in Resources */,
-				3C6A5F35214F40BB008C36F9 /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -592,17 +568,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				3CE6CFE3244B41C800F09C7A /* SyncView.swift in Sources */,
-				3C5D1448225011610095FA8C /* QRCodeViewController.swift in Sources */,
 				3C25952821A1CA5F005BB947 /* RustLocalNative.swift in Sources */,
 				04BCEDA22235E3970098122F /* AppState.swift in Sources */,
 				3CE6CFDF244AA51D00F09C7A /* QRCodeView.swift in Sources */,
-				3CAA968D22F7BE9700503D94 /* ClientSyncViewController.swift in Sources */,
-				3C6A5F32214F40BA008C36F9 /* ViewController.swift in Sources */,
 				3CABE3412443FB1F004BEB8F /* ContentView.swift in Sources */,
 				3C6A5F30214F40BA008C36F9 /* AppDelegate.swift in Sources */,
 				3CABE3432443FE86004BEB8F /* NoteRowView.swift in Sources */,
 				3CE6CFE1244B3C1800F09C7A /* CodeScanner.swift in Sources */,
-				3C0891792179799000A333DE /* NoteTableViewCell.swift in Sources */,
 				3CABE33A2443F52B004BEB8F /* SceneDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -655,14 +627,6 @@
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
-		3C6A5F33214F40BB008C36F9 /* Main.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				3C6A5F34214F40BB008C36F9 /* Base */,
-			);
-			name = Main.storyboard;
-			sourceTree = "<group>";
-		};
 		3C6A5F38214F40BC008C36F9 /* LaunchScreen.storyboard */ = {
 			isa = PBXVariantGroup;
 			children = (
