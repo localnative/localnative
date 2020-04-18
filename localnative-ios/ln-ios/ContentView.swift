@@ -44,7 +44,7 @@ struct ContentView: View {
                 }
                 List (env.notes){
                     note in
-                    NoteRowView(note: note)
+                    NoteRowView(note: note, query: self.$searchText)
                 }.navigationBarTitle(Text("Local Native"))
             }
         }

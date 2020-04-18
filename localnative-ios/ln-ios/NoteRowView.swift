@@ -10,6 +10,7 @@ import SwiftUI
 
 struct NoteRowView: View {
     var note: Note
+    @Binding var query: String
     @State private var showingAlert = false
     var body: some View {
         VStack(alignment: .leading){
@@ -35,6 +36,7 @@ struct NoteRowView: View {
                 ForEach(note.tags.split(separator: ","), id:\.self){
                     tag in
                     Text(tag).onTapGesture {
+                        self.query = String(tag)
                         AppState.clearOffset()
                         AppState.search(input: String(tag), offset: 0)
                     }.foregroundColor(.blue)
@@ -62,7 +64,6 @@ struct NoteRowView: View {
 }
 
 struct NoteRowView_Previews: PreviewProvider {
-    @Binding var query: String
     static var previews: some View {
         NoteRowView(note: Note(
             id: 0,
@@ -73,6 +74,6 @@ struct NoteRowView_Previews: PreviewProvider {
             description: "description",
             annotations: "annotations",
             created_at: "2020-04-12"
-        ))
+        ), query: .constant("query"))
     }
 }
