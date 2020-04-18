@@ -208,19 +208,14 @@
 		3C6A5F2E214F40BA008C36F9 /* ln-ios */ = {
 			isa = PBXGroup;
 			children = (
-				04BCEDA12235E3970098122F /* AppState.swift */,
 				3C6A5F2F214F40BA008C36F9 /* AppDelegate.swift */,
-				3C6A5F31214F40BA008C36F9 /* ViewController.swift */,
-				3CAA968C22F7BE9700503D94 /* ClientSyncViewController.swift */,
-				3C5D1447225011610095FA8C /* QRCodeViewController.swift */,
-				3C6A5F33214F40BB008C36F9 /* Main.storyboard */,
-				3C0891782179799000A333DE /* NoteTableViewCell.swift */,
-				3C6A5F36214F40BC008C36F9 /* Assets.xcassets */,
+				3CABE3392443F52B004BEB8F /* SceneDelegate.swift */,
+				3CE6CFDC244AA3AB00F09C7A /* Models */,
+				3CE6CFDD244AA3DB00F09C7A /* Views */,
+				3CE6CFDB244AA2F400F09C7A /* Legacy-0.4.0 */,
 				3C6A5F38214F40BC008C36F9 /* LaunchScreen.storyboard */,
 				3C6A5F3B214F40BC008C36F9 /* Info.plist */,
-				3CABE3392443F52B004BEB8F /* SceneDelegate.swift */,
-				3CABE3402443FB1F004BEB8F /* ContentView.swift */,
-				3CABE3422443FE86004BEB8F /* NoteRowView.swift */,
+				3C6A5F36214F40BC008C36F9 /* Assets.xcassets */,
 			);
 			path = "ln-ios";
 			sourceTree = "<group>";
@@ -253,6 +248,35 @@
 				3CFE7C2D2193B19C00AF0C26 /* GetURL.js */,
 			);
 			path = "share-ext";
+			sourceTree = "<group>";
+		};
+		3CE6CFDB244AA2F400F09C7A /* Legacy-0.4.0 */ = {
+			isa = PBXGroup;
+			children = (
+				3C6A5F31214F40BA008C36F9 /* ViewController.swift */,
+				3CAA968C22F7BE9700503D94 /* ClientSyncViewController.swift */,
+				3C5D1447225011610095FA8C /* QRCodeViewController.swift */,
+				3C6A5F33214F40BB008C36F9 /* Main.storyboard */,
+				3C0891782179799000A333DE /* NoteTableViewCell.swift */,
+			);
+			path = "Legacy-0.4.0";
+			sourceTree = "<group>";
+		};
+		3CE6CFDC244AA3AB00F09C7A /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				04BCEDA12235E3970098122F /* AppState.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		3CE6CFDD244AA3DB00F09C7A /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				3CABE3402443FB1F004BEB8F /* ContentView.swift */,
+				3CABE3422443FE86004BEB8F /* NoteRowView.swift */,
+			);
+			path = Views;
 			sourceTree = "<group>";
 		};
 		672DB188772190EA214657EA /* Pods */ = {

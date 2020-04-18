@@ -22,6 +22,7 @@
 //  Created by Yi Wang on 3/30/19.
 //
 
+import SwiftUI
 import UIKit
 class QRCodeViewController : UIViewController{
     @IBOutlet weak var backButton: UIBarButtonItem!
