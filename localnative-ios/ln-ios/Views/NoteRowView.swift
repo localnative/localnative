@@ -13,7 +13,7 @@ struct NoteRowView: View {
     var note: Note
     @Binding var query: String
     @State private var showingAlert = false
-    @State var showingQRCode = false
+    @State private var showingQRCode = false
     var body: some View {
         VStack(alignment: .leading){
             HStack{

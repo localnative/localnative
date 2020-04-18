@@ -35,6 +35,8 @@
 		3CD0459D214F4A38005E3D05 /* MainInterface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3CD0459B214F4A38005E3D05 /* MainInterface.storyboard */; };
 		3CD045A1214F4A38005E3D05 /* share-ext.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 3CD04597214F4A38005E3D05 /* share-ext.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		3CE6CFDF244AA51D00F09C7A /* QRCodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CE6CFDE244AA51D00F09C7A /* QRCodeView.swift */; };
+		3CE6CFE1244B3C1800F09C7A /* CodeScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CE6CFE0244B3C1800F09C7A /* CodeScanner.swift */; };
+		3CE6CFE3244B41C800F09C7A /* SyncView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CE6CFE2244B41C800F09C7A /* SyncView.swift */; };
 		3CFE7C2E2193B19C00AF0C26 /* GetURL.js in Resources */ = {isa = PBXBuildFile; fileRef = 3CFE7C2D2193B19C00AF0C26 /* GetURL.js */; };
 		88F832D24F5194B3B3622523 /* Pods_localnative_iosUITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2902ADB65AA7B32ED3111FC7 /* Pods_localnative_iosUITests.framework */; };
 		B16D5515620C189EDCC8C505 /* Pods_localnative_iosTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1EA952423F4362019D7EC1F6 /* Pods_localnative_iosTests.framework */; };
@@ -112,6 +114,8 @@
 		3CD0459C214F4A38005E3D05 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/MainInterface.storyboard; sourceTree = "<group>"; };
 		3CD0459E214F4A38005E3D05 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		3CE6CFDE244AA51D00F09C7A /* QRCodeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRCodeView.swift; sourceTree = "<group>"; };
+		3CE6CFE0244B3C1800F09C7A /* CodeScanner.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CodeScanner.swift; sourceTree = "<group>"; };
+		3CE6CFE2244B41C800F09C7A /* SyncView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncView.swift; sourceTree = "<group>"; };
 		3CF3678221987E9F00D72FE3 /* share-ext.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "share-ext.entitlements"; sourceTree = "<group>"; };
 		3CF3678321987EB400D72FE3 /* localnative-ios.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "localnative-ios.entitlements"; sourceTree = "<group>"; };
 		3CFE7C2D2193B19C00AF0C26 /* GetURL.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = GetURL.js; sourceTree = "<group>"; };
@@ -278,6 +282,8 @@
 				3CABE3402443FB1F004BEB8F /* ContentView.swift */,
 				3CABE3422443FE86004BEB8F /* NoteRowView.swift */,
 				3CE6CFDE244AA51D00F09C7A /* QRCodeView.swift */,
+				3CE6CFE2244B41C800F09C7A /* SyncView.swift */,
+				3CE6CFE0244B3C1800F09C7A /* CodeScanner.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -585,6 +591,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3CE6CFE3244B41C800F09C7A /* SyncView.swift in Sources */,
 				3C5D1448225011610095FA8C /* QRCodeViewController.swift in Sources */,
 				3C25952821A1CA5F005BB947 /* RustLocalNative.swift in Sources */,
 				04BCEDA22235E3970098122F /* AppState.swift in Sources */,
@@ -594,6 +601,7 @@
 				3CABE3412443FB1F004BEB8F /* ContentView.swift in Sources */,
 				3C6A5F30214F40BA008C36F9 /* AppDelegate.swift in Sources */,
 				3CABE3432443FE86004BEB8F /* NoteRowView.swift in Sources */,
+				3CE6CFE1244B3C1800F09C7A /* CodeScanner.swift in Sources */,
 				3C0891792179799000A333DE /* NoteTableViewCell.swift in Sources */,
 				3CABE33A2443F52B004BEB8F /* SceneDelegate.swift in Sources */,
 			);

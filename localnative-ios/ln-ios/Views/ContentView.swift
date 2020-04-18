@@ -11,7 +11,7 @@ import SwiftUI
 struct ContentView: View {
     @State private var searchText : String = ""
     @EnvironmentObject var env : Env
-    
+    @State private var showingSync = false
     var body: some View {
         NavigationView {
             VStack {
@@ -19,9 +19,11 @@ struct ContentView: View {
                     Text("   Own your bookmarks on your device.")
                     Spacer()
                     Button(action:{
-                        print("sync")
+                        self.showingSync.toggle()
                     }){
                         Text("Sync   ")
+                    }.sheet(isPresented: $showingSync){
+                        SyncView()
                     }
                 }
                 SearchBar(text: $searchText, placeholder: "type to search")
