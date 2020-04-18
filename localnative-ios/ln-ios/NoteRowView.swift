@@ -33,6 +33,7 @@ struct NoteRowView: View {
                         secondaryButton: .cancel()
                     )
                 }.foregroundColor(.red).buttonStyle(BorderlessButtonStyle())
+                Spacer()
                 ForEach(note.tags.split(separator: ","), id:\.self){
                     tag in
                     Text(tag).onTapGesture {
@@ -41,6 +42,14 @@ struct NoteRowView: View {
                         AppState.search(input: String(tag), offset: 0)
                     }.foregroundColor(.blue)
                 }
+                Text("QR").onTapGesture {
+                    print("QR")
+                }.foregroundColor(.white).background(Color.gray)
+            }
+            HStack{
+                Text(note.created_at.prefix(19))
+                Spacer()
+                Text("\(String(note.uuid4.prefix(5))).. \(String(note.id))")
             }
             Text(makeText(note: note))
             Text(note.url).onTapGesture {
@@ -49,8 +58,7 @@ struct NoteRowView: View {
         }
     }
     func makeText(note: Note) -> String{
-        let t = "\(String(note.created_at.prefix(19))) \(String(note.uuid4.prefix(5))).. \(String(note.id))"
-        return t + newLineOrEmptyString(str: note.title)
+        return note.title
             + newLineOrEmptyString(str: note.description)
             + newLineOrEmptyString(str: note.annotations)
     }
