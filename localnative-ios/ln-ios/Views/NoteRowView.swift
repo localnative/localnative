@@ -12,6 +12,7 @@ struct NoteRowView: View {
     var note: Note
     @Binding var query: String
     @State private var showingAlert = false
+    @State var showingQRCode = false
     var body: some View {
         VStack(alignment: .leading){
             HStack{
@@ -43,8 +44,11 @@ struct NoteRowView: View {
                     }.foregroundColor(.blue)
                 }
                 Text("QR").onTapGesture {
-                    print("QR")
+                    self.showingQRCode.toggle()
                 }.foregroundColor(.white).background(Color.gray)
+                    .sheet(isPresented: $showingQRCode){
+                        QRCodeView(note: self.note)
+                }
             }
             HStack{
                 Text(note.created_at.prefix(19))
