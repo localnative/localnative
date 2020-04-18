@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import CoreImage.CIFilterBuiltins
 
 struct NoteRowView: View {
     var note: Note
@@ -45,10 +46,9 @@ struct NoteRowView: View {
                 }
                 Text("QR").onTapGesture {
                     self.showingQRCode.toggle()
+                }.sheet(isPresented: $showingQRCode){
+                    QRCodeView(note: self.note, image: self.generateQRCode(from: self.note.url))
                 }.foregroundColor(.white).background(Color.gray)
-                    .sheet(isPresented: $showingQRCode){
-                        QRCodeView(note: self.note)
-                }
             }
             HStack{
                 Text(note.created_at.prefix(19))
@@ -60,6 +60,20 @@ struct NoteRowView: View {
                 UIApplication.shared.open(URL(string: self.note.url)!)
             }.foregroundColor(.blue)
         }
+    }
+    let context = CIContext()
+    let filter = CIFilter.qrCodeGenerator()
+    func generateQRCode(from string: String) -> UIImage {
+        let data = Data(string.utf8)
+        filter.setValue(data, forKey: "inputMessage")
+
+        if let outputImage = filter.outputImage {
+            if let cgimg = context.createCGImage(outputImage, from: outputImage.extent) {
+                return UIImage(cgImage: cgimg)
+            }
+        }
+
+        return UIImage(systemName: "xmark.circle") ?? UIImage()
     }
     func makeText(note: Note) -> String{
         return note.title

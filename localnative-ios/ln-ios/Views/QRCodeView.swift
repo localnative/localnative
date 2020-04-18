@@ -10,6 +10,8 @@ import SwiftUI
 
 struct QRCodeView: View {
     var note: Note
+    var image: UIImage
+
     var body: some View {
         VStack(alignment: .leading){
             HStack{
@@ -21,6 +23,10 @@ struct QRCodeView: View {
             Text(note.url).onTapGesture {
                 UIApplication.shared.open(URL(string: self.note.url)!)
             }.foregroundColor(.blue)
+            Image(uiImage: image).interpolation(.none)
+            .resizable()
+            .aspectRatio(contentMode: .fit)
+            //Spacer()
         }.padding()
     }
     func makeText(note: Note) -> String{
@@ -48,6 +54,6 @@ struct QRCodeView_Previews: PreviewProvider {
             description: "description",
             annotations: "annotations",
             created_at: "2020-04-12"
-        ))
+        ), image: UIImage())
     }
 }
