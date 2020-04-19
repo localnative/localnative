@@ -15,7 +15,7 @@
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-#![feature(arbitrary_self_types, async_await, proc_macro_hygiene)]
+// #![feature(arbitrary_self_types, async_await, proc_macro_hygiene)]
 pub mod rpc;
 
 pub extern crate dirs;
