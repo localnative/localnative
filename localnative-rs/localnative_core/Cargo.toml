@@ -3,7 +3,7 @@ name = "localnative_core"
 description = "localnative core lib"
 homepage = "https://localnative.app"
 authors = ["Yi Wang"]
-version = "0.4.1"
+version = "0.4.2"
 license = "AGPL-3.0"
 edition = "2018"
 [dependencies.rusqlite]
@@ -39,4 +39,4 @@ name = "localnative_core"
 # android only need this
 # crate-type = ["cdylib"]
 # ios works as below
-crate-type = ["staticlib"]
+# crate-type = ["staticlib"]

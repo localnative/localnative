@@ -8,20 +8,20 @@ echo "set version to" $1
 
 
 # rs
-sed -i "6s/.*/version = \"$1\"/" localnative-rs/localnative_core/Cargo.toml
-sed -i "5s/.*/version = \"$1\"/" localnative-rs/localnative_cli/Cargo.toml
+gsed -i "6s/.*/version = \"$1\"/" localnative-rs/localnative_core/Cargo.toml
+gsed -i "5s/.*/version = \"$1\"/" localnative-rs/localnative_cli/Cargo.toml
 
 # electron
-sed -i "3s/.*/  \"version\": \"$1\",/" localnative-electron/package.json
-sed -i "18s/.*/const version = \"$1\"/" localnative-electron/src/main.js
+gsed -i "3s/.*/  \"version\": \"$1\",/" localnative-electron/package.json
+gsed -i "18s/.*/const version = \"$1\"/" localnative-electron/src/main.js
 
 # neon
-sed -i "3s/.*/  \"version\": \"$1\",/" localnative-neon/package.json
-sed -i "18s/.*/let version = '$1'/" localnative-neon/lib/index.js
-sed -i "3s/.*/version = \"$1\"/" localnative-neon/native/Cargo.toml
-sed -i "20s/.*/version = \"$1\"/" localnative-neon/native/Cargo.toml
-sed -i "24s/.*/version = \"$1\"/" localnative-neon/native/Cargo.toml
+gsed -i "3s/.*/  \"version\": \"$1\",/" localnative-neon/package.json
+gsed -i "18s/.*/let version = '$1'/" localnative-neon/lib/index.js
+gsed -i "3s/.*/version = \"$1\"/" localnative-neon/native/Cargo.toml
+gsed -i "20s/.*/version = \"$1\"/" localnative-neon/native/Cargo.toml
+gsed -i "24s/.*/version = \"$1\"/" localnative-neon/native/Cargo.toml
 
 # web-ext
-sed -i "60s/.*/v$1/" localnative-browser-extension/app/popup.html
-sed -i "3s/.*/  \"version\": \"$1\",/" localnative-browser-extension/app/manifest.json
+gsed -i "60s/.*/v$1/" localnative-browser-extension/app/popup.html
+gsed -i "3s/.*/  \"version\": \"$1\",/" localnative-browser-extension/app/manifest.json

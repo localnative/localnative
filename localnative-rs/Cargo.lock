@@ -491,15 +491,15 @@ dependencies = [
 
 [[package]]
 name = "localnative_cli"
-version = "0.4.1"
+version = "0.4.2"
 dependencies = [
  "clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "localnative_core 0.4.1",
+ "localnative_core 0.4.2",
 ]
 
 [[package]]
 name = "localnative_core"
-version = "0.4.1"
+version = "0.4.2"
 dependencies = [
  "base64 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "dirs 2.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
