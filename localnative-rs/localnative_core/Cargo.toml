@@ -37,6 +37,6 @@ tokio = "0.2.0-alpha.2"
 [lib]
 name = "localnative_core"
 # android only need this
-crate-type = ["cdylib"]
+# crate-type = ["cdylib"]
 # ios works as below
 # crate-type = ["staticlib"]
