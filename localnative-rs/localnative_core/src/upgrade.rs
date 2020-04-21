@@ -23,7 +23,7 @@ extern crate uuid;
 use self::semver::Version;
 use rusqlite::{Connection, NO_PARAMS};
 // version to upgrade to
-const VERSION: &'static str = "0.4.1";
+const VERSION: &'static str = "0.4.2";
 mod to_0_4_0;
 mod utils;
 use crate::OneString;
@@ -48,6 +48,9 @@ pub fn upgrade(conn: &Connection) -> Result<&str, &str> {
         }
         if Version::parse(&get_meta_version(conn)) == Version::parse("0.4.0") {
             to_0_4_0::migrate_note(conn).unwrap();
+            set_meta_version(conn, "0.4.1");
+        }
+        if Version::parse(&get_meta_version(conn)) == Version::parse("0.4.1") {
             set_meta_version(conn, VERSION);
         }
         eprintln!("upgraded to {}", VERSION);
