@@ -26,10 +26,11 @@ use rusqlite::Connection;
 use std::io::{Error, ErrorKind};
 use std::{io, net::SocketAddr};
 use tarpc::{client, context};
-use tokio::runtime::current_thread::Runtime;
+use tokio::runtime::Runtime;
+use tokio_serde::formats::Json;
 
 async fn run_sync_to_server(addr: &SocketAddr) -> io::Result<()> {
-    let transport = bincode_transport::connect(&addr).await?;
+    let transport = tarpc::serde_transport::tcp::connect(addr, Json::default()).await?;
     let mut client = LocalNativeClient::new(client::Config::default(), transport).spawn()?;
     let conn = get_sqlite_connection();
 
@@ -59,7 +60,7 @@ async fn run_sync_to_server(addr: &SocketAddr) -> io::Result<()> {
 }
 
 async fn run_sync_from_server(addr: &SocketAddr) -> io::Result<()> {
-    let transport = bincode_transport::connect(&addr).await?;
+    let transport = tarpc::serde_transport::tcp::connect(addr, Json::default()).await?;
     let mut client = LocalNativeClient::new(client::Config::default(), transport).spawn()?;
     let conn = get_sqlite_connection();
 
@@ -102,7 +103,7 @@ pub fn sync(addr: &str) -> Result<String, String> {
 }
 
 async fn run_stop_server(addr: &SocketAddr) -> io::Result<()> {
-    let transport = bincode_transport::connect(addr).await?;
+    let transport = tarpc::serde_transport::tcp::connect(addr, Json::default()).await?;
     let mut client = LocalNativeClient::new(client::Config::default(), transport).spawn()?;
     let conn = get_sqlite_connection();
 
