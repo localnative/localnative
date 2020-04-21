@@ -35,10 +35,10 @@ use tarpc::{
     server::{self, BaseChannel, Channel, Handler},
 };
 use tokio::runtime::Runtime;
-use tokio_serde::formats::Json;
+use tokio_serde::formats::Bincode;
 
 #[derive(Clone)]
-struct LocalNativeServer;
+struct LocalNativeServer(SocketAddr);
 
 impl LocalNative for LocalNativeServer {
     type IsVersionMatchFut = Ready<bool>;
@@ -92,13 +92,16 @@ impl LocalNative for LocalNativeServer {
 }
 
 async fn start_server(addr: &SocketAddr) -> io::Result<()> {
-    tarpc::serde_transport::tcp::listen(addr, Json::default)
+    tarpc::serde_transport::tcp::listen(addr, Bincode::default)
         .await?
         .filter_map(|r| future::ready(r.ok()))
         .map(server::BaseChannel::with_defaults)
         // Limit channels to 1 per IP.
         .max_channels_per_key(1, |t| t.as_ref().peer_addr().unwrap().ip())
-        .map(|channel| channel.respond_with(LocalNativeServer.serve()).execute())
+        .map(|channel| {
+            let server = LocalNativeServer(channel.as_ref().as_ref().peer_addr().unwrap());
+            channel.respond_with(server.serve()).execute()
+        })
         // Max 10 channels.
         .buffer_unordered(10)
         .for_each(|_| async {})
