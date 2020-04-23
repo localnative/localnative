@@ -122,5 +122,4 @@ struct Response: Decodable {
 class Env: ObservableObject {
     @Published var notes:[Note] = []
     @Published var paginationText:String = "/"
-    @Published var addr: String = ""
 }
