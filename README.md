@@ -8,11 +8,9 @@ A cross-platform tool to save and sync your notes in local SQLite database witho
 [Local Native YouTube Channel](https://www.youtube.com/channel/UCO3qFIyK0eSmqvMknsslWRw)
 
 ## Articles
-[Updates](https://chuanyan.live/tags/localnative)
+[Updates](https://localnative.app/blog)
 
-[Local Native v0.4.0 发布](https://localnative.app/blog/2019/08/24/localnative-v0.4.0-release)
-
-[Why Local Native?](https://chuanyan.live/2019-01-why-local-native)
+[Why Local Native?](https://localnative.app/blog/2019/01/04/why-local-native)
 
 # Sub-directories
 

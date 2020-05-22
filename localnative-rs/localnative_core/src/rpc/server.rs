@@ -120,3 +120,12 @@ pub fn start(addr: &str) -> Result<(), &'static str> {
     });
     Ok(())
 }
+
+pub fn get_server_addr() -> String {
+    for iface in get_if_addrs::get_if_addrs().unwrap() {
+        if !iface.is_loopback() {
+            return format!("{}:3456", iface.addr.ip().to_string())
+        }
+    }
+    return "".to_string()
+}
