@@ -8,33 +8,34 @@ import styles from './styles.module.css';
 
 const features = [
   {
-    title: <>Easy to Use</>,
-    imageUrl: 'img/undraw_docusaurus_mountain.svg',
+    title: <>Fast</>,
+    imageUrl: 'img/localnative-web-ext-popup.png',
     description: (
       <>
-        Docusaurus was designed from the ground up to be easily installed and
-        used to get your website up and running quickly.
+        Fast free text search. <br/>
+        Fast save. <br/>
+        Fast sync.
       </>
     ),
   },
   {
-    title: <>Focus on What Matters</>,
-    imageUrl: 'img/undraw_docusaurus_tree.svg',
+    title: <>Decentralized</>,
+    imageUrl: 'img/localnative-mobile-android-qr.png',
     description: (
       <>
-        Docusaurus lets you focus on your docs, and we&apos;ll do the chores. Go
-        ahead and move your docs into the <code>docs</code> directory.
-      </>
+      Local Native empowers you to save and sync your web bookmarks in local SQLite database without going through any centralized service.
+    </>
     ),
   },
   {
-    title: <>Powered by React</>,
-    imageUrl: 'img/undraw_docusaurus_react.svg',
+    title: <>Cross Platfom</>,
+    imageUrl: 'img/localnative-desktop-0.3.10-qrcode.jpg',
     description: (
       <>
-        Extend or customize your website layout by reusing React. Docusaurus can
-        be extended while reusing the same header and footer.
-      </>
+      Sync between multiple devices you own (desktop or mobile) by scanning QR code generated on the same network (Wi-Fi/LAN).
+      Search, create, read, delete and pagination.
+      Time-series filtering on time range.
+      Tag cloud visualization.      </>
     ),
   },
 ];
@@ -115,6 +116,10 @@ function Home() {
               Chrome Extension
           </Link>
           </div>
+          <div class="container">
+          <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/DBsVscpSp6w" frameBorder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowFullScreen class="video"></iframe>
+          </div>
+
         </div>
       </header>
       <main>
