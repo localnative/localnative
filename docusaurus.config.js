@@ -21,6 +21,7 @@ module.exports = {
           position: 'left',
         },
         {to: 'blog', label: 'Blog', position: 'left'},
+        {to: 'privacy-policy', label: 'Privacy', position: 'left'},
         {
           href: 'https://gitlab.com/localnative/localnative',
           label: 'GitLab',
@@ -42,22 +43,26 @@ module.exports = {
               label: 'Developer Setup',
               to: 'docs/developer-setup',
             },
+            {
+              label: 'Privacy Policy',
+              to: 'privacy-policy',
+            },
           ],
         },
         {
           title: 'Community',
           items: [
             {
-              label: 'Stack Overflow',
-              href: 'https://stackoverflow.com/questions/tagged/docusaurus',
+              label: 'Librem Social',
+              href: 'href="https://social.librem.one/@yi',
             },
             {
-              label: 'Discord',
-              href: 'https://discordapp.com/invite/docusaurus',
+              label: 'Open Collective',
+              href: 'https://opencollective.com/localnative',
             },
             {
-              label: 'Twitter',
-              href: 'https://twitter.com/docusaurus',
+              label: 'Pateron',
+              href: 'https://www.patreon.com/localnative',
             },
           ],
         },
@@ -69,13 +74,17 @@ module.exports = {
               to: 'blog',
             },
             {
-              label: 'GitHub',
-              href: 'https://github.com/facebook/docusaurus',
+              label: 'GitLab',
+              href: 'https://gitlab.com/localnative/localnative',
+            },
+            {
+              label: 'Bounty',
+              href: 'https://www.bountysource.com/teams/localnative-bounty/issues',
             },
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Docusaurus.`,
+      copyright: `Unless otherwise noted, contents on this website are copyleft with a CC-by-SA 4.0 license.`,
     },
   },
   presets: [

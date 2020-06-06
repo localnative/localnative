@@ -66,14 +66,54 @@ function Home() {
           <h1 className="hero__title">{siteConfig.title}</h1>
           <p className="hero__subtitle">{siteConfig.tagline}</p>
           <div className={styles.buttons}>
-            <Link
-              className={classnames(
-                'button button--outline button--secondary button--lg',
-                styles.getStarted,
-              )}
-              to={useBaseUrl('docs/doc1')}>
-              Get Started
-            </Link>
+          <Link
+    className={classnames(
+      'button button--outline button--secondary button--lg',
+      styles.getStarted,
+    )}
+    to="https://itunes.apple.com/us/app/local-native/id1443968309">
+    iOS & iPadOS
+          </Link>
+          <Link
+            className={classnames(
+              'button button--outline button--secondary button--lg',
+              styles.getStarted,
+            )}
+            to="https://gitlab.com/localnative/localnative-release/tree/master/v0.4.1/mac">
+            macOS
+          </Link>
+          <Link
+            className={classnames(
+              'button button--outline button--secondary button--lg',
+              styles.getStarted,
+            )}
+            to="https://play.google.com/store/apps/details?id=app.localnative">
+            Android
+          </Link>
+          <Link
+            className={classnames(
+              'button button--outline button--secondary button--lg',
+              styles.getStarted,
+            )}
+            to="https://gitlab.com/localnative/localnative-release/tree/master/v0.4.1/gnu-linux">
+              GNU/Linux
+          </Link>
+          <Link
+            className={classnames(
+              'button button--outline button--secondary button--lg',
+              styles.getStarted,
+            )}
+            to="https://addons.mozilla.org/en-US/firefox/addon/localnative">
+              Firefox Addon
+          </Link>
+          <Link
+            className={classnames(
+              'button button--outline button--secondary button--lg',
+              styles.getStarted,
+            )}
+            to="https://chrome.google.com/webstore/detail/local-native/oclkmkeameccmgnajgogjlhdjeaconnb">
+              Chrome Extension
+          </Link>
           </div>
         </div>
       </header>
