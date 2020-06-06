@@ -1,29 +1,29 @@
 module.exports = {
-  title: 'My Site',
-  tagline: 'The tagline of my site',
-  url: 'https://your-docusaurus-test-site.com',
+  title: 'Local Native',
+  tagline: 'Own your bookmarks on your device.',
+  url: 'https://localnative.app',
   baseUrl: '/',
-  favicon: 'img/favicon.ico',
-  organizationName: 'facebook', // Usually your GitHub org/user name.
-  projectName: 'docusaurus', // Usually your repo name.
+  favicon: 'img/icon.png',
+  organizationName: 'Local Native', // Usually your GitHub org/user name.
+  projectName: 'Local Native', // Usually your repo name.
   themeConfig: {
     navbar: {
-      title: 'My Site',
+      title: 'Local Native',
       logo: {
-        alt: 'My Site Logo',
-        src: 'img/logo.svg',
+        alt: 'Local Native Logo',
+        src: 'img/icon.png',
       },
       links: [
         {
-          to: 'docs/doc1',
+          to: 'docs/quick-start',
           activeBasePath: 'docs',
           label: 'Docs',
           position: 'left',
         },
         {to: 'blog', label: 'Blog', position: 'left'},
         {
-          href: 'https://github.com/facebook/docusaurus',
-          label: 'GitHub',
+          href: 'https://gitlab.com/localnative/localnative',
+          label: 'GitLab',
           position: 'right',
         },
       ],
@@ -35,12 +35,12 @@ module.exports = {
           title: 'Docs',
           items: [
             {
-              label: 'Style Guide',
-              to: 'docs/doc1',
+              label: 'Quick Start',
+              to: 'docs/quick-start',
             },
             {
-              label: 'Second Doc',
-              to: 'docs/doc2',
+              label: 'Developer Setup',
+              to: 'docs/developer-setup',
             },
           ],
         },
