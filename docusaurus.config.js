@@ -72,7 +72,7 @@ module.exports = {
           items: [
             {
               label: 'Librem Social',
-              href: 'href="https://social.librem.one/@yi',
+              href: 'https://social.librem.one/@yi',
             },
             {
               label: 'Open Collective',
