@@ -80,7 +80,7 @@ function Home() {
               'button button--outline button--secondary button--lg',
               styles.getStarted,
             )}
-            to="https://gitlab.com/localnative/localnative-release/tree/master/v0.4.1/mac">
+            to="https://gitlab.com/localnative/localnative-release/tree/master/v0.4.2/mac">
             macOS
           </Link>
           <Link
