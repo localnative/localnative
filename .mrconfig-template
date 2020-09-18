@@ -1,3 +1,0 @@
-
-[external-libs/tarpc]
-checkout = git clone 'git@github.com:yiwang/tarpc.git' 'tarpc'
