@@ -15,7 +15,7 @@ rm -rf node_modules
 npm i
 npm run build
 rm -rf node_modules/localnative-neon/native/target
-electron-builder .
+electron-builder -c electron-builder.yaml
 
 DIR="../../localnative-release/v$1/gnu-linux/"
 mkdir -p $DIR

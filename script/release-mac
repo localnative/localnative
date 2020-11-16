@@ -15,7 +15,7 @@ cd localnative-electron
 npm i
 npm run build
 rm -rf node_modules/localnative-neon/native/target
-electron-builder .
+electron-builder -c electron-builder.yaml
 
 DIR="../../localnative-release/v$1/mac/"
 mkdir -p $DIR
