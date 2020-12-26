@@ -66,6 +66,7 @@ function Home() {
         <div className="container">
           <h1 className="hero__title">{siteConfig.title}</h1>
           <p className="hero__subtitle">{siteConfig.tagline}</p>
+
           <div className={styles.buttons}>
           <Link
     className={classnames(
@@ -83,6 +84,9 @@ function Home() {
             to="https://gitlab.com/localnative/localnative-release/tree/master/v0.4.2/mac">
             macOS
           </Link>
+          </div>
+
+          <div className={styles.buttons}>
           <Link
             className={classnames(
               'button button--outline button--secondary button--lg',
@@ -99,6 +103,9 @@ function Home() {
             to="https://gitlab.com/localnative/localnative-release/tree/master/v0.4.1/gnu-linux">
               GNU/Linux
           </Link>
+          </div>
+
+          <div className={styles.buttons}>
           <Link
             className={classnames(
               'button button--outline button--secondary button--lg',
@@ -116,6 +123,7 @@ function Home() {
               Chrome Extension
           </Link>
           </div>
+
           <div class="container">
           <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/DBsVscpSp6w" frameBorder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowFullScreen class="video"></iframe>
           </div>
