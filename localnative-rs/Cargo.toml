@@ -3,5 +3,6 @@
 members = [
     "localnative_core",
     "localnative_cli",
+    "localnative_druid",
     "localnative_iced"
 ]

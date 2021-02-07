@@ -1,0 +1,14 @@
+[package]
+name = "localnative_druid"
+version = "0.1.0"
+authors = ["Yi Wang <e@yi-wang.me>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+# [dependencies.localnative_core]
+# path = "../localnative_core"
+
+[dependencies]
+druid = "0.7.0"
+
