@@ -2,7 +2,7 @@ use druid::{AppLauncher, WindowDesc, Widget, PlatformError};
 use druid::widget::Label;
 
 fn build_ui() -> impl Widget<()> {
-    Label::new("Hello world")
+    Label::new("Local Native")
 }
 
 fn main() -> Result<(), PlatformError> {
