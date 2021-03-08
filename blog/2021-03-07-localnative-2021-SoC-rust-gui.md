@@ -33,7 +33,7 @@ August 16-31 | 写总结 Blog 和 educative 教程文档 | August 31 Final Evalu
 
 ### 津贴
 - 参考G家SoC [Stipends](https://developers.google.com/open-source/gsoc/help/student-stipends)
-- 支付用 PayPal 通过 [Open Collective](https://opencollective.com/localnative#category-ABOUT)
+- 支付用 PayPal 通过 [Open Collective](https://opencollective.com/localnative)
 
 
 欢迎有Rust经验的同学申请!
