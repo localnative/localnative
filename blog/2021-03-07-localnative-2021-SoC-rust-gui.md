@@ -10,12 +10,13 @@ tags: ["all", "gui", "rust", "druid", "iced", "localnative", "contributor", "202
 ### 目标
 推进 FLOSS 项目 https://localnative.app 的 Rust GUI 代码和相关的 educative 教程的编写, 招募代码, 文档和教程贡献同学。
 - Rust GUI 编程 
-  - 用druid 和/或者 iced 框架 设计和实现/取代目前用 Electron 实现的 Local Native 桌面程序
-  - 支持 Windows 发布版本 (用Rust 修改注册表支持 Web Extension Host)
+  - 用druid 和/或者 [iced](https://github.com/hecrj/iced) 框架 设计, 实现并取代目前用 Electron 实现的 Local Native 桌面程序
+      - 尝试用 [druid](https://github.com/linebender/druid) 实现QR Code
+  - 尝试支持 Windows 发布版本 (尝试用Rust修改[注册表](https://developer.chrome.com/docs/apps/nativeMessaging/#native-messaging-host-location))
   
 - 给 educative.io 上相关课程加入新实现的内容
   
-- 写计划Blog 和 总结 Blog, 完善目前的文档 
+- 写计划Blog 和 总结 Blog, 完善文档 
 
 ### 时间线
 借鉴G家2021 SoC的[时间线](https://summerofcode.withgoogle.com/how-it-works/#timeline)
@@ -39,6 +40,6 @@ August 16-31 | 写总结 Blog 和 educative 教程文档 | August 31 Final Evalu
 
 加微信 `yi-wang-dot-me` 备注 SoC 发送 
 - 简历
-- Rust作品 
+- Rust经验/作品 
 - 期望津贴 
   
