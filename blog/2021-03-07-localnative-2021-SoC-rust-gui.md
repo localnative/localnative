@@ -7,6 +7,8 @@ authorImageURL: https://secure.gravatar.com/avatar/1484b2bde1c0027dab9b135a1e051
 categories: ["公告 Announcement"]
 tags: ["all", "gui", "rust", "druid", "iced", "localnative", "contributor", "2021", "SoC"]
 ---
+[2021-03-20 更新](2021-04-01-localnative-2021-SoC-team.md)
+
 ### 目标
 推进 FLOSS 项目 https://localnative.app 的 Rust GUI 代码和相关的 educative 教程的编写, 招募代码, 文档和教程贡献同学。
 - Rust GUI 编程 
@@ -27,7 +29,7 @@ March 29 - April 13|申请 |
 April 13 - May 17|确定申请结果
 May 17 - June 7 | 熟悉代码和框架，写计划 Blog | 
 June 7 - July 18 | code() and debug() and document() | July 18 First Evaluation 45%
-Julay 18 - August 16 | code() and debug() and document() | 
+July 18 - August 16 | code() and debug() and document() | 
 August 16-31 | 写总结 Blog 和 educative 教程文档 | August 31 Final Evaluation 55%
 
 
@@ -42,4 +44,3 @@ August 16-31 | 写总结 Blog 和 educative 教程文档 | August 31 Final Evalu
 - 简历
 - Rust经验/作品 
 - 期望津贴 
-  
