@@ -7,7 +7,7 @@ authorImageURL: https://secure.gravatar.com/avatar/1484b2bde1c0027dab9b135a1e051
 categories: ["公告 Announcement"]
 tags: ["all", "gui", "rust", "druid", "iced", "localnative", "contributor", "2021", "SoC"]
 ---
-[2021-03-20 更新](2021-04-01-localnative-2021-SoC-team.md)
+[2021-03-20 更新](2021-04-01-localnative-2021-soc-team.md)
 
 ### 目标
 推进 FLOSS 项目 https://localnative.app 的 Rust GUI 代码和相关的 educative 教程的编写, 招募代码, 文档和教程贡献同学。

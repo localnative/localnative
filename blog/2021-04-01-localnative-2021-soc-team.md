@@ -8,7 +8,7 @@ categories: ["公告 Announcement"]
 tags: ["all", "localnative", "team", "2021", "SoC"]
 ---
 
-提前完成了 [Local Native 2021 Summer of Code](2021-03-07-localnative-2021-SoC-rust-gui.md) 团队的组建。
+提前完成了 [Local Native 2021 Summer of Code](2021-03-07-localnative-2021-soc-rust-gui.md) 团队的组建。
 
 ## 时间线
 调整和提前了主要时间线:
