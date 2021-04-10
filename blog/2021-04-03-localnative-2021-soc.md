@@ -4,7 +4,7 @@ author: Yi Wang
 authorURL: http://twitter.com/yi_wang
 authorImageURL: https://secure.gravatar.com/avatar/1484b2bde1c0027dab9b135a1e051b3b?s=180&d=identicon
 
-categories: ["公告 Announcement"]
+categories: ["2021 Summer of Code"]
 tags: ["all", "localnative", "2021", "SoC"]
 ---
 
