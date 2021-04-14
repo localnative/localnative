@@ -136,8 +136,7 @@ fn process(cmd: Cmd, text: &str) -> String {
         }
         "insert-image" => {
             if let Ok(i) = serde_json::from_str::<CmdInsert>(text) {
-                let created_at =
-                    time::strftime("%Y-%m-%d %H:%M:%S:%f UTC", &time::now_utc()).unwrap();
+                let created_at = time::OffsetDateTime::now_utc().format("%Y-%m-%d %H:%M:%S:%f UTC");
                 //eprintln!("created_at {}", created_at);
                 let note = Note {
                     rowid: 0i64,
@@ -162,8 +161,7 @@ fn process(cmd: Cmd, text: &str) -> String {
         }
         "insert" => {
             if let Ok(i) = serde_json::from_str::<CmdInsert>(text) {
-                let created_at =
-                    time::strftime("%Y-%m-%d %H:%M:%S:%f UTC", &time::now_utc()).unwrap();
+                let created_at = time::OffsetDateTime::now_utc().format("%Y-%m-%d %H:%M:%S:%f UTC");
                 //eprintln!("created_at {}", created_at);
                 let note = Note {
                     rowid: 0i64,
@@ -219,7 +217,7 @@ fn process(cmd: Cmd, text: &str) -> String {
     }
 }
 
-fn do_search(conn: &Connection, query: &str, limit: &u32, offset: &u32) -> String {
+pub fn do_search(conn: &Connection, query: &str, limit: &u32, offset: &u32) -> String {
     let c = search_count(&conn, query);
     let j = search(&conn, query, limit, offset);
     let d = search_by_day(&conn, query);

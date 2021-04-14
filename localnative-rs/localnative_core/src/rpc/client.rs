@@ -15,14 +15,12 @@
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-
-use super::LocalNativeClient;
+use super::LNClient;
 use crate::cmd::insert;
 use crate::cmd::sync::get_note_by_uuid4;
 use crate::cmd::sync::next_uuid4_candidates;
 use crate::exe::get_sqlite_connection;
 use crate::upgrade::get_meta_version;
-use rusqlite::Connection;
 use std::io::{Error, ErrorKind};
 use std::{io, net::SocketAddr};
 use tarpc::{client, context};
@@ -30,8 +28,8 @@ use tokio::runtime::Runtime;
 use tokio_serde::formats::Bincode;
 
 async fn run_sync_to_server(addr: &SocketAddr) -> io::Result<()> {
-    let transport = tarpc::serde_transport::tcp::connect(addr, Bincode::default()).await?;
-    let mut client = LocalNativeClient::new(client::Config::default(), transport).spawn()?;
+    let transport = tarpc::serde_transport::tcp::connect(addr, || Bincode::default()).await?;
+    let client = LNClient::new(client::Config::default(), transport).spawn()?;
     let conn = get_sqlite_connection();
 
     // check version
@@ -60,8 +58,8 @@ async fn run_sync_to_server(addr: &SocketAddr) -> io::Result<()> {
 }
 
 async fn run_sync_from_server(addr: &SocketAddr) -> io::Result<()> {
-    let transport = tarpc::serde_transport::tcp::connect(addr, Bincode::default()).await?;
-    let mut client = LocalNativeClient::new(client::Config::default(), transport).spawn()?;
+    let transport = tarpc::serde_transport::tcp::connect(addr, || Bincode::default()).await?;
+    let client = LNClient::new(client::Config::default(), transport).spawn()?;
     let conn = get_sqlite_connection();
 
     // check version
@@ -87,27 +85,27 @@ async fn run_sync_from_server(addr: &SocketAddr) -> io::Result<()> {
 
     Ok(())
 }
-
+// TODO: 错误处理，这里不知道为啥要用String进行错误返回。。
 pub fn sync(addr: &str) -> Result<String, String> {
     let server_addr = addr
         .parse()
         .unwrap_or_else(|e| panic!(r#"server_addr {} invalid: {}"#, addr, e));
-    let mut rt = Runtime::new().unwrap();
+    let rt = Runtime::new().unwrap();
     rt.block_on(async {
-        run_sync_to_server(&server_addr).await;
+        run_sync_to_server(&server_addr).await.unwrap();
         eprintln!("sync to server done");
     });
-    let mut rt2 = Runtime::new().unwrap();
+    let rt2 = Runtime::new().unwrap();
     rt2.block_on(async {
-        run_sync_from_server(&server_addr).await;
+        run_sync_from_server(&server_addr).await.unwrap();
         eprintln!("sync from server done");
     });
     Ok("sync ok".to_string())
 }
 
 async fn run_stop_server(addr: &SocketAddr) -> io::Result<()> {
-    let transport = tarpc::serde_transport::tcp::connect(addr, Bincode::default()).await?;
-    let mut client = LocalNativeClient::new(client::Config::default(), transport).spawn()?;
+    let transport = tarpc::serde_transport::tcp::connect(addr, || Bincode::default()).await?;
+    let client = LNClient::new(client::Config::default(), transport).spawn()?;
     let conn = get_sqlite_connection();
 
     // check version
@@ -119,7 +117,7 @@ async fn run_stop_server(addr: &SocketAddr) -> io::Result<()> {
     }
 
     // diff uuid4
-    let is_stopped = client.stop(context::current()).await?;
+    client.stop(context::current()).await?;
     Ok(())
 }
 
@@ -127,7 +125,7 @@ pub fn stop_server(addr: &str) -> Result<String, String> {
     let server_addr: SocketAddr = addr
         .parse()
         .unwrap_or_else(|e| panic!(r#"server_addr {} invalid: {}"#, addr, e));
-    let mut rt = Runtime::new().unwrap();
+    let rt = Runtime::new().unwrap();
     rt.block_on(async {
         run_stop_server(&server_addr).await.unwrap();
     });

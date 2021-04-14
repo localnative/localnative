@@ -18,7 +18,7 @@
 use super::make_tags;
 use crate::{KVStringI64, Note, Tags};
 use rusqlite::types::ToSql;
-use rusqlite::{Connection, NO_PARAMS};
+use rusqlite::Connection;
 use std::collections::HashMap;
 
 pub fn select_by_day(conn: &Connection) -> String {
@@ -31,7 +31,7 @@ pub fn select_by_day(conn: &Connection) -> String {
         )
         .unwrap();
     let result_iter = stmt
-        .query_map(NO_PARAMS, |row| {
+        .query_map([], |row| {
             Ok(KVStringI64 {
                 k: row.get(0)?,
                 v: row.get(1)?,
@@ -73,7 +73,7 @@ pub fn select_by_tag(conn: &Connection) -> String {
     let mut tag_count_map: HashMap<String, i64> = HashMap::new();
 
     let result_iter = stmt
-        .query_map(NO_PARAMS, |row| Ok(Tags { tags: row.get(0)? }))
+        .query_map([], |row| Ok(Tags { tags: row.get(0)? }))
         .unwrap();
 
     for r in result_iter {
@@ -104,7 +104,7 @@ pub fn select_by_tag(conn: &Connection) -> String {
 
 pub fn select_count(conn: &Connection) -> u32 {
     let mut stmt = conn.prepare("SELECT count(1) FROM note").unwrap();
-    let rs = stmt.query_row(NO_PARAMS, |row| row.get(0)).unwrap();
+    let rs = stmt.query_row([], |row| row.get(0)).unwrap();
     rs
 }
 
@@ -119,7 +119,7 @@ pub fn select(conn: &Connection, limit: &u32, offset: &u32) -> String {
         )
         .unwrap();
     let note_iter = stmt
-        .query_map_named(
+        .query_map(
             &[
                 (":limit", limit as &dyn ToSql),
                 (":offset", offset as &dyn ToSql),

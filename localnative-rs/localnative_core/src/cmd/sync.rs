@@ -15,11 +15,10 @@
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-use super::make_tags;
-use crate::{KVStringI64, Note, OneString, Tags};
-use rusqlite::types::ToSql;
-use rusqlite::{Connection, NO_PARAMS};
-use std::collections::{HashMap, HashSet};
+
+use crate::{Note, OneString};
+use rusqlite::Connection;
+use std::collections::HashSet;
 
 //client
 pub fn get_note_by_uuid4(conn: &Connection, uuid4: &str) -> Note {
@@ -51,7 +50,7 @@ pub fn next_uuid4_candidates(conn: &Connection) -> Vec<String> {
         .prepare("select uuid4 FROM note order by rowid")
         .unwrap();
     let iter = stmt
-        .query_map(NO_PARAMS, |row| Ok(OneString { s: row.get(0)? }))
+        .query_map([], |row| Ok(OneString { s: row.get(0)? }))
         .unwrap();
     for i in iter {
         if let Ok(uuid4) = i {
@@ -79,7 +78,7 @@ pub fn diff_uuid4_from_server(conn: &Connection, candidates: Vec<String>) -> Vec
     let mut r = Vec::new();
     let mut stmt = conn.prepare("select uuid4 FROM note").unwrap();
     let iter = stmt
-        .query_map(NO_PARAMS, |row| Ok(OneString { s: row.get(0)? }))
+        .query_map([], |row| Ok(OneString { s: row.get(0)? }))
         .unwrap();
 
     for i in iter {

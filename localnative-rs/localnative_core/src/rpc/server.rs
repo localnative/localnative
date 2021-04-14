@@ -27,12 +27,11 @@ use super::LocalNative;
 use futures::{
     future::{self, Ready},
     prelude::*,
-    Future,
 };
 use std::{io, net::SocketAddr};
 use tarpc::{
-    client, context,
-    server::{self, BaseChannel, Channel, Handler},
+    context,
+    server::{self, Channel, Incoming},
 };
 use tokio::runtime::Runtime;
 use tokio_serde::formats::Bincode;
@@ -83,11 +82,12 @@ impl LocalNative for LocalNativeServer {
         let note = get_note_by_uuid4(&conn, &uuid4);
         future::ready(note)
     }
-    type StopFut = Ready<bool>;
+    type StopFut = Ready<()>;
+    #[allow(unreachable_code)]
     fn stop(self, _: context::Context) -> Self::StopFut {
         eprintln!("server stopping");
         process::exit(0);
-        future::ready(true)
+        future::ready(())
     }
 }
 
@@ -100,7 +100,7 @@ async fn start_server(addr: &SocketAddr) -> io::Result<()> {
         .max_channels_per_key(1, |t| t.as_ref().peer_addr().unwrap().ip())
         .map(|channel| {
             let server = LocalNativeServer(channel.as_ref().as_ref().peer_addr().unwrap());
-            channel.respond_with(server.serve()).execute()
+            channel.execute(server.serve())
         })
         // Max 10 channels.
         .buffer_unordered(10)
@@ -114,9 +114,9 @@ pub fn start(addr: &str) -> Result<(), &'static str> {
     let server_addr: SocketAddr = addr
         .parse()
         .unwrap_or_else(|e| panic!(r#"server_addr {} invalid: {}"#, addr, e));
-    let mut rt = Runtime::new().unwrap();
+    let rt = Runtime::new().unwrap();
     rt.block_on(async {
-        start_server(&server_addr).await;
+        start_server(&server_addr).await.unwrap();
     });
     Ok(())
 }
@@ -124,8 +124,8 @@ pub fn start(addr: &str) -> Result<(), &'static str> {
 pub fn get_server_addr() -> String {
     for iface in get_if_addrs::get_if_addrs().unwrap() {
         if !iface.is_loopback() {
-            return format!("{}:3456", iface.addr.ip().to_string())
+            return format!("{}:3456", iface.addr.ip().to_string());
         }
     }
-    return "".to_string()
+    return "".to_string();
 }

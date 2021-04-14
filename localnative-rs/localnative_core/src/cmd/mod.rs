@@ -16,11 +16,9 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 use crate::Note;
-use linked_hash_set::LinkedHashSet;
-use regex::Regex;
 use rusqlite::types::ToSql;
-use rusqlite::{Connection, NO_PARAMS};
-use std::iter::FromIterator;
+use rusqlite::Connection;
+use std::collections::HashSet;
 mod filter;
 pub mod image;
 mod search;
@@ -71,7 +69,7 @@ pub fn count(conn: &Connection, tbl: &str) -> i64 {
     let mut stmt = conn
         .prepare(&format!("select count(1) as cnt from {}", tbl))
         .unwrap();
-    let rs = stmt.query_row(NO_PARAMS, |row| row.get(0)).unwrap();
+    let rs = stmt.query_row([], |row| row.get(0)).unwrap();
     rs
 }
 
@@ -82,19 +80,14 @@ pub fn delete(conn: &Connection, rowid: i64) {
 
 // format and dedup tags
 pub fn make_tags(input: &str) -> String {
-    let re1 = Regex::new(r",+").unwrap();
-    let re2 = Regex::new(r"\s+").unwrap();
-    let s1 = re1.replace_all(input, " ");
-    let s2 = re2.replace_all(s1.trim(), ",");
-    let v1 = s2.split(",");
-    let h1: LinkedHashSet<&str> = LinkedHashSet::from_iter(v1);
-    let mut s = "".to_string();
-    for e in h1 {
-        s.push_str(e);
-        s.push_str(",")
-    }
-    s.pop();
-    s.to_string()
+    let input = input
+        .split(&[' ', ',', '，'][..])
+        .into_iter()
+        .filter(|s| !s.is_empty())
+        .collect::<HashSet<&str>>();
+    let mut res = input.into_iter().collect::<Vec<&str>>();
+    res.sort_by(|a, b| a.len().cmp(&b.len()));
+    res.join(",")
 }
 
 pub fn insert(note: Note) {
@@ -127,7 +120,7 @@ pub fn insert(note: Note) {
         UPDATE ssb SET is_last_note = 0
         WHERE is_active_author = 1
         ",
-            NO_PARAMS,
+            [],
         )
         .unwrap();
     }

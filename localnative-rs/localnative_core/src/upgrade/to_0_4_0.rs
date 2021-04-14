@@ -18,7 +18,7 @@
 
 use super::utils;
 use super::uuid::Uuid;
-use rusqlite::{Connection, Result, ToSql, NO_PARAMS};
+use rusqlite::{Connection, Result, ToSql};
 
 // insert each record to note from _note_0_3 with newly generated uuid4 value
 pub fn migrate_note(conn: &Connection) -> Result<()> {
@@ -35,7 +35,7 @@ pub fn migrate_note(conn: &Connection) -> Result<()> {
             )
             .unwrap();
         let note_iter = stmt
-            .query_map(NO_PARAMS, |row| {
+            .query_map([], |row| {
                 Ok(Note {
                     rowid: row.get(0)?,
                     uuid4: Uuid::new_v4().to_string(),

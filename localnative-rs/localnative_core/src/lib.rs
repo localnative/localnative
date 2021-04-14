@@ -22,11 +22,9 @@ pub extern crate dirs;
 pub extern crate rusqlite;
 pub extern crate serde_json;
 
-#[macro_use]
-extern crate serde_derive;
 pub mod cmd;
 pub mod exe;
-mod upgrade;
+pub mod upgrade;
 
 // JNI interface for android
 #[cfg(target_os = "android")]
@@ -83,6 +81,7 @@ pub extern "C" fn localnative_free(s: *mut c_char) {
         CString::from_raw(s)
     };
 }
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct KVStringI64 {
@@ -131,7 +130,7 @@ pub struct Ssb {
     pub prev: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
 pub struct Note {
     pub rowid: i64,
     pub uuid4: String,

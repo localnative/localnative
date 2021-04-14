@@ -15,6 +15,9 @@
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
+pub mod client;
+pub mod server;
+
 use crate::Note;
 
 #[tarpc::service]
@@ -24,8 +27,6 @@ pub trait LocalNative {
     async fn diff_uuid4_from_server(candidates: Vec<String>) -> Vec<String>;
     async fn send_note(note: Note) -> bool;
     async fn receive_note(uuid4: String) -> Note;
-    async fn stop() -> bool;
+    async fn stop() -> ();
 }
-
-pub mod client;
-pub mod server;
+pub type LNClient = LocalNativeClient;

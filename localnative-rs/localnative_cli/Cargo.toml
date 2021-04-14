@@ -10,6 +10,6 @@ edition = "2018"
 path = "../localnative_core"
 
 [dependencies]
-clap = "2.33.0"
+clap = "2.33"
 
 

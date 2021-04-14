@@ -50,7 +50,7 @@ pub fn search_by_tag(conn: &Connection, query: &str) -> String {
     let mut tag_count_map: HashMap<String, i64> = HashMap::new();
 
     let result_iter = stmt
-        .query_map_named(&params, |row| Ok(Tags { tags: row.get(0)? }))
+        .query_map(&params[..], |row| Ok(Tags { tags: row.get(0)? }))
         .unwrap();
 
     for r in result_iter {
@@ -106,7 +106,7 @@ pub fn search_by_day(conn: &Connection, query: &str) -> String {
     }
 
     let result_iter = stmt
-        .query_map_named(&params, |row| {
+        .query_map(&params[..], |row| {
             Ok(KVStringI64 {
                 k: row.get(0)?,
                 v: row.get(1)?,
@@ -153,7 +153,7 @@ pub fn search_count(conn: &Connection, query: &str) -> u32 {
 
     eprintln!("params {:?}", params.len());
 
-    let rs = stmt.query_map_named(&params, |row| row.get(0)).unwrap();
+    let rs = stmt.query_map(&params[..], |row| row.get(0)).unwrap();
     let mut c: u32 = 0;
     for r in rs {
         c = r.unwrap();
@@ -197,7 +197,7 @@ pub fn search(conn: &Connection, query: &str, limit: &u32, offset: &u32) -> Stri
     eprintln!("params {:?}", params.len());
 
     let note_iter = stmt
-        .query_map_named(&params, |row| {
+        .query_map(&params[..], |row| {
             Ok(Note {
                 rowid: row.get(0)?,
                 uuid4: row.get(1)?,

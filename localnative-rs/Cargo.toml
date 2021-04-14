@@ -1,8 +1,6 @@
 [workspace]
-
 members = [
+    "localnative_iced",
     "localnative_core",
-    "localnative_cli",
-    "localnative_druid",
-    "localnative_iced"
+    "localnative_cli"
 ]

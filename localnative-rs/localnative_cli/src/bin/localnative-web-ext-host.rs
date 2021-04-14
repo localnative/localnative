@@ -16,8 +16,6 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 use localnative_core::exe::run;
-use localnative_core::serde_json;
-use localnative_core::Cmd;
 use std::io;
 use std::io::{Read, Write};
 use std::mem::transmute;
