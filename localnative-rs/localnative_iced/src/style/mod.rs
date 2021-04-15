@@ -1,4 +1,6 @@
+#[allow(dead_code)]
 pub mod icon;
+
 pub mod qr_code;
 pub mod symbol;
 pub mod tag;

@@ -168,7 +168,7 @@ impl Tag {
                         .style(crate::style::tag::Tag)
                         .on_press(Message::Editing),
                 );
-                let delete_button = Button::new(delete, Icon::delete())
+                let delete_button = Button::new(delete, Icon::delete_back())
                     .style(crate::style::symbol::Symbol)
                     .on_press(Message::Delete);
                 if name.as_str() != temp.as_str() {
@@ -196,7 +196,7 @@ impl Tag {
                     Message::InputChanged,
                 )
                 .on_submit(Message::Enter);
-                let delete_button = Button::new(delete, Icon::delete())
+                let delete_button = Button::new(delete, Icon::delete_back())
                     .style(crate::style::symbol::Symbol)
                     .on_press(Message::Delete);
                 if name.as_str() != temp.as_str() {

@@ -1,4 +1,6 @@
-use iced::{button, text_input, Button, Element, Row, Text, TextInput};
+use iced::{button, text_input, Button, Element, Row, TextInput};
+
+use crate::style;
 
 #[derive(Debug, Default)]
 pub struct SearchBar {
@@ -38,10 +40,18 @@ impl SearchBar {
         )
         .on_submit(Message::Search(self.search_text.clone()))
         .size(35);
-        let clear = Button::new(clear_button, Text::new("X").size(35)).on_press(Message::Clear);
-        iced::Container::new(Row::new().push(input).spacing(5).push(clear))
-            .align_x(iced::Align::Center)
-            .align_y(iced::Align::Start)
-            .into()
+        let clear = Button::new(clear_button, style::icon::Icon::close())
+            .on_press(Message::Clear)
+            .style(style::symbol::Symbol);
+        iced::Container::new(
+            Row::new()
+                .padding(10)
+                .push(style::icon::Icon::search())
+                .push(input)
+                .push(clear),
+        )
+        .align_x(iced::Align::Center)
+        .align_y(iced::Align::Start)
+        .into()
     }
 }

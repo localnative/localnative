@@ -416,16 +416,18 @@ impl NoteView {
         let qrcode_button;
         let qrcode = match qr_state {
             QrState::Hide { qrcode_show } => {
-                qrcode_button =
-                    Button::new(qrcode_show, Text::new("QR")).on_press(Message::EnableQrcode);
+                qrcode_button = Button::new(qrcode_show, Icon::qr_code())
+                    .on_press(Message::EnableQrcode)
+                    .style(crate::style::symbol::Symbol);
                 None
             }
             QrState::Show {
                 qrcode_hide,
                 qrcode,
             } => {
-                qrcode_button =
-                    Button::new(qrcode_hide, Text::new("QR")).on_press(Message::DisableQrcode);
+                qrcode_button = Button::new(qrcode_hide, Icon::qr_code())
+                    .on_press(Message::DisableQrcode)
+                    .style(crate::style::symbol::Symbol);
                 Some(QRCode::new(qrcode))
             }
         };
@@ -455,7 +457,7 @@ impl NoteView {
                 let edit_button = Button::new(edit, Icon::edit())
                     .style(crate::style::symbol::Symbol)
                     .on_press(Message::Editable);
-                let delete_button = Button::new(delete, Icon::delete())
+                let delete_button = Button::new(delete, Icon::delete_bin())
                     .style(crate::style::symbol::Symbol)
                     .on_press(Message::Delete);
                 let op = Column::new()

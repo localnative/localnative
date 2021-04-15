@@ -297,16 +297,14 @@ impl Data {
         } = self;
 
         match message {
-            Message::SearchBar(sm) => {
-                match sm {
-                    search_bar::Message::Search(text) => {
-                       self.update(Message::Search(text));
-                    }
-                    search_bar::Message::Clear => {
-                        search_bar.update(sm);
-                    }
+            Message::SearchBar(sm) => match sm {
+                search_bar::Message::Search(text) => {
+                    self.update(Message::Search(text));
                 }
-            }
+                search_bar::Message::Clear => {
+                    search_bar.update(sm);
+                }
+            },
             Message::NoteMessage(idx, nm) => {
                 if let Some(note) = data_view.notes.get_mut(idx) {
                     match nm {

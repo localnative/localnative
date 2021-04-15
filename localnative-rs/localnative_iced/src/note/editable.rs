@@ -150,7 +150,7 @@ impl Edit {
                     let edit_button = Button::new(edit, content)
                         .style(crate::style::symbol::Symbol)
                         .on_press(EditMessage::Edit);
-                    let delete_button = Button::new(delete, Icon::delete())
+                    let delete_button = Button::new(delete, Icon::delete_back())
                         .style(crate::style::symbol::Symbol)
                         .on_press(EditMessage::Delete);
                     if temp.as_str() != text && !text.is_empty() {
@@ -192,7 +192,7 @@ impl Edit {
                         EditMessage::InputChanged,
                     )
                     .on_submit(EditMessage::Enter);
-                    let delete_button = Button::new(delete, Icon::delete())
+                    let delete_button = Button::new(delete, Icon::delete_back())
                         .style(crate::style::symbol::Symbol)
                         .on_press(EditMessage::Delete);
                     if temp.as_str() != text {
