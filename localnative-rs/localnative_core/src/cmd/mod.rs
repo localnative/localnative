@@ -16,9 +16,9 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 use crate::Note;
+use linked_hash_set::LinkedHashSet;
 use rusqlite::types::ToSql;
 use rusqlite::Connection;
-use std::collections::HashSet;
 mod filter;
 pub mod image;
 mod search;
@@ -84,9 +84,8 @@ pub fn make_tags(input: &str) -> String {
         .split(&[' ', ',', '，'][..])
         .into_iter()
         .filter(|s| !s.is_empty())
-        .collect::<HashSet<&str>>();
-    let mut res = input.into_iter().collect::<Vec<&str>>();
-    res.sort_by(|a, b| a.len().cmp(&b.len()));
+        .collect::<LinkedHashSet<&str>>();
+    let res = input.into_iter().collect::<Vec<&str>>();
     res.join(",")
 }
 
