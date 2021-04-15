@@ -85,7 +85,7 @@ async fn run_sync_from_server(addr: &SocketAddr) -> io::Result<()> {
 
     Ok(())
 }
-// TODO: 错误处理，这里不知道为啥要用String进行错误返回。。
+
 pub fn sync(addr: &str) -> Result<String, String> {
     let server_addr = addr
         .parse()
