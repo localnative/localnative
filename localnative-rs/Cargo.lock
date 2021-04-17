@@ -2053,6 +2053,8 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "directories-next",
+ "serde",
+ "serde_json",
  "tauri-bundler",
 ]
 

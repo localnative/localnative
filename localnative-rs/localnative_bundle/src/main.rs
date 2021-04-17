@@ -4,19 +4,24 @@ use tauri_bundler::{
     bundle_project, AppCategory, BundleBinary, BundleSettings, DebianSettings, MacOsSettings,
     PackageSettings, PackageType, Settings, SettingsBuilder, WindowsSettings,
 };
+use serde::Deserialize;
+
+#[derive(Debug,Deserialize)]
 struct Bundler {
     debug: bool,
     verbose: bool,
 }
 
 impl Bundler {
-    pub fn new(debug: bool, verbose: bool) -> Self {
-        Self { debug, verbose }
+    pub fn new() -> anyhow::Result<Self> {
+        let file = include_str!("../../bundler.json");
+        serde_json::from_str(file)
+        .map_err(|e|anyhow::anyhow!("{}",e))
     }
 }
 
 fn main() -> anyhow::Result<()> {
-    let bundler = Bundler::new(true, true);
+    let bundler = Bundler::new()?;
     let settings = settings(&bundler)?;
     let mut build_args = vec![
         "build",
