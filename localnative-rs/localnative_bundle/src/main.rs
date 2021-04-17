@@ -1,12 +1,12 @@
 use std::process::Command;
 
+use serde::Deserialize;
 use tauri_bundler::{
     bundle_project, AppCategory, BundleBinary, BundleSettings, DebianSettings, MacOsSettings,
     PackageSettings, PackageType, Settings, SettingsBuilder, WindowsSettings,
 };
-use serde::Deserialize;
 
-#[derive(Debug,Deserialize)]
+#[derive(Debug, Deserialize)]
 struct Bundler {
     debug: bool,
     verbose: bool,
@@ -15,8 +15,7 @@ struct Bundler {
 impl Bundler {
     pub fn new() -> anyhow::Result<Self> {
         let file = include_str!("../../bundler.json");
-        serde_json::from_str(file)
-        .map_err(|e|anyhow::anyhow!("{}",e))
+        serde_json::from_str(file).map_err(|e| anyhow::anyhow!("{}", e))
     }
 }
 
@@ -62,7 +61,8 @@ fn main() -> anyhow::Result<()> {
 
 fn settings(bundler: &Bundler) -> anyhow::Result<Settings> {
     let iced_src_path = Some(get_src_path("local_native", bundler));
-    let iced_src = BundleBinary::new("localnative_iced".to_owned(), true).set_src_path(iced_src_path);
+    let iced_src =
+        BundleBinary::new("localnative_iced".to_owned(), true).set_src_path(iced_src_path);
     let mut seetings_builder = SettingsBuilder::new()
         .binaries(vec![iced_src])
         .bundle_settings(BundleSettings {
@@ -120,9 +120,14 @@ fn get_src_path(name: &str, bundler: &Bundler) -> String {
 fn project_out_dir() -> anyhow::Result<String> {
     let mut dir = std::env::current_dir()?;
     dir = dir.join("output");
-    let res = dir.into_os_string()
-    .into_string()
-    .map_err(|e|anyhow::anyhow!("{:?}",e))?;
-    let res = res.replace("//", "/");
+    let mut res = dir
+        .into_os_string()
+        .into_string()
+        .map_err(|e| anyhow::anyhow!("{:?}", e))?;
+    res = if cfg!(windows) {
+        res.replace("//", "/")
+    } else {
+        res
+    };
     Ok(res)
 }
