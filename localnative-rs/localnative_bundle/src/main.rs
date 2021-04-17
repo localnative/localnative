@@ -22,21 +22,8 @@ impl Bundler {
 fn main() -> anyhow::Result<()> {
     let bundler = Bundler::new()?;
     let settings = settings(&bundler)?;
-    let mut build_args = vec![
-        "build",
-        "--package",
-        "localnative_iced",
-        "--out-dir",
-        "./output",
-        "-Z",
-        "unstable-options",
-    ];
-    if !bundler.debug {
-        build_args.push("--release");
-    }
-    if !Command::new("cargo").args(&build_args).status()?.success() {
-        return Err(anyhow::anyhow!("cargo fail!"));
-    }
+    build_iced(&bundler)?;
+    build_web_ext_host(&bundler)?;
     bundle_project(settings)?;
     // 方案一：
     // 1. 获取安装目录
@@ -60,11 +47,15 @@ fn main() -> anyhow::Result<()> {
 }
 
 fn settings(bundler: &Bundler) -> anyhow::Result<Settings> {
-    let iced_src_path = Some(get_src_path("local_native", bundler));
+    let iced_src_path = Some(get_src_path("localnative_iced", bundler));
     let iced_src =
         BundleBinary::new("localnative_iced".to_owned(), true).set_src_path(iced_src_path);
+    let host_src_path = Some(get_src_path("localnative-web-ext-host", bundler));
+    let host_src =
+        BundleBinary::new("localnative-web-ext-host".to_owned(), false)
+        .set_src_path(host_src_path);
     let mut seetings_builder = SettingsBuilder::new()
-        .binaries(vec![iced_src])
+        .binaries(vec![iced_src, host_src])
         .bundle_settings(BundleSettings {
             identifier: Some("com.localnative.iced".to_owned()),
             icon: Some(vec![
@@ -98,6 +89,7 @@ fn settings(bundler: &Bundler) -> anyhow::Result<Settings> {
             PackageType::WindowsMsi,
             PackageType::MacOsBundle,
             PackageType::Deb,
+            PackageType::AppImage,
         ])
         .project_out_directory(project_out_dir()?);
     if bundler.verbose {
@@ -130,4 +122,42 @@ fn project_out_dir() -> anyhow::Result<String> {
         res
     };
     Ok(res)
+}
+fn build_iced(bundler: &Bundler) -> anyhow::Result<()> {
+    let mut build_args = vec![
+        "build",
+        "--package",
+        "localnative_iced",
+        "--out-dir",
+        "./output",
+        "-Z",
+        "unstable-options",
+    ];
+    if !bundler.debug {
+        build_args.push("--release");
+    }
+    if !Command::new("cargo").args(&build_args).status()?.success() {
+        return Err(anyhow::anyhow!("build iced fail!"));
+    }
+    Ok(())
+}
+fn build_web_ext_host(bundler: &Bundler) -> anyhow::Result<()> {
+    let mut build_args = vec![
+        "build",
+        "--package",
+        "localnative_cli",
+        "--bin",
+        "localnative-web-ext-host",
+        "--out-dir",
+        "./output",
+        "-Z",
+        "unstable-options",
+    ];
+    if !bundler.debug {
+        build_args.push("--release");
+    }
+    if !Command::new("cargo").args(&build_args).status()?.success() {
+        return Err(anyhow::anyhow!("build web host fail!"));
+    }
+    Ok(())
 }
