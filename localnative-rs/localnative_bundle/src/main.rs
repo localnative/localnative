@@ -99,7 +99,7 @@ fn settings(bundler: &Bundler) -> anyhow::Result<Settings> {
             PackageType::MacOsBundle,
             PackageType::Deb,
         ])
-        .project_out_directory(r"F:\Documents\GitHub\localnative\localnative-rs\output".to_owned());
+        .project_out_directory(project_out_dir()?);
     if bundler.verbose {
         seetings_builder = seetings_builder.verbose();
     }
@@ -116,4 +116,13 @@ fn get_src_path(name: &str, bundler: &Bundler) -> String {
     }
     src += name;
     src
+}
+fn project_out_dir() -> anyhow::Result<String> {
+    let mut dir = std::env::current_dir()?;
+    dir = dir.join("output");
+    let res = dir.into_os_string()
+    .into_string()
+    .map_err(|e|anyhow::anyhow!("{:?}",e))?;
+    let res = res.replace("//", "/");
+    Ok(res)
 }
