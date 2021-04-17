@@ -2,5 +2,6 @@
 members = [
     "localnative_iced",
     "localnative_core",
-    "localnative_cli"
+    "localnative_cli",
+    "localnative_bundle"
 ]
