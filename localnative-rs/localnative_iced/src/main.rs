@@ -14,8 +14,8 @@ mod tags;
 #[allow(dead_code)]
 mod wrap;
 
-use iced::{scrollable, Application, Column, Command, Container, Element, Row, Settings, Text};
 use iced::window;
+use iced::{scrollable, Application, Column, Command, Container, Element, Row, Settings, Text};
 
 use config::{Config, ConfigView};
 use data_view::{DataView, MiddleData};
@@ -44,9 +44,9 @@ fn main() -> anyhow::Result<()> {
                 Some(font)
             }
         },
-        window:window::Settings{
-            icon:Some(window::Icon::from_rgba(logo,64,64)?),
-            size:(1000,700),
+        window: window::Settings {
+            icon: Some(window::Icon::from_rgba(logo, 64, 64)?),
+            size: (1000, 700),
             ..Default::default()
         },
         ..Default::default()
@@ -243,7 +243,6 @@ impl Application for LocalNative {
                     }
                     Message::Search(text) => {
                         search_bar.search_text = text;
-                        page_bar.page_num = 1;
                         page_bar.offset = 0;
                         let middle_data = MiddleData::from_select(
                             &resource.conn,
@@ -287,11 +286,17 @@ pub struct Data {
     state: State,
 }
 
-#[derive(Debug, Default)]
-pub struct State {
-    scrollable_left: scrollable::State,
-    scrollable_center: scrollable::State,
-    scrollable_right: scrollable::State,
+#[derive(Debug)]
+pub enum State {
+    Contents,
+    Settings,
+    Sync,
+}
+
+impl Default for State {
+    fn default() -> Self {
+        Self::Contents
+    }
 }
 
 impl Data {
@@ -302,43 +307,63 @@ impl Data {
             config_view,
             search_bar,
             page_bar,
+            state,
             ..
         } = self;
-
-        match message {
-            Message::SearchBar(sm) => match sm {
-                search_bar::Message::Search(text) => {
-                    self.update(Message::Search(text));
-                }
-                search_bar::Message::Clear => {
-                    search_bar.update(sm);
-                }
-            },
-            Message::NoteMessage(idx, nm) => {
-                if let Some(note) = data_view.notes.get_mut(idx) {
-                    match nm {
-                        note::Message::Delete => {
-                            cmd::delete(&resource.conn, note.rowid);
-                            let middle_data = MiddleData::from_select(
-                                &resource.conn,
-                                search_bar.search_text.as_str(),
-                                &config_view.config.limit,
-                                &page_bar.offset,
-                            );
-                            middle_data.encode(data_view, page_bar);
-                        }
-                        note::Message::Enter => {
-                            let old_note = note.old_note();
-                            log::debug!("old note:{:?}", &old_note);
-                            note.update(note::Message::Enter);
-                            let rowid = note.rowid;
-                            let mut new_note: note::Note = (&*note).into();
-                            log::debug!("new note:{:?}", &new_note);
-                            if new_note != old_note {
-                                cmd::delete(&resource.conn, rowid);
-                                new_note.uuid4 = uuid::Uuid::new_v4().to_string();
-                                cmd::insert(new_note);
+        match state {
+            State::Contents => match message {
+                Message::SearchBar(sm) => match sm {
+                    search_bar::Message::Search(text) => {
+                        self.update(Message::Search(text));
+                    }
+                    search_bar::Message::Clear => {
+                        search_bar.update(sm);
+                    }
+                },
+                Message::NoteMessage(idx, nm) => {
+                    if let Some(note) = data_view.notes.get_mut(idx) {
+                        match nm {
+                            note::Message::Delete => {
+                                cmd::delete(&resource.conn, note.rowid);
+                                let middle_data = MiddleData::from_select(
+                                    &resource.conn,
+                                    search_bar.search_text.as_str(),
+                                    &config_view.config.limit,
+                                    &page_bar.offset,
+                                );
+                                middle_data.encode(data_view, page_bar);
                             }
+                            note::Message::Enter => {
+                                let old_note = note.old_note();
+                                log::debug!("old note:{:?}", &old_note);
+                                note.update(note::Message::Enter);
+                                let rowid = note.rowid;
+                                let mut new_note: note::Note = (&*note).into();
+                                log::debug!("new note:{:?}", &new_note);
+                                if new_note != old_note {
+                                    cmd::delete(&resource.conn, rowid);
+                                    new_note.uuid4 = uuid::Uuid::new_v4().to_string();
+                                    cmd::insert(new_note);
+                                }
+                                let middle_data = MiddleData::from_select(
+                                    &resource.conn,
+                                    search_bar.search_text.as_str(),
+                                    &config_view.config.limit,
+                                    &page_bar.offset,
+                                );
+                                middle_data.encode(data_view, page_bar);
+                            }
+                            nm => note.update(nm),
+                        }
+                    }
+                }
+                Message::ConfigMessage(cm) => {
+                    config_view.update(cm);
+                }
+                Message::PageBar(pm) => {
+                    let cm = page_bar.update(pm, (&*config_view).limit());
+                    match cm {
+                        Message::NeedUpdate => {
                             let middle_data = MiddleData::from_select(
                                 &resource.conn,
                                 search_bar.search_text.as_str(),
@@ -347,33 +372,17 @@ impl Data {
                             );
                             middle_data.encode(data_view, page_bar);
                         }
-                        nm => note.update(nm),
+                        _ => {}
                     }
                 }
-            }
-            Message::ConfigMessage(cm) => {
-                config_view.update(cm);
-            }
-            Message::PageBar(pm) => {
-                let cm = page_bar.update(pm, (&*config_view).limit());
-                match cm {
-                    Message::NeedUpdate => {
-                        let middle_data = MiddleData::from_select(
-                            &resource.conn,
-                            search_bar.search_text.as_str(),
-                            &config_view.config.limit,
-                            &page_bar.offset,
-                        );
-                        middle_data.encode(data_view, page_bar);
-                    }
-                    _ => {}
+                Message::StyleMessage(_) => {}
+                Message::Search(text) => {
+                    search_bar.search_text = text;
                 }
-            }
-            Message::StyleMessage(_) => {}
-            Message::Search(text) => {
-                search_bar.search_text = text;
-            }
-            _ => {}
+                _ => {}
+            },
+            State::Settings => {}
+            State::Sync => {}
         }
     }
     fn view(&mut self) -> Element<Message> {
@@ -382,89 +391,108 @@ impl Data {
             config_view,
             search_bar,
             page_bar,
+            state,
             ..
         } = self;
-        let DataView { notes, tags, state } = data_view;
-        let limit = config_view.limit();
-        let data_view::State {
-            tags_scrollable,
-            notes_scrollable,
-        } = state;
-        Row::new()
-            .align_items(iced::Align::Start)
-            .push(config_view.viwe().map(|cm| Message::ConfigMessage(cm)))
-            .push(
-                iced::Container::new(
-                    Column::new()
-                        .push(search_bar.view().map(|sm| match sm {
-                            search_bar::Message::Search(text) => Message::Search(text),
-                            sm => Message::SearchBar(sm),
-                        }))
-                        .push({
-                            let notes = notes;
-                            let scrollable = notes_scrollable;
-                            Container::new({
-                                let scrollable = scrollable::Scrollable::new(scrollable);
-                                let notes_cloumn = notes
-                                    .iter_mut()
-                                    .enumerate()
-                                    .fold(
-                                        Column::new().align_items(iced::Align::Start),
-                                        |column, (idx, note)| {
-                                            column.push(note.view().map(move |nm| match nm {
-                                                note::Message::TagMessage(
-                                                    _,
-                                                    note::tag::Message::Search(text),
-                                                ) => Message::Search(text),
-                                                nm => Message::NoteMessage(idx, nm),
+        match state {
+            State::Contents => {
+                let DataView { notes, tags, state } = data_view;
+                let limit = config_view.limit();
+                let data_view::State {
+                    tags_scrollable,
+                    notes_scrollable,
+                } = state;
+                Row::new()
+                    .align_items(iced::Align::Start)
+                    .push(config_view.viwe().map(|cm| Message::ConfigMessage(cm)))
+                    .push(
+                        iced::Container::new(
+                            Column::new()
+                                .push(search_bar.view().map(|sm| match sm {
+                                    search_bar::Message::Search(text) => Message::Search(text),
+                                    sm => Message::SearchBar(sm),
+                                }))
+                                .push({
+                                    let notes = notes;
+                                    let scrollable = notes_scrollable;
+                                    Container::new({
+                                        let scrollable = scrollable::Scrollable::new(scrollable);
+                                        let notes_cloumn = notes
+                                            .iter_mut()
+                                            .enumerate()
+                                            .fold(
+                                                Column::new().align_items(iced::Align::Start),
+                                                |column, (idx, note)| {
+                                                    column.push(note.view().map(
+                                                        move |nm| match nm {
+                                                            note::Message::TagMessage(
+                                                                _,
+                                                                note::tag::Message::Search(text),
+                                                            ) => Message::Search(text),
+                                                            nm => Message::NoteMessage(idx, nm),
+                                                        },
+                                                    ))
+                                                },
+                                            )
+                                            .padding(30);
+                                        scrollable
+                                            .align_items(iced::Align::Center)
+                                            .spacing(30)
+                                            .push(notes_cloumn)
+                                            .push(
+                                                page_bar.view(limit).map(|pm| Message::PageBar(pm)),
+                                            )
+                                    })
+                                    .center_x()
+                                    .center_y()
+                                    .height(iced::Length::Shrink)
+                                }),
+                        )
+                        .width(iced::Length::FillPortion(8))
+                        .center_x()
+                        .center_y(),
+                    )
+                    .push({
+                        let tags = tags;
+                        let scrollable = tags_scrollable;
+                        Container::new(
+                            scrollable::Scrollable::new(scrollable)
+                                .scrollbar_width(1)
+                                .push(
+                                    tags.iter_mut().fold(
+                                        Wrap {
+                                            spacing: 10,
+                                            line_spacing: 10,
+                                            padding: 10,
+                                            line_height: 30,
+                                            ..Default::default()
+                                        }
+                                        .push(Text::new("tags:").into()),
+                                        |wrap, tag| {
+                                            wrap.push(tag.view().map(|tm| match tm {
+                                                tags::Message::Search(text) => {
+                                                    Message::Search(text)
+                                                }
                                             }))
                                         },
-                                    )
-                                    .padding(30);
-                                scrollable
-                                    .align_items(iced::Align::Center)
-                                    .spacing(30)
-                                    .push(notes_cloumn)
-                                    .push(page_bar.view(limit).map(|pm| Message::PageBar(pm)))
-                            })
-                            .center_x()
-                            .center_y()
-                            .height(iced::Length::Shrink)
-                        }),
-                )
-                .width(iced::Length::FillPortion(8))
-                .center_x()
-                .center_y(),
-            )
-            .push({
-                let tags = tags;
-                let scrollable = tags_scrollable;
-                Container::new(
-                    scrollable::Scrollable::new(scrollable)
-                        .scrollbar_width(1)
-                        .push(
-                            tags.iter_mut().fold(
-                                Wrap {
-                                    spacing: 10,
-                                    line_spacing: 10,
-                                    padding: 10,
-                                    line_height: 30,
-                                    ..Default::default()
-                                }
-                                .push(Text::new("tags:").into()),
-                                |wrap, tag| {
-                                    wrap.push(tag.view().map(|tm| match tm {
-                                        tags::Message::Search(text) => Message::Search(text),
-                                    }))
-                                },
-                            ),
+                                    ),
+                                )
+                                .align_items(iced::Align::Center),
                         )
-                        .align_items(iced::Align::Center),
-                )
-                .width(iced::Length::FillPortion(2))
-                .height(iced::Length::Fill)
-            })
-            .into()
+                        .width(iced::Length::FillPortion(2))
+                        .height(iced::Length::Fill)
+                    })
+                    .into()
+            }
+            State::Settings => Row::new()
+                .align_items(iced::Align::Start)
+                .push(config_view.viwe().map(|cm| Message::ConfigMessage(cm)))
+                .into(),
+            State::Sync => Row::new()
+                .align_items(iced::Align::Start)
+                .push(config_view.viwe().map(|cm| Message::ConfigMessage(cm)))
+                .into(),
+        }
     }
 }
 
