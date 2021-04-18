@@ -5,7 +5,7 @@ authorURL: http://twitter.com/yi_wang
 authorImageURL: https://secure.gravatar.com/avatar/1484b2bde1c0027dab9b135a1e051b3b?s=180&d=identicon
 
 categories: ["公告 Announcement"]
-tags: ["all", "localnative", "rust", "nyc", "meetup"]
+tags: ["all", "localnative", "rust", "nyc", "meetup", "talk"]
 ---
 
 I've given a talk at [Rust NYC](https://github.com/rust-nyc/meetups/issues/13) for its [2019 September Meetup](https://www.meetup.com/Rust-NYC/events/264849068/).
