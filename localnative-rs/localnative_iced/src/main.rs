@@ -13,6 +13,7 @@ mod tags;
 mod wrap;
 
 use iced::{scrollable, Application, Column, Command, Container, Element, Row, Settings, Text};
+use iced::window;
 
 use config::{Config, ConfigView};
 use data_view::{DataView, MiddleData};
@@ -29,6 +30,7 @@ use wrap::Wrap;
 fn main() -> anyhow::Result<()> {
     setup_logger()?;
     let font = font();
+    let logo = style::icon::Icon::logo()?;
     LocalNative::run(Settings {
         antialiasing: true,
         default_font: {
@@ -39,6 +41,11 @@ fn main() -> anyhow::Result<()> {
                 log::info!("font load success.");
                 Some(font)
             }
+        },
+        window:window::Settings{
+            icon:Some(window::Icon::from_rgba(logo,64,64)?),
+            size:(1000,700),
+            ..Default::default()
         },
         ..Default::default()
     })

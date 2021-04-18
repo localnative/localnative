@@ -3,6 +3,13 @@ pub struct Icon;
 
 const ICON_SIZE: u16 = 25;
 impl Icon {
+    pub fn logo() -> anyhow::Result<Vec<u8>> {
+        let mut ico_path = std::env::current_dir()?;
+        ico_path = ico_path.join("icons").join("icon.ico");
+        Ok(image::open(ico_path)?
+        .into_rgba8()
+        .as_raw().clone())
+    }
     pub fn qr_code() -> Svg {
         Svg::from_path(format!("{}/icon/qr-code.svg", env!("CARGO_MANIFEST_DIR")))
             .width(iced::Length::Units(ICON_SIZE))
