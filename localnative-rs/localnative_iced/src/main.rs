@@ -402,6 +402,7 @@ impl Data {
                     tags_scrollable,
                     notes_scrollable,
                 } = state;
+                let search_text_is_empty = search_bar.search_text.is_empty();
                 Row::new()
                     .align_items(iced::Align::Start)
                     .push(config_view.viwe().map(|cm| Message::ConfigMessage(cm)))
@@ -416,7 +417,19 @@ impl Data {
                                     let notes = notes;
                                     let scrollable = notes_scrollable;
                                     Container::new({
-                                        let scrollable = scrollable::Scrollable::new(scrollable);
+                                        let mut scrollable = scrollable::Scrollable::new(scrollable);
+                                        if notes.is_empty() {
+                                            scrollable = scrollable.push(
+                                                {
+                                                    let text = if search_text_is_empty {
+                                                        "您还没有任何一个note，您可以通过浏览器扩展添加note。"
+                                                    }else {
+                                                        "抱歉，没找到您想要的结果..."
+                                                    };
+                                                    Container::new( Text::new(text))
+                                                }
+                                            );
+                                        }
                                         let notes_cloumn = notes
                                             .iter_mut()
                                             .enumerate()
