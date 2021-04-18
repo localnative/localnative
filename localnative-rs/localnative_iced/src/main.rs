@@ -75,16 +75,16 @@ fn font() -> &'static Arc<Vec<u8>> {
     INSTANCE.get_or_init(|| {
         if let Ok(handle) = SystemSource::new().select_best_match(
             &[
-                //TODO: 这几个都是英文字体，不知道有没有方法中英文都可以直接使用
-                // FamilyName::Title("Helvetica".to_owned()),
-                // FamilyName::Title("Tahoma".to_owned()),
-                // FamilyName::Title("Arial".to_owned()),
                 FamilyName::Title("PingFang SC".to_owned()),
                 FamilyName::Title("Hiragino Sans GB".to_owned()),
                 FamilyName::Title("Heiti SC".to_owned()),
                 FamilyName::Title("Microsoft YaHei".to_owned()),
                 FamilyName::Title("WenQuanYi Micro Hei".to_owned()),
                 FamilyName::Title("Microsoft YaHei".to_owned()),
+                // TODO:目前不能英文字体优先使用，需要iced支持
+                FamilyName::Title("Helvetica".to_owned()),
+                FamilyName::Title("Tahoma".to_owned()),
+                FamilyName::Title("Arial".to_owned()),
                 FamilyName::SansSerif,
             ],
             &Properties::new(),
