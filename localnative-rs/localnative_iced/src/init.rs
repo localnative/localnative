@@ -76,7 +76,7 @@ fn registr(kind: WebKind) -> anyhow::Result<Option<WebKind>> {
     log::info!("registr starting");
     let path = kind.registr_path();
     let write_path = path.join("app.localnative");
-    log::info!("registr write path:{:?}",&write_path);
+    log::info!("registr write path:{:?}", &write_path);
     log::info!("registr get kind host");
     let json_path = kind.json_path()?;
     let key = winreg::RegKey::predef(HKEY_CURRENT_USER);
@@ -84,7 +84,7 @@ fn registr(kind: WebKind) -> anyhow::Result<Option<WebKind>> {
     if let Ok(k) = key.open_subkey(&path) {
         log::info!("registr open subkey success");
         if let Ok(k) = k.open_subkey(Path::new("app.localnative")) {
-            if let Ok(v) = k.get_value::<String,&str>("") {
+            if let Ok(v) = k.get_value::<String, &str>("") {
                 log::info!("registr get value success:{:?}", &v);
                 if v != json_path {
                     log::info!("registr start set value");
@@ -98,7 +98,7 @@ fn registr(kind: WebKind) -> anyhow::Result<Option<WebKind>> {
             }
         } else {
             log::info!("registr start set value");
-            let (writer,_disposition) = key.create_subkey_with_flags(&write_path, KEY_WRITE)?;
+            let (writer, _disposition) = key.create_subkey_with_flags(&write_path, KEY_WRITE)?;
             writer.set_value("", &json_path)?;
             log::info!("registr set value ok");
             return Ok(Some(kind));
@@ -240,8 +240,8 @@ impl WebKind {
                 .join("Mozilla")
                 .join("NativeMessagingHosts"),
             WebKind::Chrome => Path::new("Software")
-            .join("Google")    
-            .join("Chrome")
+                .join("Google")
+                .join("Chrome")
                 .join("NativeMessagingHosts"),
             WebKind::Chromium => Path::new("Software")
                 .join("Chromium")
@@ -270,8 +270,8 @@ impl WebKind {
     fn json_path(&self) -> anyhow::Result<String> {
         let path = self.path()?.join("app.localnative.json");
         path.into_os_string()
-        .into_string()
-        .map_err(|e| anyhow::anyhow!("into string fail{:?}",e))
+            .into_string()
+            .map_err(|e| anyhow::anyhow!("into string fail{:?}", e))
     }
 }
 async fn try_init_file(kind: WebKind) -> anyhow::Result<()> {

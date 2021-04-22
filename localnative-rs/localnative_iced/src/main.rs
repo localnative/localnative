@@ -34,12 +34,12 @@ fn main() -> anyhow::Result<()> {
     let font = font();
     let logo = if let Ok(logo) = style::icon::Icon::logo() {
         if let Ok(logo) = window::Icon::from_rgba(logo, 64, 64) {
-            Some(logo)    
-        }else {
+            Some(logo)
+        } else {
             log::warn!("icon into fail!");
             None
         }
-    }else {
+    } else {
         log::warn!("icon load fail!");
         None
     };

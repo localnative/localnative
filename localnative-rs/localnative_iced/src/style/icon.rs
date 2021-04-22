@@ -5,7 +5,10 @@ const ICON_SIZE: u16 = 25;
 impl Icon {
     pub fn logo() -> anyhow::Result<Vec<u8>> {
         let ico_buffer = include_bytes!("../../../icons/icon.ico");
-        Ok(image::load_from_memory(ico_buffer)?.into_rgba8().as_raw().clone())
+        Ok(image::load_from_memory(ico_buffer)?
+            .into_rgba8()
+            .as_raw()
+            .clone())
     }
     pub fn qr_code() -> Svg {
         Svg::from_path(format!("{}/icon/qr-code.svg", env!("CARGO_MANIFEST_DIR")))
