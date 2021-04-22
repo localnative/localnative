@@ -1,4 +1,4 @@
-// #![windows_subsystem = "windows"]
+#![windows_subsystem = "windows"]
 
 mod config;
 mod data_view;
@@ -74,7 +74,7 @@ fn setup_logger() -> anyhow::Result<(), fern::InitError> {
                 message
             ))
         })
-        .level(log::LevelFilter::Info)
+        .level(log::LevelFilter::Warn)
         .chain(std::io::stdout())
         .chain(fern::log_file("localnative_iced.log")?)
         .apply()?;
