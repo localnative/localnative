@@ -8,7 +8,6 @@ use tauri_bundler::{
 
 #[derive(Debug, Deserialize)]
 struct Bundler {
-    debug: bool,
     verbose: bool,
 }
 
@@ -22,8 +21,8 @@ impl Bundler {
 fn main() -> anyhow::Result<()> {
     let bundler = Bundler::new()?;
     let settings = settings(&bundler)?;
-    build_iced(&bundler)?;
-    build_web_ext_host(&bundler)?;
+    build_iced()?;
+    build_web_ext_host()?;
     bundle_project(settings)?;
     // 方案一：
     // 1. 获取安装目录
@@ -47,13 +46,12 @@ fn main() -> anyhow::Result<()> {
 }
 
 fn settings(bundler: &Bundler) -> anyhow::Result<Settings> {
-    let iced_src_path = Some(get_src_path("localnative_iced", bundler));
+    let iced_src_path = Some(get_src_path("localnative_iced"));
     let iced_src =
         BundleBinary::new("localnative_iced".to_owned(), true).set_src_path(iced_src_path);
-    let host_src_path = Some(get_src_path("localnative-web-ext-host", bundler));
+    let host_src_path = Some(get_src_path("localnative-web-ext-host"));
     let host_src =
-        BundleBinary::new("localnative-web-ext-host".to_owned(), false)
-        .set_src_path(host_src_path);
+        BundleBinary::new("localnative-web-ext-host".to_owned(), false).set_src_path(host_src_path);
     let mut seetings_builder = SettingsBuilder::new()
         .binaries(vec![iced_src, host_src])
         .bundle_settings(BundleSettings {
@@ -74,6 +72,7 @@ fn settings(bundler: &Bundler) -> anyhow::Result<Settings> {
             macos: MacOsSettings::default(),
             updater: None,
             windows: WindowsSettings {
+                template: Some("./templates/main.wxs".to_owned()),
                 ..Default::default()
             },
         })
@@ -82,8 +81,8 @@ fn settings(bundler: &Bundler) -> anyhow::Result<Settings> {
             version: "0.4.2".to_owned(),
             description: "localnative iced application".to_owned(),
             homepage: Some("https://localnative.app/".to_owned()),
-            authors: None,
-            default_run: None,
+            authors: Some(vec!["Cupnfish".to_owned()]),
+            default_run: Some("localnative_iced".to_owned()),
         })
         .package_types(vec![
             PackageType::WindowsMsi,
@@ -99,9 +98,9 @@ fn settings(bundler: &Bundler) -> anyhow::Result<Settings> {
         .build()
         .map_err(|err| anyhow::anyhow!("{:?}", err))
 }
-fn get_src_path(name: &str, bundler: &Bundler) -> String {
+fn get_src_path(name: &str) -> String {
     let mut src = "target".to_owned();
-    if bundler.debug {
+    if cfg!(debug_assertions) {
         src += "debug";
     } else {
         src += "release";
@@ -123,7 +122,7 @@ fn project_out_dir() -> anyhow::Result<String> {
     };
     Ok(res)
 }
-fn build_iced(bundler: &Bundler) -> anyhow::Result<()> {
+fn build_iced() -> anyhow::Result<()> {
     let mut build_args = vec![
         "build",
         "--package",
@@ -133,7 +132,7 @@ fn build_iced(bundler: &Bundler) -> anyhow::Result<()> {
         "-Z",
         "unstable-options",
     ];
-    if !bundler.debug {
+    if !cfg!(debug_assertions) {
         build_args.push("--release");
     }
     if !Command::new("cargo").args(&build_args).status()?.success() {
@@ -141,7 +140,7 @@ fn build_iced(bundler: &Bundler) -> anyhow::Result<()> {
     }
     Ok(())
 }
-fn build_web_ext_host(bundler: &Bundler) -> anyhow::Result<()> {
+fn build_web_ext_host() -> anyhow::Result<()> {
     let mut build_args = vec![
         "build",
         "--package",
@@ -153,7 +152,7 @@ fn build_web_ext_host(bundler: &Bundler) -> anyhow::Result<()> {
         "-Z",
         "unstable-options",
     ];
-    if !bundler.debug {
+    if !cfg!(debug_assertions) {
         build_args.push("--release");
     }
     if !Command::new("cargo").args(&build_args).status()?.success() {

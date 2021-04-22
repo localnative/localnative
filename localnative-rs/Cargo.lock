@@ -2101,6 +2101,7 @@ dependencies = [
  "iced",
  "iced_graphics",
  "iced_native",
+ "image",
  "localnative_core",
  "log",
  "once_cell",
@@ -2110,6 +2111,7 @@ dependencies = [
  "thiserror",
  "tokio",
  "uuid",
+ "winreg",
 ]
 
 [[package]]
@@ -3723,7 +3725,6 @@ dependencies = [
 [[package]]
 name = "tauri-bundler"
 version = "1.0.0-beta-rc.0"
-source = "git+https://github.com/tauri-apps/tauri.git#ece243d17c9c3ef8d2ba8e3b25b872aa6ea0b6ab"
 dependencies = [
  "anyhow",
  "ar",
