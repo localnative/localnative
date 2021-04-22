@@ -47,7 +47,6 @@ impl MiddleData {
         }
     }
     pub fn from_select(conn: &Connection, query: &str, limit: &u32, offset: &u32) -> MiddleData {
-        Self::upgrade(conn);
         let text = do_search(conn, query, limit, offset);
         log::debug!("{}", text);
         if let Ok(res) = serde_json::from_str(&text) {

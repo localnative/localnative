@@ -1,4 +1,4 @@
-#![windows_subsystem = "windows"]
+// #![windows_subsystem = "windows"]
 
 mod config;
 mod data_view;
@@ -32,7 +32,17 @@ use wrap::Wrap;
 fn main() -> anyhow::Result<()> {
     setup_logger()?;
     let font = font();
-    let logo = style::icon::Icon::logo()?;
+    let logo = if let Ok(logo) = style::icon::Icon::logo() {
+        if let Ok(logo) = window::Icon::from_rgba(logo, 64, 64) {
+            Some(logo)    
+        }else {
+            log::warn!("icon into fail!");
+            None
+        }
+    }else {
+        log::warn!("icon load fail!");
+        None
+    };
     LocalNative::run(Settings {
         antialiasing: true,
         default_font: {
@@ -45,7 +55,7 @@ fn main() -> anyhow::Result<()> {
             }
         },
         window: window::Settings {
-            icon: Some(window::Icon::from_rgba(logo, 64, 64)?),
+            icon: logo,
             size: (1000, 700),
             ..Default::default()
         },
@@ -104,9 +114,10 @@ enum LocalNative {
     Loaded(Data),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum Message {
     Loaded(Result<Config, config::ConfigError>),
+    InitResult(anyhow::Result<()>),
     NeedCreate(Config),
     PageBar(page_bar::Message),
     UnknowError,
@@ -152,7 +163,7 @@ impl Application for LocalNative {
                             config,
                             ..Default::default()
                         };
-
+                        MiddleData::upgrade(&resource.conn);
                         let search_bar = SearchBar::default();
                         let mut page_bar = PageBar::default();
 
@@ -173,7 +184,7 @@ impl Application for LocalNative {
                             ..Default::default()
                         };
                         *self = LocalNative::Loaded(data);
-                        Command::none()
+                        Command::perform(init::init_app_host(), Message::InitResult)
                     } else {
                         Command::perform(Config::new(), Message::NeedCreate)
                     }
@@ -184,8 +195,6 @@ impl Application for LocalNative {
                 _ => unreachable!(),
             },
             LocalNative::Loaded(data) => {
-                data.update(message.clone());
-
                 let Data {
                     data_view,
                     resource,
@@ -194,7 +203,6 @@ impl Application for LocalNative {
                     search_bar,
                     ..
                 } = data;
-
                 match message {
                     Message::Loaded(config) => {
                         if let Ok(config) = config {
@@ -212,17 +220,23 @@ impl Application for LocalNative {
                             Command::perform(Config::new(), Message::NeedCreate)
                         }
                     }
-                    Message::SearchBar(sm) => {
-                        search_bar.update(sm);
-                        let middle_data = MiddleData::from_select(
-                            &resource.conn,
-                            search_bar.search_text.as_str(),
-                            &config_view.config.limit,
-                            &page_bar.offset,
-                        );
-                        middle_data.encode(data_view, page_bar);
-                        Command::none()
-                    }
+                    Message::SearchBar(sm) => match sm {
+                        search_bar::Message::Search(text) => {
+                            self.update(Message::Search(text), _clipboard);
+                            Command::none()
+                        }
+                        search_bar::Message::Clear => {
+                            search_bar.update(sm);
+                            let middle_data = MiddleData::from_select(
+                                &resource.conn,
+                                search_bar.search_text.as_str(),
+                                &config_view.config.limit,
+                                &page_bar.offset,
+                            );
+                            middle_data.encode(data_view, page_bar);
+                            Command::none()
+                        }
+                    },
 
                     Message::ConfigMessage(cm) => {
                         match cm {
@@ -239,6 +253,7 @@ impl Application for LocalNative {
                             config::Message::LanguageChanged(_) => {}
                             config::Message::ThemeChanged(_) => {}
                         }
+                        config_view.update(cm);
                         Command::perform(config::Config::save(config_view.config), Message::Loaded)
                     }
                     Message::Search(text) => {
@@ -254,12 +269,84 @@ impl Application for LocalNative {
                         Command::none()
                     }
 
-                    _ => Command::none(),
+                    Message::NoteMessage(idx, nm) => {
+                        if let Some(note) = data_view.notes.get_mut(idx) {
+                            match nm {
+                                note::Message::Delete => {
+                                    cmd::delete(&resource.conn, note.rowid);
+                                    let middle_data = MiddleData::from_select(
+                                        &resource.conn,
+                                        search_bar.search_text.as_str(),
+                                        &config_view.config.limit,
+                                        &page_bar.offset,
+                                    );
+                                    middle_data.encode(data_view, page_bar);
+                                    Command::none()
+                                }
+                                note::Message::Enter => {
+                                    let old_note = note.old_note();
+                                    log::debug!("old note:{:?}", &old_note);
+                                    note.update(note::Message::Enter);
+                                    let rowid = note.rowid;
+                                    let mut new_note: note::Note = (&*note).into();
+                                    log::debug!("new note:{:?}", &new_note);
+                                    if new_note != old_note {
+                                        cmd::delete(&resource.conn, rowid);
+                                        new_note.uuid4 = uuid::Uuid::new_v4().to_string();
+                                        cmd::insert(new_note);
+                                    }
+                                    let middle_data = MiddleData::from_select(
+                                        &resource.conn,
+                                        search_bar.search_text.as_str(),
+                                        &config_view.config.limit,
+                                        &page_bar.offset,
+                                    );
+                                    middle_data.encode(data_view, page_bar);
+                                    Command::none()
+                                }
+                                nm => {
+                                    note.update(nm);
+                                    Command::none()
+                                }
+                            }
+                        } else {
+                            Command::none()
+                        }
+                    }
+
+                    Message::PageBar(pm) => {
+                        let cm = page_bar.update(pm, (&*config_view).limit());
+                        match cm {
+                            Message::NeedUpdate => {
+                                let middle_data = MiddleData::from_select(
+                                    &resource.conn,
+                                    search_bar.search_text.as_str(),
+                                    &config_view.config.limit,
+                                    &page_bar.offset,
+                                );
+                                middle_data.encode(data_view, page_bar);
+                                Command::none()
+                            }
+                            _ => Command::none(),
+                        }
+                    }
+                    Message::StyleMessage(_) => Command::none(),
+                    Message::InitResult(res) => {
+                        if let Err(e) = res {
+                            log::error!("init fail: {:?}", e);
+                        } else {
+                            log::info!("init success!");
+                        }
+                        Command::none()
+                    }
+                    Message::NeedCreate(_) => Command::none(),
+                    Message::UnknowError => Command::none(),
+                    Message::NeedUpdate => Command::none(),
+                    Message::Ignore => Command::none(),
                 }
             }
         }
     }
-
     fn view(&mut self) -> iced::Element<'_, Self::Message> {
         match self {
             LocalNative::Loading => Container::new(
@@ -271,7 +358,11 @@ impl Application for LocalNative {
             .height(iced::Length::Fill)
             .center_y()
             .into(),
-            LocalNative::Loaded(data) => data.view(),
+            LocalNative::Loaded(data) => match data.state {
+                State::Contents => data.contents_view(),
+                State::Settings => todo!(),
+                State::Sync => todo!(),
+            },
         }
     }
 }
@@ -300,212 +391,106 @@ impl Default for State {
 }
 
 impl Data {
-    fn update(&mut self, message: Message) {
+    fn contents_view(&mut self) -> Element<Message> {
         let Data {
             data_view,
-            resource,
             config_view,
             search_bar,
             page_bar,
-            state,
             ..
         } = self;
-        match state {
-            State::Contents => match message {
-                Message::SearchBar(sm) => match sm {
-                    search_bar::Message::Search(text) => {
-                        self.update(Message::Search(text));
-                    }
-                    search_bar::Message::Clear => {
-                        search_bar.update(sm);
-                    }
-                },
-                Message::NoteMessage(idx, nm) => {
-                    if let Some(note) = data_view.notes.get_mut(idx) {
-                        match nm {
-                            note::Message::Delete => {
-                                cmd::delete(&resource.conn, note.rowid);
-                                let middle_data = MiddleData::from_select(
-                                    &resource.conn,
-                                    search_bar.search_text.as_str(),
-                                    &config_view.config.limit,
-                                    &page_bar.offset,
-                                );
-                                middle_data.encode(data_view, page_bar);
-                            }
-                            note::Message::Enter => {
-                                let old_note = note.old_note();
-                                log::debug!("old note:{:?}", &old_note);
-                                note.update(note::Message::Enter);
-                                let rowid = note.rowid;
-                                let mut new_note: note::Note = (&*note).into();
-                                log::debug!("new note:{:?}", &new_note);
-                                if new_note != old_note {
-                                    cmd::delete(&resource.conn, rowid);
-                                    new_note.uuid4 = uuid::Uuid::new_v4().to_string();
-                                    cmd::insert(new_note);
+        let DataView { notes, tags, state } = data_view;
+        let limit = config_view.limit();
+        let data_view::State {
+            tags_scrollable,
+            notes_scrollable,
+        } = state;
+        let search_text_is_empty = search_bar.search_text.is_empty();
+        Row::new()
+            .align_items(iced::Align::Start)
+            .push(config_view.viwe().map(|cm| Message::ConfigMessage(cm)))
+            .push(
+                iced::Container::new(
+                    Column::new()
+                        .push(search_bar.view().map(|sm| match sm {
+                            search_bar::Message::Search(text) => Message::Search(text),
+                            sm => Message::SearchBar(sm),
+                        }))
+                        .push({
+                            let notes = notes;
+                            let scrollable = notes_scrollable;
+                            Container::new({
+                                let mut scrollable = scrollable::Scrollable::new(scrollable);
+                                if notes.is_empty() {
+                                    scrollable = scrollable.push({
+                                        let text = if search_text_is_empty {
+                                            "您还没有任何一个note，您可以通过浏览器扩展添加note。"
+                                        } else {
+                                            "抱歉，没找到您想要的结果..."
+                                        };
+                                        Container::new(Text::new(text))
+                                    });
                                 }
-                                let middle_data = MiddleData::from_select(
-                                    &resource.conn,
-                                    search_bar.search_text.as_str(),
-                                    &config_view.config.limit,
-                                    &page_bar.offset,
-                                );
-                                middle_data.encode(data_view, page_bar);
-                            }
-                            nm => note.update(nm),
-                        }
-                    }
-                }
-                Message::ConfigMessage(cm) => {
-                    config_view.update(cm);
-                }
-                Message::PageBar(pm) => {
-                    let cm = page_bar.update(pm, (&*config_view).limit());
-                    match cm {
-                        Message::NeedUpdate => {
-                            let middle_data = MiddleData::from_select(
-                                &resource.conn,
-                                search_bar.search_text.as_str(),
-                                &config_view.config.limit,
-                                &page_bar.offset,
-                            );
-                            middle_data.encode(data_view, page_bar);
-                        }
-                        _ => {}
-                    }
-                }
-                Message::StyleMessage(_) => {}
-                Message::Search(text) => {
-                    search_bar.search_text = text;
-                }
-                _ => {}
-            },
-            State::Settings => {}
-            State::Sync => {}
-        }
-    }
-    fn view(&mut self) -> Element<Message> {
-        let Data {
-            data_view,
-            config_view,
-            search_bar,
-            page_bar,
-            state,
-            ..
-        } = self;
-        match state {
-            State::Contents => {
-                let DataView { notes, tags, state } = data_view;
-                let limit = config_view.limit();
-                let data_view::State {
-                    tags_scrollable,
-                    notes_scrollable,
-                } = state;
-                let search_text_is_empty = search_bar.search_text.is_empty();
-                Row::new()
-                    .align_items(iced::Align::Start)
-                    .push(config_view.viwe().map(|cm| Message::ConfigMessage(cm)))
-                    .push(
-                        iced::Container::new(
-                            Column::new()
-                                .push(search_bar.view().map(|sm| match sm {
-                                    search_bar::Message::Search(text) => Message::Search(text),
-                                    sm => Message::SearchBar(sm),
-                                }))
-                                .push({
-                                    let notes = notes;
-                                    let scrollable = notes_scrollable;
-                                    Container::new({
-                                        let mut scrollable = scrollable::Scrollable::new(scrollable);
-                                        if notes.is_empty() {
-                                            scrollable = scrollable.push(
-                                                {
-                                                    let text = if search_text_is_empty {
-                                                        "您还没有任何一个note，您可以通过浏览器扩展添加note。"
-                                                    }else {
-                                                        "抱歉，没找到您想要的结果..."
-                                                    };
-                                                    Container::new( Text::new(text))
-                                                }
-                                            );
-                                        }
-                                        let notes_cloumn = notes
-                                            .iter_mut()
-                                            .enumerate()
-                                            .fold(
-                                                Column::new().align_items(iced::Align::Start),
-                                                |column, (idx, note)| {
-                                                    column.push(note.view().map(
-                                                        move |nm| match nm {
-                                                            note::Message::TagMessage(
-                                                                _,
-                                                                note::tag::Message::Search(text),
-                                                            ) => Message::Search(text),
-                                                            nm => Message::NoteMessage(idx, nm),
-                                                        },
-                                                    ))
-                                                },
-                                            )
-                                            .padding(30);
-                                        scrollable
-                                            .align_items(iced::Align::Center)
-                                            .spacing(30)
-                                            .push(notes_cloumn)
-                                            .push(
-                                                page_bar.view(limit).map(|pm| Message::PageBar(pm)),
-                                            )
-                                    })
-                                    .center_x()
-                                    .center_y()
-                                    .height(iced::Length::Shrink)
-                                }),
-                        )
-                        .width(iced::Length::FillPortion(8))
-                        .center_x()
-                        .center_y(),
-                    )
-                    .push({
-                        let tags = tags;
-                        let scrollable = tags_scrollable;
-                        Container::new(
-                            scrollable::Scrollable::new(scrollable)
-                                .scrollbar_width(1)
-                                .push(
-                                    tags.iter_mut().fold(
-                                        Wrap {
-                                            spacing: 10,
-                                            line_spacing: 10,
-                                            padding: 10,
-                                            line_height: 30,
-                                            ..Default::default()
-                                        }
-                                        .push(Text::new("tags:").into()),
-                                        |wrap, tag| {
-                                            wrap.push(tag.view().map(|tm| match tm {
-                                                tags::Message::Search(text) => {
-                                                    Message::Search(text)
-                                                }
+                                let notes_cloumn = notes
+                                    .iter_mut()
+                                    .enumerate()
+                                    .fold(
+                                        Column::new().align_items(iced::Align::Start),
+                                        |column, (idx, note)| {
+                                            column.push(note.view().map(move |nm| match nm {
+                                                note::Message::TagMessage(
+                                                    _,
+                                                    note::tag::Message::Search(text),
+                                                ) => Message::Search(text),
+                                                nm => Message::NoteMessage(idx, nm),
                                             }))
                                         },
-                                    ),
-                                )
-                                .align_items(iced::Align::Center),
+                                    )
+                                    .padding(30);
+                                scrollable
+                                    .align_items(iced::Align::Center)
+                                    .spacing(30)
+                                    .push(notes_cloumn)
+                                    .push(page_bar.view(limit).map(|pm| Message::PageBar(pm)))
+                            })
+                            .center_x()
+                            .center_y()
+                            .height(iced::Length::Shrink)
+                        }),
+                )
+                .width(iced::Length::FillPortion(8))
+                .center_x()
+                .center_y(),
+            )
+            .push({
+                let tags = tags;
+                let scrollable = tags_scrollable;
+                Container::new(
+                    scrollable::Scrollable::new(scrollable)
+                        .scrollbar_width(1)
+                        .push(
+                            tags.iter_mut().fold(
+                                Wrap {
+                                    spacing: 10,
+                                    line_spacing: 10,
+                                    padding: 10,
+                                    line_height: 30,
+                                    ..Default::default()
+                                }
+                                .push(Text::new("tags:").into()),
+                                |wrap, tag| {
+                                    wrap.push(tag.view().map(|tm| match tm {
+                                        tags::Message::Search(text) => Message::Search(text),
+                                    }))
+                                },
+                            ),
                         )
-                        .width(iced::Length::FillPortion(2))
-                        .height(iced::Length::Fill)
-                    })
-                    .into()
-            }
-            State::Settings => Row::new()
-                .align_items(iced::Align::Start)
-                .push(config_view.viwe().map(|cm| Message::ConfigMessage(cm)))
-                .into(),
-            State::Sync => Row::new()
-                .align_items(iced::Align::Start)
-                .push(config_view.viwe().map(|cm| Message::ConfigMessage(cm)))
-                .into(),
-        }
+                        .align_items(iced::Align::Center),
+                )
+                .width(iced::Length::FillPortion(2))
+                .height(iced::Length::Fill)
+            })
+            .into()
     }
 }
 
