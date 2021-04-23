@@ -1,16 +1,25 @@
 use std::fmt::Display;
 
 use directories_next::BaseDirs;
-use iced::{pick_list, slider, Column, Element, PickList, Slider};
+use iced::{
+    button, pick_list, qr_code, slider, Button, Column, Element, PickList, Row, Slider, Text,
+};
 use serde::{Deserialize, Serialize};
 
-use crate::style::Theme;
+use crate::style::{symbol::Symbol, Theme};
 
 #[derive(Debug, Clone)]
 pub enum Message {
     LimitChanged(u32),
     LanguageChanged(Language),
-    ThemeChanged(Theme),
+    SelectSettingBoard,
+    SelectServer,
+    OpenFile,
+    OpenClient,
+    ThemeChanged,
+    OpenSlider,
+    HideSlider,
+    Apply,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, Copy)]
@@ -25,20 +34,60 @@ impl Config {
         Config::default()
     }
 }
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Default)]
 pub struct ConfigView {
     pub config: Config,
     pub state: State,
+    pub board_state: BoardState,
+    pub sync_state: SyncState,
 }
 
 #[derive(Debug, Clone, Default)]
 pub struct State {
-    limit: slider::State,
+    setting_button: button::State,
+    theme_button: button::State,
+    server_button: button::State,
+    open_file_button: button::State,
+    client_button: button::State,
     offset: slider::State,
-    language: pick_list::State<Language>,
-    theme: pick_list::State<Theme>,
 }
 
+#[derive(Debug, Clone, Default)]
+pub struct BoardState {
+    limit_temp: u32,
+    is_open: bool,
+    limit_button: button::State,
+    limit_slider: slider::State,
+    apply_button: button::State,
+    language: pick_list::State<Language>,
+    language_temp: Language,
+}
+#[derive(Debug)]
+pub struct SyncState {
+    qr_code: qr_code::State,
+    qr_data: String,
+}
+
+impl Default for SyncState {
+    fn default() -> Self {
+        let qrcode = if let Ok(qr_state) = qr_code::State::with_version(
+            "",
+            qr_code::Version::Normal(8),
+            qr_code::ErrorCorrection::Low,
+        ) {
+            qr_state
+        } else {
+            qr_code::State::new("").unwrap_or(
+                // 如果到了这里，都出错，只能panic了
+                qr_code::State::new("Error in qrcode generation.").unwrap(),
+            )
+        };
+        Self {
+            qr_code: qrcode,
+            qr_data: String::default(),
+        }
+    }
+}
 impl ConfigView {
     pub fn limit(&self) -> u32 {
         self.config.limit
@@ -46,54 +95,178 @@ impl ConfigView {
     pub fn update(&mut self, message: Message) {
         match message {
             Message::LimitChanged(limit) => {
-                self.config.limit = limit;
+                self.board_state.limit_temp = limit;
             }
-            Message::LanguageChanged(l) => {
-                // TODO:做出实质的语言更改
-                self.config.language = l;
+            Message::LanguageChanged(language) => {
+                self.board_state.language_temp = language;
             }
-            Message::ThemeChanged(t) => {
-                //TODO：做出实质的语言更改
-                self.config.theme = t;
+            Message::ThemeChanged => {
+                let old = self.config.theme;
+                self.config.theme = -old;
             }
+            Message::OpenSlider => {
+                self.board_state.is_open = true;
+            }
+            Message::HideSlider => {
+                self.board_state.is_open = false;
+            }
+            Message::Apply => {
+                self.config.limit = self.board_state.limit_temp;
+                self.config.language = self.board_state.language_temp;
+            }
+            Message::SelectSettingBoard => {}
+            Message::SelectServer => {}
+            Message::OpenFile => {}
+            Message::OpenClient => {}
         }
     }
     pub fn viwe(&mut self) -> Element<Message> {
-        let ConfigView { config, state } = self;
-        let State {
-            limit,
-            language,
-            theme,
+        let ConfigView { config, state, .. } = self;
+        left_bar_viwe(state, config.theme, "start server".to_owned())
+    }
+    pub fn setting_board_open_view(&mut self) -> Element<Message> {
+        let ConfigView {
+            config,
+            state,
+            board_state,
             ..
-        } = state;
-        let limit = Slider::new(limit, 5..=50, config.limit, Message::LimitChanged);
-        let language = PickList::new(
-            language,
-            &[Language::Chinese, Language::English][..],
-            Some(config.language.clone()),
-            Message::LanguageChanged,
-        );
-        let theme = PickList::new(
-            theme,
-            &[Theme::Dark, Theme::Light][..],
-            Some(config.theme.clone()),
-            Message::ThemeChanged,
-        );
-        iced::Container::new(
-            Column::new()
-                .align_items(iced::Align::Center)
-                .spacing(10)
-                .push(limit)
-                .push(language)
-                .push(theme),
-        )
-        .width(iced::Length::FillPortion(1))
-        .align_x(iced::Align::Start)
-        .align_y(iced::Align::Center)
-        .into()
+        } = self;
+        let left_bar = left_bar_viwe(state, config.theme, "start server".to_owned());
+        let setting_board = setting_board_view(board_state, config.language);
+        Row::new().push(left_bar).push(setting_board).into()
+    }
+    pub fn sync_board_open_view(&mut self) -> Element<Message> {
+        let ConfigView {
+            config,
+            state,
+            sync_state,
+            ..
+        } = self;
+        let left_bar = left_bar_viwe(state, config.theme, "stop server".to_owned());
+        let sync_board = sync_board_view(&*sync_state);
+        Row::new().push(left_bar).push(sync_board).into()
     }
 }
+pub fn sync_board_view(state: &SyncState) -> Element<Message> {
+    let SyncState { qr_code, qr_data } = state;
+    let text = Column::new()
+        .push(Text::new(
+            "Click Stop Server button in main window to stop server.",
+        ))
+        .push(Text::new(format!(
+            "Use {} in Local Native desktop app for server address and port to start sync.",
+            qr_data
+        )))
+        .push(Text::new(
+            "Use Local Native mobile app to scan this barcode to start sync.",
+        ));
+    Row::new()
+        .push(text)
+        .push(iced::QRCode::new(qr_code))
+        .into()
+}
+pub fn left_bar_viwe(state: &mut State, theme: Theme, server_text: String) -> Element<Message> {
+    let State {
+        theme_button,
+        setting_button,
+        server_button,
+        open_file_button,
+        client_button,
+        ..
+    } = state;
 
+    let theme_button = Button::new(theme_button, {
+        if theme == Theme::Dark {
+            crate::style::icon::Icon::dark()
+        } else {
+            crate::style::icon::Icon::light()
+        }
+    })
+    .style(Symbol)
+    .on_press(Message::ThemeChanged);
+    let theme = Column::new()
+        .push(
+            Row::new()
+                .push(theme_button)
+                .align_items(iced::Align::Center),
+        )
+        .align_items(iced::Align::End);
+
+    let server_button =
+        Button::new(server_button, Text::new(server_text)).on_press(Message::SelectServer);
+    let client_button =
+        Button::new(client_button, Text::new("start client sync")).on_press(Message::OpenClient);
+    let open_file_button = Button::new(open_file_button, Text::new("sync via attach file"))
+        .on_press(Message::OpenFile);
+
+    let setting_button = Button::new(
+        setting_button,
+        Row::new()
+            .push(crate::style::icon::Icon::settings())
+            .push(Text::new("setting")),
+    )
+    .style(Symbol)
+    .on_press(Message::SelectSettingBoard);
+
+    iced::Container::new(
+        Column::new()
+            .align_items(iced::Align::Center)
+            .spacing(10)
+            .push(open_file_button)
+            .push(server_button)
+            .push(client_button)
+            .push(setting_button)
+            .push(theme),
+    )
+    .width(iced::Length::FillPortion(1))
+    .align_x(iced::Align::Start)
+    .align_y(iced::Align::Center)
+    .into()
+}
+pub fn setting_board_view(
+    board_state: &mut BoardState,
+    pre_language: Language,
+) -> Element<Message> {
+    let BoardState {
+        limit_button,
+        limit_slider,
+        apply_button,
+        language,
+        ..
+    } = board_state;
+    let limit_text = Text::new(format!("limit: {}", board_state.limit_temp));
+    let setting_column = if board_state.is_open {
+        let limit_ctrl = Slider::new(
+            limit_slider,
+            5..=50,
+            board_state.limit_temp,
+            Message::LimitChanged,
+        )
+        .on_release(Message::HideSlider);
+        Column::new().push(limit_text).push(limit_ctrl)
+    } else {
+        Column::new().push(
+            Button::new(limit_button, limit_text)
+                .style(Symbol)
+                .on_press(Message::OpenSlider),
+        )
+    };
+    let language = PickList::new(
+        language,
+        &[Language::Chinese, Language::English][..],
+        Some(pre_language),
+        Message::LanguageChanged,
+    );
+
+    let apply = Row::new()
+        .push(
+            Button::new(apply_button, crate::style::icon::Icon::enter())
+                .style(Symbol)
+                .on_press(Message::Apply),
+        )
+        .align_items(iced::Align::End);
+    setting_column.push(language).push(apply).into()
+}
 #[derive(Debug, Clone)]
 pub enum LoadError {
     FileError,
@@ -172,7 +345,11 @@ pub enum Language {
     English,
     Chinese,
 }
-
+impl Default for Language {
+    fn default() -> Self {
+        Language::English
+    }
+}
 impl Display for Language {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {

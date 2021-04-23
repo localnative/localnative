@@ -6,12 +6,24 @@ pub mod symbol;
 pub mod tag;
 pub mod url;
 
+use std::ops::Neg;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Copy, Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub enum Theme {
     Dark,
     Light,
+}
+impl Neg for Theme {
+    type Output = Theme;
+
+    fn neg(self) -> Self::Output {
+        match self {
+            Theme::Dark => Theme::Light,
+            Theme::Light => Theme::Dark,
+        }
+    }
 }
 
 impl std::fmt::Display for Theme {
