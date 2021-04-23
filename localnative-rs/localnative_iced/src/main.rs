@@ -64,26 +64,25 @@ fn main() -> anyhow::Result<()> {
     .map_err(|iced_err| anyhow::anyhow!("iced err:{:?}", iced_err))
 }
 fn setup_logger() -> anyhow::Result<(), fern::InitError> {
-    let dispatch = 
-    fern::Dispatch::new()
-        .format(|out, message, record| {
-            out.finish(format_args!(
-                "{}[{}][{}] {}",
-                chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
-                record.target(),
-                record.level(),
-                message
-            ))
-        });
+    let dispatch = fern::Dispatch::new().format(|out, message, record| {
+        out.finish(format_args!(
+            "{}[{}][{}] {}",
+            chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
+            record.target(),
+            record.level(),
+            message
+        ))
+    });
     if cfg!(debug_assertions) {
-        dispatch.level(log::LevelFilter::Info)
-        .chain(std::io::stdout())
-
-    }else {
-        dispatch.level(log::LevelFilter::Warn)
-        .chain(fern::log_file("localnative_iced.log")?)
+        dispatch
+            .level(log::LevelFilter::Info)
+            .chain(std::io::stdout())
+    } else {
+        dispatch
+            .level(log::LevelFilter::Warn)
+            .chain(fern::log_file("localnative_iced.log")?)
     }
-        .apply()?;
+    .apply()?;
     Ok(())
 }
 fn font() -> &'static Arc<Vec<u8>> {
