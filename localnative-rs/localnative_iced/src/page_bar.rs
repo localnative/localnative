@@ -58,7 +58,14 @@ impl PageBar {
             .on_press(Message::Next)
             .style(crate::style::symbol::Symbol);
         let page = Text::new(format!(
-            "{}/{}",
+            "{}-{}/{}",
+            {
+                if self.offset == 0 {
+                    1
+                } else {
+                    self.offset
+                }
+            },
             (self.offset + limit).min(self.count),
             self.count
         ));

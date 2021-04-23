@@ -7,7 +7,7 @@ mod init;
 mod note;
 mod page_bar;
 mod search_bar;
-mod setting_bar;
+mod setting_board;
 mod style;
 mod tags;
 
@@ -243,24 +243,19 @@ impl Application for LocalNative {
                         }
                     },
 
-                    Message::ConfigMessage(cm) => {
-                        match cm {
-                            config::Message::LimitChanged(_) => {
-                                let middle_data = MiddleData::from_select(
-                                    &resource.conn,
-                                    search_bar.search_text.as_str(),
-                                    &config_view.config.limit,
-                                    &page_bar.offset,
-                                );
-                                middle_data.encode(data_view, page_bar);
-                            }
-                            // TODO:实现真实的语言切换和主题切换
-                            config::Message::LanguageChanged(_) => {}
-                            config::Message::ThemeChanged(_) => {}
+                    Message::ConfigMessage(cm) => match cm {
+                        config::Message::Apply | config::Message::ThemeChanged => {
+                            config_view.update(cm);
+                            Command::perform(
+                                config::Config::save(config_view.config),
+                                Message::Loaded,
+                            )
                         }
-                        config_view.update(cm);
-                        Command::perform(config::Config::save(config_view.config), Message::Loaded)
-                    }
+                        cm => {
+                            config_view.update(cm);
+                            Command::none()
+                        }
+                    },
                     Message::Search(text) => {
                         search_bar.search_text = text;
                         page_bar.offset = 0;
@@ -435,28 +430,30 @@ impl Data {
                                         };
                                         Container::new(Text::new(text).size(50))
                                     });
+                                    scrollable.align_items(iced::Align::Center).spacing(30)
+                                } else {
+                                    let notes_cloumn = notes
+                                        .iter_mut()
+                                        .enumerate()
+                                        .fold(
+                                            Column::new().align_items(iced::Align::Start),
+                                            |column, (idx, note)| {
+                                                column.push(note.view().map(move |nm| match nm {
+                                                    note::Message::TagMessage(
+                                                        _,
+                                                        note::tag::Message::Search(text),
+                                                    ) => Message::Search(text),
+                                                    nm => Message::NoteMessage(idx, nm),
+                                                }))
+                                            },
+                                        )
+                                        .padding(30);
+                                    scrollable
+                                        .align_items(iced::Align::Center)
+                                        .spacing(30)
+                                        .push(notes_cloumn)
+                                        .push(page_bar.view(limit).map(|pm| Message::PageBar(pm)))
                                 }
-                                let notes_cloumn = notes
-                                    .iter_mut()
-                                    .enumerate()
-                                    .fold(
-                                        Column::new().align_items(iced::Align::Start),
-                                        |column, (idx, note)| {
-                                            column.push(note.view().map(move |nm| match nm {
-                                                note::Message::TagMessage(
-                                                    _,
-                                                    note::tag::Message::Search(text),
-                                                ) => Message::Search(text),
-                                                nm => Message::NoteMessage(idx, nm),
-                                            }))
-                                        },
-                                    )
-                                    .padding(30);
-                                scrollable
-                                    .align_items(iced::Align::Center)
-                                    .spacing(30)
-                                    .push(notes_cloumn)
-                                    .push(page_bar.view(limit).map(|pm| Message::PageBar(pm)))
                             })
                             .center_x()
                             .center_y()
