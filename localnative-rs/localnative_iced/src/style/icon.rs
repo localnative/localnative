@@ -3,6 +3,16 @@ pub struct Icon;
 
 const ICON_SIZE: u16 = 25;
 impl Icon {
+    pub fn dark() -> Svg {
+        Svg::from_path(format!("{}/icon/dark.svg", env!("CARGO_MANIFEST_DIR")))
+            .width(iced::Length::Units(ICON_SIZE))
+            .height(iced::Length::Units(ICON_SIZE))
+    }
+    pub fn light() -> Svg {
+        Svg::from_path(format!("{}/icon/light.svg", env!("CARGO_MANIFEST_DIR")))
+            .width(iced::Length::Units(ICON_SIZE))
+            .height(iced::Length::Units(ICON_SIZE))
+    }
     pub fn logo() -> anyhow::Result<Vec<u8>> {
         let ico_buffer = include_bytes!("../../../icons/icon.ico");
         Ok(image::load_from_memory(ico_buffer)?
