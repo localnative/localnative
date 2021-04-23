@@ -272,20 +272,18 @@ impl NoteView {
                     tags, view_state, ..
                 } = self;
                 if !tag.is_empty() {
-                    tag.split(&[' ', ',', '，'][..])
-                        .into_iter()
-                        .filter(|tag| !tag.is_empty())
-                        .for_each(|tag| {
-                            tags.push(Tag::new(
-                                tag,
-                                tag::State::Editable {
-                                    temp: tag.to_string(),
-                                    edit: button::State::new(),
-                                    reset: button::State::new(),
-                                    delete: button::State::new(),
-                                },
-                            ));
-                        });
+                    let tag = localnative_core::cmd::make_tags(&tag);
+                    tag.split(",").into_iter().for_each(|tag| {
+                        tags.push(Tag::new(
+                            tag,
+                            tag::State::Editable {
+                                temp: tag.to_string(),
+                                edit: button::State::new(),
+                                reset: button::State::new(),
+                                delete: button::State::new(),
+                            },
+                        ));
+                    });
                 }
                 match view_state {
                     ViewState::Edit { add_tag, .. } => {

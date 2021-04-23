@@ -217,8 +217,8 @@ impl Tag {
 }
 
 pub fn focused_input() -> text_input::State {
-    let mut input = text_input::State::new();
-    input.focus();
+    let mut input = text_input::State::focused();
+    input.move_cursor_to_end();
     input
 }
 pub const TAG_TEXT_SIZE: u16 = 16;
