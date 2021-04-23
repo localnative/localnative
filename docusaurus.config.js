@@ -85,6 +85,15 @@ module.exports = {
           ],
         },
         {
+          title: 'Video',
+          items: [
+            {
+              label: 'YouTube',
+              href: 'https://www.youtube.com/channel/UCO3qFIyK0eSmqvMknsslWRw',
+            },
+          ],
+        },
+        {
           title: 'More',
           items: [
             {
@@ -94,10 +103,6 @@ module.exports = {
             {
               label: 'GitLab',
               href: 'https://gitlab.com/localnative/localnative',
-            },
-            {
-              label: 'Bounty',
-              href: 'https://www.bountysource.com/teams/localnative-bounty/issues',
             },
           ],
         },
