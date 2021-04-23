@@ -24,24 +24,6 @@ fn main() -> anyhow::Result<()> {
     build_iced()?;
     build_web_ext_host()?;
     bundle_project(settings)?;
-    // 方案一：
-    // 1. 获取安装目录
-    // 2. 由已知安装目录，生成相应的json
-    // 3. 将生成的json移动到浏览器插件对应位置
-    // 4. 对windows平台做注册表处理
-    // 5. 由bundle生成对应的安装文件
-    // 6. 需要的binary：neon、iced
-    // 7. neon生成的文件放在已知的安装目录
-
-    // 方案二：
-    // 1. 设置一个固定的环境变量，指向neon存放的位置，最好是和electron版本放在一个地方
-    // 2. 由1中环境变量生成对应json，移动到对应位置，并且对windows平台做注册表处理
-    // 3. 由bundler生成对应的安装文件，其中neon文件的位置需要移动到和ekectron一致的位置
-
-    // 方案三：
-    // 类似方案二，但是环境变量设置为安装应用程序的目录，其中neon放到用户选择的目录中
-    // 并且还要提供一个迁移方案，copy之前用户存放在~/localnatiev中的sqlite3文件，
-    // 将这些文件作为最终程序包，这样的好处是易于卸载。
     Ok(())
 }
 

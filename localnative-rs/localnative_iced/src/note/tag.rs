@@ -115,7 +115,6 @@ impl Tag {
             _ => {}
         }
     }
-    // TODO:如果为了代码可读性，这里应该单独拎出来作为一个新的结构体，TagAdd的。。
     pub fn add_tag_view(&mut self) -> Element<Message> {
         let Tag { name, state } = self;
         match state {

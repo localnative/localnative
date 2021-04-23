@@ -1,4 +1,4 @@
-#![windows_subsystem = "windows"]
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod config;
 mod data_view;
@@ -64,6 +64,7 @@ fn main() -> anyhow::Result<()> {
     .map_err(|iced_err| anyhow::anyhow!("iced err:{:?}", iced_err))
 }
 fn setup_logger() -> anyhow::Result<(), fern::InitError> {
+    let dispatch = 
     fern::Dispatch::new()
         .format(|out, message, record| {
             out.finish(format_args!(
@@ -73,10 +74,15 @@ fn setup_logger() -> anyhow::Result<(), fern::InitError> {
                 record.level(),
                 message
             ))
-        })
-        .level(log::LevelFilter::Warn)
+        });
+    if cfg!(debug_assertions) {
+        dispatch.level(log::LevelFilter::Info)
         .chain(std::io::stdout())
+
+    }else {
+        dispatch.level(log::LevelFilter::Warn)
         .chain(fern::log_file("localnative_iced.log")?)
+    }
         .apply()?;
     Ok(())
 }
@@ -428,7 +434,7 @@ impl Data {
                                         } else {
                                             "抱歉，没找到您想要的结果..."
                                         };
-                                        Container::new(Text::new(text))
+                                        Container::new(Text::new(text).size(50))
                                     });
                                 }
                                 let notes_cloumn = notes
