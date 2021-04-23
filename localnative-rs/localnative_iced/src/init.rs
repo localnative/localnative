@@ -94,6 +94,7 @@ fn registr(kind: WebKind) -> anyhow::Result<Option<WebKind>> {
                     return Ok(Some(kind));
                 } else {
                     log::info!("registr value Eq");
+                    return Ok(Some(kind));
                 }
             }
         } else {
