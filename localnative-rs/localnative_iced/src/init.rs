@@ -96,6 +96,8 @@ fn registr(kind: WebKind) -> anyhow::Result<Option<WebKind>> {
                     log::info!("registr value Eq");
                     return Ok(Some(kind));
                 }
+            }else {
+                log::error!("get registr value fail!");
             }
         } else {
             log::info!("registr start set value");
