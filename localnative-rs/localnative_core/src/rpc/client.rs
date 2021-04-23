@@ -103,7 +103,7 @@ pub fn sync(addr: &str) -> Result<String, String> {
     Ok("sync ok".to_string())
 }
 
-async fn run_stop_server(addr: &SocketAddr) -> io::Result<()> {
+pub async fn run_stop_server(addr: &SocketAddr) -> io::Result<()> {
     let transport = tarpc::serde_transport::tcp::connect(addr, || Bincode::default()).await?;
     let client = LNClient::new(client::Config::default(), transport).spawn()?;
     let conn = get_sqlite_connection();

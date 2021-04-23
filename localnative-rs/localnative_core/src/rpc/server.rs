@@ -91,7 +91,7 @@ impl LocalNative for LocalNativeServer {
     }
 }
 
-async fn start_server(addr: &SocketAddr) -> io::Result<()> {
+pub async fn start_server(addr: &SocketAddr) -> io::Result<()> {
     tarpc::serde_transport::tcp::listen(addr, Bincode::default)
         .await?
         .filter_map(|r| future::ready(r.ok()))

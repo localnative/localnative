@@ -65,7 +65,7 @@ pub struct BoardState {
 #[derive(Debug)]
 pub struct SyncState {
     qr_code: qr_code::State,
-    qr_data: String,
+    pub qr_data: String,
 }
 
 impl Default for SyncState {
@@ -89,6 +89,30 @@ impl Default for SyncState {
     }
 }
 impl ConfigView {
+    pub fn init(config: Config, ip: Option<String>) -> Self {
+        let qr_data;
+        let qr_code = if let Some(ip) = ip {
+            qr_data = ip;
+            qr_code::State::new(&qr_data)
+                .unwrap_or(qr_code::State::new("Error in qrcode generation.").unwrap())
+        } else {
+            qr_data = "0.0.0.0:2345".to_owned();
+            let data = "抱歉，获取本地ip失败。";
+            qr_code::State::new(&data)
+                .unwrap_or(qr_code::State::new("Error in qrcode generation.").unwrap())
+        };
+        Self {
+            config,
+            board_state: BoardState {
+                limit_temp: config.limit,
+                language_temp: config.language,
+                is_open: false,
+                ..Default::default()
+            },
+            sync_state: SyncState { qr_code, qr_data },
+            ..Default::default()
+        }
+    }
     pub fn limit(&self) -> u32 {
         self.config.limit
     }
@@ -132,7 +156,7 @@ impl ConfigView {
             ..
         } = self;
         let left_bar = left_bar_viwe(state, config.theme, "start server".to_owned());
-        let setting_board = setting_board_view(board_state, config.language);
+        let setting_board = setting_board_view(board_state);
         Row::new().push(left_bar).push(setting_board).into()
     }
     pub fn sync_board_open_view(&mut self) -> Element<Message> {
@@ -147,7 +171,7 @@ impl ConfigView {
         Row::new().push(left_bar).push(sync_board).into()
     }
 }
-pub fn sync_board_view(state: &SyncState) -> Element<Message> {
+fn sync_board_view(state: &SyncState) -> Element<Message> {
     let SyncState { qr_code, qr_data } = state;
     let text = Column::new()
         .push(Text::new(
@@ -160,12 +184,14 @@ pub fn sync_board_view(state: &SyncState) -> Element<Message> {
         .push(Text::new(
             "Use Local Native mobile app to scan this barcode to start sync.",
         ));
-    Row::new()
-        .push(text)
-        .push(iced::QRCode::new(qr_code))
+    crate::Wrap::new()
+        .height(iced::Length::Fill)
+        .width(iced::Length::FillPortion(10))
+        .push(text.into())
+        .push(iced::QRCode::new(qr_code).into())
         .into()
 }
-pub fn left_bar_viwe(state: &mut State, theme: Theme, server_text: String) -> Element<Message> {
+fn left_bar_viwe(state: &mut State, theme: Theme, server_text: String) -> Element<Message> {
     let State {
         theme_button,
         setting_button,
@@ -184,13 +210,11 @@ pub fn left_bar_viwe(state: &mut State, theme: Theme, server_text: String) -> El
     })
     .style(Symbol)
     .on_press(Message::ThemeChanged);
-    let theme = Column::new()
-        .push(
-            Row::new()
-                .push(theme_button)
-                .align_items(iced::Align::Center),
-        )
-        .align_items(iced::Align::End);
+    let theme = Column::new().push(
+        Row::new()
+            .push(theme_button)
+            .align_items(iced::Align::Center),
+    );
 
     let server_button =
         Button::new(server_button, Text::new(server_text)).on_press(Message::SelectServer);
@@ -207,26 +231,19 @@ pub fn left_bar_viwe(state: &mut State, theme: Theme, server_text: String) -> El
     )
     .style(Symbol)
     .on_press(Message::SelectSettingBoard);
-
-    iced::Container::new(
-        Column::new()
-            .align_items(iced::Align::Center)
-            .spacing(10)
-            .push(open_file_button)
-            .push(server_button)
-            .push(client_button)
-            .push(setting_button)
-            .push(theme),
-    )
-    .width(iced::Length::FillPortion(1))
-    .align_x(iced::Align::Start)
-    .align_y(iced::Align::Center)
-    .into()
+    Column::new()
+        .align_items(iced::Align::Center)
+        .height(iced::Length::Fill)
+        .width(iced::Length::FillPortion(2))
+        .spacing(10)
+        .push(open_file_button)
+        .push(server_button)
+        .push(client_button)
+        .push(setting_button)
+        .push(theme)
+        .into()
 }
-pub fn setting_board_view(
-    board_state: &mut BoardState,
-    pre_language: Language,
-) -> Element<Message> {
+fn setting_board_view(board_state: &mut BoardState) -> Element<Message> {
     let BoardState {
         limit_button,
         limit_slider,
@@ -254,7 +271,7 @@ pub fn setting_board_view(
     let language = PickList::new(
         language,
         &[Language::Chinese, Language::English][..],
-        Some(pre_language),
+        Some(board_state.language_temp),
         Message::LanguageChanged,
     );
 
@@ -265,7 +282,13 @@ pub fn setting_board_view(
                 .on_press(Message::Apply),
         )
         .align_items(iced::Align::End);
-    setting_column.push(language).push(apply).into()
+    setting_column
+        .align_items(iced::Align::Center)
+        .height(iced::Length::Fill)
+        .width(iced::Length::FillPortion(10))
+        .push(language)
+        .push(apply)
+        .into()
 }
 #[derive(Debug, Clone)]
 pub enum LoadError {

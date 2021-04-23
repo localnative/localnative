@@ -3,11 +3,11 @@
 mod config;
 mod data_view;
 mod days;
+mod helper;
 mod init;
 mod note;
 mod page_bar;
 mod search_bar;
-mod setting_board;
 mod style;
 mod tags;
 
@@ -122,7 +122,7 @@ enum LocalNative {
 #[derive(Debug)]
 pub enum Message {
     Loaded(Result<Config, config::ConfigError>),
-    InitResult(anyhow::Result<()>),
+    ResultHandle(anyhow::Result<()>),
     NeedCreate(Config),
     PageBar(page_bar::Message),
     UnknowError,
@@ -164,10 +164,7 @@ impl Application for LocalNative {
                             cmd::create(&resource.conn);
                             config.is_created_db = true;
                         }
-                        let config_view = ConfigView {
-                            config,
-                            ..Default::default()
-                        };
+                        let config_view = ConfigView::init(config, helper::get_ip());
                         MiddleData::upgrade(&resource.conn);
                         let search_bar = SearchBar::default();
                         let mut page_bar = PageBar::default();
@@ -189,7 +186,7 @@ impl Application for LocalNative {
                             ..Default::default()
                         };
                         *self = LocalNative::Loaded(data);
-                        Command::perform(init::init_app_host(), Message::InitResult)
+                        Command::perform(init::init_app_host(), Message::ResultHandle)
                     } else {
                         Command::perform(Config::new(), Message::NeedCreate)
                     }
@@ -206,6 +203,7 @@ impl Application for LocalNative {
                     config_view,
                     page_bar,
                     search_bar,
+                    state,
                     ..
                 } = data;
                 match message {
@@ -250,6 +248,27 @@ impl Application for LocalNative {
                                 config::Config::save(config_view.config),
                                 Message::Loaded,
                             )
+                        }
+                        config::Message::SelectServer => match state {
+                            State::Contents | State::Settings => {
+                                *state = State::Sync;
+                                Command::perform(helper::start_server(), Message::ResultHandle)
+                            }
+                            State::Sync => {
+                                *state = State::Contents;
+                                Command::perform(helper::stop_server(), Message::ResultHandle)
+                            }
+                        },
+                        config::Message::SelectSettingBoard => {
+                            match state {
+                                State::Contents | State::Sync => {
+                                    *state = State::Settings;
+                                }
+                                State::Settings => {
+                                    *state = State::Contents;
+                                }
+                            }
+                            Command::none()
                         }
                         cm => {
                             config_view.update(cm);
@@ -331,11 +350,11 @@ impl Application for LocalNative {
                         }
                     }
                     Message::StyleMessage(_) => Command::none(),
-                    Message::InitResult(res) => {
+                    Message::ResultHandle(res) => {
                         if let Err(e) = res {
-                            log::error!("init fail: {:?}", e);
+                            log::error!("fail: {:?}", e);
                         } else {
-                            log::info!("init success!");
+                            log::info!("success!");
                         }
                         Command::none()
                     }
@@ -360,8 +379,8 @@ impl Application for LocalNative {
             .into(),
             LocalNative::Loaded(data) => match data.state {
                 State::Contents => data.contents_view(),
-                State::Settings => todo!(),
-                State::Sync => todo!(),
+                State::Settings => data.setting_view(),
+                State::Sync => data.sync_view(),
             },
         }
     }
@@ -391,6 +410,18 @@ impl Default for State {
 }
 
 impl Data {
+    fn sync_view(&mut self) -> Element<Message> {
+        let Data { config_view, .. } = self;
+        config_view
+            .sync_board_open_view()
+            .map(|cm| Message::ConfigMessage(cm))
+    }
+    fn setting_view(&mut self) -> Element<Message> {
+        let Data { config_view, .. } = self;
+        config_view
+            .setting_board_open_view()
+            .map(|cm| Message::ConfigMessage(cm))
+    }
     fn contents_view(&mut self) -> Element<Message> {
         let Data {
             data_view,
