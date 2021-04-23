@@ -1,7 +1,7 @@
 ---
 title: Local Native @ Rust NYC 2019 September Meetup
 author: Yi Wang
-authorURL: http://twitter.com/yi_wang
+authorURL: https://www.yi-wang.me
 authorImageURL: https://secure.gravatar.com/avatar/1484b2bde1c0027dab9b135a1e051b3b?s=180&d=identicon
 
 categories: ["公告 Announcement"]
