@@ -117,6 +117,9 @@ fn build_iced() -> anyhow::Result<()> {
     if !cfg!(debug_assertions) {
         build_args.push("--release");
     }
+    if cfg!(windows) {
+        build_args.push("-Zconfigurable-env");
+    }
     if !Command::new("cargo").args(&build_args).status()?.success() {
         return Err(anyhow::anyhow!("build iced fail!"));
     }

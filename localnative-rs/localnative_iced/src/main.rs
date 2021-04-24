@@ -17,7 +17,7 @@ mod wrap;
 use iced::window;
 use iced::{scrollable, Application, Column, Command, Container, Element, Row, Settings, Text};
 
-use config::{Config, ConfigView};
+use config::{Backend, Config, ConfigView};
 use data_view::{DataView, MiddleData};
 use font_kit::family_name::FamilyName;
 use font_kit::properties::Properties;
@@ -160,6 +160,18 @@ impl Application for LocalNative {
                 Message::Loaded(config) => {
                     if let Ok(mut config) = config {
                         let resource = Resource::default();
+                        if std::env::var("WGPU_BACKEND").is_err() {
+                            if cfg!(windows) {
+                                use winreg::{enums::*, RegKey};
+                                let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+                                let (env, _) = hkcu.create_subkey("Environment").unwrap(); // create_subkey opens with write permissions
+                                env.set_value("WGPU_BACKEND", &Backend::default().to_string())
+                                    .unwrap();
+                                log::info!("backend {:?}", std::env::var("WGPU_BACKEND"));
+                            }else {
+                                todo!()
+                            }
+                        }
                         if !config.is_created_db {
                             cmd::create(&resource.conn);
                             config.is_created_db = true;

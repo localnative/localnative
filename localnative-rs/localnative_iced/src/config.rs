@@ -12,6 +12,7 @@ use crate::style::{symbol::Symbol, Theme};
 pub enum Message {
     LimitChanged(u32),
     LanguageChanged(Language),
+    BackendChanged(Backend),
     SelectSettingBoard,
     SelectServer,
     OpenFile,
@@ -27,8 +28,41 @@ pub struct Config {
     pub limit: u32,
     pub language: Language,
     pub theme: Theme,
+    pub backend: Backend,
     pub is_created_db: bool,
 }
+#[derive(Debug, Deserialize, Serialize, Clone, Copy, PartialEq, Eq)]
+pub enum Backend {
+    Gl,
+    Vulkan,
+    Dx12,
+    Dx11,
+    Metal,
+}
+impl Display for Backend {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Backend::Gl => f.write_str("OpenGL"),
+            Backend::Vulkan => f.write_str("Vulkan"),
+            Backend::Dx12 => f.write_str("Dx12"),
+            Backend::Dx11 => f.write_str("Dx11"),
+            Backend::Metal => f.write_str("Metal"),
+        }
+    }
+}
+
+impl Default for Backend {
+    fn default() -> Self {
+        if cfg!(target_os = "windows") {
+            Self::Dx12
+        } else if cfg!(target_os = "macos") {
+            Self::Metal
+        } else {
+            Self::Vulkan
+        }
+    }
+}
+
 impl Config {
     pub async fn new() -> Self {
         Config::default()
@@ -61,6 +95,8 @@ pub struct BoardState {
     apply_button: button::State,
     language: pick_list::State<Language>,
     language_temp: Language,
+    backend: pick_list::State<Backend>,
+    backend_temp: Backend,
 }
 #[derive(Debug)]
 pub struct SyncState {
@@ -107,6 +143,7 @@ impl ConfigView {
                 limit_temp: config.limit,
                 language_temp: config.language,
                 is_open: false,
+                backend_temp: config.backend,
                 ..Default::default()
             },
             sync_state: SyncState { qr_code, qr_data },
@@ -137,11 +174,27 @@ impl ConfigView {
             Message::Apply => {
                 self.config.limit = self.board_state.limit_temp;
                 self.config.language = self.board_state.language_temp;
+                if self.config.backend != self.board_state.backend_temp {
+                    self.config.backend = self.board_state.backend_temp;
+                    if cfg!(windows) {
+                        use winreg::{enums::*, RegKey};
+                        let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+                        let (env, _) = hkcu.create_subkey("Environment").unwrap(); // create_subkey opens with write permissions
+                        env.set_value("WGPU_BACKEND", &self.board_state.backend_temp.to_string())
+                            .unwrap();
+                        log::info!("backend {:?}", std::env::var("WGPU_BACKEND"));
+                    } else {
+                        //TODO:
+                    }
+                }
             }
             Message::SelectSettingBoard => {}
             Message::SelectServer => {}
             Message::OpenFile => {}
             Message::OpenClient => {}
+            Message::BackendChanged(backend) => {
+                self.board_state.backend_temp = backend;
+            }
         }
     }
     pub fn viwe(&mut self) -> Element<Message> {
@@ -249,6 +302,7 @@ fn setting_board_view(board_state: &mut BoardState) -> Element<Message> {
         limit_slider,
         apply_button,
         language,
+        backend,
         ..
     } = board_state;
     let limit_text = Text::new(format!("limit: {}", board_state.limit_temp));
@@ -274,7 +328,22 @@ fn setting_board_view(board_state: &mut BoardState) -> Element<Message> {
         Some(board_state.language_temp),
         Message::LanguageChanged,
     );
-
+    let backends = if cfg!(target_os = "windows") {
+        &[Backend::Gl, Backend::Vulkan, Backend::Dx11, Backend::Dx12][..]
+    } else if cfg!(target_os = "macos") {
+        &[Backend::Gl, Backend::Vulkan, Backend::Metal][..]
+    } else {
+        &[Backend::Gl, Backend::Vulkan][..]
+    };
+    let backend = PickList::new(
+        backend,
+        backends,
+        Some(board_state.backend_temp),
+        Message::BackendChanged,
+    );
+    let backend = Column::new()
+        .push(backend)
+        .push(Text::new("需要重启应用。"));
     let apply = Row::new()
         .push(
             Button::new(apply_button, crate::style::icon::Icon::enter())
@@ -287,6 +356,7 @@ fn setting_board_view(board_state: &mut BoardState) -> Element<Message> {
         .height(iced::Length::Fill)
         .width(iced::Length::FillPortion(10))
         .push(language)
+        .push(backend)
         .push(apply)
         .into()
 }
@@ -389,6 +459,7 @@ impl Default for Config {
             theme: Theme::Light,
             language: Language::English,
             is_created_db: false,
+            backend: Backend::default(),
         }
     }
 }
