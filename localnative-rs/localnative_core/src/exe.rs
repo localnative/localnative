@@ -33,9 +33,9 @@ use crate::CmdSelect;
 use crate::CmdSyncViaAttach;
 use crate::Note;
 use rusqlite::Connection;
-use time::macros::format_description;
 use std::fs;
 use std::path::Path;
+use time::macros::format_description;
 use uuid::Uuid;
 
 pub fn get_sqlite_connection() -> Connection {
@@ -137,11 +137,7 @@ fn process(cmd: Cmd, text: &str) -> String {
         }
         "insert-image" => {
             if let Ok(i) = serde_json::from_str::<CmdInsert>(text) {
-                let format = format_description!("[year]-[month]-[day] [hour]:[minute]:[second]");
-                let created_at = time::OffsetDateTime::now_utc();
-                let created_at = created_at
-                .format(&format).unwrap()+created_at.nanosecond().to_string().as_str() + " UTC";
-                eprintln!("created_at {}", &created_at);
+                let created_at = created_time();
                 let note = Note {
                     rowid: 0i64,
                     uuid4: Uuid::new_v4().to_string(),
@@ -165,10 +161,7 @@ fn process(cmd: Cmd, text: &str) -> String {
         }
         "insert" => {
             if let Ok(i) = serde_json::from_str::<CmdInsert>(text) {
-                let format = format_description!("[year]-[month]-[day] [hour]:[minute]:[second]");
-                let created_at = time::OffsetDateTime::now_utc();
-                let created_at = created_at
-                .format(&format).unwrap()+created_at.nanosecond().to_string().as_str() + " UTC";
+                let created_at = created_time();
                 eprintln!("created_at {}", &created_at);
                 let note = Note {
                     rowid: 0i64,
@@ -222,6 +215,17 @@ fn process(cmd: Cmd, text: &str) -> String {
         }
         _ => r#"{"error": "cmd no match"}"#.to_string(),
     }
+}
+
+fn created_time() -> String {
+    let created_at = time::OffsetDateTime::now_utc();
+    created_at
+        .format(&format_description!(
+            "[year]-[month]-[day] [hour]:[minute]:[second]:"
+        ))
+        .unwrap()
+        + created_at.nanosecond().to_string().as_str()
+        + " UTC"
 }
 
 pub fn do_search(conn: &Connection, query: &str, limit: &u32, offset: &u32) -> String {
