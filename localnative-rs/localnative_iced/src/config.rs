@@ -342,12 +342,6 @@ fn setting_board_view(board_state: &mut BoardState) -> Element<Message> {
         Message::BackendChanged,
     );
 
-    let backend = iced::Tooltip::new(
-        backend,
-        "需要重启应用，如果是第一次打开，可能需要重启电脑。",
-        iced::tooltip::Position::Right,
-    );
-
     let apply = Row::new()
         .push(
             Button::new(apply_button, crate::style::icon::Icon::enter())
