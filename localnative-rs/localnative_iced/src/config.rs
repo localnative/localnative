@@ -180,9 +180,9 @@ impl ConfigView {
                         use winreg::{enums::*, RegKey};
                         let hkcu = RegKey::predef(HKEY_CURRENT_USER);
                         let (env, _) = hkcu.create_subkey("Environment").unwrap(); // create_subkey opens with write permissions
-                        env.set_value("WGPU_BACKEND", &self.board_state.backend_temp.to_string())
+                        env.set_value(crate::BACKEND, &self.board_state.backend_temp.to_string())
                             .unwrap();
-                        log::info!("backend {:?}", std::env::var("WGPU_BACKEND"));
+                        log::info!("backend {:?}", std::env::var(crate::BACKEND));
                     } else {
                         //TODO:
                     }

@@ -29,6 +29,8 @@ use search_bar::SearchBar;
 use std::sync::Arc;
 use wrap::Wrap;
 
+pub const BACKEND: &str = "WGPU_BACKEND";
+
 fn main() -> anyhow::Result<()> {
     setup_logger()?;
     let font = font();
@@ -43,6 +45,9 @@ fn main() -> anyhow::Result<()> {
         log::warn!("icon load fail!");
         None
     };
+    if std::env::var(BACKEND).is_err() {
+        std::env::set_var(BACKEND, &Backend::default().to_string());
+    }
     LocalNative::run(Settings {
         antialiasing: true,
         default_font: {
@@ -160,14 +165,14 @@ impl Application for LocalNative {
                 Message::Loaded(config) => {
                     if let Ok(mut config) = config {
                         let resource = Resource::default();
-                        if std::env::var("WGPU_BACKEND").is_err() {
+                        if std::env::var(BACKEND).is_err() {
                             if cfg!(windows) {
                                 use winreg::{enums::*, RegKey};
                                 let hkcu = RegKey::predef(HKEY_CURRENT_USER);
                                 let (env, _) = hkcu.create_subkey("Environment").unwrap(); // create_subkey opens with write permissions
-                                env.set_value("WGPU_BACKEND", &Backend::default().to_string())
+                                env.set_value(BACKEND, &Backend::default().to_string())
                                     .unwrap();
-                                log::info!("backend {:?}", std::env::var("WGPU_BACKEND"));
+                                log::info!("backend {:?}", std::env::var(BACKEND));
                             } else {
                                 todo!()
                             }
