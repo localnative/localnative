@@ -47,6 +47,16 @@ fn main() -> anyhow::Result<()> {
     };
     if std::env::var(BACKEND).is_err() {
         std::env::set_var(BACKEND, &Backend::default().to_string());
+        if cfg!(target_os = "windows") {
+            use winreg::{enums::*, RegKey};
+            let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+            let (env, _) = hkcu.create_subkey("Environment").unwrap(); // create_subkey opens with write permissions
+            env.set_value(BACKEND, &Backend::default().to_string())
+                .unwrap();
+            log::info!("backend {:?}", std::env::var(BACKEND));
+        } else {
+            todo!()
+        }
     }
     LocalNative::run(Settings {
         antialiasing: true,
@@ -165,18 +175,6 @@ impl Application for LocalNative {
                 Message::Loaded(config) => {
                     if let Ok(mut config) = config {
                         let resource = Resource::default();
-                        if std::env::var(BACKEND).is_err() {
-                            if cfg!(target_os = "windows") {
-                                use winreg::{enums::*, RegKey};
-                                let hkcu = RegKey::predef(HKEY_CURRENT_USER);
-                                let (env, _) = hkcu.create_subkey("Environment").unwrap(); // create_subkey opens with write permissions
-                                env.set_value(BACKEND, &Backend::default().to_string())
-                                    .unwrap();
-                                log::info!("backend {:?}", std::env::var(BACKEND));
-                            } else {
-                                todo!()
-                            }
-                        }
                         if !config.is_created_db {
                             cmd::create(&resource.conn);
                             config.is_created_db = true;
