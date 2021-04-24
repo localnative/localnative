@@ -97,7 +97,7 @@ fn project_out_dir() -> anyhow::Result<String> {
         .into_os_string()
         .into_string()
         .map_err(|e| anyhow::anyhow!("{:?}", e))?;
-    res = if cfg!(windows) {
+    res = if cfg!(target_os = "windows") {
         res.replace("//", "/")
     } else {
         res

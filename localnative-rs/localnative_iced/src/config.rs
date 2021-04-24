@@ -176,7 +176,7 @@ impl ConfigView {
                 self.config.language = self.board_state.language_temp;
                 if self.config.backend != self.board_state.backend_temp {
                     self.config.backend = self.board_state.backend_temp;
-                    if cfg!(windows) {
+                    if cfg!(target_os = "windows") {
                         use winreg::{enums::*, RegKey};
                         let hkcu = RegKey::predef(HKEY_CURRENT_USER);
                         let (env, _) = hkcu.create_subkey("Environment").unwrap(); // create_subkey opens with write permissions

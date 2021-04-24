@@ -15,7 +15,7 @@ impl AppHost {
         let mut name = String::from("localnative-web-ext-host");
         // TODO: add version
         // name += "-0.4.2";
-        if cfg!(windows) {
+        if cfg!(target_os = "windows") {
             name += ".exe";
         };
         let mut path = std::env::current_dir()?;
@@ -24,7 +24,7 @@ impl AppHost {
             .into_os_string()
             .into_string()
             .map_err(|err| anyhow::anyhow!("faid to get path {:?}", err))?;
-        res = if cfg!(windows) {
+        res = if cfg!(target_os = "windows") {
             res.replace("//", "/")
         } else {
             res
@@ -70,7 +70,7 @@ pub async fn init_app_host() -> anyhow::Result<()> {
 
 // [HKEY_CURRENT_USER\Software\Mozilla\NativeMessagingHosts\app.localnative]
 // @="PATH_TO_FIREFOX_MANIFEST\\app.localnative.json"
-#[cfg(windows)]
+#[cfg(target_os = "windows")]
 fn registr(kind: WebKind) -> anyhow::Result<Option<WebKind>> {
     use winreg::enums::*;
     log::info!("registr starting");
@@ -213,7 +213,7 @@ enum WebKind {
 
 impl WebKind {
     async fn init_all() -> anyhow::Result<()> {
-        if cfg!(windows) {
+        if cfg!(target_os = "windows") {
             if let Some(kind) = registr(Self::FireFox)? {
                 try_init_file(kind).await?;
             };
@@ -269,7 +269,7 @@ impl WebKind {
             _ => AppHost::chrome(),
         }
     }
-    #[cfg(windows)]
+    #[cfg(target_os = "windows")]
     fn json_path(&self) -> anyhow::Result<String> {
         let path = self.path()?.join("app.localnative.json");
         path.into_os_string()
@@ -285,7 +285,7 @@ async fn try_init_file(kind: WebKind) -> anyhow::Result<()> {
     let host = kind.host()?;
     log::info!("try_init_file start get raw data.");
     let raw_file = host.raw_data()?;
-    if cfg!(windows) {
+    if cfg!(target_os = "windows") {
         init_file(&file_path, &raw_file, &dir_path).await?;
         log::info!("try_init_file init ok.");
     } else if cfg!(unix) {
