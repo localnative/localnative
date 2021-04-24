@@ -54,7 +54,7 @@ impl Display for Backend {
 impl Default for Backend {
     fn default() -> Self {
         if cfg!(target_os = "windows") {
-            Self::Dx12
+            Self::Dx11
         } else if cfg!(target_os = "macos") {
             Self::Metal
         } else {
@@ -341,9 +341,13 @@ fn setting_board_view(board_state: &mut BoardState) -> Element<Message> {
         Some(board_state.backend_temp),
         Message::BackendChanged,
     );
-    let backend = Column::new()
-        .push(backend)
-        .push(Text::new("需要重启应用。"));
+
+    let backend = iced::Tooltip::new(
+        backend,
+        "需要重启应用，如果是第一次打开，可能需要重启电脑。",
+        iced::tooltip::Position::Right,
+    );
+
     let apply = Row::new()
         .push(
             Button::new(apply_button, crate::style::icon::Icon::enter())
@@ -429,6 +433,7 @@ pub fn app_dir() -> std::path::PathBuf {
     if let Some(base) = BaseDirs::new() {
         base.home_dir().join("LocalNative")
     } else {
+        log::error!("init app dir fial.");
         std::env::current_dir().unwrap().join("LocalNative")
     }
 }
