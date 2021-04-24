@@ -168,7 +168,7 @@ impl Application for LocalNative {
                                 env.set_value("WGPU_BACKEND", &Backend::default().to_string())
                                     .unwrap();
                                 log::info!("backend {:?}", std::env::var("WGPU_BACKEND"));
-                            }else {
+                            } else {
                                 todo!()
                             }
                         }
