@@ -1,4 +1,4 @@
-use std::process::Command;
+use std::{path::Path, process::Command};
 
 use serde::Deserialize;
 use tauri_bundler::{
@@ -23,6 +23,7 @@ fn main() -> anyhow::Result<()> {
     let settings = settings(&bundler)?;
     build_iced()?;
     build_web_ext_host()?;
+    copy_file()?;
     bundle_project(settings)?;
     Ok(())
 }
@@ -39,9 +40,9 @@ fn settings(bundler: &Bundler) -> anyhow::Result<Settings> {
         .bundle_settings(BundleSettings {
             identifier: Some("com.localnative.iced".to_owned()),
             icon: Some(vec![
-                "/icons/512x512.png".to_owned(),
-                "/icons/icon.icns".to_owned(),
-                "/icons/icon.ico".to_owned(),
+                "./icons/512x512.png".to_owned(),
+                "./icons/icon.icns".to_owned(),
+                "./icons/icon.ico".to_owned(),
             ]),
             resources: None,
             copyright: None,
@@ -83,11 +84,11 @@ fn settings(bundler: &Bundler) -> anyhow::Result<Settings> {
         .map_err(|err| anyhow::anyhow!("{:?}", err))
 }
 fn get_src_path(name: &str) -> String {
-    let mut src = "target".to_owned();
+    let mut src = "./target".to_owned();
     if cfg!(debug_assertions) {
-        src += "debug";
+        src += "/debug";
     } else {
-        src += "release";
+        src += "/release";
     }
     src += name;
     src
@@ -99,23 +100,14 @@ fn project_out_dir() -> anyhow::Result<String> {
         .into_os_string()
         .into_string()
         .map_err(|e| anyhow::anyhow!("{:?}", e))?;
-    res = if cfg!(target_os = "windows") {
-        res.replace("//", "/")
-    } else {
-        res
-    };
+    #[cfg(windows)]
+    {
+        res = res.replace("//", "/");
+    }
     Ok(res)
 }
 fn build_iced() -> anyhow::Result<()> {
-    let mut build_args = vec![
-        "build",
-        "--package",
-        "localnative_iced",
-        "--out-dir",
-        "./output",
-        "-Z",
-        "unstable-options",
-    ];
+    let mut build_args = vec!["build", "--bin", "localnative_iced"];
     if !cfg!(debug_assertions) {
         build_args.push("--release");
     }
@@ -131,10 +123,6 @@ fn build_web_ext_host() -> anyhow::Result<()> {
         "localnative_cli",
         "--bin",
         "localnative-web-ext-host",
-        "--out-dir",
-        "./output",
-        "-Z",
-        "unstable-options",
     ];
     if !cfg!(debug_assertions) {
         build_args.push("--release");
@@ -142,5 +130,37 @@ fn build_web_ext_host() -> anyhow::Result<()> {
     if !Command::new("cargo").args(&build_args).status()?.success() {
         return Err(anyhow::anyhow!("build web host fail!"));
     }
+    Ok(())
+}
+fn copy_file_to_output(name: &str) -> anyhow::Result<()> {
+    let from = get_src_path(name);
+    let to = project_out_dir()? + name;
+    std::fs::copy(Path::new(&from), Path::new(&to))?;
+    Ok(())
+}
+
+fn copy_file() -> anyhow::Result<()> {
+    let mut iced = "/localnative_iced".to_owned();
+    #[cfg(windows)]
+    {
+        iced += ".exe"
+    }
+    let mut host = "/localnative-web-ext-host".to_owned();
+    #[cfg(windows)]
+    {
+        host += ".exe"
+    }
+    let output = project_out_dir()?;
+    let iced_file = output.clone() + iced.as_str();
+    if Path::new(&iced_file).exists() {
+        std::fs::remove_file(iced_file)?;
+    }
+    let host_file = output+host.as_str();
+    if Path::new(&host_file).exists() {
+        std::fs::remove_file(host_file)?;
+    }
+
+    copy_file_to_output(&iced)?;
+    copy_file_to_output(&host)?;
     Ok(())
 }
