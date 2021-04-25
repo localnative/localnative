@@ -14,7 +14,7 @@ pub enum Message {
     LanguageChanged(Language),
     BackendChanged(Backend),
     SelectSettingBoard,
-    SelectServer,
+    Server,
     OpenFile,
     OpenClient,
     ThemeChanged,
@@ -35,8 +35,11 @@ pub struct Config {
 pub enum Backend {
     Gl,
     Vulkan,
+    #[cfg(target_os = "windows")]
     Dx12,
+    #[cfg(target_os = "windows")]
     Dx11,
+    #[cfg(target_os = "macos")]
     Metal,
 }
 impl Display for Backend {
@@ -44,8 +47,11 @@ impl Display for Backend {
         match self {
             Backend::Gl => f.write_str("OpenGL"),
             Backend::Vulkan => f.write_str("Vulkan"),
+            #[cfg(target_os = "windows")]
             Backend::Dx12 => f.write_str("Dx12"),
+            #[cfg(target_os = "windows")]
             Backend::Dx11 => f.write_str("Dx11"),
+            #[cfg(target_os = "macos")]
             Backend::Metal => f.write_str("Metal"),
         }
     }
@@ -53,13 +59,13 @@ impl Display for Backend {
 
 impl Default for Backend {
     fn default() -> Self {
-        if cfg!(target_os = "windows") {
-            Self::Dx11
-        } else if cfg!(target_os = "macos") {
-            Self::Metal
-        } else {
-            Self::Vulkan
-        }
+        #[cfg(target_os = "windows")]
+        let res = Self::Dx11;
+        #[cfg(target_os = "macos")]
+        let res = Self::Metal;
+        #[cfg(target_os = "linux")]
+        let res = Self::Vulkan;
+        res
     }
 }
 
@@ -178,20 +184,21 @@ impl ConfigView {
                 self.config.language = self.board_state.language_temp;
                 if self.config.backend != self.board_state.backend_temp {
                     self.config.backend = self.board_state.backend_temp;
-                    if cfg!(target_os = "windows") {
+
+                    #[cfg(target_os = "windows")]
+                    {
                         use winreg::{enums::*, RegKey};
                         let hkcu = RegKey::predef(HKEY_CURRENT_USER);
                         let (env, _) = hkcu.create_subkey("Environment").unwrap(); // create_subkey opens with write permissions
                         env.set_value(crate::BACKEND, &self.board_state.backend_temp.to_string())
                             .unwrap();
                         log::info!("backend {:?}", std::env::var(crate::BACKEND));
-                    } else {
-                        //TODO:
                     }
+                    // TODO:linux
                 }
             }
             Message::SelectSettingBoard => {}
-            Message::SelectServer => {}
+            Message::Server => {}
             Message::OpenFile => {}
             Message::OpenClient => {}
             Message::BackendChanged(backend) => {
@@ -271,8 +278,7 @@ fn left_bar_viwe(state: &mut State, theme: Theme) -> Element<Message> {
             .align_items(iced::Align::Center),
     );
 
-    let server_button =
-        Button::new(server_button, Text::new("server")).on_press(Message::SelectServer);
+    let server_button = Button::new(server_button, Text::new("server")).on_press(Message::Server);
     let client_button =
         Button::new(client_button, Text::new("start client sync")).on_press(Message::OpenClient);
     let open_file_button = Button::new(open_file_button, Text::new("sync via attach file"))
@@ -330,12 +336,14 @@ fn setting_board_view(board_state: &mut BoardState) -> Element<Message> {
         Some(board_state.language_temp),
         Message::LanguageChanged,
     );
-    let backends = if cfg!(target_os = "windows") {
-        &[Backend::Gl, Backend::Vulkan, Backend::Dx11, Backend::Dx12][..]
-    } else if cfg!(target_os = "macos") {
-        &[Backend::Gl, Backend::Vulkan, Backend::Metal][..]
-    } else {
-        &[Backend::Gl, Backend::Vulkan][..]
+    let backends = {
+        #[cfg(target_os = "windows")]
+        let res = &[Backend::Gl, Backend::Vulkan, Backend::Dx11, Backend::Dx12][..];
+        #[cfg(target_os = "macos")]
+        let res = return &[Backend::Gl, Backend::Vulkan, Backend::Metal][..];
+        #[cfg(target_os = "linux")]
+        let res = return &[Backend::Gl, Backend::Vulkan][..];
+        res
     };
     let backend = PickList::new(
         backend,

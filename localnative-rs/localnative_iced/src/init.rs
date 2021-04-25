@@ -112,18 +112,21 @@ fn registr(kind: WebKind) -> anyhow::Result<Option<WebKind>> {
 pub fn firefox_path() -> anyhow::Result<PathBuf> {
     if let Some(user_dir) = directories_next::UserDirs::new() {
         let home_dir = user_dir.home_dir();
-        if cfg!(target_os = "macos") {
+        #[cfg(target_os = "macos")]
+        {
             Ok(home_dir
                 .join("Library")
                 .join("Application Support")
                 .join("Mozilla")
                 .join("NativeMessagingHosts"))
-        } else if cfg!(target_os = "linux") {
+        }
+        #[cfg(target_os = "linux")]
+        {
             Ok(home_dir.join(".mozilla").join("native-messaging-hosts"))
-        } else if cfg!(target_os = "windows") {
+        }
+        #[cfg(target_os = "windows")]
+        {
             Ok(home_dir.join("LocalNative").join("config").join("mozilla"))
-        } else {
-            Err(anyhow::anyhow!("not support platform."))
         }
     } else {
         Err(anyhow::anyhow!("not found user dir."))
@@ -132,22 +135,25 @@ pub fn firefox_path() -> anyhow::Result<PathBuf> {
 pub fn chrome_path() -> anyhow::Result<PathBuf> {
     if let Some(user_dir) = directories_next::UserDirs::new() {
         let home_dir = user_dir.home_dir();
-        if cfg!(target_os = "macos") {
+        #[cfg(target_os = "macos")]
+        {
             Ok(home_dir
                 .join("Library")
                 .join("Application Support")
                 .join("Google")
                 .join("Chrome")
                 .join("NativeMessagingHosts"))
-        } else if cfg!(target_os = "linux") {
+        }
+        #[cfg(target_os = "linux")]
+        {
             Ok(home_dir
                 .join(".config")
                 .join("google-chrome")
                 .join("NativeMessagingHosts"))
-        } else if cfg!(target_os = "windows") {
+        }
+        #[cfg(target_os = "windows")]
+        {
             Ok(home_dir.join("LocalNative").join("config").join("chrome"))
-        } else {
-            Err(anyhow::anyhow!("not support platform."))
         }
     } else {
         Err(anyhow::anyhow!("not found user dir."))
@@ -156,21 +162,24 @@ pub fn chrome_path() -> anyhow::Result<PathBuf> {
 pub fn chromium_path() -> anyhow::Result<PathBuf> {
     if let Some(user_dir) = directories_next::UserDirs::new() {
         let home_dir = user_dir.home_dir();
-        if cfg!(target_os = "macos") {
+        #[cfg(target_os = "macos")]
+        {
             Ok(home_dir
                 .join("Library")
                 .join("Application Support")
                 .join("Chromium")
                 .join("NativeMessagingHosts"))
-        } else if cfg!(target_os = "linux") {
+        }
+        #[cfg(target_os = "linux")]
+        {
             Ok(home_dir
                 .join(".config")
                 .join("chromium")
                 .join("NativeMessagingHosts"))
-        } else if cfg!(target_os = "windows") {
+        }
+        #[cfg(target_os = "windows")]
+        {
             Ok(home_dir.join("LocalNative").join("config").join("chrome"))
-        } else {
-            Err(anyhow::anyhow!("not support platform."))
         }
     } else {
         Err(anyhow::anyhow!("not found user dir."))
@@ -179,7 +188,8 @@ pub fn chromium_path() -> anyhow::Result<PathBuf> {
 pub fn edge_path() -> anyhow::Result<PathBuf> {
     if let Some(user_dir) = directories_next::UserDirs::new() {
         let home_dir = user_dir.home_dir();
-        if cfg!(target_os = "macos") {
+        #[cfg(target_os = "macos")]
+        {
             // TODO：需要测试
             Ok(home_dir
                 .join("Library")
@@ -187,17 +197,19 @@ pub fn edge_path() -> anyhow::Result<PathBuf> {
                 .join("Microsoft")
                 .join("Edge")
                 .join("NativeMessagingHosts"))
-        } else if cfg!(target_os = "linux") {
+        }
+        #[cfg(target_os = "linux")]
+        {
             // TODO:需要测试
             Ok(home_dir
                 .join(".config")
                 .join("Microsoft")
                 .join("Edge")
                 .join("NativeMessagingHosts"))
-        } else if cfg!(target_os = "windows") {
+        }
+        #[cfg(target_os = "windows")]
+        {
             Ok(home_dir.join("LocalNative").join("config").join("edge"))
-        } else {
-            Err(anyhow::anyhow!("not support platform."))
         }
     } else {
         Err(anyhow::anyhow!("not found user dir."))
@@ -212,7 +224,8 @@ enum WebKind {
 
 impl WebKind {
     async fn init_all() -> anyhow::Result<()> {
-        if cfg!(target_os = "windows") {
+        #[cfg(windows)]
+        {
             if let Some(kind) = registr(Self::FireFox)? {
                 try_init_file(kind).await?;
             };
@@ -226,7 +239,9 @@ impl WebKind {
                 try_init_file(kind).await?;
             }
             Ok(())
-        } else {
+        }
+        #[cfg(unix)]
+        {
             tokio::try_join!(
                 try_init_file(Self::FireFox),
                 try_init_file(Self::Chrome),
@@ -236,6 +251,7 @@ impl WebKind {
             .map(|_| ())
         }
     }
+    #[cfg(target_os = "windows")]
     fn registr_path(&self) -> PathBuf {
         match self {
             WebKind::FireFox => Path::new("Software")

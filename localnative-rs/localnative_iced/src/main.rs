@@ -47,16 +47,16 @@ fn main() -> anyhow::Result<()> {
     };
     if std::env::var(BACKEND).is_err() {
         std::env::set_var(BACKEND, &Backend::default().to_string());
-        if cfg!(target_os = "windows") {
+        #[cfg(target_os = "windows")]
+        {
             use winreg::{enums::*, RegKey};
             let hkcu = RegKey::predef(HKEY_CURRENT_USER);
             let (env, _) = hkcu.create_subkey("Environment").unwrap(); // create_subkey opens with write permissions
             env.set_value(BACKEND, &Backend::default().to_string())
                 .unwrap();
             log::info!("backend {:?}", std::env::var(BACKEND));
-        } else {
-            todo!()
         }
+        // TODO: linux mac
     }
     LocalNative::run(Settings {
         antialiasing: true,
@@ -266,14 +266,14 @@ impl Application for LocalNative {
                                 Message::Loaded,
                             )
                         }
-                        config::Message::SelectServer => match state {
+                        config::Message::Server => match state {
                             State::Contents | State::Settings => {
                                 *state = State::Sync;
                                 Command::perform(helper::start_server(), Message::ResultHandle)
                             }
                             State::Sync => {
                                 *state = State::Contents;
-                                Command::perform(helper::stop_server(), Message::ResultHandle)
+                                Command::none()
                             }
                         },
                         config::Message::SelectSettingBoard => {
