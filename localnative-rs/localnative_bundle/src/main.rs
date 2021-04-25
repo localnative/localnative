@@ -41,7 +41,7 @@ fn settings(bundler: &Bundler) -> anyhow::Result<Settings> {
             identifier: Some("com.localnative.iced".to_owned()),
             icon: Some(vec![
                 "./icons/512x512.png".to_owned(),
-                "./icons/icon.icns".to_owned(),
+                "./icons/app.icns".to_owned(),
                 "./icons/icon.ico".to_owned(),
             ]),
             resources: None,
@@ -54,7 +54,7 @@ fn settings(bundler: &Bundler) -> anyhow::Result<Settings> {
             deb: DebianSettings::default(),
             macos: MacOsSettings::default(),
             updater: None,
-            #[cfg(target_os = "windows")]
+            #[cfg(windows)]
             windows: tauri_bundler::WindowsSettings {
                 template: Some("./templates/main.wxs".to_owned()),
                 ..Default::default()
@@ -69,7 +69,7 @@ fn settings(bundler: &Bundler) -> anyhow::Result<Settings> {
             default_run: Some("localnative_iced".to_owned()),
         })
         .package_types(vec![
-            #[cfg(target_os = "windows")]
+            #[cfg(windows)]
             PackageType::WindowsMsi,
             PackageType::MacOsBundle,
             PackageType::Deb,
