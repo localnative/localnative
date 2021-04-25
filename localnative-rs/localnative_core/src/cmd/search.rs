@@ -230,7 +230,7 @@ fn make_words(query: &str) -> Vec<String> {
     let re1 = Regex::new(r"\s+").unwrap();
     let s1 = re1.replace_all(query, " ");
     s1.trim()
-        .split(" ")
+        .split(' ')
         .map(|w| format!("%{}%", w))
         .collect::<Vec<String>>()
 }

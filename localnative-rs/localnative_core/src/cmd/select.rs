@@ -43,10 +43,10 @@ pub fn select_by_day(conn: &Connection) -> String {
     for r in result_iter {
         let r = r.unwrap();
         d.push_str(&serde_json::to_string(&r).unwrap());
-        d.push_str(",");
+        d.push(',');
     }
     d.pop();
-    d.push_str("]");
+    d.push(']');
     d
 }
 
@@ -95,10 +95,10 @@ pub fn select_by_tag(conn: &Connection) -> String {
             v: count,
         };
         d.push_str(&serde_json::to_string(&item).unwrap());
-        d.push_str(",");
+        d.push(',');
     }
     d.pop();
-    d.push_str("]");
+    d.push(']');
     d
 }
 
@@ -147,9 +147,9 @@ pub fn select(conn: &Connection, limit: &u32, offset: &u32) -> String {
         note.tags = make_tags(&note.tags);
         //eprintln!("Found note {:?}", note);
         j.push_str(&serde_json::to_string(&note).unwrap());
-        j.push_str(",");
+        j.push(',');
     }
     j.pop();
-    j.push_str("]");
+    j.push(']');
     j
 }

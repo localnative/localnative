@@ -30,7 +30,7 @@ pub use self::search::{search, search_by_day, search_by_tag, search_count};
 pub use self::select::{select, select_by_day, select_by_tag, select_count};
 
 pub fn sync_via_attach(conn: &Connection, uri: &str) -> String {
-    if let Ok(_) = conn.execute("attach ? as 'other'", &[uri]) {
+    if conn.execute("attach ? as 'other'", &[uri]).is_ok() {
         match conn.execute_batch("BEGIN;
         insert into main.note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public)
         select uuid4, title, url, tags, description, comments, annotations, created_at, is_public

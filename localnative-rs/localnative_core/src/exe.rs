@@ -88,8 +88,8 @@ fn process(cmd: Cmd, text: &str) -> String {
         "server" => {
             eprintln!(r#"{{"server": "starting"}}"#);
             if let Ok(s) = serde_json::from_str::<CmdRpcServer>(text) {
-                if let Ok(_) = crate::rpc::server::start(&s.addr) {
-                    format!(r#"{{"server": "started"}}"#)
+                if crate::rpc::server::start(&s.addr).is_ok() {
+                    r#"{"server": "started"}"#.to_string()
                 } else {
                     r#"{"error":"server error"}"#.to_string()
                 }
