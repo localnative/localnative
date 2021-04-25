@@ -41,6 +41,7 @@ struct LocalNativeServer(SocketAddr);
 
 impl LocalNative for LocalNativeServer {
     type IsVersionMatchFut = Ready<bool>;
+    #[allow(clippy::wrong_self_convention)]
     fn is_version_match(self, _: context::Context, version: String) -> Self::IsVersionMatchFut {
         let conn = get_sqlite_connection();
         if version == get_meta_version(&conn) {
@@ -127,5 +128,5 @@ pub fn get_server_addr() -> String {
             return format!("{}:3456", iface.addr.ip().to_string());
         }
     }
-    return "".to_string();
+    "".to_string()
 }

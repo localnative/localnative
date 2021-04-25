@@ -53,7 +53,7 @@ fn settings(bundler: &Bundler) -> anyhow::Result<Settings> {
             deb: DebianSettings::default(),
             macos: MacOsSettings::default(),
             updater: None,
-            #[cfg(windows)]
+            #[cfg(target_os = "windows")]
             windows: tauri_bundler::WindowsSettings {
                 template: Some("./templates/main.wxs".to_owned()),
                 ..Default::default()

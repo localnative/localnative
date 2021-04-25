@@ -23,7 +23,7 @@ extern crate uuid;
 use self::semver::Version;
 use rusqlite::Connection;
 // version to upgrade to
-const VERSION: &'static str = "0.4.2";
+const VERSION: &str = "0.4.2";
 mod to_0_4_0;
 mod utils;
 use crate::OneString;

@@ -72,10 +72,10 @@ pub fn search_by_tag(conn: &Connection, query: &str) -> String {
             v: count,
         };
         d.push_str(&serde_json::to_string(&item).unwrap());
-        d.push_str(",");
+        d.push(',');
     }
     d.pop();
-    d.push_str("]");
+    d.push(']');
     d
 }
 
@@ -118,10 +118,10 @@ pub fn search_by_day(conn: &Connection, query: &str) -> String {
     for r in result_iter {
         let r = r.unwrap();
         d.push_str(&serde_json::to_string(&r).unwrap());
-        d.push_str(",");
+        d.push(',');
     }
     d.pop();
-    d.push_str("]");
+    d.push(']');
     d
 }
 
@@ -219,10 +219,10 @@ pub fn search(conn: &Connection, query: &str, limit: &u32, offset: &u32) -> Stri
         note.tags = make_tags(&note.tags);
         //eprintln!("Found note {:?}", note);
         j.push_str(&serde_json::to_string(&note).unwrap());
-        j.push_str(",");
+        j.push(',');
     }
     j.pop();
-    j.push_str("]");
+    j.push(']');
     j
 }
 

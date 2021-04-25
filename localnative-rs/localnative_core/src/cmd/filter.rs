@@ -77,10 +77,10 @@ pub fn filter_by_tag(conn: &Connection, query: &str, from: &str, to: &str) -> St
             v: count,
         };
         d.push_str(&serde_json::to_string(&item).unwrap());
-        d.push_str(",");
+        d.push(',');
     }
     d.pop();
-    d.push_str("]");
+    d.push(']');
     d
 }
 
@@ -192,10 +192,10 @@ pub fn filter(
         note.tags = make_tags(&note.tags);
         //eprintln!("Found note {:?}", note);
         j.push_str(&serde_json::to_string(&note).unwrap());
-        j.push_str(",");
+        j.push(',');
     }
     j.pop();
-    j.push_str("]");
+    j.push(']');
     j
 }
 
@@ -203,7 +203,7 @@ fn make_words(query: &str) -> Vec<String> {
     let re1 = Regex::new(r"\s+").unwrap();
     let s1 = re1.replace_all(query, " ");
     s1.trim()
-        .split(" ")
+        .split(' ')
         .map(|w| format!("%{}%", w))
         .collect::<Vec<String>>()
 }
