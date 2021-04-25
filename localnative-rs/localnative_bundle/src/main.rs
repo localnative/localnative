@@ -67,20 +67,13 @@ fn settings(bundler: &Bundler) -> anyhow::Result<Settings> {
             authors: Some(vec!["Cupnfish".to_owned()]),
             default_run: Some("localnative_iced".to_owned()),
         })
-        .package_types(if cfg!(target_os = "windows") {
-            vec![
-                PackageType::WindowsMsi,
-                PackageType::MacOsBundle,
-                PackageType::Deb,
-                PackageType::AppImage,
-            ]
-        } else {
-            vec![
-                PackageType::MacOsBundle,
-                PackageType::Deb,
-                PackageType::AppImage,
-            ]
-        })
+        .package_types(vec![
+            #[cfg(target_os = "windows")]
+            PackageType::WindowsMsi,
+            PackageType::MacOsBundle,
+            PackageType::Deb,
+            PackageType::AppImage,
+        ])
         .project_out_directory(project_out_dir()?);
     if bundler.verbose {
         seetings_builder = seetings_builder.verbose();
