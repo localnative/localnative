@@ -41,8 +41,7 @@ use uuid::Uuid;
 pub fn get_sqlite_connection() -> Connection {
     let p = sqlite3_db_location();
     let path = Path::new(&p);
-    let conn = Connection::open(path).unwrap();
-    conn
+    Connection::open(path).unwrap()
 }
 
 fn sqlite3_db_location() -> String {

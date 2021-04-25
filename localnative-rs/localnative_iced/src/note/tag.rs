@@ -42,10 +42,7 @@ pub enum State {
 
 impl Tag {
     pub fn is_editing(&self) -> bool {
-        match &self.state {
-            State::Editing { .. } => true,
-            _ => false,
-        }
+        matches!(&self.state, State::Editing { .. })
     }
     pub fn new(name: &str, state: State) -> Self {
         Self {
@@ -56,12 +53,11 @@ impl Tag {
     pub fn update(&mut self, message: Message) {
         let Tag { name, state } = self;
         match message {
-            Message::InputChanged(change) => match state {
-                State::Editing { temp, .. } => {
+            Message::InputChanged(change) => {
+                if let State::Editing { temp, .. } = state {
                     *temp = change;
                 }
-                _ => {}
-            },
+            }
             Message::Reset => match state {
                 State::Editable { temp, .. } | State::Editing { temp, .. } => {
                     *temp = name.clone();
@@ -77,8 +73,8 @@ impl Tag {
                     delete: button::State::new(),
                 };
             }
-            Message::Editing => match state {
-                State::Editable { temp, .. } => {
+            Message::Editing => {
+                if let State::Editable { temp, .. } = state {
                     *state = State::Editing {
                         temp: temp.clone(),
                         edit_input: focused_input(),
@@ -86,10 +82,10 @@ impl Tag {
                         delete: button::State::new(),
                     }
                 }
-                _ => {}
-            },
-            Message::CancelAdd => match state {
-                State::Editing { .. } => {
+            }
+
+            Message::CancelAdd => {
+                if let State::Editing { .. } = state {
                     *state = State::Editable {
                         temp: String::new(),
                         edit: button::State::new(),
@@ -97,20 +93,16 @@ impl Tag {
                         delete: button::State::new(),
                     };
                 }
-                _ => unreachable!(),
-            },
+            }
             Message::Enter => {
-                match state {
-                    State::Editing { temp, .. } => {
-                        *state = State::Editable {
-                            temp: temp.clone(),
-                            edit: button::State::new(),
-                            reset: button::State::new(),
-                            delete: button::State::new(),
-                        };
-                    }
-                    _ => {}
-                };
+                if let State::Editing { temp, .. } = state {
+                    *state = State::Editable {
+                        temp: temp.clone(),
+                        edit: button::State::new(),
+                        reset: button::State::new(),
+                        delete: button::State::new(),
+                    };
+                }
             }
             _ => {}
         }

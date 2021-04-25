@@ -65,11 +65,11 @@ pub enum ViewState {
         add_tag: tag::Tag,
     },
 }
-impl Into<NoteView> for Note {
-    fn into(self) -> NoteView {
-        let tags: Vec<Tag> = self
+impl From<Note> for NoteView {
+    fn from(note: Note) -> Self {
+        let tags: Vec<Tag> = note
             .tags
-            .split(",")
+            .split(',')
             .into_iter()
             .filter(|name| !name.is_empty())
             .map(|name| {
@@ -82,23 +82,23 @@ impl Into<NoteView> for Note {
             })
             .collect();
         let editables = Editables {
-            title: self.title,
-            url: self.url,
-            description: self.description,
-            comments: self.comments,
+            title: note.title,
+            url: note.url,
+            description: note.description,
+            comments: note.comments,
             state: editable::State::Normal {
                 url_button: button::State::new(),
             },
         };
         NoteView {
-            rowid: self.rowid,
-            uuid4: self.uuid4,
+            rowid: note.rowid,
+            uuid4: note.uuid4,
             editables,
-            annotations: self.annotations,
-            tags_string: self.tags,
+            annotations: note.annotations,
+            tags_string: note.tags,
             tags,
-            created_at: self.created_at,
-            is_public: self.is_public,
+            created_at: note.created_at,
+            is_public: note.is_public,
             view_state: ViewState::Normal {
                 edit: button::State::new(),
                 delete: button::State::new(),
@@ -109,25 +109,26 @@ impl Into<NoteView> for Note {
         }
     }
 }
-impl Into<Note> for &NoteView {
-    fn into(self) -> Note {
-        let tags = self
+
+impl From<&NoteView> for Note {
+    fn from(note_view: &NoteView) -> Self {
+        let tags = note_view
             .tags
             .iter()
             .map(|tag| tag.name.as_str())
             .collect::<Vec<&str>>()
             .join(",");
         Note {
-            rowid: self.rowid,
-            uuid4: self.uuid4.clone(),
-            title: self.editables.title.clone(),
-            url: self.editables.url.clone(),
+            rowid: note_view.rowid,
+            uuid4: note_view.uuid4.clone(),
+            title: note_view.editables.title.clone(),
+            url: note_view.editables.url.clone(),
             tags,
-            description: self.editables.description.clone(),
-            comments: self.editables.comments.clone(),
-            annotations: self.annotations.clone(),
-            created_at: self.created_at.clone(),
-            is_public: self.is_public,
+            description: note_view.editables.description.clone(),
+            comments: note_view.editables.comments.clone(),
+            annotations: note_view.annotations.clone(),
+            created_at: note_view.created_at.clone(),
+            is_public: note_view.is_public,
         }
     }
 }
@@ -168,8 +169,8 @@ impl NoteView {
             Message::EditableMessage(em) => {
                 self.editables.update(em);
             }
-            Message::EnableQrcode => match self.qr_state {
-                QrState::Hide { .. } => {
+            Message::EnableQrcode => {
+                if let QrState::Hide { .. } = self.qr_state {
                     let qrcode = if let Ok(qr_state) = qr_code::State::with_version(
                         self.qr_code(),
                         qr_code::Version::Normal(8),
@@ -177,9 +178,12 @@ impl NoteView {
                     ) {
                         qr_state
                     } else {
-                        qr_code::State::new(self.qr_code()).unwrap_or(
+                        qr_code::State::new(self.qr_code()).unwrap_or_else(
                             // 如果到了这里，都出错，只能panic了
-                            qr_code::State::new("Error in qrcode generation.").unwrap(),
+                            |e| {
+                                qr_code::State::new(format!("Error in qrcode generation:{:?}", e))
+                                    .unwrap()
+                            },
                         )
                     };
 
@@ -188,54 +192,48 @@ impl NoteView {
                         qrcode,
                     };
                 }
-                _ => {}
-            },
-            Message::DisableQrcode => match self.qr_state {
-                QrState::Show { .. } => {
+            }
+
+            Message::DisableQrcode => {
+                if let QrState::Show { .. } = self.qr_state {
                     self.qr_state = QrState::Hide {
                         qrcode_show: button::State::new(),
                     };
                 }
-                _ => {}
-            },
+            }
             Message::Editable => {
                 self.editables.update(editable::Message::TurnEdit);
                 self.tags
                     .iter_mut()
                     .for_each(|tag| tag.update(tag::Message::Editable));
                 let NoteView { view_state, .. } = self;
-                match view_state {
-                    ViewState::Normal { .. } => {
-                        *view_state = ViewState::Edit {
-                            enter: button::State::new(),
-                            cancel: button::State::new(),
-                            add_editable: pick_list::State::default(),
-                            add_tag: tag::Tag::new(
-                                "Add new tag",
-                                tag::State::Editable {
-                                    temp: String::new(),
-                                    edit: button::State::new(),
-                                    reset: button::State::new(),
-                                    delete: button::State::new(),
-                                },
-                            ),
-                        };
-                    }
-                    _ => {}
+
+                if let ViewState::Normal { .. } = view_state {
+                    *view_state = ViewState::Edit {
+                        enter: button::State::new(),
+                        cancel: button::State::new(),
+                        add_editable: pick_list::State::default(),
+                        add_tag: tag::Tag::new(
+                            "Add new tag",
+                            tag::State::Editable {
+                                temp: String::new(),
+                                edit: button::State::new(),
+                                reset: button::State::new(),
+                                delete: button::State::new(),
+                            },
+                        ),
+                    };
                 }
             }
             Message::Cancel => {
                 self.editables.update(editable::Message::Cancel);
                 self.cancel_tags();
                 let NoteView { view_state, .. } = self;
-                match view_state {
-                    ViewState::Edit { .. } => {
-                        *view_state = ViewState::Normal {
-                            edit: button::State::new(),
-                            delete: button::State::new(),
-                        };
-                    }
-                    _ => {}
+                if let ViewState::Edit { .. } = view_state {
+                    *view_state = ViewState::Normal {
+                        edit: button::State::new(),
+                        delete: button::State::new(),
+                    };
                 }
             }
             Message::Enter => {
@@ -273,7 +271,7 @@ impl NoteView {
                 } = self;
                 if !tag.is_empty() {
                     let tag = localnative_core::cmd::make_tags(&tag);
-                    tag.split(",").into_iter().for_each(|tag| {
+                    tag.split(',').into_iter().for_each(|tag| {
                         tags.push(Tag::new(
                             tag,
                             tag::State::Editable {
@@ -349,7 +347,7 @@ impl NoteView {
     pub fn new(note: Note, view_state: ViewState, qr_state: QrState) -> Self {
         let tags = note
             .tags
-            .split(",")
+            .split(',')
             .map(|name| {
                 let tag_state = match view_state {
                     ViewState::Normal { .. } => tag::State::Normal {
@@ -390,7 +388,7 @@ impl NoteView {
     pub fn cancel_tags(&mut self) {
         self.tags = self
             .tags_string
-            .split(",")
+            .split(',')
             .filter(|s| !s.is_empty())
             .map(|name| {
                 let tag_state = tag::State::Normal {
@@ -469,7 +467,7 @@ impl NoteView {
                             .padding(20)
                             .spacing(10),
                     );
-                let editables_view = editables.view().map(|m| Message::EditableMessage(m));
+                let editables_view = editables.view().map(Message::EditableMessage);
                 let editables_row = Row::new().push(editables_view);
                 if let Some(qrcode) = qrcode {
                     Container::new(
@@ -534,7 +532,7 @@ impl NoteView {
                     tag::Message::EnterAdd(text) => Message::AddTag(text),
                     tm => Message::AddTagMessage(tm),
                 }));
-                let editables_view = editables.view().map(|m| Message::EditableMessage(m));
+                let editables_view = editables.view().map(Message::EditableMessage);
 
                 let editables_row = Row::new()
                     .push(editables_view)

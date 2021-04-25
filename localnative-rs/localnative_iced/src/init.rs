@@ -91,11 +91,10 @@ fn registr(kind: WebKind) -> anyhow::Result<Option<WebKind>> {
                     let writer = key.open_subkey_with_flags(&write_path, KEY_WRITE)?;
                     writer.set_value("", &json_path)?;
                     log::info!("registr set value ok");
-                    return Ok(Some(kind));
                 } else {
                     log::info!("registr value Eq");
-                    return Ok(Some(kind));
                 }
+                return Ok(Some(kind));
             } else {
                 log::error!("get registr value fail!");
             }
@@ -299,12 +298,8 @@ async fn try_init_file(kind: WebKind) -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn init_file(
-    file_path: &PathBuf,
-    raw_file: &Vec<u8>,
-    dir_path: &PathBuf,
-) -> anyhow::Result<()> {
-    Ok(if file_path.exists() {
+async fn init_file(file_path: &Path, raw_file: &[u8], dir_path: &Path) -> anyhow::Result<()> {
+    if file_path.exists() {
         log::info!("init_file is reading.");
         let file = tokio::fs::read(file_path).await?;
         log::info!("init_file read fine.");
@@ -319,5 +314,6 @@ async fn init_file(
         log::info!("init_file is writing file.");
         tokio::fs::write(file_path, raw_file).await?;
         log::info!("init_file write ok.");
-    })
+    }
+    Ok(())
 }

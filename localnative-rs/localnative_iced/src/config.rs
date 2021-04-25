@@ -113,9 +113,9 @@ impl Default for SyncState {
         ) {
             qr_state
         } else {
-            qr_code::State::new("").unwrap_or(
+            qr_code::State::new("").unwrap_or_else(
                 // 如果到了这里，都出错，只能panic了
-                qr_code::State::new("Error in qrcode generation.").unwrap(),
+                |e| qr_code::State::new(format!("error in qrcode generation:{:?}", e)).unwrap(),
             )
         };
         Self {
@@ -129,13 +129,15 @@ impl ConfigView {
         let qr_data;
         let qr_code = if let Some(ip) = ip {
             qr_data = ip;
-            qr_code::State::new(&qr_data)
-                .unwrap_or(qr_code::State::new("Error in qrcode generation.").unwrap())
+            qr_code::State::new(&qr_data).unwrap_or_else(|e| {
+                qr_code::State::new(format!("Error in qrcode generation: {:?}", e)).unwrap()
+            })
         } else {
             qr_data = "0.0.0.0:2345".to_owned();
             let data = "抱歉，获取本地ip失败。";
-            qr_code::State::new(&data)
-                .unwrap_or(qr_code::State::new("Error in qrcode generation.").unwrap())
+            qr_code::State::new(&data).unwrap_or_else(|e| {
+                qr_code::State::new(format!("Error in qrcode generation: {:?}", e)).unwrap()
+            })
         };
         Self {
             config,

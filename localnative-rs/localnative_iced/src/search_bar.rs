@@ -20,11 +20,8 @@ pub enum Message {
 }
 impl SearchBar {
     pub fn update(&mut self, message: Message) {
-        match message {
-            Message::Clear => {
-                self.search_text.clear();
-            }
-            _ => {}
+        if let Message::Clear = message {
+            self.search_text.clear();
         }
     }
     pub fn view(&mut self) -> Element<Message> {

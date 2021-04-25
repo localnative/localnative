@@ -29,4 +29,4 @@ pub trait LocalNative {
     async fn receive_note(uuid4: String) -> Note;
     async fn stop() -> ();
 }
-pub type LNClient = LocalNativeClient;
+pub type LnClient = LocalNativeClient;

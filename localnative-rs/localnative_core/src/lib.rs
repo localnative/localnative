@@ -62,6 +62,7 @@ use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 
 #[no_mangle]
+#[allow(clippy::not_unsafe_ptr_arg_deref)]
 pub extern "C" fn localnative_run(json_input: *const c_char) -> *mut c_char {
     let c_str = unsafe { CStr::from_ptr(json_input) };
     let json = match c_str.to_str() {
@@ -73,6 +74,7 @@ pub extern "C" fn localnative_run(json_input: *const c_char) -> *mut c_char {
 }
 
 #[no_mangle]
+#[allow(clippy::not_unsafe_ptr_arg_deref)]
 pub extern "C" fn localnative_free(s: *mut c_char) {
     unsafe {
         if s.is_null() {
@@ -82,7 +84,7 @@ pub extern "C" fn localnative_free(s: *mut c_char) {
     };
 }
 use serde::{Deserialize, Serialize};
-
+#[allow(clippy::upper_case_acronyms)]
 #[derive(Serialize, Deserialize, Debug)]
 pub struct KVStringI64 {
     pub k: String,

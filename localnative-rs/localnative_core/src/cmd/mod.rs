@@ -69,8 +69,7 @@ pub fn count(conn: &Connection, tbl: &str) -> i64 {
     let mut stmt = conn
         .prepare(&format!("select count(1) as cnt from {}", tbl))
         .unwrap();
-    let rs = stmt.query_row([], |row| row.get(0)).unwrap();
-    rs
+    stmt.query_row([], |row| row.get(0)).unwrap()
 }
 
 pub fn delete(conn: &Connection, rowid: i64) {

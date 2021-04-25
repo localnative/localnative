@@ -63,9 +63,9 @@ fn send_message(message: &str) -> io::Result<()> {
 
     let mut handle = io::stdout();
     // Write message size.
-    handle.write(&bytes)?;
+    handle.write_all(&bytes)?;
     // Write the message itself.
-    handle.write(buf)?;
+    handle.write_all(buf)?;
     handle.flush()?;
     Ok(())
 }

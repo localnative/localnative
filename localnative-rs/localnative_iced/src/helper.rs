@@ -29,9 +29,9 @@ pub fn get_ip() -> Option<String> {
     };
 
     match socket.local_addr() {
-        Ok(addr) => return Some(addr.ip().to_string() + ":2345"),
-        Err(_) => return None,
-    };
+        Ok(addr) => Some(addr.ip().to_string() + ":2345"),
+        Err(_) => None,
+    }
 }
 pub async fn stop_server() -> anyhow::Result<()> {
     let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 2345);

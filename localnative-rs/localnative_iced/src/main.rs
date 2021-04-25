@@ -130,6 +130,7 @@ fn font() -> &'static Arc<Vec<u8>> {
     })
 }
 
+#[allow(clippy::large_enum_variant)]
 enum LocalNative {
     Loading,
     Loaded(Data),
@@ -194,9 +195,9 @@ impl Application for LocalNative {
                         let mut data_view = DataView::default();
                         middle_data.encode(&mut data_view, &mut page_bar);
                         let data = Data {
-                            config_view,
-                            resource,
                             data_view,
+                            resource,
+                            config_view,
                             search_bar,
                             page_bar,
                             ..Default::default()
@@ -430,13 +431,13 @@ impl Data {
         let Data { config_view, .. } = self;
         config_view
             .sync_board_open_view()
-            .map(|cm| Message::ConfigMessage(cm))
+            .map(Message::ConfigMessage)
     }
     fn setting_view(&mut self) -> Element<Message> {
         let Data { config_view, .. } = self;
         config_view
             .setting_board_open_view()
-            .map(|cm| Message::ConfigMessage(cm))
+            .map(Message::ConfigMessage)
     }
     fn contents_view(&mut self) -> Element<Message> {
         let Data {
@@ -455,7 +456,7 @@ impl Data {
         let search_text_is_empty = search_bar.search_text.is_empty();
         Row::new()
             .align_items(iced::Align::Start)
-            .push(config_view.viwe().map(|cm| Message::ConfigMessage(cm)))
+            .push(config_view.viwe().map(Message::ConfigMessage))
             .push(
                 iced::Container::new(
                     Column::new()
@@ -499,7 +500,7 @@ impl Data {
                                         .align_items(iced::Align::Center)
                                         .spacing(30)
                                         .push(notes_cloumn)
-                                        .push(page_bar.view(limit).map(|pm| Message::PageBar(pm)))
+                                        .push(page_bar.view(limit).map(Message::PageBar))
                                 }
                             })
                             .center_x()

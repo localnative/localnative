@@ -104,8 +104,7 @@ pub fn select_by_tag(conn: &Connection) -> String {
 
 pub fn select_count(conn: &Connection) -> u32 {
     let mut stmt = conn.prepare("SELECT count(1) FROM note").unwrap();
-    let rs = stmt.query_row([], |row| row.get(0)).unwrap();
-    rs
+    stmt.query_row([], |row| row.get(0)).unwrap()
 }
 
 pub fn select(conn: &Connection, limit: &u32, offset: &u32) -> String {

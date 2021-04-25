@@ -31,6 +31,7 @@ impl Display for Editable {
         }
     }
 }
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug)]
 pub enum State {
     Normal {
@@ -91,48 +92,40 @@ impl Edit {
             EditMessage::Delete => {
                 // 上层处理
             }
-            EditMessage::Edit => match self {
-                Edit::Nonempty { state, .. } => match state {
-                    EditState::Editable => {
+            EditMessage::Edit => {
+                if let Edit::Nonempty { state, .. } = self {
+                    if let EditState::Editable = state  {
                         *state = EditState::Editing {
                             text_bar: focused_input(),
                         };
                     }
-                    _ => {}
-                },
-                _ => {}
-            },
+            }}
+            ,
             // normal
-            EditMessage::Reset => match self {
-                Edit::Nonempty { temp, .. } => {
+            EditMessage::Reset => {
+                if let Edit::Nonempty { temp, .. }= self {
                     *temp = org;
                 }
-                _ => {}
-            },
+        },
             // edting => editable
-            EditMessage::Enter => match self {
-                Edit::Nonempty { state, temp, .. } => match state {
-                    EditState::Editing { .. } => {
+            EditMessage::Enter => {
+                if let Edit::Nonempty { state, temp, .. }= self   {
+                    if let EditState::Editing { .. } = state {
                         if temp.is_empty() {
                             *self = Edit::Empty;
                         } else {
                             *state = EditState::Editable;
                         }
                     }
-                    _ => {}
-                },
-                _ => {}
-            },
+                }}
+            ,
             // edting
-            EditMessage::InputChanged(changed) => match self {
-                Edit::Nonempty { temp, state, .. } => match state {
-                    EditState::Editing { .. } => {
+            EditMessage::InputChanged(changed) => {
+                if let Edit::Nonempty { temp, state:EditState::Editing { .. }, .. } = self {
                         *temp = changed;
-                    }
-                    _ => {}
-                },
-                _ => {}
-            },
+                }
+            }
+            ,
         }
     }
     pub fn view(&mut self, text: &str, kind: Editable) -> Element<EditMessage> {

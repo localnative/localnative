@@ -181,13 +181,14 @@ where
             .next()
     }
 }
-impl<'a, Message, B> Into<Element<'a, Message, Renderer<B>>> for Wrap<'a, B, Message>
+
+impl<'a, Message, B> From<Wrap<'a, B, Message>> for Element<'a, Message, Renderer<B>>
 where
     B: Backend + 'a,
     Message: 'a,
 {
-    fn into(self) -> Element<'a, Message, Renderer<B>> {
-        Element::new(self)
+    fn from(wrap: Wrap<'a, B, Message>) -> Self {
+        Element::new(wrap)
     }
 }
 
