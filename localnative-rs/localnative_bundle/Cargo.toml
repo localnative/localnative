@@ -7,7 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tauri-bundler = { git = "https://github.com/Cupnfish/tauri.git" }
+tauri-bundler = { git = "https://github.com/tauri-apps/tauri.git" }
 directories-next = "2"
 anyhow = "1"
 serde = {version = "1",features = ["derive"]}

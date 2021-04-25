@@ -83,6 +83,7 @@ fn settings(bundler: &Bundler) -> anyhow::Result<Settings> {
         .build()
         .map_err(|err| anyhow::anyhow!("{:?}", err))
 }
+#[allow(unused_mut)]
 fn get_src_path(name: &str) -> String {
     let mut src = "./target".to_owned();
     if cfg!(debug_assertions) {
@@ -93,6 +94,7 @@ fn get_src_path(name: &str) -> String {
     src += name;
     src
 }
+#[allow(unused_mut)]
 fn project_out_dir() -> anyhow::Result<String> {
     let mut dir = std::env::current_dir()?;
     dir = dir.join("output");
@@ -138,7 +140,7 @@ fn copy_file_to_output(name: &str) -> anyhow::Result<()> {
     std::fs::copy(Path::new(&from), Path::new(&to))?;
     Ok(())
 }
-
+#[allow(unused_mut)]
 fn copy_file() -> anyhow::Result<()> {
     let mut iced = "/localnative_iced".to_owned();
     #[cfg(windows)]
