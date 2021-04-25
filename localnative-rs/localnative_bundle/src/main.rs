@@ -54,14 +54,9 @@ fn settings(bundler: &Bundler) -> anyhow::Result<Settings> {
             macos: MacOsSettings::default(),
             updater: None,
             #[cfg(target_os = "windows")]
-            windows: 
-            if cfg!(windows) {
-                tauri_bundler::WindowsSettings {
-                    template: Some("./templates/main.wxs".to_owned()),
-                    ..Default::default()
-                }
-            }else {
-                Default::default()
+            windows: tauri_bundler::WindowsSettings {
+                template: Some("./templates/main.wxs".to_owned()),
+                ..Default::default()
             },
         })
         .package_settings(PackageSettings {
@@ -72,7 +67,7 @@ fn settings(bundler: &Bundler) -> anyhow::Result<Settings> {
             authors: Some(vec!["Cupnfish".to_owned()]),
             default_run: Some("localnative_iced".to_owned()),
         })
-        .package_types(if cfg!(windows) {
+        .package_types(if cfg!(target_os = "windows") {
             vec![
                 PackageType::WindowsMsi,
                 PackageType::MacOsBundle,
