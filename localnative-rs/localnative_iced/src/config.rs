@@ -340,9 +340,9 @@ fn setting_board_view(board_state: &mut BoardState) -> Element<Message> {
         #[cfg(target_os = "windows")]
         let res = &[Backend::Gl, Backend::Vulkan, Backend::Dx11, Backend::Dx12][..];
         #[cfg(target_os = "macos")]
-        let res = return &[Backend::Gl, Backend::Vulkan, Backend::Metal][..];
+        let res = &[Backend::Gl, Backend::Vulkan, Backend::Metal][..];
         #[cfg(target_os = "linux")]
-        let res = return &[Backend::Gl, Backend::Vulkan][..];
+        let res = &[Backend::Gl, Backend::Vulkan][..];
         res
     };
     let backend = PickList::new(
