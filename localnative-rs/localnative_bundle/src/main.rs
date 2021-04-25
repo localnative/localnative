@@ -54,9 +54,14 @@ fn settings(bundler: &Bundler) -> anyhow::Result<Settings> {
             macos: MacOsSettings::default(),
             updater: None,
             #[cfg(target_os = "windows")]
-            windows: tauri_bundler::WindowsSettings {
-                template: Some("./templates/main.wxs".to_owned()),
-                ..Default::default()
+            windows: 
+            if cfg!(windows) {
+                tauri_bundler::WindowsSettings {
+                    template: Some("./templates/main.wxs".to_owned()),
+                    ..Default::default()
+                }
+            }else {
+                Default::default()
             },
         })
         .package_settings(PackageSettings {
