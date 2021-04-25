@@ -199,7 +199,7 @@ impl ConfigView {
     }
     pub fn viwe(&mut self) -> Element<Message> {
         let ConfigView { config, state, .. } = self;
-        left_bar_viwe(state, config.theme, "start server".to_owned())
+        left_bar_viwe(state, config.theme)
     }
     pub fn setting_board_open_view(&mut self) -> Element<Message> {
         let ConfigView {
@@ -208,7 +208,7 @@ impl ConfigView {
             board_state,
             ..
         } = self;
-        let left_bar = left_bar_viwe(state, config.theme, "start server".to_owned());
+        let left_bar = left_bar_viwe(state, config.theme);
         let setting_board = setting_board_view(board_state);
         Row::new().push(left_bar).push(setting_board).into()
     }
@@ -219,7 +219,7 @@ impl ConfigView {
             sync_state,
             ..
         } = self;
-        let left_bar = left_bar_viwe(state, config.theme, "stop server".to_owned());
+        let left_bar = left_bar_viwe(state, config.theme);
         let sync_board = sync_board_view(&*sync_state);
         Row::new().push(left_bar).push(sync_board).into()
     }
@@ -244,7 +244,7 @@ fn sync_board_view(state: &SyncState) -> Element<Message> {
         .push(iced::QRCode::new(qr_code).into())
         .into()
 }
-fn left_bar_viwe(state: &mut State, theme: Theme, server_text: String) -> Element<Message> {
+fn left_bar_viwe(state: &mut State, theme: Theme) -> Element<Message> {
     let State {
         theme_button,
         setting_button,
@@ -270,7 +270,7 @@ fn left_bar_viwe(state: &mut State, theme: Theme, server_text: String) -> Elemen
     );
 
     let server_button =
-        Button::new(server_button, Text::new(server_text)).on_press(Message::SelectServer);
+        Button::new(server_button, Text::new("server")).on_press(Message::SelectServer);
     let client_button =
         Button::new(client_button, Text::new("start client sync")).on_press(Message::OpenClient);
     let open_file_button = Button::new(open_file_button, Text::new("sync via attach file"))

@@ -3,7 +3,7 @@ use std::process::Command;
 use serde::Deserialize;
 use tauri_bundler::{
     bundle_project, AppCategory, BundleBinary, BundleSettings, DebianSettings, MacOsSettings,
-    PackageSettings, PackageType, Settings, SettingsBuilder, WindowsSettings,
+    PackageSettings, PackageType, Settings, SettingsBuilder,
 };
 
 #[derive(Debug, Deserialize)]
@@ -53,7 +53,8 @@ fn settings(bundler: &Bundler) -> anyhow::Result<Settings> {
             deb: DebianSettings::default(),
             macos: MacOsSettings::default(),
             updater: None,
-            windows: WindowsSettings {
+            #[cfg(windows)]
+            windows: tauri_bundler::WindowsSettings {
                 template: Some("./templates/main.wxs".to_owned()),
                 ..Default::default()
             },
@@ -66,12 +67,20 @@ fn settings(bundler: &Bundler) -> anyhow::Result<Settings> {
             authors: Some(vec!["Cupnfish".to_owned()]),
             default_run: Some("localnative_iced".to_owned()),
         })
-        .package_types(vec![
-            PackageType::WindowsMsi,
-            PackageType::MacOsBundle,
-            PackageType::Deb,
-            PackageType::AppImage,
-        ])
+        .package_types(if cfg!(windows) {
+            vec![
+                PackageType::WindowsMsi,
+                PackageType::MacOsBundle,
+                PackageType::Deb,
+                PackageType::AppImage,
+            ]
+        } else {
+            vec![
+                PackageType::MacOsBundle,
+                PackageType::Deb,
+                PackageType::AppImage,
+            ]
+        })
         .project_out_directory(project_out_dir()?);
     if bundler.verbose {
         seetings_builder = seetings_builder.verbose();

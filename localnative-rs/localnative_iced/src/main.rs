@@ -92,6 +92,7 @@ fn setup_logger() -> anyhow::Result<(), fern::InitError> {
         dispatch
             .level(log::LevelFilter::Info)
             .chain(std::io::stdout())
+            .chain(fern::log_file("localnative_iced.log")?)
     } else {
         dispatch
             .level(log::LevelFilter::Warn)
