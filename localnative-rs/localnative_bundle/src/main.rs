@@ -56,7 +56,10 @@ fn settings(bundler: &Bundler) -> anyhow::Result<Settings> {
             updater: None,
             #[cfg(windows)]
             windows: tauri_bundler::WindowsSettings {
-                template: Some("./templates/main.wxs".to_owned()),
+                wix: Some(tauri_bundler::WixSettings {
+                    template: Some(Path::new("./templates/main.wxs").to_owned()),
+                    ..Default::default()
+                }),
                 ..Default::default()
             },
         })
@@ -157,7 +160,7 @@ fn copy_file() -> anyhow::Result<()> {
     if Path::new(&iced_file).exists() {
         std::fs::remove_file(iced_file)?;
     }
-    let host_file = output+host.as_str();
+    let host_file = output + host.as_str();
     if Path::new(&host_file).exists() {
         std::fs::remove_file(host_file)?;
     }

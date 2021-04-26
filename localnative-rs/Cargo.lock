@@ -3538,8 +3538,8 @@ dependencies = [
 
 [[package]]
 name = "tauri-bundler"
-version = "1.0.0-beta-rc.0"
-source = "git+https://github.com/Cupnfish/tauri.git#c0d75d1c0477406c81494b3e8423e5a34c3f2692"
+version = "1.0.0-beta-rc.1"
+source = "git+https://github.com/tauri-apps/tauri.git?branch=dev#0f86bc4071635d142b54ae0abf5cf79694ec8ede"
 dependencies = [
  "anyhow",
  "ar",
@@ -3552,7 +3552,6 @@ dependencies = [
  "hex",
  "icns",
  "image",
- "lazy_static",
  "libflate",
  "md5",
  "regex",
