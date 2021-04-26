@@ -88,15 +88,18 @@ fn setup_logger() -> anyhow::Result<(), fern::InitError> {
             message
         ))
     });
+    let log_dir = setting_view::app_dir()
+    .join("log")
+    .join("localnative.log");
     if cfg!(debug_assertions) {
         dispatch
             .level(log::LevelFilter::Info)
             .chain(std::io::stdout())
-            .chain(fern::log_file("localnative_iced.log")?)
+            .chain(fern::log_file(&log_dir)?)
     } else {
         dispatch
             .level(log::LevelFilter::Warn)
-            .chain(fern::log_file("localnative_iced.log")?)
+            .chain(fern::log_file(&log_dir)?)
     }
     .apply()?;
     Ok(())

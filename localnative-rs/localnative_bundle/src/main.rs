@@ -140,6 +140,9 @@ fn build_web_ext_host() -> anyhow::Result<()> {
 fn copy_file_to_output(name: &str) -> anyhow::Result<()> {
     let from = get_src_path(name);
     let to = project_out_dir()? + name;
+    if !Path::new("output").exists() {
+        std::fs::create_dir("output")?;
+    }
     std::fs::copy(Path::new(&from), Path::new(&to))?;
     Ok(())
 }
