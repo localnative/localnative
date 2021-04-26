@@ -336,11 +336,11 @@ impl Application for LocalNative {
                                 }
                                 note::Message::Enter => {
                                     let old_note = note.old_note();
-                                    log::debug!("old note:{:?}", &old_note);
+                                    log::info!("old note:{:?}", &old_note);
                                     note.update(note::Message::Enter);
                                     let rowid = note.rowid;
-                                    let mut new_note: note::Note = (&*note).into();
-                                    log::debug!("new note:{:?}", &new_note);
+                                    let mut new_note = note::Note::from(&*note);
+                                    log::info!("new note:{:?}", &new_note);
                                     if new_note != old_note {
                                         cmd::delete(&resource.conn, rowid);
                                         new_note.uuid4 = uuid::Uuid::new_v4().to_string();

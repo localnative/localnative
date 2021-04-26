@@ -98,9 +98,26 @@ impl Tag {
                 }
             }
             Message::Enter => {
-                if let State::Edit { state, .. } = state {
-                    if let EditState::Editing(..) = state {
-                        *state = EditState::Able;
+                if let State::Edit {
+                    state: edit_state,
+                    temp,
+                    ..
+                } = state
+                {
+                    match edit_state {
+                        EditState::Able => {
+                            if name != temp {
+                                *name = temp.clone();
+                                log::info!("{}", name);
+                            }
+                            *state = State::Normal {
+                                search: button::State::new(),
+                            };
+                        }
+                        EditState::Editing(_) => {
+                            *temp = temp.replace(&[',', '，', ' '][..], "").to_owned();
+                            *edit_state = EditState::Able;
+                        }
                     }
                 }
             }

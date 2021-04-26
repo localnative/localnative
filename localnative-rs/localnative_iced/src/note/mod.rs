@@ -229,26 +229,12 @@ impl NoteView {
             Message::Enter => {
                 let NoteView {
                     tags,
-                    view_state,
                     editables,
                     ..
                 } = self;
-                match view_state {
-                    ViewState::Edit { add_tag, .. } => {
-                        let Tag { state, .. } = add_tag;
-                        let temp = match state {
-                            tag::State::Edit { temp, .. } => Some(temp.clone()),
-                            _ => None,
-                        };
-                        if let Some(temp) = temp {
-                            add_tag.update(tag::Message::EnterAdd(temp));
-                        }
-                    }
-                    _ => unreachable!(),
-                }
                 editables.update(editable::Message::Enter);
                 tags.iter_mut()
-                    .filter(|tag| tag.is_editing())
+                    .filter(|tag| !tag.is_editing())
                     .for_each(|tag| tag.update(tag::Message::Enter));
             }
 
