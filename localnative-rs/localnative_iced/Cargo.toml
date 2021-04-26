@@ -11,7 +11,7 @@ serde = {version = "1",features = ["derive"]}
 serde_json = "1"
 tokio = {version = "1",features = ["fs","io-util","macros"]}
 directories-next = "2"
-localnative_core = { path = "../localnative_core" }
+localnative_core = { path = "../localnative_core", features = ["iced"] }
 thiserror = "1"
 anyhow = "1"
 open = "1"

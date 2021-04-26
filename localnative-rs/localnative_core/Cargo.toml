@@ -36,3 +36,6 @@ name = "localnative_core"
 # crate-type = ["cdylib"]
 # ios works as below
 # crate-type = ["staticlib"]
+[features]
+default = []
+iced = []

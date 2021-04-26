@@ -39,3 +39,8 @@ pub async fn start_server() -> anyhow::Result<()> {
     localnative_core::rpc::server::start_server(&addr).await?;
     Ok(())
 }
+pub async fn stop_server() -> anyhow::Result<()> {
+    let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 2345);
+    localnative_core::rpc::client::run_stop_server(&addr).await?;
+    Ok(())
+}

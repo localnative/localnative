@@ -140,6 +140,8 @@ enum LocalNative {
 pub enum Message {
     Loaded(Result<Config, config::ConfigError>),
     ResultHandle(anyhow::Result<()>),
+    StartServerResult(anyhow::Result<()>),
+    StopServerResult(anyhow::Result<()>),
     NeedCreate(Config),
     PageBar(page_bar::Message),
     UnknowError,
@@ -221,6 +223,7 @@ impl Application for LocalNative {
                     page_bar,
                     search_bar,
                     state,
+                    server_state,
                     ..
                 } = data;
                 match message {
@@ -269,10 +272,16 @@ impl Application for LocalNative {
                         config::Message::Server => match state {
                             State::Contents | State::Settings => {
                                 *state = State::Sync;
-                                Command::perform(helper::start_server(), Message::ResultHandle)
+                                if let ServerState::Closed = server_state{
+                                    return Command::perform(helper::start_server(), Message::StartServerResult);
+                                }
+                                Command::none()
                             }
                             State::Sync => {
                                 *state = State::Contents;
+                                if let ServerState::Opening = server_state {
+                                    return Command::perform(helper::stop_server(), Message::StopServerResult);
+                                }
                                 Command::none()
                             }
                         },
@@ -379,6 +388,18 @@ impl Application for LocalNative {
                     Message::UnknowError => Command::none(),
                     Message::NeedUpdate => Command::none(),
                     Message::Ignore => Command::none(),
+                    Message::StartServerResult(res) => {
+                        if res.is_ok() {
+                            *server_state = ServerState::Opening; 
+                        }
+                        Command::none()
+                    }
+                    Message::StopServerResult(res) => {
+                        if res.is_ok() {
+                            *server_state = ServerState::Closed;
+                        }
+                        Command::none()
+                    }
                 }
             }
         }
@@ -410,7 +431,19 @@ pub struct Data {
     config_view: ConfigView,
     search_bar: SearchBar,
     page_bar: PageBar,
+    server_state:ServerState,
     state: State,
+}
+#[derive(Debug)]
+pub enum ServerState {
+    Opening,
+    Closed
+}
+
+impl Default for ServerState {
+    fn default() -> Self {
+        Self::Closed
+    }
 }
 
 #[derive(Debug)]
