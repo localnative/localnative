@@ -204,11 +204,12 @@ impl NoteView {
                         add_editable: pick_list::State::default(),
                         add_tag: tag::Tag::new(
                             "Add new tag",
-                            tag::State::Editable {
+                            tag::State::Edit {
                                 temp: String::new(),
                                 edit: button::State::new(),
                                 reset: button::State::new(),
                                 delete: button::State::new(),
+                                state: tag::EditState::Able,
                             },
                         ),
                     };
@@ -236,7 +237,7 @@ impl NoteView {
                     ViewState::Edit { add_tag, .. } => {
                         let Tag { state, .. } = add_tag;
                         let temp = match state {
-                            tag::State::Editing { temp, .. } => Some(temp.clone()),
+                            tag::State::Edit { temp, .. } => Some(temp.clone()),
                             _ => None,
                         };
                         if let Some(temp) = temp {
@@ -263,11 +264,12 @@ impl NoteView {
                     tag.split(',').into_iter().for_each(|tag| {
                         tags.push(Tag::new(
                             tag,
-                            tag::State::Editable {
+                            tag::State::Edit {
                                 temp: tag.to_string(),
                                 edit: button::State::new(),
                                 reset: button::State::new(),
                                 delete: button::State::new(),
+                                state: tag::EditState::Able,
                             },
                         ));
                     });
@@ -276,15 +278,12 @@ impl NoteView {
                     ViewState::Edit { add_tag, .. } => {
                         let Tag { state, .. } = add_tag;
                         match state {
-                            tag::State::Editing { .. } => {
-                                *state = tag::State::Editable {
-                                    temp: String::new(),
-                                    edit: button::State::new(),
-                                    reset: button::State::new(),
-                                    delete: button::State::new(),
-                                };
+                            tag::State::Edit { temp, state, .. } => {
+                                temp.clear();
+                                if let tag::EditState::Editing(..) = state {
+                                    *state = tag::EditState::Able;
+                                }
                             }
-                            tag::State::Editable { temp, .. } => temp.clear(),
                             _ => unreachable!(),
                         }
                     }
@@ -342,11 +341,12 @@ impl NoteView {
                     ViewState::Normal { .. } => tag::State::Normal {
                         search: button::State::new(),
                     },
-                    ViewState::Edit { .. } => tag::State::Editable {
+                    ViewState::Edit { .. } => tag::State::Edit {
                         temp: name.to_string(),
                         edit: button::State::new(),
                         reset: button::State::new(),
                         delete: button::State::new(),
+                        state: tag::EditState::Able,
                     },
                 };
                 Tag::new(name, tag_state)

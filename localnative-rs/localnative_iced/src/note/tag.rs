@@ -25,24 +25,29 @@ pub enum State {
     Normal {
         search: button::State,
     },
-    // TODO: 有些参数是相互重叠的，所以可以共用，最好添加一个新的State
-    Editable {
+    Edit {
         temp: String,
+        reset: button::State,
+        delete: button::State,
         edit: button::State,
-        reset: button::State,
-        delete: button::State,
+        state: EditState,
     },
-    Editing {
-        temp: String,
-        edit_input: text_input::State,
-        reset: button::State,
-        delete: button::State,
-    },
+}
+#[derive(Debug, Clone)]
+pub enum EditState {
+    Able,
+    Editing(text_input::State),
 }
 
 impl Tag {
     pub fn is_editing(&self) -> bool {
-        matches!(&self.state, State::Editing { .. })
+        matches!(
+            &self.state,
+            State::Edit {
+                state: EditState::Editing { .. },
+                ..
+            }
+        )
     }
     pub fn new(name: &str, state: State) -> Self {
         Self {
@@ -54,54 +59,49 @@ impl Tag {
         let Tag { name, state } = self;
         match message {
             Message::InputChanged(change) => {
-                if let State::Editing { temp, .. } = state {
+                if let State::Edit { temp, .. } = state {
                     *temp = change;
                 }
             }
             Message::Reset => match state {
-                State::Editable { temp, .. } | State::Editing { temp, .. } => {
+                State::Edit { temp, .. } => {
                     *temp = name.clone();
                 }
                 _ => {}
             },
 
             Message::Editable => {
-                *state = State::Editable {
-                    temp: name.clone(),
-                    edit: button::State::new(),
-                    reset: button::State::new(),
-                    delete: button::State::new(),
-                };
-            }
-            Message::Editing => {
-                if let State::Editable { temp, .. } = state {
-                    *state = State::Editing {
-                        temp: temp.clone(),
-                        edit_input: focused_input(),
+                if let State::Normal { .. } = state {
+                    *state = State::Edit {
+                        temp: name.clone(),
+                        state: EditState::Able,
+                        edit: button::State::new(),
                         reset: button::State::new(),
                         delete: button::State::new(),
+                    };
+                }
+            }
+            Message::Editing => {
+                if let State::Edit { state, .. } = state {
+                    if let EditState::Able { .. } = state {
+                        *state = EditState::Editing(focused_input());
                     }
                 }
             }
 
             Message::CancelAdd => {
-                if let State::Editing { .. } = state {
-                    *state = State::Editable {
-                        temp: String::new(),
-                        edit: button::State::new(),
-                        reset: button::State::new(),
-                        delete: button::State::new(),
-                    };
+                if let State::Edit { temp, state, .. } = state {
+                    if let EditState::Editing(..) = state {
+                        temp.clear();
+                        *state = EditState::Able;
+                    }
                 }
             }
             Message::Enter => {
-                if let State::Editing { temp, .. } = state {
-                    *state = State::Editable {
-                        temp: temp.clone(),
-                        edit: button::State::new(),
-                        reset: button::State::new(),
-                        delete: button::State::new(),
-                    };
+                if let State::Edit { state, .. } = state {
+                    if let EditState::Editing(..) = state {
+                        *state = EditState::Able;
+                    }
                 }
             }
             _ => {}
@@ -110,31 +110,35 @@ impl Tag {
     pub fn add_tag_view(&mut self) -> Element<Message> {
         let Tag { name, state } = self;
         match state {
-            State::Editable { edit, .. } => Row::new()
-                .push(
-                    Button::new(edit, Text::new(name.as_str()).size(TAG_TEXT_SIZE))
-                        .on_press(Message::Editing)
-                        .style(crate::style::tag::Tag),
-                )
-                .into(),
-            State::Editing {
+            State::Edit {
                 temp,
-                edit_input,
                 delete,
+                edit,
+                state,
                 ..
             } => {
-                let input = TextInput::new(
-                    edit_input,
-                    name.as_str(),
-                    temp.as_str(),
-                    Message::InputChanged,
-                )
-                .on_submit(Message::EnterAdd(temp.clone()));
-                let cancel_button = Button::new(delete, Icon::cancel())
-                    .style(crate::style::symbol::Symbol)
-                    .on_press(Message::CancelAdd);
+                if let EditState::Editing(edit_input) = state {
+                    let input = TextInput::new(
+                        edit_input,
+                        name.as_str(),
+                        temp.as_str(),
+                        Message::InputChanged,
+                    )
+                    .on_submit(Message::EnterAdd(temp.clone()));
+                    let cancel_button = Button::new(delete, Icon::cancel())
+                        .style(crate::style::symbol::Symbol)
+                        .on_press(Message::CancelAdd);
 
-                Row::new().push(input).push(cancel_button).into()
+                    Row::new().push(input).push(cancel_button).into()
+                } else {
+                    Row::new()
+                        .push(
+                            Button::new(edit, Text::new(name.as_str()).size(TAG_TEXT_SIZE))
+                                .on_press(Message::Editing)
+                                .style(crate::style::tag::Tag),
+                        )
+                        .into()
+                }
             }
             _ => unreachable!(),
         }
@@ -148,61 +152,55 @@ impl Tag {
                     .style(crate::style::tag::Tag)
                     .into()
             }
-            State::Editable {
+            State::Edit {
                 temp,
                 edit,
                 reset,
                 delete,
+                state,
             } => {
-                let edit = Row::new().push(
-                    Button::new(edit, Text::new(temp.as_str()).size(TAG_TEXT_SIZE))
-                        .style(crate::style::tag::Tag)
-                        .on_press(Message::Editing),
-                );
                 let delete_button = Button::new(delete, Icon::delete_back())
                     .style(crate::style::symbol::Symbol)
                     .on_press(Message::Delete);
-                if name.as_str() != temp.as_str() {
-                    edit.push(
-                        Button::new(reset, Icon::reset())
-                            .on_press(Message::Reset)
-                            .style(crate::style::symbol::Symbol),
+                if let EditState::Editing(edit_input) = state {
+                    let input = TextInput::new(
+                        edit_input,
+                        temp.as_str(),
+                        temp.as_str(),
+                        Message::InputChanged,
                     )
-                    .push(delete_button)
+                    .on_submit(Message::Enter);
+                    if name.as_str() != temp.as_str() {
+                        Row::new()
+                            .push(input)
+                            .push(
+                                Button::new(reset, Icon::reset())
+                                    .style(crate::style::symbol::Symbol)
+                                    .on_press(Message::Reset),
+                            )
+                            .push(delete_button)
+                    } else {
+                        Row::new().push(input).push(delete_button)
+                    }
+                    .into()
                 } else {
-                    edit.push(delete_button)
-                }
-                .into()
-            }
-            State::Editing {
-                temp,
-                edit_input,
-                reset,
-                delete,
-            } => {
-                let input = TextInput::new(
-                    edit_input,
-                    temp.as_str(),
-                    temp.as_str(),
-                    Message::InputChanged,
-                )
-                .on_submit(Message::Enter);
-                let delete_button = Button::new(delete, Icon::delete_back())
-                    .style(crate::style::symbol::Symbol)
-                    .on_press(Message::Delete);
-                if name.as_str() != temp.as_str() {
-                    Row::new()
-                        .push(input)
-                        .push(
+                    let edit = Row::new().push(
+                        Button::new(edit, Text::new(temp.as_str()).size(TAG_TEXT_SIZE))
+                            .style(crate::style::tag::Tag)
+                            .on_press(Message::Editing),
+                    );
+                    if name.as_str() != temp.as_str() {
+                        edit.push(
                             Button::new(reset, Icon::reset())
-                                .style(crate::style::symbol::Symbol)
-                                .on_press(Message::Reset),
+                                .on_press(Message::Reset)
+                                .style(crate::style::symbol::Symbol),
                         )
                         .push(delete_button)
-                } else {
-                    Row::new().push(input).push(delete_button)
+                    } else {
+                        edit.push(delete_button)
+                    }
+                    .into()
                 }
-                .into()
             }
         }
     }
