@@ -194,7 +194,7 @@ impl ConfigView {
                             .unwrap();
                         log::info!("backend {:?}", std::env::var(crate::BACKEND));
                     }
-                    // TODO:linux
+                    // TODO:linux mac env
                 }
             }
             Message::SelectSettingBoard => {}
