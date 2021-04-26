@@ -373,46 +373,53 @@ fn setting_board_view<'a>(
             Message::BackendChanged,
         ));
 
-    let mut apply = Row::new()
-        .push(Rule::horizontal(50).style(symbol::Symbol))
-        .spacing(2);
-    if config.language != board_state.language_temp
+    let apply = if config.language != board_state.language_temp
         || config.limit != board_state.limit_temp
         || config.backend != board_state.backend_temp
     {
-        apply = apply.push(
-            Button::new(
-                reset_button,
-                Row::new()
-                    .align_items(iced::Align::Center)
-                    .push(crate::style::icon::Icon::reset())
-                    .push(Text::new("reset")),
-            )
-            .style(symbol::Symbol)
-            .on_press(Message::Reset),
-        )
-    }
-    apply = apply.push(
-        Button::new(
-            apply_button,
+        Some(
             Row::new()
-                .align_items(iced::Align::Center)
-                .push(crate::style::icon::Icon::enter())
-                .push(Text::new("apply setting")),
+                .push(Rule::horizontal(50).style(symbol::Symbol))
+                .spacing(2)
+                .push(
+                    Button::new(
+                        reset_button,
+                        Row::new()
+                            .align_items(iced::Align::Center)
+                            .push(crate::style::icon::Icon::reset())
+                            .push(Text::new("reset")),
+                    )
+                    .style(symbol::Symbol)
+                    .on_press(Message::Reset),
+                )
+                .push(
+                    Button::new(
+                        apply_button,
+                        Row::new()
+                            .align_items(iced::Align::Center)
+                            .push(crate::style::icon::Icon::enter())
+                            .push(Text::new("apply setting")),
+                    )
+                    .style(symbol::Symbol)
+                    .on_press(Message::Apply),
+                ),
         )
-        .style(symbol::Symbol)
-        .on_press(Message::Apply),
-    );
-
-    setting_column
+    } else {
+        None
+    };
+    let res = setting_column
         .align_items(iced::Align::Center)
         .height(iced::Length::Fill)
         .width(iced::Length::FillPortion(10))
         .push(language)
         .push(backend)
-        .push(Rule::vertical(50).style(symbol::Symbol))
-        .push(apply)
-        .into()
+        .push(Rule::vertical(50).style(symbol::Symbol));
+    if let Some(apply) = apply {
+        res.push(apply)
+    } else {
+        res
+    }
+    .into()
 }
 #[derive(Debug, Clone)]
 pub enum LoadError {

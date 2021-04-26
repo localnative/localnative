@@ -228,9 +228,7 @@ impl NoteView {
             }
             Message::Enter => {
                 let NoteView {
-                    tags,
-                    editables,
-                    ..
+                    tags, editables, ..
                 } = self;
                 editables.update(editable::Message::Enter);
                 tags.iter_mut()
