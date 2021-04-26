@@ -251,7 +251,10 @@ impl ConfigView {
 }
 fn sync_board_view(state: &SyncState) -> Element<Message> {
     let SyncState { qr_code, qr_data } = state;
-    let text = Column::new()
+    Column::new()
+        .height(iced::Length::Fill)
+        .width(iced::Length::FillPortion(10))
+        .align_items(iced::Align::Center)
         .push(Text::new(
             "Click Stop Server button in main window to stop server.",
         ))
@@ -261,12 +264,8 @@ fn sync_board_view(state: &SyncState) -> Element<Message> {
         )))
         .push(Text::new(
             "Use Local Native mobile app to scan this barcode to start sync.",
-        ));
-    crate::Wrap::new()
-        .height(iced::Length::Fill)
-        .width(iced::Length::FillPortion(10))
-        .push(text.into())
-        .push(iced::QRCode::new(qr_code).into())
+        ))
+        .push(iced::QRCode::new(qr_code).cell_size(10))
         .into()
 }
 fn left_bar_viwe(state: &mut State, theme: Theme) -> Element<Message> {
@@ -346,12 +345,15 @@ fn setting_board_view<'a>(
                 .on_press(Message::OpenSlider),
         )
     };
-    let language = PickList::new(
-        language,
-        &[Language::Chinese, Language::English][..],
-        Some(board_state.language_temp),
-        Message::LanguageChanged,
-    );
+    let language = Row::new()
+        .spacing(300)
+        .push(Text::new("language"))
+        .push(PickList::new(
+            language,
+            &[Language::Chinese, Language::English][..],
+            Some(board_state.language_temp),
+            Message::LanguageChanged,
+        ));
     let backends = {
         #[cfg(target_os = "windows")]
         let res = &[Backend::Gl, Backend::Vulkan, Backend::Dx11, Backend::Dx12][..];
@@ -361,12 +363,15 @@ fn setting_board_view<'a>(
         let res = &[Backend::Gl, Backend::Vulkan][..];
         res
     };
-    let backend = PickList::new(
-        backend,
-        backends,
-        Some(board_state.backend_temp),
-        Message::BackendChanged,
-    );
+    let backend = Row::new()
+        .spacing(300)
+        .push(Text::new("render backend"))
+        .push(PickList::new(
+            backend,
+            backends,
+            Some(board_state.backend_temp),
+            Message::BackendChanged,
+        ));
 
     let mut apply = Row::new()
         .push(Rule::horizontal(50).style(symbol::Symbol))

@@ -1,6 +1,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-mod config;
 mod data_view;
 mod days;
 mod helper;
@@ -8,6 +7,7 @@ mod init;
 mod note;
 mod page_bar;
 mod search_bar;
+mod setting_view;
 mod style;
 mod tags;
 
@@ -17,7 +17,6 @@ mod wrap;
 use iced::window;
 use iced::{scrollable, Application, Column, Command, Container, Element, Row, Settings, Text};
 
-use config::{Backend, Config, ConfigView};
 use data_view::{DataView, MiddleData};
 use font_kit::family_name::FamilyName;
 use font_kit::properties::Properties;
@@ -26,6 +25,7 @@ use localnative_core::{cmd, exe::get_sqlite_connection, rusqlite::Connection};
 use once_cell::sync::OnceCell;
 use page_bar::PageBar;
 use search_bar::SearchBar;
+use setting_view::{Backend, Config, ConfigView};
 use std::sync::Arc;
 use wrap::Wrap;
 
@@ -56,7 +56,7 @@ fn main() -> anyhow::Result<()> {
                 .unwrap();
             log::info!("backend {:?}", std::env::var(BACKEND));
         }
-        // TODO: linux mac
+        // TODO: linux mac env
     }
     LocalNative::run(Settings {
         antialiasing: true,
@@ -138,7 +138,7 @@ enum LocalNative {
 
 #[derive(Debug)]
 pub enum Message {
-    Loaded(Result<Config, config::ConfigError>),
+    Loaded(Result<Config, setting_view::ConfigError>),
     ResultHandle(anyhow::Result<()>),
     StartServerResult(anyhow::Result<()>),
     StopServerResult(anyhow::Result<()>),
@@ -147,7 +147,7 @@ pub enum Message {
     UnknowError,
     SearchBar(search_bar::Message),
     NoteMessage(usize, note::Message),
-    ConfigMessage(config::Message),
+    SettingMessage(setting_view::Message),
     StyleMessage(style::Message),
     NeedUpdate,
     Ignore,
@@ -161,7 +161,7 @@ impl Application for LocalNative {
     fn new(_: Self::Flags) -> (Self, iced::Command<Self::Message>) {
         (
             Self::Loading,
-            Command::perform(config::Config::load(), Message::Loaded),
+            Command::perform(setting_view::Config::load(), Message::Loaded),
         )
     }
 
@@ -211,7 +211,7 @@ impl Application for LocalNative {
                     }
                 }
                 Message::NeedCreate(config) => {
-                    Command::perform(config::Config::save(config), Message::Loaded)
+                    Command::perform(setting_view::Config::save(config), Message::Loaded)
                 }
                 _ => unreachable!(),
             },
@@ -261,15 +261,15 @@ impl Application for LocalNative {
                         }
                     },
 
-                    Message::ConfigMessage(cm) => match cm {
-                        config::Message::Apply | config::Message::ThemeChanged => {
+                    Message::SettingMessage(cm) => match cm {
+                        setting_view::Message::Apply | setting_view::Message::ThemeChanged => {
                             config_view.update(cm);
                             Command::perform(
-                                config::Config::save(config_view.config),
+                                setting_view::Config::save(config_view.config),
                                 Message::Loaded,
                             )
                         }
-                        config::Message::Server => match state {
+                        setting_view::Message::Server => match state {
                             State::Contents | State::Settings => {
                                 *state = State::Sync;
                                 if let ServerState::Closed = server_state {
@@ -291,7 +291,7 @@ impl Application for LocalNative {
                                 Command::none()
                             }
                         },
-                        config::Message::SelectSettingBoard => {
+                        setting_view::Message::SelectSettingBoard => {
                             match state {
                                 State::Contents | State::Sync => {
                                     *state = State::Settings;
@@ -470,13 +470,13 @@ impl Data {
         let Data { config_view, .. } = self;
         config_view
             .sync_board_open_view()
-            .map(Message::ConfigMessage)
+            .map(Message::SettingMessage)
     }
     fn setting_view(&mut self) -> Element<Message> {
         let Data { config_view, .. } = self;
         config_view
             .setting_board_open_view()
-            .map(Message::ConfigMessage)
+            .map(Message::SettingMessage)
     }
     fn contents_view(&mut self) -> Element<Message> {
         let Data {
@@ -495,7 +495,7 @@ impl Data {
         let search_text_is_empty = search_bar.search_text.is_empty();
         Row::new()
             .align_items(iced::Align::Start)
-            .push(config_view.viwe().map(Message::ConfigMessage))
+            .push(config_view.viwe().map(Message::SettingMessage))
             .push(
                 iced::Container::new(
                     Column::new()
