@@ -34,6 +34,6 @@ get_if_addrs = "0.5.3"
 [lib]
 name = "localnative_core"
 # android only need this
-# crate-type = ["cdylib"]
+crate-type = ["cdylib"]
 # ios works as below
 # crate-type = ["staticlib"]
