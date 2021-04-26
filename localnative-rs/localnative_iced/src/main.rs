@@ -31,8 +31,9 @@ use wrap::Wrap;
 
 pub const BACKEND: &str = "WGPU_BACKEND";
 
-fn main() -> anyhow::Result<()> {
-    setup_logger()?;
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    setup_logger().await?;
     let font = font();
     let logo = if let Ok(logo) = style::icon::Icon::logo() {
         if let Ok(logo) = window::Icon::from_rgba(logo, 64, 64) {
@@ -78,7 +79,7 @@ fn main() -> anyhow::Result<()> {
     })
     .map_err(|iced_err| anyhow::anyhow!("iced err:{:?}", iced_err))
 }
-fn setup_logger() -> anyhow::Result<(), fern::InitError> {
+async fn setup_logger() -> anyhow::Result<(), fern::InitError> {
     let dispatch = fern::Dispatch::new().format(|out, message, record| {
         out.finish(format_args!(
             "{}[{}][{}] {}",
@@ -89,17 +90,19 @@ fn setup_logger() -> anyhow::Result<(), fern::InitError> {
         ))
     });
     let log_dir = setting_view::app_dir()
-    .join("log")
-    .join("localnative.log");
+    .join("log");
+    if !log_dir.exists() {
+        tokio::fs::create_dir_all(&log_dir).await?;
+    }
     if cfg!(debug_assertions) {
         dispatch
             .level(log::LevelFilter::Info)
             .chain(std::io::stdout())
-            .chain(fern::log_file(&log_dir)?)
+            .chain(fern::log_file(log_dir.join("localnative.log"))?)
     } else {
         dispatch
             .level(log::LevelFilter::Warn)
-            .chain(fern::log_file(&log_dir)?)
+            .chain(fern::log_file(log_dir.join("localnative.log"))?)
     }
     .apply()?;
     Ok(())
