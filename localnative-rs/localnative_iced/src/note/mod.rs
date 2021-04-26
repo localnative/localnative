@@ -31,7 +31,6 @@ pub struct NoteView {
     pub rowid: i64,
     pub uuid4: String,
     pub editables: Editables,
-    // TODO:annotations是图片信息。。
     pub annotations: String,
     pub tags_string: String,
     pub tags: Vec<tag::Tag>,
@@ -41,16 +40,11 @@ pub struct NoteView {
     qr_state: QrState,
 }
 
-// TODO: show、hide可以抽象成一个state。
 #[derive(Debug)]
-pub enum QrState {
-    Hide {
-        qrcode_show: button::State,
-    },
-    Show {
-        qrcode_hide: button::State,
-        qrcode: qr_code::State,
-    },
+pub struct QrState {
+    is_show: bool,
+    qrcode_button: button::State,
+    qrcode: Option<qr_code::State>,
 }
 #[derive(Debug)]
 pub enum ViewState {
@@ -103,8 +97,10 @@ impl From<Note> for NoteView {
                 edit: button::State::new(),
                 delete: button::State::new(),
             },
-            qr_state: QrState::Hide {
-                qrcode_show: button::State::new(),
+            qr_state: QrState {
+                is_show: false,
+                qrcode_button: button::State::new(),
+                qrcode: None,
             },
         }
     }
@@ -148,9 +144,6 @@ impl NoteView {
             is_public: self.is_public,
         }
     }
-    pub fn qr_code(&self) -> &[u8] {
-        self.editables.url.as_bytes()
-    }
     pub fn update(&mut self, message: Message) {
         match message {
             Message::TagMessage(idx, tm) => match tm {
@@ -170,36 +163,32 @@ impl NoteView {
                 self.editables.update(em);
             }
             Message::EnableQrcode => {
-                if let QrState::Hide { .. } = self.qr_state {
-                    let qrcode = if let Ok(qr_state) = qr_code::State::with_version(
-                        self.qr_code(),
+                let NoteView {
+                    qr_state,
+                    editables,
+                    ..
+                } = self;
+                let QrState { ref mut qrcode, .. } = qr_state;
+                if qrcode.is_none() {
+                    let qrcode_state = if let Ok(qr_state) = qr_code::State::with_version(
+                        editables.url.as_bytes(),
                         qr_code::Version::Normal(8),
                         qr_code::ErrorCorrection::Low,
                     ) {
                         qr_state
                     } else {
-                        qr_code::State::new(self.qr_code()).unwrap_or_else(
-                            // 如果到了这里，都出错，只能panic了
-                            |e| {
-                                qr_code::State::new(format!("Error in qrcode generation:{:?}", e))
-                                    .unwrap()
-                            },
-                        )
+                        qr_code::State::new(editables.url.as_bytes()).unwrap_or_else(|e| {
+                            qr_code::State::new(format!("Error in qrcode generation:{:?}", e))
+                                .unwrap()
+                        })
                     };
-
-                    self.qr_state = QrState::Show {
-                        qrcode_hide: button::State::new(),
-                        qrcode,
-                    };
+                    qrcode.replace(qrcode_state);
                 }
+                self.qr_state.is_show = true;
             }
 
             Message::DisableQrcode => {
-                if let QrState::Show { .. } = self.qr_state {
-                    self.qr_state = QrState::Hide {
-                        qrcode_show: button::State::new(),
-                    };
-                }
+                self.qr_state.is_show = false;
             }
             Message::Editable => {
                 self.editables.update(editable::Message::TurnEdit);
@@ -408,23 +397,28 @@ impl NoteView {
             qr_state,
             ..
         } = self;
-
+        let QrState {
+            qrcode_button: qrcode_button_state,
+            qrcode,
+            ..
+        } = qr_state;
         let qrcode_button;
-        let qrcode = match qr_state {
-            QrState::Hide { qrcode_show } => {
-                qrcode_button = Button::new(qrcode_show, Icon::qr_code())
+        let qrcode = {
+            if qr_state.is_show {
+                qrcode_button = Button::new(qrcode_button_state, Icon::qr_code())
+                    .on_press(Message::DisableQrcode)
+                    .style(crate::style::symbol::Symbol);
+                if let Some(ref qrcode) = qrcode {
+                    Some(QRCode::new(qrcode))
+                } else {
+                    log::warn!("Qr Code init fail");
+                    None
+                }
+            } else {
+                qrcode_button = Button::new(qrcode_button_state, Icon::qr_code())
                     .on_press(Message::EnableQrcode)
                     .style(crate::style::symbol::Symbol);
                 None
-            }
-            QrState::Show {
-                qrcode_hide,
-                qrcode,
-            } => {
-                qrcode_button = Button::new(qrcode_hide, Icon::qr_code())
-                    .on_press(Message::DisableQrcode)
-                    .style(crate::style::symbol::Symbol);
-                Some(QRCode::new(qrcode))
             }
         };
         let info_row = Row::new()
