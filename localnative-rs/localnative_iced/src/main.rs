@@ -272,15 +272,21 @@ impl Application for LocalNative {
                         config::Message::Server => match state {
                             State::Contents | State::Settings => {
                                 *state = State::Sync;
-                                if let ServerState::Closed = server_state{
-                                    return Command::perform(helper::start_server(), Message::StartServerResult);
+                                if let ServerState::Closed = server_state {
+                                    return Command::perform(
+                                        helper::start_server(),
+                                        Message::StartServerResult,
+                                    );
                                 }
                                 Command::none()
                             }
                             State::Sync => {
                                 *state = State::Contents;
                                 if let ServerState::Opening = server_state {
-                                    return Command::perform(helper::stop_server(), Message::StopServerResult);
+                                    return Command::perform(
+                                        helper::stop_server(),
+                                        Message::StopServerResult,
+                                    );
                                 }
                                 Command::none()
                             }
@@ -390,7 +396,7 @@ impl Application for LocalNative {
                     Message::Ignore => Command::none(),
                     Message::StartServerResult(res) => {
                         if res.is_ok() {
-                            *server_state = ServerState::Opening; 
+                            *server_state = ServerState::Opening;
                         }
                         Command::none()
                     }
@@ -431,13 +437,13 @@ pub struct Data {
     config_view: ConfigView,
     search_bar: SearchBar,
     page_bar: PageBar,
-    server_state:ServerState,
+    server_state: ServerState,
     state: State,
 }
 #[derive(Debug)]
 pub enum ServerState {
     Opening,
-    Closed
+    Closed,
 }
 
 impl Default for ServerState {

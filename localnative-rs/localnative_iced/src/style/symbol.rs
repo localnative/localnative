@@ -1,4 +1,4 @@
-use iced::{button, container, Color};
+use iced::{button, container, rule, Color};
 
 pub struct Symbol;
 impl button::StyleSheet for Symbol {
@@ -16,6 +16,16 @@ impl container::StyleSheet for Symbol {
             background: None,
             border_color: Color::TRANSPARENT,
             ..Default::default()
+        }
+    }
+}
+impl rule::StyleSheet for Symbol {
+    fn style(&self) -> rule::Style {
+        rule::Style {
+            color: Color::TRANSPARENT,
+            width: 0,
+            radius: 0.0,
+            fill_mode: rule::FillMode::Percent(90.0),
         }
     }
 }

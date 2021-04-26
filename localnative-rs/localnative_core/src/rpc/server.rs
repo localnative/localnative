@@ -89,7 +89,7 @@ impl LocalNative for LocalNativeServer {
         eprintln!("server stopping");
         if cfg!(feature = "iced") {
             drop(self);
-        }else {
+        } else {
             process::exit(0);
         }
         future::ready(())

@@ -2,11 +2,14 @@ use std::fmt::Display;
 
 use directories_next::BaseDirs;
 use iced::{
-    button, pick_list, qr_code, slider, Button, Column, Element, PickList, Row, Slider, Text,
+    button, pick_list, qr_code, slider, Button, Column, Element, PickList, Row, Rule, Slider, Text,
 };
 use serde::{Deserialize, Serialize};
 
-use crate::style::{symbol::Symbol, Theme};
+use crate::style::{
+    symbol::{self, Symbol},
+    Theme,
+};
 
 #[derive(Debug, Clone)]
 pub enum Message {
@@ -21,6 +24,7 @@ pub enum Message {
     OpenSlider,
     HideSlider,
     Apply,
+    Reset,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, Copy)]
@@ -99,6 +103,7 @@ pub struct BoardState {
     limit_button: button::State,
     limit_slider: slider::State,
     apply_button: button::State,
+    reset_button: button::State,
     language: pick_list::State<Language>,
     language_temp: Language,
     backend: pick_list::State<Backend>,
@@ -204,6 +209,17 @@ impl ConfigView {
             Message::BackendChanged(backend) => {
                 self.board_state.backend_temp = backend;
             }
+            Message::Reset => {
+                if self.board_state.backend_temp != self.config.backend {
+                    self.board_state.backend_temp = self.config.backend;
+                }
+                if self.board_state.limit_temp != self.config.limit {
+                    self.board_state.limit_temp = self.config.limit;
+                }
+                if self.board_state.language_temp != self.config.language {
+                    self.board_state.language_temp = self.config.language;
+                }
+            }
         }
     }
     pub fn viwe(&mut self) -> Element<Message> {
@@ -218,7 +234,7 @@ impl ConfigView {
             ..
         } = self;
         let left_bar = left_bar_viwe(state, config.theme);
-        let setting_board = setting_board_view(board_state);
+        let setting_board = setting_board_view(board_state, &*config);
         Row::new().push(left_bar).push(setting_board).into()
     }
     pub fn sync_board_open_view(&mut self) -> Element<Message> {
@@ -272,11 +288,6 @@ fn left_bar_viwe(state: &mut State, theme: Theme) -> Element<Message> {
     })
     .style(Symbol)
     .on_press(Message::ThemeChanged);
-    let theme = Column::new().push(
-        Row::new()
-            .push(theme_button)
-            .align_items(iced::Align::Center),
-    );
 
     let server_button = Button::new(server_button, Text::new("server")).on_press(Message::Server);
     let client_button =
@@ -300,17 +311,22 @@ fn left_bar_viwe(state: &mut State, theme: Theme) -> Element<Message> {
         .push(open_file_button)
         .push(server_button)
         .push(client_button)
+        .push(Rule::vertical(50).style(symbol::Symbol))
+        .push(theme_button)
         .push(setting_button)
-        .push(theme)
         .into()
 }
-fn setting_board_view(board_state: &mut BoardState) -> Element<Message> {
+fn setting_board_view<'a>(
+    board_state: &'a mut BoardState,
+    config: &'a Config,
+) -> Element<'a, Message> {
     let BoardState {
         limit_button,
         limit_slider,
         apply_button,
         language,
         backend,
+        reset_button,
         ..
     } = board_state;
     let limit_text = Text::new(format!("limit: {}", board_state.limit_temp));
@@ -352,19 +368,44 @@ fn setting_board_view(board_state: &mut BoardState) -> Element<Message> {
         Message::BackendChanged,
     );
 
-    let apply = Row::new()
-        .push(
-            Button::new(apply_button, crate::style::icon::Icon::enter())
-                .style(Symbol)
-                .on_press(Message::Apply),
+    let mut apply = Row::new()
+        .push(Rule::horizontal(50).style(symbol::Symbol))
+        .spacing(2);
+    if config.language != board_state.language_temp
+        || config.limit != board_state.limit_temp
+        || config.backend != board_state.backend_temp
+    {
+        apply = apply.push(
+            Button::new(
+                reset_button,
+                Row::new()
+                    .align_items(iced::Align::Center)
+                    .push(crate::style::icon::Icon::reset())
+                    .push(Text::new("reset")),
+            )
+            .style(symbol::Symbol)
+            .on_press(Message::Reset),
         )
-        .align_items(iced::Align::End);
+    }
+    apply = apply.push(
+        Button::new(
+            apply_button,
+            Row::new()
+                .align_items(iced::Align::Center)
+                .push(crate::style::icon::Icon::enter())
+                .push(Text::new("apply setting")),
+        )
+        .style(symbol::Symbol)
+        .on_press(Message::Apply),
+    );
+
     setting_column
         .align_items(iced::Align::Center)
         .height(iced::Length::Fill)
         .width(iced::Length::FillPortion(10))
         .push(language)
         .push(backend)
+        .push(Rule::vertical(50).style(symbol::Symbol))
         .push(apply)
         .into()
 }
