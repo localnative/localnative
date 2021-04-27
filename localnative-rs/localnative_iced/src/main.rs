@@ -25,7 +25,7 @@ use localnative_core::{cmd, exe::get_sqlite_connection, rusqlite::Connection};
 use once_cell::sync::OnceCell;
 use page_bar::PageBar;
 use search_bar::SearchBar;
-use setting_view::{Backend, Config, ConfigView};
+use setting_view::{Backend, Config, SettingView};
 use std::sync::Arc;
 use wrap::Wrap;
 
@@ -72,7 +72,7 @@ async fn main() -> anyhow::Result<()> {
         },
         window: window::Settings {
             icon: logo,
-            size: (1000, 700),
+            size: (1300, 800),
             ..Default::default()
         },
         ..Default::default()
@@ -89,8 +89,7 @@ async fn setup_logger() -> anyhow::Result<(), fern::InitError> {
             message
         ))
     });
-    let log_dir = setting_view::app_dir()
-    .join("log");
+    let log_dir = setting_view::app_dir().join("log");
     if !log_dir.exists() {
         tokio::fs::create_dir_all(&log_dir).await?;
     }
@@ -189,7 +188,7 @@ impl Application for LocalNative {
                             cmd::create(&resource.conn);
                             config.is_created_db = true;
                         }
-                        let config_view = ConfigView::init(config, helper::get_ip());
+                        let config_view = SettingView::init(config, helper::get_ip());
                         MiddleData::upgrade(&resource.conn);
                         let search_bar = SearchBar::default();
                         let mut page_bar = PageBar::default();
@@ -205,7 +204,7 @@ impl Application for LocalNative {
                         let data = Data {
                             data_view,
                             resource,
-                            config_view,
+                            setting_view: config_view,
                             search_bar,
                             page_bar,
                             ..Default::default()
@@ -225,7 +224,7 @@ impl Application for LocalNative {
                 let Data {
                     data_view,
                     resource,
-                    config_view,
+                    setting_view,
                     page_bar,
                     search_bar,
                     state,
@@ -235,12 +234,12 @@ impl Application for LocalNative {
                 match message {
                     Message::Loaded(config) => {
                         if let Ok(config) = config {
-                            config_view.config = config;
+                            setting_view.config = config;
 
                             let middle_data = MiddleData::from_select(
                                 &resource.conn,
                                 search_bar.search_text.as_str(),
-                                &config_view.config.limit,
+                                &setting_view.config.limit,
                                 &page_bar.offset,
                             );
                             middle_data.encode(data_view, page_bar);
@@ -259,7 +258,7 @@ impl Application for LocalNative {
                             let middle_data = MiddleData::from_select(
                                 &resource.conn,
                                 search_bar.search_text.as_str(),
-                                &config_view.config.limit,
+                                &setting_view.config.limit,
                                 &page_bar.offset,
                             );
                             middle_data.encode(data_view, page_bar);
@@ -269,9 +268,9 @@ impl Application for LocalNative {
 
                     Message::SettingMessage(cm) => match cm {
                         setting_view::Message::Apply | setting_view::Message::ThemeChanged => {
-                            config_view.update(cm);
+                            setting_view.update(cm);
                             Command::perform(
-                                setting_view::Config::save(config_view.config),
+                                setting_view::Config::save(setting_view.config),
                                 Message::Loaded,
                             )
                         }
@@ -308,8 +307,26 @@ impl Application for LocalNative {
                             }
                             Command::none()
                         }
-                        cm => {
-                            config_view.update(cm);
+                        sm => {
+                            if let setting_view::Message::Sync = sm {
+                                setting_view.update(setting_view::Message::Sync);
+                                if let Some(addr) = setting_view.state.socket {
+                                    return Command::batch(vec![
+                                        Command::perform(
+                                            helper::client_sync_from_server(addr),
+                                            Message::ResultHandle,
+                                        ),
+                                        Command::perform(
+                                            helper::client_sync_to_server(addr),
+                                            Message::ResultHandle,
+                                        ),
+                                    ]);
+                                } else {
+                                    log::warn!("addr input error");
+                                }
+                            } else {
+                                setting_view.update(sm);
+                            }
                             Command::none()
                         }
                     },
@@ -319,7 +336,7 @@ impl Application for LocalNative {
                         let middle_data = MiddleData::from_select(
                             &resource.conn,
                             search_bar.search_text.as_str(),
-                            &config_view.config.limit,
+                            &setting_view.config.limit,
                             &page_bar.offset,
                         );
                         middle_data.encode(data_view, page_bar);
@@ -334,7 +351,7 @@ impl Application for LocalNative {
                                     let middle_data = MiddleData::from_select(
                                         &resource.conn,
                                         search_bar.search_text.as_str(),
-                                        &config_view.config.limit,
+                                        &setting_view.config.limit,
                                         &page_bar.offset,
                                     );
                                     middle_data.encode(data_view, page_bar);
@@ -355,7 +372,7 @@ impl Application for LocalNative {
                                     let middle_data = MiddleData::from_select(
                                         &resource.conn,
                                         search_bar.search_text.as_str(),
-                                        &config_view.config.limit,
+                                        &setting_view.config.limit,
                                         &page_bar.offset,
                                     );
                                     middle_data.encode(data_view, page_bar);
@@ -372,13 +389,13 @@ impl Application for LocalNative {
                     }
 
                     Message::PageBar(pm) => {
-                        let cm = page_bar.update(pm, (&*config_view).limit());
+                        let cm = page_bar.update(pm, (&*setting_view).limit());
                         match cm {
                             Message::NeedUpdate => {
                                 let middle_data = MiddleData::from_select(
                                     &resource.conn,
                                     search_bar.search_text.as_str(),
-                                    &config_view.config.limit,
+                                    &setting_view.config.limit,
                                     &page_bar.offset,
                                 );
                                 middle_data.encode(data_view, page_bar);
@@ -440,7 +457,7 @@ impl Application for LocalNative {
 pub struct Data {
     data_view: DataView,
     resource: Resource,
-    config_view: ConfigView,
+    setting_view: SettingView,
     search_bar: SearchBar,
     page_bar: PageBar,
     server_state: ServerState,
@@ -473,13 +490,19 @@ impl Default for State {
 
 impl Data {
     fn sync_view(&mut self) -> Element<Message> {
-        let Data { config_view, .. } = self;
+        let Data {
+            setting_view: config_view,
+            ..
+        } = self;
         config_view
             .sync_board_open_view()
             .map(Message::SettingMessage)
     }
     fn setting_view(&mut self) -> Element<Message> {
-        let Data { config_view, .. } = self;
+        let Data {
+            setting_view: config_view,
+            ..
+        } = self;
         config_view
             .setting_board_open_view()
             .map(Message::SettingMessage)
@@ -487,7 +510,7 @@ impl Data {
     fn contents_view(&mut self) -> Element<Message> {
         let Data {
             data_view,
-            config_view,
+            setting_view: config_view,
             search_bar,
             page_bar,
             ..

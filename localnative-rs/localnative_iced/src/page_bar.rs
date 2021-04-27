@@ -39,7 +39,7 @@ impl PageBar {
             }
             Message::Next => {
                 let current_count = self.offset + limit;
-                if  current_count< self.count {
+                if current_count < self.count {
                     self.offset = current_count;
                     return crate::Message::NeedUpdate;
                 }

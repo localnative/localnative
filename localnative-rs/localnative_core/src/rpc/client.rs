@@ -27,52 +27,60 @@ use tarpc::{client, context};
 use tokio::runtime::Runtime;
 use tokio_serde::formats::Bincode;
 
-async fn run_sync_to_server(addr: &SocketAddr) -> io::Result<()> {
+pub async fn run_sync_to_server(addr: &SocketAddr) -> io::Result<()> {
     let transport = tarpc::serde_transport::tcp::connect(addr, Bincode::default).await?;
     let client = LnClient::new(client::Config::default(), transport).spawn()?;
     let conn = get_sqlite_connection();
 
     // check version
     let version = get_meta_version(&conn);
+    drop(conn);
     let is_version_match = client.is_version_match(context::current(), version).await?;
     eprintln!("is_version_match: {}", is_version_match);
     if !is_version_match {
         return Err(Error::new(ErrorKind::Other, "VERSION_NOT_MATCH"));
     }
-
+    let conn = get_sqlite_connection();
+    let candidates = next_uuid4_candidates(&conn);
+    drop(conn);
     // diff uuid4
     let diff_uuid4 = client
-        .diff_uuid4_to_server(context::current(), next_uuid4_candidates(&conn))
+        .diff_uuid4_to_server(context::current(), candidates)
         .await?;
     eprintln!("diff_uuid4_to_server len: {:?}", diff_uuid4.len());
 
     // send one by one
     for u in diff_uuid4 {
-        client
-            .send_note(context::current(), get_note_by_uuid4(&conn, &u))
-            .await?;
+        let conn = get_sqlite_connection();
+        let uuid4 = get_note_by_uuid4(&conn, &u);
+        drop(conn);
+        client.send_note(context::current(), uuid4).await?;
     }
     eprintln!("send_note done");
 
     Ok(())
 }
 
-async fn run_sync_from_server(addr: &SocketAddr) -> io::Result<()> {
+pub async fn run_sync_from_server(addr: &SocketAddr) -> io::Result<()> {
     let transport = tarpc::serde_transport::tcp::connect(addr, Bincode::default).await?;
     let client = LnClient::new(client::Config::default(), transport).spawn()?;
     let conn = get_sqlite_connection();
 
     // check version
     let version = get_meta_version(&conn);
+    drop(conn);
     let is_version_match = client.is_version_match(context::current(), version).await?;
     eprintln!("is_version_match: {}", is_version_match);
     if !is_version_match {
         return Err(Error::new(ErrorKind::Other, "VERSION_NOT_MATCH"));
     }
 
+    let conn = get_sqlite_connection();
+    let candidates = next_uuid4_candidates(&conn);
+    drop(conn);
     // diff uuid4
     let diff_uuid4 = client
-        .diff_uuid4_from_server(context::current(), next_uuid4_candidates(&conn))
+        .diff_uuid4_from_server(context::current(), candidates)
         .await?;
     eprintln!("diff_uuid4_from_server len: {:?}", diff_uuid4.len());
 

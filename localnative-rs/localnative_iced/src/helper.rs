@@ -44,3 +44,15 @@ pub async fn stop_server() -> anyhow::Result<()> {
     localnative_core::rpc::client::run_stop_server(&addr).await?;
     Ok(())
 }
+pub async fn client_sync_from_server(addr: SocketAddr) -> anyhow::Result<()> {
+    localnative_core::rpc::client::run_sync_from_server(&addr)
+        .await
+        .map_err(|e| anyhow::anyhow!("sync from server fail:{:?}", e))?;
+    Ok(())
+}
+pub async fn client_sync_to_server(addr: SocketAddr) -> anyhow::Result<()> {
+    localnative_core::rpc::client::run_sync_to_server(&addr)
+        .await
+        .map_err(|e| anyhow::anyhow!("sync to server fail:{:?}", e))?;
+    Ok(())
+}

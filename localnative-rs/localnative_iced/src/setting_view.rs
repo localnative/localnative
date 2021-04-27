@@ -1,8 +1,9 @@
-use std::fmt::Display;
+use std::{fmt::Display, net::SocketAddr, str::FromStr};
 
 use directories_next::BaseDirs;
 use iced::{
-    button, pick_list, qr_code, slider, Button, Column, Element, PickList, Row, Rule, Slider, Text,
+    button, pick_list, qr_code, slider, text_input, Button, Column, Element, PickList, Row, Rule,
+    Slider, Text, TextInput,
 };
 use serde::{Deserialize, Serialize};
 
@@ -16,15 +17,17 @@ pub enum Message {
     LimitChanged(u32),
     LanguageChanged(Language),
     BackendChanged(Backend),
+    AddrsChanged(String),
     SelectSettingBoard,
     Server,
     OpenFile,
-    OpenClient,
+    Sync,
     ThemeChanged,
     OpenSlider,
     HideSlider,
     Apply,
     Reset,
+    ClearAddrInput,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, Copy)]
@@ -79,7 +82,7 @@ impl Config {
     }
 }
 #[derive(Debug, Default)]
-pub struct ConfigView {
+pub struct SettingView {
     pub config: Config,
     pub state: State,
     pub board_state: BoardState,
@@ -92,7 +95,10 @@ pub struct State {
     theme_button: button::State,
     server_button: button::State,
     open_file_button: button::State,
-    client_button: button::State,
+    clear_button: button::State,
+    addr_input: text_input::State,
+    addr: String,
+    pub socket: Option<SocketAddr>,
     offset: slider::State,
 }
 
@@ -135,7 +141,7 @@ impl Default for SyncState {
         }
     }
 }
-impl ConfigView {
+impl SettingView {
     pub fn init(config: Config, ip: Option<String>) -> Self {
         let qr_data;
         let qr_code = if let Some(ip) = ip {
@@ -205,7 +211,13 @@ impl ConfigView {
             Message::SelectSettingBoard => {}
             Message::Server => {}
             Message::OpenFile => {}
-            Message::OpenClient => {}
+            Message::Sync => {
+                let addr = SocketAddr::from_str(&self.state.addr);
+                match addr {
+                    Ok(socket) => self.state.socket.replace(socket),
+                    Err(_) => self.state.socket.take(),
+                };
+            }
             Message::BackendChanged(backend) => {
                 self.board_state.backend_temp = backend;
             }
@@ -220,14 +232,23 @@ impl ConfigView {
                     self.board_state.language_temp = self.config.language;
                 }
             }
+            Message::AddrsChanged(addr) => {
+                self.state.addr = addr;
+            }
+            Message::ClearAddrInput => {
+                self.state.addr.clear();
+                if self.state.socket.is_some() {
+                    self.state.socket.take();
+                }
+            }
         }
     }
     pub fn viwe(&mut self) -> Element<Message> {
-        let ConfigView { config, state, .. } = self;
+        let SettingView { config, state, .. } = self;
         left_bar_viwe(state, config.theme)
     }
     pub fn setting_board_open_view(&mut self) -> Element<Message> {
-        let ConfigView {
+        let SettingView {
             config,
             state,
             board_state,
@@ -238,7 +259,7 @@ impl ConfigView {
         Row::new().push(left_bar).push(setting_board).into()
     }
     pub fn sync_board_open_view(&mut self) -> Element<Message> {
-        let ConfigView {
+        let SettingView {
             config,
             state,
             sync_state,
@@ -274,7 +295,9 @@ fn left_bar_viwe(state: &mut State, theme: Theme) -> Element<Message> {
         setting_button,
         server_button,
         open_file_button,
-        client_button,
+        clear_button,
+        addr_input,
+        addr,
         ..
     } = state;
 
@@ -289,11 +312,21 @@ fn left_bar_viwe(state: &mut State, theme: Theme) -> Element<Message> {
     .on_press(Message::ThemeChanged);
 
     let server_button = Button::new(server_button, Text::new("server")).on_press(Message::Server);
-    let client_button =
-        Button::new(client_button, Text::new("start client sync")).on_press(Message::OpenClient);
+    let clear_button = Button::new(clear_button, crate::style::icon::Icon::close())
+        .style(symbol::Symbol)
+        .on_press(Message::ClearAddrInput);
+    let addr_input = TextInput::new(
+        addr_input,
+        "xxx.xxx.xxx.xxx:2345 [server address]:[port]",
+        &addr,
+        Message::AddrsChanged,
+    )
+    .on_submit(Message::Sync);
+    let addr_row = Column::new()
+        .push(Text::new("start client sync"))
+        .push(Row::new().push(addr_input).push(clear_button));
     let open_file_button = Button::new(open_file_button, Text::new("sync via attach file"))
         .on_press(Message::OpenFile);
-
     let setting_button = Button::new(
         setting_button,
         Row::new()
@@ -309,7 +342,7 @@ fn left_bar_viwe(state: &mut State, theme: Theme) -> Element<Message> {
         .spacing(10)
         .push(open_file_button)
         .push(server_button)
-        .push(client_button)
+        .push(addr_row)
         .push(Rule::vertical(50).style(symbol::Symbol))
         .push(theme_button)
         .push(setting_button)
@@ -439,7 +472,6 @@ pub enum SaveError {
 }
 
 impl Config {
-    // TODO:增加可更改地址
     pub fn path() -> std::path::PathBuf {
         let mut path = app_dir().join("config");
         path.push("config.json");
