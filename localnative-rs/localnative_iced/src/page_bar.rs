@@ -38,8 +38,9 @@ impl PageBar {
                 }
             }
             Message::Next => {
-                if self.offset + limit <= self.count {
-                    self.offset += limit;
+                let current_count = self.offset + limit;
+                if  current_count< self.count {
+                    self.offset = current_count;
                     return crate::Message::NeedUpdate;
                 }
             }
