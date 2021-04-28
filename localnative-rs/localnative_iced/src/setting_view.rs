@@ -2,7 +2,7 @@ use std::{fmt::Display, net::SocketAddr, str::FromStr};
 
 use directories_next::BaseDirs;
 use iced::{
-    button, pick_list, qr_code, slider, text_input, Button, Column, Container, Element, PickList,
+    button, pick_list, qr_code, slider, text_input, Button, Column, Element, PickList,
     Row, Rule, Slider, Text, TextInput,
 };
 use serde::{Deserialize, Serialize};

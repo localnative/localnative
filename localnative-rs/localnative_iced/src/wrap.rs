@@ -250,9 +250,11 @@ where
     //     self.horizontal_alignment = align;
     //     self
     // }
-
-    pub fn push(mut self, element: Element<'a, Message, Renderer<B>>) -> Self {
-        self.elements.push(element);
+    pub fn push<E>(mut self, element: E) -> Self
+    where
+        E: Into<Element<'a, Message, Renderer<B>>>,
+    {
+        self.elements.push(element.into());
         self
     }
 }

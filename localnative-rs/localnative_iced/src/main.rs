@@ -595,7 +595,7 @@ impl Data {
                                     line_height: 30,
                                     ..Default::default()
                                 }
-                                .push(Text::new("tags:").into()),
+                                .push(Text::new("tags:")),
                                 |wrap, tag| {
                                     wrap.push(tag.view().map(|tm| match tm {
                                         tags::Message::Search(text) => Message::Search(text),

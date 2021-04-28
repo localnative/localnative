@@ -421,8 +421,8 @@ impl NoteView {
                 // vertical_alignment: Align::End,
                 ..Default::default()
             }
-            .push(info_row.into())
-            .push(qrcode_button.into()),
+            .push(info_row)
+            .push(qrcode_button),
             |wrap, (idx, tag)| wrap.push(tag.view().map(move |m| Message::TagMessage(idx, m))),
         );
 
