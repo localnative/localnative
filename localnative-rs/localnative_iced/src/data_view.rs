@@ -28,6 +28,7 @@ impl MiddleData {
         let tags: Vec<TagView> = self
             .tags
             .into_iter()
+            .filter(|tag| !tag.name.is_empty())
             .map(move |tag| TagView {
                 tag,
                 search_button: button::State::new(),
