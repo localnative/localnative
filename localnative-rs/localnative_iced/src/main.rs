@@ -72,7 +72,7 @@ async fn main() -> anyhow::Result<()> {
         },
         window: window::Settings {
             icon: logo,
-            size: (1300, 800),
+            size: (1080, 700),
             ..Default::default()
         },
         ..Default::default()

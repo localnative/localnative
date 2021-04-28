@@ -2,8 +2,8 @@ use std::{fmt::Display, net::SocketAddr, str::FromStr};
 
 use directories_next::BaseDirs;
 use iced::{
-    button, pick_list, qr_code, slider, text_input, Button, Column, Element, PickList, Row, Rule,
-    Slider, Text, TextInput,
+    button, pick_list, qr_code, slider, text_input, Button, Column, Container, Element, PickList,
+    Row, Rule, Slider, Text, TextInput,
 };
 use serde::{Deserialize, Serialize};
 
@@ -312,19 +312,25 @@ fn left_bar_viwe(state: &mut State, theme: Theme) -> Element<Message> {
     .on_press(Message::ThemeChanged);
 
     let server_button = Button::new(server_button, Text::new("server")).on_press(Message::Server);
-    let clear_button = Button::new(clear_button, crate::style::icon::Icon::close())
-        .style(symbol::Symbol)
-        .on_press(Message::ClearAddrInput);
+    let clear_button = Button::new(
+        clear_button,
+        crate::style::icon::Icon::close()
+            .width(iced::Length::Units(18))
+            .height(iced::Length::Units(18)),
+    )
+    .style(symbol::Symbol)
+    .on_press(Message::ClearAddrInput);
     let addr_input = TextInput::new(
         addr_input,
-        "xxx.xxx.xxx.xxx:2345 [server address]:[port]",
+        "xxx.xxx.xxx.xxx:2345",
         &addr,
         Message::AddrsChanged,
     )
     .on_submit(Message::Sync);
     let addr_row = Column::new()
         .push(Text::new("start client sync"))
-        .push(Row::new().push(addr_input).push(clear_button));
+        .push(Row::new().push(addr_input).push(clear_button))
+        .push(Text::new("input format:\n [server address]:[port]"));
     let open_file_button = Button::new(open_file_button, Text::new("sync via attach file"))
         .on_press(Message::OpenFile);
     let setting_button = Button::new(
