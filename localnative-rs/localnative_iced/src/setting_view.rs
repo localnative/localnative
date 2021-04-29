@@ -29,7 +29,6 @@ pub enum Message {
     Reset,
     ClearAddrInput,
     FixHost,
-    ChangeEnv(Backend),
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, Copy)]
@@ -53,6 +52,7 @@ pub enum Backend {
 impl Backend {
     pub fn from_env() -> Backend {
         let backend = std::env::var(crate::BACKEND);
+        log::info!("backend from env:{:?}", &backend);
         if let Ok(backend) = backend {
             match backend.to_ascii_lowercase().as_str() {
                 "opengl" => Backend::Gl,
@@ -67,6 +67,22 @@ impl Backend {
             }
         } else {
             Backend::default()
+        }
+    }
+    pub async fn from_file() -> anyhow::Result<Backend> {
+        let file_path = app_dir().join(".env");
+        let backend = String::from_utf8(tokio::fs::read(file_path).await?)?;
+        log::info!("backend: {}", &backend[15..]);
+        match backend[15..].to_ascii_lowercase().as_str() {
+            "opengl" => Ok(Backend::Gl),
+            "vulkan" => Ok(Backend::Vulkan),
+            #[cfg(target_os = "windows")]
+            "dx12" => Ok(Backend::Dx12),
+            #[cfg(target_os = "windows")]
+            "dx11" => Ok(Backend::Dx11),
+            #[cfg(target_os = "macos")]
+            "metal" => Ok(Backend::Metal),
+            s => Err(anyhow::anyhow!("Unknow Backend:{:?}", s)),
         }
     }
 }
@@ -109,7 +125,6 @@ pub struct SettingView {
     pub board_state: BoardState,
     pub sync_state: SyncState,
 }
-
 #[derive(Debug, Clone, Default)]
 pub struct State {
     setting_button: button::State,
@@ -135,8 +150,10 @@ pub struct BoardState {
     language: pick_list::State<Language>,
     language_temp: Language,
     backend: pick_list::State<Backend>,
-    backend_temp: Backend,
+    pub backend_temp: Backend,
+    pub backend_org: Backend,
 }
+
 #[derive(Debug)]
 pub struct SyncState {
     qr_code: qr_code::State,
@@ -178,13 +195,15 @@ impl SettingView {
                 qr_code::State::new(format!("Error in qrcode generation: {:?}", e)).unwrap()
             })
         };
+        let backend = Backend::from_env();
         Self {
             config,
             board_state: BoardState {
                 limit_temp: config.limit,
                 language_temp: config.language,
                 is_open: false,
-                backend_temp: Backend::from_env(),
+                backend_temp: backend,
+                backend_org: backend,
                 ..Default::default()
             },
             sync_state: SyncState { qr_code, qr_data },
@@ -215,9 +234,6 @@ impl SettingView {
             Message::Apply => {
                 self.config.limit = self.board_state.limit_temp;
                 self.config.language = self.board_state.language_temp;
-                if Backend::from_env() != self.board_state.backend_temp {
-                    self.update(Message::ChangeEnv(self.board_state.backend_temp));
-                }
             }
             Message::SelectSettingBoard => {}
             Message::Server => {}
@@ -253,7 +269,6 @@ impl SettingView {
                 }
             }
             Message::FixHost => {}
-            Message::ChangeEnv(_) => {}
         }
     }
     pub fn viwe(&mut self) -> Element<Message> {
@@ -428,7 +443,7 @@ fn setting_board_view<'a>(
 
     let apply = if config.language != board_state.language_temp
         || config.limit != board_state.limit_temp
-        || Backend::from_env() != board_state.backend_temp
+        || board_state.backend_org != board_state.backend_temp
     {
         Some(
             Row::new()

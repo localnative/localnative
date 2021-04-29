@@ -59,7 +59,7 @@ fn main() -> anyhow::Result<()> {
         },
         window: window::Settings {
             icon: logo,
-            size: (1080, 700),
+            size: (1080, 720),
             ..Default::default()
         },
         ..Default::default()
@@ -145,6 +145,7 @@ pub enum Message {
     NeedUpdate,
     Ignore,
     Search(String),
+    BackendRes(anyhow::Result<Backend>),
 }
 impl Application for LocalNative {
     type Executor = iced::executor::Default;
@@ -190,7 +191,7 @@ impl Application for LocalNative {
                             cmd::create(&resource.conn);
                             config.is_created_db = true;
                         }
-                        let config_view = SettingView::init(config, helper::get_ip());
+                        let setting_view = SettingView::init(config, helper::get_ip());
                         MiddleData::upgrade(&resource.conn);
                         let search_bar = SearchBar::default();
                         let mut page_bar = PageBar::default();
@@ -198,7 +199,7 @@ impl Application for LocalNative {
                         let middle_data = MiddleData::from_select(
                             &resource.conn,
                             search_bar.search_text.as_str(),
-                            &config_view.config.limit,
+                            &setting_view.config.limit,
                             &page_bar.offset,
                         );
                         let mut data_view = DataView::default();
@@ -206,7 +207,7 @@ impl Application for LocalNative {
                         let data = Data {
                             data_view,
                             resource,
-                            setting_view: config_view,
+                            setting_view,
                             search_bar,
                             page_bar,
                             ..Default::default()
@@ -279,10 +280,30 @@ impl Application for LocalNative {
                     Message::SettingMessage(sm) => match sm {
                         setting_view::Message::Apply | setting_view::Message::ThemeChanged => {
                             setting_view.update(sm);
-                            Command::perform(
-                                setting_view::Config::save(setting_view.config),
-                                Message::Loaded,
-                            )
+                            if setting_view.board_state.backend_org
+                                != setting_view.board_state.backend_temp
+                            {
+                                log::info!(
+                                    "chage env will run 🤙,org:{},temp:{}",
+                                    setting_view.board_state.backend_org.to_string(),
+                                    setting_view.board_state.backend_temp.to_string()
+                                );
+                                Command::batch(vec![
+                                    Command::perform(
+                                        init::change_env(setting_view.board_state.backend_temp),
+                                        Message::BackendRes,
+                                    ),
+                                    Command::perform(
+                                        setting_view::Config::save(setting_view.config),
+                                        Message::Loaded,
+                                    ),
+                                ])
+                            } else {
+                                Command::perform(
+                                    setting_view::Config::save(setting_view.config),
+                                    Message::Loaded,
+                                )
+                            }
                         }
                         setting_view::Message::Server => match state {
                             State::Contents | State::Settings => {
@@ -338,8 +359,9 @@ impl Application for LocalNative {
                         setting_view::Message::FixHost => {
                             Command::perform(init::fix_app_host(), Message::ResultHandle)
                         }
-                        setting_view::Message::ChangeEnv(env) => {
-                            Command::perform(init::change_env(env), Message::ResultHandle)
+                        setting_view::Message::BackendChanged(backend) => {
+                            setting_view.update(setting_view::Message::BackendChanged(backend));
+                            Command::perform(Backend::from_file(), Message::BackendRes)
                         }
                         sm => {
                             setting_view.update(sm);
@@ -445,6 +467,17 @@ impl Application for LocalNative {
                         }
                         Command::none()
                     }
+                    Message::BackendRes(res) => match res {
+                        std::result::Result::Ok(backend) => {
+                            setting_view.board_state.backend_org = backend;
+                            Command::none()
+                        }
+                        std::result::Result::Err(e) => {
+                            log::error!("backend res error: {:?}", e);
+                            setting_view.board_state.backend_org = Backend::default();
+                            Command::perform(init::create_env(), Message::ResultHandle)
+                        }
+                    },
                 }
             }
         }

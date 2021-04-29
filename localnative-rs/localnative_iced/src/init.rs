@@ -87,7 +87,7 @@ pub async fn create_env() -> anyhow::Result<()> {
     .await?;
     Ok(())
 }
-pub async fn change_env(backend: setting_view::Backend) -> anyhow::Result<()> {
+pub async fn change_env(backend: setting_view::Backend) -> anyhow::Result<setting_view::Backend> {
     let app_dir = setting_view::app_dir();
     if !app_dir.exists() {
         tokio::fs::create_dir_all(&app_dir).await?;
@@ -100,9 +100,11 @@ pub async fn change_env(backend: setting_view::Backend) -> anyhow::Result<()> {
     if env_path.exists() && env_path.is_dir() {
         tokio::fs::remove_dir(&env_path).await?;
     }
-
-    tokio::fs::write(env_path, format!("WGPU_BACKEND = {}", backend.to_string())).await?;
-    Ok(())
+    log::info!("{} backend will write in env.💥💥💢", backend.to_string());
+    tokio::fs::write(env_path, format!("WGPU_BACKEND = {}", backend.to_string()))
+        .await
+        .map(|_| backend)
+        .map_err(|e| anyhow::anyhow!("write env fail:{:?}", e))
 }
 
 //     Windows Registry Editor Version 5.00
