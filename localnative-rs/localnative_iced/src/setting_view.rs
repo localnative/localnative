@@ -28,6 +28,8 @@ pub enum Message {
     Apply,
     Reset,
     ClearAddrInput,
+    FixHost,
+    ChangeEnv(Backend),
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, Copy)]
@@ -35,7 +37,6 @@ pub struct Config {
     pub limit: u32,
     pub language: Language,
     pub theme: Theme,
-    pub backend: Backend,
     pub is_created_db: bool,
 }
 #[derive(Debug, Deserialize, Serialize, Clone, Copy, PartialEq, Eq)]
@@ -48,6 +49,26 @@ pub enum Backend {
     Dx11,
     #[cfg(target_os = "macos")]
     Metal,
+}
+impl Backend {
+    pub fn from_env() -> Backend {
+        let backend = std::env::var(crate::BACKEND);
+        if let Ok(backend) = backend {
+            match backend.to_ascii_lowercase().as_str() {
+                "opengl" => Backend::Gl,
+                "vulkan" => Backend::Vulkan,
+                #[cfg(target_os = "windows")]
+                "dx12" => Backend::Dx12,
+                #[cfg(target_os = "windows")]
+                "dx11" => Backend::Dx11,
+                #[cfg(target_os = "macos")]
+                "metal" => Backend::Metal,
+                _ => Backend::default(),
+            }
+        } else {
+            Backend::default()
+        }
+    }
 }
 impl Display for Backend {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -110,6 +131,7 @@ pub struct BoardState {
     limit_slider: slider::State,
     apply_button: button::State,
     reset_button: button::State,
+    fix_web_host_button: button::State,
     language: pick_list::State<Language>,
     language_temp: Language,
     backend: pick_list::State<Backend>,
@@ -162,7 +184,7 @@ impl SettingView {
                 limit_temp: config.limit,
                 language_temp: config.language,
                 is_open: false,
-                backend_temp: config.backend,
+                backend_temp: Backend::from_env(),
                 ..Default::default()
             },
             sync_state: SyncState { qr_code, qr_data },
@@ -193,19 +215,8 @@ impl SettingView {
             Message::Apply => {
                 self.config.limit = self.board_state.limit_temp;
                 self.config.language = self.board_state.language_temp;
-                if self.config.backend != self.board_state.backend_temp {
-                    self.config.backend = self.board_state.backend_temp;
-
-                    #[cfg(target_os = "windows")]
-                    {
-                        use winreg::{enums::*, RegKey};
-                        let hkcu = RegKey::predef(HKEY_CURRENT_USER);
-                        let (env, _) = hkcu.create_subkey("Environment").unwrap(); // create_subkey opens with write permissions
-                        env.set_value(crate::BACKEND, &self.board_state.backend_temp.to_string())
-                            .unwrap();
-                        log::info!("backend {:?}", std::env::var(crate::BACKEND));
-                    }
-                    // TODO:linux mac env
+                if Backend::from_env() != self.board_state.backend_temp {
+                    self.update(Message::ChangeEnv(self.board_state.backend_temp));
                 }
             }
             Message::SelectSettingBoard => {}
@@ -222,8 +233,8 @@ impl SettingView {
                 self.board_state.backend_temp = backend;
             }
             Message::Reset => {
-                if self.board_state.backend_temp != self.config.backend {
-                    self.board_state.backend_temp = self.config.backend;
+                if self.board_state.backend_temp != Backend::from_env() {
+                    self.board_state.backend_temp = Backend::from_env();
                 }
                 if self.board_state.limit_temp != self.config.limit {
                     self.board_state.limit_temp = self.config.limit;
@@ -241,6 +252,8 @@ impl SettingView {
                     self.state.socket.take();
                 }
             }
+            Message::FixHost => {}
+            Message::ChangeEnv(_) => {}
         }
     }
     pub fn viwe(&mut self) -> Element<Message> {
@@ -365,6 +378,7 @@ fn setting_board_view<'a>(
         language,
         backend,
         reset_button,
+        fix_web_host_button,
         ..
     } = board_state;
     let limit_text = Text::new(format!("limit: {}", board_state.limit_temp));
@@ -414,7 +428,7 @@ fn setting_board_view<'a>(
 
     let apply = if config.language != board_state.language_temp
         || config.limit != board_state.limit_temp
-        || config.backend != board_state.backend_temp
+        || Backend::from_env() != board_state.backend_temp
     {
         Some(
             Row::new()
@@ -446,12 +460,15 @@ fn setting_board_view<'a>(
     } else {
         None
     };
+    let fix_button = Button::new(fix_web_host_button, Text::new("Try fix your web ext host"))
+        .on_press(Message::FixHost);
     let res = setting_column
         .align_items(iced::Align::Center)
         .height(iced::Length::Fill)
         .width(iced::Length::FillPortion(10))
         .push(language)
         .push(backend)
+        .push(fix_button)
         .push(Rule::vertical(50).style(symbol::Symbol));
     if let Some(apply) = apply {
         res.push(apply)
@@ -559,7 +576,6 @@ impl Default for Config {
             theme: Theme::Light,
             language: Language::English,
             is_created_db: false,
-            backend: Backend::default(),
         }
     }
 }

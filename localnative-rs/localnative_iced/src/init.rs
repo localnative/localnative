@@ -1,6 +1,8 @@
 use serde::Serialize;
 use std::path::{Path, PathBuf};
 
+use crate::setting_view;
+
 #[derive(Debug, Default, Serialize)]
 pub struct AppHost {
     name: String,
@@ -57,7 +59,52 @@ impl AppHost {
 }
 
 pub async fn init_app_host() -> anyhow::Result<()> {
+    WebKind::init_all().await?;
+    create_env().await
+}
+pub async fn fix_app_host() -> anyhow::Result<()> {
     WebKind::init_all().await
+}
+pub async fn create_env() -> anyhow::Result<()> {
+    let app_dir = setting_view::app_dir();
+    if !app_dir.exists() {
+        tokio::fs::create_dir_all(&app_dir).await?;
+    }
+    let env_path = app_dir.join(".env");
+    if env_path.is_dir() {
+        tokio::fs::remove_dir(&env_path).await?;
+    }
+    if env_path.exists() {
+        if env_path.is_dir() {
+            tokio::fs::remove_dir(&env_path).await?;
+        }
+    }
+    tokio::fs::write(
+        env_path,
+        format!(
+            "WGPU_BACKEND = {}",
+            setting_view::Backend::default().to_string()
+        ),
+    )
+    .await?;
+    Ok(())
+}
+pub async fn change_env(backend: setting_view::Backend) -> anyhow::Result<()> {
+    let app_dir = setting_view::app_dir();
+    if !app_dir.exists() {
+        tokio::fs::create_dir_all(&app_dir).await?;
+    }
+    let env_path = app_dir.join(".env");
+    if env_path.is_dir() {
+        tokio::fs::remove_dir(&env_path).await?;
+    }
+    if env_path.exists() {
+        if env_path.is_dir() {
+            tokio::fs::remove_dir(&env_path).await?;
+        }
+    }
+    tokio::fs::write(env_path, format!("WGPU_BACKEND = {}", backend.to_string())).await?;
+    Ok(())
 }
 
 //     Windows Registry Editor Version 5.00

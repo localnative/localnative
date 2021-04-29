@@ -29,84 +29,31 @@ use setting_view::{Backend, Config, SettingView};
 use std::sync::Arc;
 use wrap::Wrap;
 
-
-
 pub const BACKEND: &str = "WGPU_BACKEND";
 
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
-    setup_logger().await?;
+fn main() -> anyhow::Result<()> {
     let font = font();
     let logo = if let Ok(logo) = style::icon::Icon::logo() {
         if let Ok(logo) = window::Icon::from_rgba(logo, 64, 64) {
             Some(logo)
         } else {
-            log::warn!("icon into fail!");
             None
         }
     } else {
-        log::warn!("icon load fail!");
         None
     };
+    let path = setting_view::app_dir().join(".env");
+    let is_first = dotenv::from_path(path).is_err();
     if std::env::var(BACKEND).is_err() {
         std::env::set_var(BACKEND, &Backend::default().to_string());
-        #[cfg(target_os = "windows")]
-        {
-            use winreg::{enums::*, RegKey};
-            let hkcu = RegKey::predef(HKEY_CURRENT_USER);
-            let (env, _) = hkcu.create_subkey("Environment").unwrap(); // create_subkey opens with write permissions
-            env.set_value(BACKEND, &Backend::default().to_string())
-                .unwrap();
-            log::info!("backend {:?}", std::env::var(BACKEND));
-        }
-        #[cfg(not(target_os = "windows"))]
-        {   
-            //linux_env 
-            use std::fs::OpenOptions;
-            use std::io::prelude::*;
-            use std::fs::File;
-            use std::path::Path;
-            use std::fs;
-            //格式化~/.bash_profile文件路径
-            let home = std::env::var("HOME").unwrap();
-            let from_env = format!("{}/.bash_profile",home);
-            let path = Path::new(&from_env);
-    
-            //读取文件内容
-            let contents = fs::read_to_string(&path)
-                .expect("Something went wrong reading the file");
-            //若BACKEND存在，则移除
-            let mut old_env = Vec::new();
-                for line in contents.lines() {
-                    if !line.contains(BACKEND) {
-                        old_env.push(line);
-                    }
-                }
-            //格式化文件内容
-            let mut env_str = String::new();
-                for i in &old_env {
-                    env_str = format!("{}{}\n", &env_str, i);
-                }
-            //重新写入“移除BACKEND”之后的内容
-            let mut old_key = File::create(&path).unwrap();
-            old_key.write(env_str.as_bytes()).unwrap();
-            //追加新的环境变量
-            let  new_key = format!("# Local_Native_{}_ENV\nexport {}={}\n",
-                BACKEND,
-                BACKEND,
-                &Backend::default().to_string());
-            let mut set_env = OpenOptions::new().create(true).append(true).open(&path).unwrap();
-            set_env.write(new_key.as_bytes()).unwrap();
-        }
     }
     LocalNative::run(Settings {
+        flags: is_first,
         antialiasing: true,
         default_font: {
             if font.is_empty() {
-                log::error!("font load fail!");
                 None
             } else {
-                log::info!("font load success.");
                 Some(font)
             }
         },
@@ -119,7 +66,7 @@ async fn main() -> anyhow::Result<()> {
     })
     .map_err(|iced_err| anyhow::anyhow!("iced err:{:?}", iced_err))
 }
-async fn setup_logger() -> anyhow::Result<(), fern::InitError> {
+async fn setup_logger() -> anyhow::Result<()> {
     let dispatch = fern::Dispatch::new().format(|out, message, record| {
         out.finish(format_args!(
             "{}[{}][{}] {}",
@@ -143,7 +90,8 @@ async fn setup_logger() -> anyhow::Result<(), fern::InitError> {
             .level(log::LevelFilter::Warn)
             .chain(fern::log_file(log_dir.join("localnative.log"))?)
     }
-    .apply()?;
+    .apply()
+    .map_err(|e| anyhow::anyhow!("set logger error :{:?}", e))?;
     Ok(())
 }
 fn font() -> &'static Arc<Vec<u8>> {
@@ -201,13 +149,27 @@ pub enum Message {
 impl Application for LocalNative {
     type Executor = iced::executor::Default;
     type Message = Message;
-    type Flags = ();
+    type Flags = bool;
 
-    fn new(_: Self::Flags) -> (Self, iced::Command<Self::Message>) {
-        (
-            Self::Loading,
-            Command::perform(setting_view::Config::load(), Message::Loaded),
-        )
+    fn new(is_first: Self::Flags) -> (Self, iced::Command<Self::Message>) {
+        if is_first {
+            (
+                Self::Loading,
+                Command::batch(vec![
+                    Command::perform(setting_view::Config::load(), Message::Loaded),
+                    Command::perform(init::init_app_host(), Message::ResultHandle),
+                    Command::perform(setup_logger(), Message::ResultHandle),
+                ]),
+            )
+        } else {
+            (
+                Self::Loading,
+                Command::batch(vec![
+                    Command::perform(setting_view::Config::load(), Message::Loaded),
+                    Command::perform(setup_logger(), Message::ResultHandle),
+                ]),
+            )
+        }
     }
 
     fn title(&self) -> String {
@@ -250,13 +212,21 @@ impl Application for LocalNative {
                             ..Default::default()
                         };
                         *self = LocalNative::Loaded(data);
-                        Command::perform(init::init_app_host(), Message::ResultHandle)
+                        Command::none()
                     } else {
                         Command::perform(Config::new(), Message::NeedCreate)
                     }
                 }
                 Message::NeedCreate(config) => {
                     Command::perform(setting_view::Config::save(config), Message::Loaded)
+                }
+                Message::ResultHandle(res) => {
+                    if let Err(e) = res {
+                        log::error!("fail: {:?}", e);
+                    } else {
+                        log::info!("success!");
+                    }
+                    Command::none()
                 }
                 _ => unreachable!(),
             },
@@ -306,9 +276,9 @@ impl Application for LocalNative {
                         }
                     },
 
-                    Message::SettingMessage(cm) => match cm {
+                    Message::SettingMessage(sm) => match sm {
                         setting_view::Message::Apply | setting_view::Message::ThemeChanged => {
-                            setting_view.update(cm);
+                            setting_view.update(sm);
                             Command::perform(
                                 setting_view::Config::save(setting_view.config),
                                 Message::Loaded,
@@ -347,26 +317,32 @@ impl Application for LocalNative {
                             }
                             Command::none()
                         }
-                        sm => {
-                            if let setting_view::Message::Sync = sm {
-                                setting_view.update(setting_view::Message::Sync);
-                                if let Some(addr) = setting_view.state.socket {
-                                    return Command::batch(vec![
-                                        Command::perform(
-                                            helper::client_sync_from_server(addr),
-                                            Message::ResultHandle,
-                                        ),
-                                        Command::perform(
-                                            helper::client_sync_to_server(addr),
-                                            Message::ResultHandle,
-                                        ),
-                                    ]);
-                                } else {
-                                    log::warn!("addr input error");
-                                }
+                        setting_view::Message::Sync => {
+                            setting_view.update(setting_view::Message::Sync);
+                            if let Some(addr) = setting_view.state.socket {
+                                return Command::batch(vec![
+                                    Command::perform(
+                                        helper::client_sync_from_server(addr),
+                                        Message::ResultHandle,
+                                    ),
+                                    Command::perform(
+                                        helper::client_sync_to_server(addr),
+                                        Message::ResultHandle,
+                                    ),
+                                ]);
                             } else {
-                                setting_view.update(sm);
+                                log::warn!("addr input error");
+                                Command::none()
                             }
+                        }
+                        setting_view::Message::FixHost => {
+                            Command::perform(init::fix_app_host(), Message::ResultHandle)
+                        }
+                        setting_view::Message::ChangeEnv(env) => {
+                            Command::perform(init::change_env(env), Message::ResultHandle)
+                        }
+                        sm => {
+                            setting_view.update(sm);
                             Command::none()
                         }
                     },
