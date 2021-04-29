@@ -320,7 +320,7 @@ impl Application for LocalNative {
                         setting_view::Message::Sync => {
                             setting_view.update(setting_view::Message::Sync);
                             if let Some(addr) = setting_view.state.socket {
-                                return Command::batch(vec![
+                                Command::batch(vec![
                                     Command::perform(
                                         helper::client_sync_from_server(addr),
                                         Message::ResultHandle,
@@ -329,7 +329,7 @@ impl Application for LocalNative {
                                         helper::client_sync_to_server(addr),
                                         Message::ResultHandle,
                                     ),
-                                ]);
+                                ])
                             } else {
                                 log::warn!("addr input error");
                                 Command::none()

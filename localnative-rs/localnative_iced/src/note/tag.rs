@@ -63,12 +63,11 @@ impl Tag {
                     *temp = change;
                 }
             }
-            Message::Reset => match state {
-                State::Edit { temp, .. } => {
+            Message::Reset => {
+                if let State::Edit { temp, .. } = state {
                     *temp = name.clone();
                 }
-                _ => {}
-            },
+            }
 
             Message::Editable => {
                 if let State::Normal { .. } = state {
@@ -115,7 +114,7 @@ impl Tag {
                             };
                         }
                         EditState::Editing(_) => {
-                            *temp = temp.replace(&[',', '，', ' '][..], "").to_owned();
+                            *temp = temp.replace(&[',', '，', ' '][..], "");
                             *edit_state = EditState::Able;
                         }
                     }

@@ -74,10 +74,8 @@ pub async fn create_env() -> anyhow::Result<()> {
     if env_path.is_dir() {
         tokio::fs::remove_dir(&env_path).await?;
     }
-    if env_path.exists() {
-        if env_path.is_dir() {
-            tokio::fs::remove_dir(&env_path).await?;
-        }
+    if env_path.exists() && env_path.is_dir() {
+        tokio::fs::remove_dir(&env_path).await?;
     }
     tokio::fs::write(
         env_path,
@@ -98,11 +96,11 @@ pub async fn change_env(backend: setting_view::Backend) -> anyhow::Result<()> {
     if env_path.is_dir() {
         tokio::fs::remove_dir(&env_path).await?;
     }
-    if env_path.exists() {
-        if env_path.is_dir() {
-            tokio::fs::remove_dir(&env_path).await?;
-        }
+
+    if env_path.exists() && env_path.is_dir() {
+        tokio::fs::remove_dir(&env_path).await?;
     }
+
     tokio::fs::write(env_path, format!("WGPU_BACKEND = {}", backend.to_string())).await?;
     Ok(())
 }
