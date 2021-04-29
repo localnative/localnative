@@ -29,12 +29,7 @@ use setting_view::{Backend, Config, SettingView};
 use std::sync::Arc;
 use wrap::Wrap;
 
-//linux_env 
-use std::fs::OpenOptions;
-use std::io::prelude::*;
-use std::fs::File;
-use std::path::Path;
-use std::fs;
+
 
 pub const BACKEND: &str = "WGPU_BACKEND";
 
@@ -64,42 +59,14 @@ async fn main() -> anyhow::Result<()> {
                 .unwrap();
             log::info!("backend {:?}", std::env::var(BACKEND));
         }
-        // TODO: linux mac env
-        #[cfg(target_os = "linux")]
-        {
-            //格式化~/.bash_profile文件路径
-            let home = std::env::var("HOME").unwrap();
-            let from_env = format!("{}/.bash_profile",home);
-            let path = Path::new(&from_env);
-    
-            //读取文件内容
-            let contents = fs::read_to_string(&path)
-                .expect("Something went wrong reading the file");
-            //若BACKEND存在，则移除
-            let mut old_env = Vec::new();
-                for line in contents.lines() {
-                    if !line.contains(BACKEND) {
-                        old_env.push(line);
-                    }
-                }
-            //格式化文件内容
-            let mut env_str = String::new();
-                for i in &old_env {
-                    env_str = format!("{}{}\n", &env_str, i);
-                }
-            //重新写入“移除BACKEND”之后的内容
-            let mut old_key = File::create(&path).unwrap();
-            old_key.write(env_str.as_bytes()).unwrap();
-            //追加新的环境变量
-            let  new_key = format!("# Local_Native_{}_ENV\nexport {}={}\n",
-                BACKEND,
-                BACKEND,
-                &Backend::default().to_string());
-            let mut set_env = OpenOptions::new().create(true).append(true).open(&path).unwrap();
-            set_env.write(new_key.as_bytes()).unwrap();
-        }
-        #[cfg(target_os = "macos")]
-        {
+        #[cfg(not(target_os = "windows"))]
+        {   
+            //linux_env 
+            use std::fs::OpenOptions;
+            use std::io::prelude::*;
+            use std::fs::File;
+            use std::path::Path;
+            use std::fs;
             //格式化~/.bash_profile文件路径
             let home = std::env::var("HOME").unwrap();
             let from_env = format!("{}/.bash_profile",home);
