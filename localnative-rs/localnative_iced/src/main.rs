@@ -26,7 +26,7 @@ use once_cell::sync::OnceCell;
 use page_bar::PageBar;
 use search_bar::SearchBar;
 use setting_view::{Backend, Config, SettingView};
-use std::sync::Arc;
+use std::{path::PathBuf, sync::Arc};
 use wrap::Wrap;
 
 pub const BACKEND: &str = "WGPU_BACKEND";
@@ -142,6 +142,7 @@ pub enum Message {
     NoteMessage(usize, note::Message),
     SettingMessage(setting_view::Message),
     StyleMessage(style::Message),
+    SyncViaFile(anyhow::Result<PathBuf>),
     NeedUpdate,
     Ignore,
     Search(String),
@@ -364,6 +365,9 @@ impl Application for LocalNative {
                             setting_view.update(setting_view::Message::BackendChanged(backend));
                             Command::perform(Backend::from_file(), Message::BackendRes)
                         }
+                        setting_view::Message::OpenFile => {
+                            Command::perform(helper::get_sync_file_path(), Message::SyncViaFile)
+                        }
                         sm => {
                             setting_view.update(sm);
                             Command::none()
@@ -480,6 +484,9 @@ impl Application for LocalNative {
                         }
                     },
                     Message::Empty(_) => Command::none(),
+                    Message::SyncViaFile(path) => {
+                        Command::perform(helper::sync_via_file(path), Message::ResultHandle)
+                    }
                 }
             }
         }

@@ -25,6 +25,7 @@ fern = "0.6"
 uuid = { version = "0.8", features = ["v4"] }
 image = "0.23"
 dotenv = "0.15"
+native-dialog = "0.5"
 
 [target."cfg(target_os = \"windows\")".dependencies]
 winreg = "0.8"

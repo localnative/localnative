@@ -1,4 +1,9 @@
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::{
+    net::{IpAddr, Ipv4Addr, SocketAddr},
+    path::PathBuf,
+};
+
+use native_dialog::FileDialog;
 
 // use iced::{button, text_input, tooltip, Element, PickList, Row, Text, TextInput};
 
@@ -54,5 +59,36 @@ pub async fn client_sync_to_server(addr: SocketAddr) -> anyhow::Result<()> {
     localnative_core::rpc::client::run_sync_to_server(&addr)
         .await
         .map_err(|e| anyhow::anyhow!("sync to server fail:{:?}", e))?;
+    Ok(())
+}
+pub async fn get_sync_file_path() -> anyhow::Result<PathBuf> {
+    // let file_path =
+    // let file = tokio::task::block_in_place(|| FileDialog::new()
+    // .add_filter("need sync file", &["sqlite3"])
+    // .show_open_single_file());
+    let file = tokio::task::spawn_blocking(|| {
+        FileDialog::new()
+            .set_location(&crate::setting_view::app_dir())
+            .add_filter("need sync file", &["sqlite3"])
+            .show_open_single_file()
+    })
+    .await??;
+    match file {
+        Some(path) => Ok(path),
+        None => Err(anyhow::anyhow!("get file path fial.")),
+    }
+}
+pub async fn sync_via_file(res: anyhow::Result<PathBuf>) -> anyhow::Result<()> {
+    if let Ok(path) = res {
+        let res = tokio::task::spawn_blocking(move || {
+            let uri = path.to_str().unwrap();
+            let conn = localnative_core::exe::get_sqlite_connection();
+            localnative_core::cmd::sync_via_attach(&conn, uri)
+        })
+        .await?;
+        log::info!("sync via file res:{:?}", res);
+    } else {
+        log::warn!("get sync via file path fail.");
+    }
     Ok(())
 }
