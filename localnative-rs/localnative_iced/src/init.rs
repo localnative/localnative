@@ -59,10 +59,10 @@ impl AppHost {
 }
 
 pub async fn init_app_host() -> anyhow::Result<()> {
-    WebKind::init_all().await?;
+    WebKind::init_all().await;
     create_env().await
 }
-pub async fn fix_app_host() -> anyhow::Result<()> {
+pub async fn fix_app_host() {
     WebKind::init_all().await
 }
 pub async fn create_env() -> anyhow::Result<()> {
@@ -118,7 +118,7 @@ pub async fn change_env(backend: setting_view::Backend) -> anyhow::Result<settin
 // [HKEY_CURRENT_USER\Software\Mozilla\NativeMessagingHosts\app.localnative]
 // @="PATH_TO_FIREFOX_MANIFEST\\app.localnative.json"
 #[cfg(target_os = "windows")]
-fn registr(kind: WebKind) -> anyhow::Result<Option<WebKind>> {
+fn registr(kind: WebKind) -> anyhow::Result<bool> {
     use winreg::enums::*;
     log::debug!("registr starting");
     let path = kind.registr_path();
@@ -141,7 +141,7 @@ fn registr(kind: WebKind) -> anyhow::Result<Option<WebKind>> {
                 } else {
                     log::debug!("registr value Eq");
                 }
-                return Ok(Some(kind));
+                return Ok(true);
             } else {
                 log::error!("get registr value fail!");
             }
@@ -150,10 +150,10 @@ fn registr(kind: WebKind) -> anyhow::Result<Option<WebKind>> {
             let (writer, _disposition) = key.create_subkey_with_flags(&write_path, KEY_WRITE)?;
             writer.set_value("", &json_path)?;
             log::debug!("registr set value ok");
-            return Ok(Some(kind));
+            return Ok(true);
         }
     }
-    Ok(None)
+    Ok(false)
 }
 
 pub fn firefox_path() -> anyhow::Result<PathBuf> {
@@ -248,6 +248,7 @@ pub fn edge_path() -> anyhow::Result<PathBuf> {
         Err(anyhow::anyhow!("not found user dir."))
     }
 }
+#[derive(Debug, Clone, Copy)]
 enum WebKind {
     FireFox,
     Chrome,
@@ -256,33 +257,13 @@ enum WebKind {
 }
 
 impl WebKind {
-    async fn init_all() -> anyhow::Result<()> {
-        #[cfg(target_os = "windows")]
-        {
-            if let Some(kind) = registr(Self::FireFox)? {
-                try_init_file(kind).await?;
-            };
-            if let Some(kind) = registr(Self::Chrome)? {
-                try_init_file(kind).await?;
-            }
-            if let Some(kind) = registr(Self::Chromium)? {
-                try_init_file(kind).await?;
-            }
-            if let Some(kind) = registr(Self::Edge)? {
-                try_init_file(kind).await?;
-            }
-            Ok(())
-        }
-        #[cfg(not(target_os = "windows"))]
-        {
-            tokio::try_join!(
-                try_init_file(Self::FireFox),
-                try_init_file(Self::Chrome),
-                try_init_file(Self::Chromium),
-                try_init_file(Self::Edge)
-            )
-            .map(|_| ())
-        }
+    async fn init_all() {
+        tokio::join!(
+            try_init_file(Self::FireFox),
+            try_init_file(Self::Chrome),
+            try_init_file(Self::Chromium),
+            try_init_file(Self::Edge)
+        );
     }
     #[cfg(target_os = "windows")]
     fn registr_path(&self) -> PathBuf {
@@ -305,14 +286,21 @@ impl WebKind {
     }
     fn path(&self) -> anyhow::Result<PathBuf> {
         let browser_path = self.browser_path()?;
-        #[cfg(target_os = "macos")]
-        {
-            Ok(browser_path.join("NativeMessagingHosts"))
-        }
-        #[cfg(target_os = "linux")]
-        match self {
-            WebKind::FireFox => Ok(browser_path.join("native-messaging-hosts")),
-            _ => Ok(browser_path.join("NativeMessagingHosts")),
+        #[cfg(not(target_os = "windows"))]
+        if browser_path.exists() {
+            #[cfg(target_os = "macos")]
+            {
+                Ok(browser_path.join("NativeMessagingHosts"))
+            }
+            #[cfg(target_os = "linux")]
+            match self {
+                WebKind::FireFox => Ok(browser_path.join("native-messaging-hosts")),
+                _ => Ok(browser_path.join("NativeMessagingHosts")),
+            }
+            #[cfg(target_os = "windows")]
+            Ok(browser_path)
+        } else {
+            Err(anyhow::anyhow!("not exists the browser:{:?}", self));
         }
         #[cfg(target_os = "windows")]
         Ok(browser_path)
@@ -339,35 +327,87 @@ impl WebKind {
             .map_err(|e| anyhow::anyhow!("into string fail{:?}", e))
     }
 }
-async fn try_init_file(kind: WebKind) -> anyhow::Result<()> {
-    log::debug!("try_init_file start get kind path.");
-    let dir_path = kind.path()?;
-    let file_path = dir_path.join("app.localnative.json");
-    log::debug!("try_init_file start get kind host.");
-    let host = kind.host()?;
-    log::debug!("try_init_file start get raw data.");
-    let path = Path::new(&host.path);
-    let raw_file = host.raw_data()?;
+async fn try_init_file(kind: WebKind) {
+    log::info!("Start try init file");
     #[cfg(target_os = "windows")]
     {
-        init_file(&file_path, &raw_file, &dir_path).await?;
-        if !path.exists() {
-            log::error!("web ext host is not exists {:?}", path);
-        }
-        log::debug!("try_init_file init ok.");
-    }
-    #[cfg(not(target_os = "windows"))]
-    {
-        let browser_path = kind.browser_path()?;
-        if browser_path.exists() {
-            init_file(&file_path, &raw_file, &dir_path).await?;
-            if !path.exists() {
-                log::error!("web ext host is not exists {:?}", path);
+        match registr(kind) {
+            Ok(false) => {
+                log::info!("this kind browser is not exists :{:?}", kind);
+                return;
             }
+            Err(e) => {
+                log::error!("registr error:{:?}", e);
+                return;
+            }
+            _ => {}
         }
     }
 
-    Ok(())
+    let dir_path = match kind.path() {
+        Ok(path) => path,
+        Err(e) => {
+            log::warn!("get dir path error:{:?}", e);
+            return;
+        }
+    };
+    let file_path = dir_path.join("app.localnative.json");
+    log::debug!("try_init_file start get kind host.");
+    let host = match kind.host() {
+        Ok(host) => host,
+        Err(e) => {
+            log::warn!("get host error:{:?}", e);
+            return;
+        }
+    };
+    log::debug!("try_init_file start get raw data.");
+    let raw_file = match host.raw_data() {
+        Ok(file) => file,
+        Err(e) => {
+            log::warn!("get raw file error:{:?}", e);
+            return;
+        }
+    };
+    #[cfg(target_os = "windows")]
+    {
+        match init_file(&file_path, &raw_file, &dir_path).await {
+            Ok(_) => {
+                let host_path = Path::new(&host.path);
+                if !host_path.exists() {
+                    log::error!(
+                        "try init file fail, web ext host is not exists {:?}",
+                        host_path
+                    );
+                } else {
+                    log::info!("try init file fine.");
+                }
+            }
+            Err(e) => {
+                log::error!("init host file error:{:?}", e);
+                return;
+            }
+        };
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        match init_file(&file_path, &raw_file, &dir_path).await {
+            Ok(_) => {
+                let host_path = Path::new(&host.path);
+                if !host_path.exists() {
+                    log::error!(
+                        "try init file fail, web ext host is not exists {:?}",
+                        host_path
+                    );
+                } else {
+                    log::info!("try init file fine.");
+                }
+            }
+            Err(e) => {
+                log::error!("init host file error:{:?}", e);
+                return;
+            }
+        };
+    }
 }
 
 async fn init_file(file_path: &Path, raw_file: &[u8], dir_path: &Path) -> anyhow::Result<()> {

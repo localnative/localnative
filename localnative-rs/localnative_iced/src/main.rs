@@ -146,6 +146,7 @@ pub enum Message {
     Ignore,
     Search(String),
     BackendRes(anyhow::Result<Backend>),
+    Empty(()),
 }
 impl Application for LocalNative {
     type Executor = iced::executor::Default;
@@ -357,7 +358,7 @@ impl Application for LocalNative {
                             }
                         }
                         setting_view::Message::FixHost => {
-                            Command::perform(init::fix_app_host(), Message::ResultHandle)
+                            Command::perform(init::fix_app_host(), Message::Empty)
                         }
                         setting_view::Message::BackendChanged(backend) => {
                             setting_view.update(setting_view::Message::BackendChanged(backend));
@@ -478,6 +479,7 @@ impl Application for LocalNative {
                             Command::perform(init::create_env(), Message::ResultHandle)
                         }
                     },
+                    Message::Empty(_) => Command::none(),
                 }
             }
         }
