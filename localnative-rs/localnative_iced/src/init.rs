@@ -349,10 +349,10 @@ async fn try_init_file(kind: WebKind) -> anyhow::Result<()> {
     let path = Path::new(&host.path);
     let raw_file = host.raw_data()?;
     #[cfg(target_os = "windows")]
-    {   
+    {
         init_file(&file_path, &raw_file, &dir_path).await?;
         if !path.exists() {
-            log::error!("web ext host is not exists {:?}",path);
+            log::error!("web ext host is not exists {:?}", path);
         }
         log::debug!("try_init_file init ok.");
     }
@@ -362,7 +362,7 @@ async fn try_init_file(kind: WebKind) -> anyhow::Result<()> {
         if browser_path.exists() {
             init_file(&file_path, &raw_file, &dir_path).await?;
             if !path.exists() {
-                log::error!("web ext host is not exists {:?}",path);
+                log::error!("web ext host is not exists {:?}", path);
             }
         }
     }
