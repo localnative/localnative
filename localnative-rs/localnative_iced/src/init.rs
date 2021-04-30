@@ -300,7 +300,7 @@ impl WebKind {
             #[cfg(target_os = "windows")]
             Ok(browser_path)
         } else {
-            Err(anyhow::anyhow!("not exists the browser:{:?}", self));
+            Err(anyhow::anyhow!("not exists the browser:{:?}", self))
         }
         #[cfg(target_os = "windows")]
         Ok(browser_path)
