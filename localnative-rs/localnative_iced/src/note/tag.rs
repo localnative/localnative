@@ -107,7 +107,7 @@ impl Tag {
                         EditState::Able => {
                             if name != temp {
                                 *name = temp.clone();
-                                log::info!("{}", name);
+                                log::debug!("{}", name);
                             }
                             *state = State::Normal {
                                 search: button::State::new(),

@@ -100,7 +100,7 @@ pub async fn change_env(backend: setting_view::Backend) -> anyhow::Result<settin
     if env_path.exists() && env_path.is_dir() {
         tokio::fs::remove_dir(&env_path).await?;
     }
-    log::info!("{} backend will write in env.💥💥💢", backend.to_string());
+    log::debug!("{} backend will write in env.💥💥💢", backend.to_string());
     tokio::fs::write(env_path, format!("WGPU_BACKEND = {}", backend.to_string()))
         .await
         .map(|_| backend)
@@ -120,36 +120,36 @@ pub async fn change_env(backend: setting_view::Backend) -> anyhow::Result<settin
 #[cfg(target_os = "windows")]
 fn registr(kind: WebKind) -> anyhow::Result<Option<WebKind>> {
     use winreg::enums::*;
-    log::info!("registr starting");
+    log::debug!("registr starting");
     let path = kind.registr_path();
     let write_path = path.join("app.localnative");
-    log::info!("registr write path:{:?}", &write_path);
-    log::info!("registr get kind host");
+    log::debug!("registr write path:{:?}", &write_path);
+    log::debug!("registr get kind host");
     let json_path = kind.json_path()?;
     let key = winreg::RegKey::predef(HKEY_CURRENT_USER);
 
     if let Ok(k) = key.open_subkey(&path) {
-        log::info!("registr open subkey success");
+        log::debug!("registr open subkey success");
         if let Ok(k) = k.open_subkey(Path::new("app.localnative")) {
             if let Ok(v) = k.get_value::<String, &str>("") {
-                log::info!("registr get value success:{:?}", &v);
+                log::debug!("registr get value success:{:?}", &v);
                 if v != json_path {
-                    log::info!("registr start set value");
+                    log::debug!("registr start set value");
                     let writer = key.open_subkey_with_flags(&write_path, KEY_WRITE)?;
                     writer.set_value("", &json_path)?;
-                    log::info!("registr set value ok");
+                    log::debug!("registr set value ok");
                 } else {
-                    log::info!("registr value Eq");
+                    log::debug!("registr value Eq");
                 }
                 return Ok(Some(kind));
             } else {
                 log::error!("get registr value fail!");
             }
         } else {
-            log::info!("registr start set value");
+            log::debug!("registr start set value");
             let (writer, _disposition) = key.create_subkey_with_flags(&write_path, KEY_WRITE)?;
             writer.set_value("", &json_path)?;
-            log::info!("registr set value ok");
+            log::debug!("registr set value ok");
             return Ok(Some(kind));
         }
     }
@@ -164,12 +164,11 @@ pub fn firefox_path() -> anyhow::Result<PathBuf> {
             Ok(home_dir
                 .join("Library")
                 .join("Application Support")
-                .join("Mozilla")
-                .join("NativeMessagingHosts"))
+                .join("Mozilla"))
         }
         #[cfg(target_os = "linux")]
         {
-            Ok(home_dir.join(".mozilla").join("native-messaging-hosts"))
+            Ok(home_dir.join(".mozilla"))
         }
         #[cfg(target_os = "windows")]
         {
@@ -188,15 +187,11 @@ pub fn chrome_path() -> anyhow::Result<PathBuf> {
                 .join("Library")
                 .join("Application Support")
                 .join("Google")
-                .join("Chrome")
-                .join("NativeMessagingHosts"))
+                .join("Chrome"))
         }
         #[cfg(target_os = "linux")]
         {
-            Ok(home_dir
-                .join(".config")
-                .join("google-chrome")
-                .join("NativeMessagingHosts"))
+            Ok(home_dir.join(".config").join("google-chrome"))
         }
         #[cfg(target_os = "windows")]
         {
@@ -214,15 +209,11 @@ pub fn chromium_path() -> anyhow::Result<PathBuf> {
             Ok(home_dir
                 .join("Library")
                 .join("Application Support")
-                .join("Chromium")
-                .join("NativeMessagingHosts"))
+                .join("Chromium"))
         }
         #[cfg(target_os = "linux")]
         {
-            Ok(home_dir
-                .join(".config")
-                .join("chromium")
-                .join("NativeMessagingHosts"))
+            Ok(home_dir.join(".config").join("chromium"))
         }
         #[cfg(target_os = "windows")]
         {
@@ -242,17 +233,12 @@ pub fn edge_path() -> anyhow::Result<PathBuf> {
                 .join("Library")
                 .join("Application Support")
                 .join("Microsoft")
-                .join("Edge")
-                .join("NativeMessagingHosts"))
+                .join("Edge"))
         }
         #[cfg(target_os = "linux")]
         {
             // TODO:需要测试
-            Ok(home_dir
-                .join(".config")
-                .join("Microsoft")
-                .join("Edge")
-                .join("NativeMessagingHosts"))
+            Ok(home_dir.join(".config").join("Microsoft").join("Edge"))
         }
         #[cfg(target_os = "windows")]
         {
@@ -271,7 +257,7 @@ enum WebKind {
 
 impl WebKind {
     async fn init_all() -> anyhow::Result<()> {
-        #[cfg(windows)]
+        #[cfg(target_os = "windows")]
         {
             if let Some(kind) = registr(Self::FireFox)? {
                 try_init_file(kind).await?;
@@ -287,7 +273,7 @@ impl WebKind {
             }
             Ok(())
         }
-        #[cfg(unix)]
+        #[cfg(not(target_os = "windows"))]
         {
             tokio::try_join!(
                 try_init_file(Self::FireFox),
@@ -318,6 +304,20 @@ impl WebKind {
         }
     }
     fn path(&self) -> anyhow::Result<PathBuf> {
+        let browser_path = self.browser_path()?;
+        #[cfg(target_os = "macos")]
+        {
+            Ok(browser_path.join("NativeMessagingHosts"))
+        }
+        #[cfg(target_os = "linux")]
+        match self {
+            WebKind::FireFox => Ok(browser_path.join("native-messaging-hosts")),
+            _ => Ok(browser_path.join("NativeMessagingHosts")),
+        }
+        #[cfg(target_os = "windows")]
+        Ok(browser_path)
+    }
+    fn browser_path(&self) -> anyhow::Result<PathBuf> {
         match self {
             WebKind::FireFox => firefox_path(),
             WebKind::Chrome => chrome_path(),
@@ -340,22 +340,24 @@ impl WebKind {
     }
 }
 async fn try_init_file(kind: WebKind) -> anyhow::Result<()> {
-    log::info!("try_init_file start get kind path.");
+    log::debug!("try_init_file start get kind path.");
     let dir_path = kind.path()?;
     let file_path = dir_path.join("app.localnative.json");
-    log::info!("try_init_file start get kind host.");
+    log::debug!("try_init_file start get kind host.");
     let host = kind.host()?;
-    log::info!("try_init_file start get raw data.");
+    log::debug!("try_init_file start get raw data.");
     let raw_file = host.raw_data()?;
-    if cfg!(target_os = "windows") {
+    #[cfg(target_os = "windows")]
+    {
         init_file(&file_path, &raw_file, &dir_path).await?;
-        log::info!("try_init_file init ok.");
-    } else if cfg!(unix) {
-        if dir_path.exists() {
+        log::debug!("try_init_file init ok.");
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        let browser_path = kind.browser_path()?;
+        if browser_path.exists() {
             init_file(&file_path, &raw_file, &dir_path).await?;
         }
-    } else {
-        return Err(anyhow::anyhow!("not support platform."));
     }
 
     Ok(())
@@ -363,20 +365,20 @@ async fn try_init_file(kind: WebKind) -> anyhow::Result<()> {
 
 async fn init_file(file_path: &Path, raw_file: &[u8], dir_path: &Path) -> anyhow::Result<()> {
     if file_path.exists() {
-        log::info!("init_file is reading.");
+        log::debug!("init_file is reading.");
         let file = tokio::fs::read(file_path).await?;
-        log::info!("init_file read fine.");
+        log::debug!("init_file read fine.");
         if file != *raw_file {
-            log::info!("init_file is writing.");
+            log::debug!("init_file is writing.");
             tokio::fs::write(file_path, raw_file).await?;
-            log::info!("init_file write ok.");
+            log::debug!("init_file write ok.");
         }
     } else {
-        log::info!("init_file is creating dir.");
+        log::debug!("init_file is creating dir.");
         tokio::fs::create_dir_all(dir_path).await?;
-        log::info!("init_file is writing file.");
+        log::debug!("init_file is writing file.");
         tokio::fs::write(file_path, raw_file).await?;
-        log::info!("init_file write ok.");
+        log::debug!("init_file write ok.");
     }
     Ok(())
 }

@@ -80,18 +80,18 @@ async fn setup_logger() -> anyhow::Result<()> {
     if !log_dir.exists() {
         tokio::fs::create_dir_all(&log_dir).await?;
     }
-    if cfg!(debug_assertions) {
-        dispatch
-            .level(log::LevelFilter::Info)
-            .chain(std::io::stdout())
-            .chain(fern::log_file(log_dir.join("localnative.log"))?)
-    } else {
-        dispatch
-            .level(log::LevelFilter::Warn)
-            .chain(fern::log_file(log_dir.join("localnative.log"))?)
-    }
-    .apply()
-    .map_err(|e| anyhow::anyhow!("set logger error :{:?}", e))?;
+    dispatch
+        .level(log::LevelFilter::Debug)
+        .level_for("tracing", log::LevelFilter::Warn)
+        .level_for("wgpu_core", log::LevelFilter::Warn)
+        .level_for("gpu_alloc", log::LevelFilter::Warn)
+        .level_for("wgpu", log::LevelFilter::Warn)
+        .level_for("iced_wgpu", log::LevelFilter::Warn)
+        .level_for("gfx_backend_dx12", log::LevelFilter::Warn)
+        .chain(std::io::stdout())
+        .chain(fern::log_file(log_dir.join("localnative.log"))?)
+        .apply()
+        .map_err(|e| anyhow::anyhow!("set logger error :{:?}", e))?;
     Ok(())
 }
 fn font() -> &'static Arc<Vec<u8>> {
@@ -225,7 +225,7 @@ impl Application for LocalNative {
                     if let Err(e) = res {
                         log::error!("fail: {:?}", e);
                     } else {
-                        log::info!("success!");
+                        log::debug!("success!");
                     }
                     Command::none()
                 }
@@ -283,7 +283,7 @@ impl Application for LocalNative {
                             if setting_view.board_state.backend_org
                                 != setting_view.board_state.backend_temp
                             {
-                                log::info!(
+                                log::debug!(
                                     "chage env will run 🤙,org:{},temp:{}",
                                     setting_view.board_state.backend_org.to_string(),
                                     setting_view.board_state.backend_temp.to_string()
@@ -397,11 +397,11 @@ impl Application for LocalNative {
                                 }
                                 note::Message::Enter => {
                                     let old_note = note.old_note();
-                                    log::info!("old note:{:?}", &old_note);
+                                    log::debug!("old note:{:?}", &old_note);
                                     note.update(note::Message::Enter);
                                     let rowid = note.rowid;
                                     let mut new_note = note::Note::from(&*note);
-                                    log::info!("new note:{:?}", &new_note);
+                                    log::debug!("new note:{:?}", &new_note);
                                     if new_note != old_note {
                                         cmd::delete(&resource.conn, rowid);
                                         new_note.uuid4 = uuid::Uuid::new_v4().to_string();
@@ -447,7 +447,7 @@ impl Application for LocalNative {
                         if let Err(e) = res {
                             log::error!("fail: {:?}", e);
                         } else {
-                            log::info!("success!");
+                            log::debug!("success!");
                         }
                         Command::none()
                     }

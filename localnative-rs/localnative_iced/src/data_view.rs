@@ -42,7 +42,7 @@ impl MiddleData {
     }
     pub fn upgrade(conn: &Connection) {
         if let Ok(version) = localnative_core::upgrade::upgrade(&conn) {
-            log::info!("upgrade done:{}", version);
+            log::debug!("upgrade done:{}", version);
         } else {
             log::error!("upgrade error");
         }
@@ -50,7 +50,7 @@ impl MiddleData {
     pub fn from_select(conn: &Connection, query: &str, limit: &u32, offset: &u32) -> MiddleData {
         let text = do_search(conn, query, limit, offset);
         if let Ok(res) = serde_json::from_str(&text) {
-            log::info!("Select data success.");
+            log::debug!("Select data success.");
             res
         } else {
             log::warn!("Select data fail.");

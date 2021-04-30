@@ -52,7 +52,7 @@ pub enum Backend {
 impl Backend {
     pub fn from_env() -> Backend {
         let backend = std::env::var(crate::BACKEND);
-        log::info!("backend from env:{:?}", &backend);
+        log::debug!("backend from env:{:?}", &backend);
         if let Ok(backend) = backend {
             match backend.to_ascii_lowercase().as_str() {
                 "opengl" => Backend::Gl,
@@ -72,7 +72,7 @@ impl Backend {
     pub async fn from_file() -> anyhow::Result<Backend> {
         let file_path = app_dir().join(".env");
         let backend = String::from_utf8(tokio::fs::read(file_path).await?)?;
-        log::info!("backend: {}", &backend[15..]);
+        log::debug!("backend: {}", &backend[15..]);
         match backend[15..].to_ascii_lowercase().as_str() {
             "opengl" => Ok(Backend::Gl),
             "vulkan" => Ok(Backend::Vulkan),

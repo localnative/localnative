@@ -29,7 +29,7 @@ use tokio_serde::formats::Bincode;
 
 pub async fn run_sync_to_server(addr: &SocketAddr) -> io::Result<()> {
     let transport = tarpc::serde_transport::tcp::connect(addr, Bincode::default).await?;
-    let client = LnClient::new(client::Config::default(), transport).spawn()?;
+    let client = LnClient::new(client::Config::default(), transport).spawn();
     let conn = get_sqlite_connection();
 
     // check version
@@ -63,7 +63,7 @@ pub async fn run_sync_to_server(addr: &SocketAddr) -> io::Result<()> {
 
 pub async fn run_sync_from_server(addr: &SocketAddr) -> io::Result<()> {
     let transport = tarpc::serde_transport::tcp::connect(addr, Bincode::default).await?;
-    let client = LnClient::new(client::Config::default(), transport).spawn()?;
+    let client = LnClient::new(client::Config::default(), transport).spawn();
     let conn = get_sqlite_connection();
 
     // check version
@@ -113,7 +113,7 @@ pub fn sync(addr: &str) -> Result<String, String> {
 
 pub async fn run_stop_server(addr: &SocketAddr) -> io::Result<()> {
     let transport = tarpc::serde_transport::tcp::connect(addr, Bincode::default).await?;
-    let client = LnClient::new(client::Config::default(), transport).spawn()?;
+    let client = LnClient::new(client::Config::default(), transport).spawn();
     let conn = get_sqlite_connection();
 
     // check version

@@ -20,7 +20,7 @@ iced_native = { git = "https://github.com/hecrj/iced.git" }
 iced_graphics = { git = "https://github.com/hecrj/iced.git" }
 font-kit = "0.10.0"
 once_cell = "1.7"
-log = "0.4"
+log = { version = "0.4", features = ["max_level_debug", "release_max_level_warn"] }
 fern = "0.6"
 uuid = { version = "0.8", features = ["v4"] }
 image = "0.23"
