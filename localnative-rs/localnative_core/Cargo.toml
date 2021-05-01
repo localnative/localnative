@@ -30,12 +30,13 @@ futures = "0.3"
 tarpc = { version = "0.26", features = ["full"]}
 get_if_addrs = "0.5.3"
 
+[features]
+default = []
+iced = []
+
 [lib]
 name = "localnative_core"
 # android only need this
 # crate-type = ["cdylib"]
 # ios works as below
 # crate-type = ["staticlib"]
-[features]
-default = []
-iced = []
