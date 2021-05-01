@@ -100,12 +100,12 @@ pub fn sync(addr: &str) -> Result<String, String> {
         .unwrap_or_else(|e| panic!(r#"server_addr {} invalid: {}"#, addr, e));
     let rt = Runtime::new().unwrap();
     rt.block_on(async {
-        run_sync_to_server(&server_addr).await.unwrap();
+        run_sync_to_server(&server_addr).await;
         eprintln!("sync to server done");
     });
     let rt2 = Runtime::new().unwrap();
     rt2.block_on(async {
-        run_sync_from_server(&server_addr).await.unwrap();
+        run_sync_from_server(&server_addr).await;
         eprintln!("sync from server done");
     });
     Ok("sync ok".to_string())
@@ -135,7 +135,7 @@ pub fn stop_server(addr: &str) -> Result<String, String> {
         .unwrap_or_else(|e| panic!(r#"server_addr {} invalid: {}"#, addr, e));
     let rt = Runtime::new().unwrap();
     rt.block_on(async {
-        run_stop_server(&server_addr).await.unwrap();
+        run_stop_server(&server_addr).await;
     });
     Ok("stop ok".to_string())
 }
