@@ -15,34 +15,31 @@
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-use super::make_tags;
-use crate::{KVStringI64, Note, OneString, Tags};
-use rusqlite::types::ToSql;
-use rusqlite::{Connection, NO_PARAMS};
-use std::collections::{HashMap, HashSet};
+
+use crate::{Note, OneString};
+use rusqlite::Connection;
+use std::collections::HashSet;
 
 //client
 pub fn get_note_by_uuid4(conn: &Connection, uuid4: &str) -> Note {
     let mut stmt = conn.prepare(
 "select uuid4, title, url, tags, description, comments, annotations, created_at FROM note where uuid4 = ? "
     ).unwrap();
-    let note = stmt
-        .query_row(&[uuid4], |row| {
-            Ok(Note {
-                rowid: 0,
-                uuid4: row.get(0)?,
-                title: row.get(1)?,
-                url: row.get(2)?,
-                tags: row.get(3)?,
-                description: row.get(4)?,
-                comments: row.get(5)?,
-                annotations: row.get(6)?,
-                created_at: row.get(7)?,
-                is_public: false,
-            })
+    stmt.query_row(&[uuid4], |row| {
+        Ok(Note {
+            rowid: 0,
+            uuid4: row.get(0)?,
+            title: row.get(1)?,
+            url: row.get(2)?,
+            tags: row.get(3)?,
+            description: row.get(4)?,
+            comments: row.get(5)?,
+            annotations: row.get(6)?,
+            created_at: row.get(7)?,
+            is_public: false,
         })
-        .unwrap();
-    note
+    })
+    .unwrap()
 }
 
 pub fn next_uuid4_candidates(conn: &Connection) -> Vec<String> {
@@ -51,12 +48,10 @@ pub fn next_uuid4_candidates(conn: &Connection) -> Vec<String> {
         .prepare("select uuid4 FROM note order by rowid")
         .unwrap();
     let iter = stmt
-        .query_map(NO_PARAMS, |row| Ok(OneString { s: row.get(0)? }))
+        .query_map([], |row| Ok(OneString { s: row.get(0)? }))
         .unwrap();
-    for i in iter {
-        if let Ok(uuid4) = i {
-            r.push(uuid4.s)
-        }
+    for uuid4 in iter.flatten() {
+        r.push(uuid4.s);
     }
     r
 }
@@ -79,14 +74,12 @@ pub fn diff_uuid4_from_server(conn: &Connection, candidates: Vec<String>) -> Vec
     let mut r = Vec::new();
     let mut stmt = conn.prepare("select uuid4 FROM note").unwrap();
     let iter = stmt
-        .query_map(NO_PARAMS, |row| Ok(OneString { s: row.get(0)? }))
+        .query_map([], |row| Ok(OneString { s: row.get(0)? }))
         .unwrap();
 
-    for i in iter {
-        if let Ok(uuid4) = i {
-            if !(candidates.contains(&uuid4.s)) {
-                r.push(uuid4.s);
-            }
+    for uuid4 in iter.flatten() {
+        if !(candidates.contains(&uuid4.s)) {
+            r.push(uuid4.s);
         }
     }
     r

@@ -55,7 +55,7 @@ pub fn filter_by_tag(conn: &Connection, query: &str, from: &str, to: &str) -> St
     let mut tag_count_map: HashMap<String, i64> = HashMap::new();
 
     let result_iter = stmt
-        .query_map_named(&params, |row| Ok(Tags { tags: row.get(0)? }))
+        .query_map(&params[..], |row| Ok(Tags { tags: row.get(0)? }))
         .unwrap();
 
     for r in result_iter {
@@ -77,10 +77,10 @@ pub fn filter_by_tag(conn: &Connection, query: &str, from: &str, to: &str) -> St
             v: count,
         };
         d.push_str(&serde_json::to_string(&item).unwrap());
-        d.push_str(",");
+        d.push(',');
     }
     d.pop();
-    d.push_str("]");
+    d.push(']');
     d
 }
 
@@ -115,7 +115,7 @@ pub fn filter_count(conn: &Connection, query: &str, from: &str, to: &str) -> u32
 
     eprintln!("params {:?}", params.len());
 
-    let rs = stmt.query_map_named(&params, |row| row.get(0)).unwrap();
+    let rs = stmt.query_map(&params[..], |row| row.get(0)).unwrap();
     let mut c: u32 = 0;
     for r in rs {
         c = r.unwrap();
@@ -170,7 +170,7 @@ pub fn filter(
     eprintln!("params {:?}", params.len());
 
     let note_iter = stmt
-        .query_map_named(&params, |row| {
+        .query_map(&params[..], |row| {
             Ok(Note {
                 rowid: row.get(0)?,
                 uuid4: row.get(1)?,
@@ -192,10 +192,10 @@ pub fn filter(
         note.tags = make_tags(&note.tags);
         //eprintln!("Found note {:?}", note);
         j.push_str(&serde_json::to_string(&note).unwrap());
-        j.push_str(",");
+        j.push(',');
     }
     j.pop();
-    j.push_str("]");
+    j.push(']');
     j
 }
 
@@ -203,7 +203,7 @@ fn make_words(query: &str) -> Vec<String> {
     let re1 = Regex::new(r"\s+").unwrap();
     let s1 = re1.replace_all(query, " ");
     s1.trim()
-        .split(" ")
+        .split(' ')
         .map(|w| format!("%{}%", w))
         .collect::<Vec<String>>()
 }

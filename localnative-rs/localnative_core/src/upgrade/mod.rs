@@ -21,9 +21,9 @@ extern crate semver;
 extern crate uuid;
 
 use self::semver::Version;
-use rusqlite::{Connection, NO_PARAMS};
+use rusqlite::Connection;
 // version to upgrade to
-const VERSION: &'static str = "0.4.2";
+const VERSION: &str = "0.4.2";
 mod to_0_4_0;
 mod utils;
 use crate::OneString;
@@ -62,7 +62,7 @@ fn get_meta_is_upgrading(conn: &Connection) -> bool {
     let mut stmt = conn
         .prepare("SELECT meta_value FROM meta where meta_key = 'is_upgrading' ")
         .unwrap();
-    match stmt.query_row(NO_PARAMS, |row| Ok(OneString { s: row.get(0)? })) {
+    match stmt.query_row([], |row| Ok(OneString { s: row.get(0)? })) {
         Ok(is_upgrading) => {
             if is_upgrading.s == "1" {
                 eprintln!("get_meta_is_upgrading: true");
@@ -80,7 +80,7 @@ pub fn get_meta_version(conn: &Connection) -> String {
     let mut stmt = conn
         .prepare("SELECT meta_value FROM meta where meta_key = 'version' ")
         .unwrap();
-    match stmt.query_row(NO_PARAMS, |row| Ok(OneString { s: row.get(0)? })) {
+    match stmt.query_row([], |row| Ok(OneString { s: row.get(0)? })) {
         Ok(version) => {
             eprintln!("get_meta_version {}", version.s);
             version.s

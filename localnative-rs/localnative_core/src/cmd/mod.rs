@@ -17,10 +17,8 @@
 */
 use crate::Note;
 use linked_hash_set::LinkedHashSet;
-use regex::Regex;
 use rusqlite::types::ToSql;
-use rusqlite::{Connection, NO_PARAMS};
-use std::iter::FromIterator;
+use rusqlite::Connection;
 mod filter;
 pub mod image;
 mod search;
@@ -32,7 +30,7 @@ pub use self::search::{search, search_by_day, search_by_tag, search_count};
 pub use self::select::{select, select_by_day, select_by_tag, select_count};
 
 pub fn sync_via_attach(conn: &Connection, uri: &str) -> String {
-    if let Ok(_) = conn.execute("attach ? as 'other'", &[uri]) {
+    if conn.execute("attach ? as 'other'", &[uri]).is_ok() {
         match conn.execute_batch("BEGIN;
         insert into main.note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public)
         select uuid4, title, url, tags, description, comments, annotations, created_at, is_public
@@ -71,8 +69,7 @@ pub fn count(conn: &Connection, tbl: &str) -> i64 {
     let mut stmt = conn
         .prepare(&format!("select count(1) as cnt from {}", tbl))
         .unwrap();
-    let rs = stmt.query_row(NO_PARAMS, |row| row.get(0)).unwrap();
-    rs
+    stmt.query_row([], |row| row.get(0)).unwrap()
 }
 
 pub fn delete(conn: &Connection, rowid: i64) {
@@ -82,19 +79,13 @@ pub fn delete(conn: &Connection, rowid: i64) {
 
 // format and dedup tags
 pub fn make_tags(input: &str) -> String {
-    let re1 = Regex::new(r",+").unwrap();
-    let re2 = Regex::new(r"\s+").unwrap();
-    let s1 = re1.replace_all(input, " ");
-    let s2 = re2.replace_all(s1.trim(), ",");
-    let v1 = s2.split(",");
-    let h1: LinkedHashSet<&str> = LinkedHashSet::from_iter(v1);
-    let mut s = "".to_string();
-    for e in h1 {
-        s.push_str(e);
-        s.push_str(",")
-    }
-    s.pop();
-    s.to_string()
+    let input = input
+        .split(&[' ', ',', '，'][..])
+        .into_iter()
+        .filter(|s| !s.is_empty())
+        .collect::<LinkedHashSet<&str>>();
+    let res = input.into_iter().collect::<Vec<&str>>();
+    res.join(",")
 }
 
 pub fn insert(note: Note) {
@@ -127,7 +118,7 @@ pub fn insert(note: Note) {
         UPDATE ssb SET is_last_note = 0
         WHERE is_active_author = 1
         ",
-            NO_PARAMS,
+            [],
         )
         .unwrap();
     }

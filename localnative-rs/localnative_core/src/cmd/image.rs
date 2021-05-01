@@ -19,7 +19,6 @@ use super::make_tags;
 use crate::Note;
 use base64::decode;
 use rusqlite::types::ToSql;
-use rusqlite::NO_PARAMS;
 
 pub fn insert_image(note: Note) {
     let data64 = note.annotations.replace("data:image/png;base64,", "");
@@ -54,7 +53,7 @@ pub fn insert_image(note: Note) {
         UPDATE ssb SET is_last_note = 0
         WHERE is_active_author = 1
         ",
-            NO_PARAMS,
+            [],
         )
         .unwrap();
     }

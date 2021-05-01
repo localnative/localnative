@@ -35,13 +35,13 @@ use crate::Note;
 use rusqlite::Connection;
 use std::fs;
 use std::path::Path;
+use time::macros::format_description;
 use uuid::Uuid;
 
 pub fn get_sqlite_connection() -> Connection {
     let p = sqlite3_db_location();
     let path = Path::new(&p);
-    let conn = Connection::open(path).unwrap();
-    conn
+    Connection::open(path).unwrap()
 }
 
 fn sqlite3_db_location() -> String {
@@ -87,8 +87,8 @@ fn process(cmd: Cmd, text: &str) -> String {
         "server" => {
             eprintln!(r#"{{"server": "starting"}}"#);
             if let Ok(s) = serde_json::from_str::<CmdRpcServer>(text) {
-                if let Ok(_) = crate::rpc::server::start(&s.addr) {
-                    format!(r#"{{"server": "started"}}"#)
+                if crate::rpc::server::start(&s.addr).is_ok() {
+                    r#"{"server": "started"}"#.to_string()
                 } else {
                     r#"{"error":"server error"}"#.to_string()
                 }
@@ -136,9 +136,7 @@ fn process(cmd: Cmd, text: &str) -> String {
         }
         "insert-image" => {
             if let Ok(i) = serde_json::from_str::<CmdInsert>(text) {
-                let created_at =
-                    time::strftime("%Y-%m-%d %H:%M:%S:%f UTC", &time::now_utc()).unwrap();
-                //eprintln!("created_at {}", created_at);
+                let created_at = created_time();
                 let note = Note {
                     rowid: 0i64,
                     uuid4: Uuid::new_v4().to_string(),
@@ -162,9 +160,8 @@ fn process(cmd: Cmd, text: &str) -> String {
         }
         "insert" => {
             if let Ok(i) = serde_json::from_str::<CmdInsert>(text) {
-                let created_at =
-                    time::strftime("%Y-%m-%d %H:%M:%S:%f UTC", &time::now_utc()).unwrap();
-                //eprintln!("created_at {}", created_at);
+                let created_at = created_time();
+                eprintln!("created_at {}", &created_at);
                 let note = Note {
                     rowid: 0i64,
                     uuid4: Uuid::new_v4().to_string(),
@@ -219,7 +216,18 @@ fn process(cmd: Cmd, text: &str) -> String {
     }
 }
 
-fn do_search(conn: &Connection, query: &str, limit: &u32, offset: &u32) -> String {
+fn created_time() -> String {
+    let created_at = time::OffsetDateTime::now_utc();
+    created_at
+        .format(&format_description!(
+            "[year]-[month]-[day] [hour]:[minute]:[second]:"
+        ))
+        .unwrap()
+        + created_at.nanosecond().to_string().as_str()
+        + " UTC"
+}
+
+pub fn do_search(conn: &Connection, query: &str, limit: &u32, offset: &u32) -> String {
     let c = search_count(&conn, query);
     let j = search(&conn, query, limit, offset);
     let d = search_by_day(&conn, query);
