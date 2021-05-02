@@ -34,15 +34,13 @@ pub async fn run_sync_to_server(addr: &SocketAddr) -> io::Result<()> {
 
     // check version
     let version = get_meta_version(&conn);
-    drop(conn);
     let is_version_match = client.is_version_match(context::current(), version).await?;
     eprintln!("is_version_match: {}", is_version_match);
     if !is_version_match {
         return Err(Error::new(ErrorKind::Other, "VERSION_NOT_MATCH"));
     }
-    let conn = get_sqlite_connection();
+
     let candidates = next_uuid4_candidates(&conn);
-    drop(conn);
     // diff uuid4
     let diff_uuid4 = client
         .diff_uuid4_to_server(context::current(), candidates)
@@ -51,9 +49,7 @@ pub async fn run_sync_to_server(addr: &SocketAddr) -> io::Result<()> {
 
     // send one by one
     for u in diff_uuid4 {
-        let conn = get_sqlite_connection();
         let uuid4 = get_note_by_uuid4(&conn, &u);
-        drop(conn);
         client.send_note(context::current(), uuid4).await?;
     }
     eprintln!("send_note done");
@@ -68,16 +64,13 @@ pub async fn run_sync_from_server(addr: &SocketAddr) -> io::Result<()> {
 
     // check version
     let version = get_meta_version(&conn);
-    drop(conn);
     let is_version_match = client.is_version_match(context::current(), version).await?;
     eprintln!("is_version_match: {}", is_version_match);
     if !is_version_match {
         return Err(Error::new(ErrorKind::Other, "VERSION_NOT_MATCH"));
     }
 
-    let conn = get_sqlite_connection();
     let candidates = next_uuid4_candidates(&conn);
-    drop(conn);
     // diff uuid4
     let diff_uuid4 = client
         .diff_uuid4_from_server(context::current(), candidates)
@@ -98,12 +91,13 @@ pub fn sync(addr: &str) -> Result<String, String> {
     let server_addr = addr
         .parse()
         .unwrap_or_else(|e| panic!(r#"server_addr {} invalid: {}"#, addr, e));
-    let rt = Runtime::new().unwrap();
+    let rt = Runtime::new().map_err(|e| format!("sync init rt error:{:?}", e))?;
+
     rt.block_on(async {
         run_sync_to_server(&server_addr).await.unwrap();
         eprintln!("sync to server done");
     });
-    let rt2 = Runtime::new().unwrap();
+    let rt2 = Runtime::new().map_err(|e| format!("sync init rt error:{:?}", e))?;
     rt2.block_on(async {
         run_sync_from_server(&server_addr).await.unwrap();
         eprintln!("sync from server done");
