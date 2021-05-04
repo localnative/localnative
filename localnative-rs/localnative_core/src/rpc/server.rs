@@ -101,8 +101,8 @@ pub async fn start_server(addr: &SocketAddr) -> io::Result<()> {
         .await?
         .filter_map(|r| future::ready(r.ok()))
         .map(server::BaseChannel::with_defaults)
-        // Limit channels to 1 per IP.
-        .max_channels_per_key(1, |t| t.as_ref().peer_addr().unwrap().ip())
+        // Limit channels to 2 per IP.
+        .max_channels_per_key(2, |t| t.as_ref().peer_addr().unwrap().ip())
         .map(|channel| {
             let server = LocalNativeServer(channel.as_ref().as_ref().peer_addr().unwrap());
             channel.execute(server.serve())

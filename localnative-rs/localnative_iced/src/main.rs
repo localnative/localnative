@@ -275,6 +275,7 @@ impl Application for LocalNative {
                                 &page_bar.offset,
                             );
                             middle_data.encode(data_view, page_bar);
+                            data_view.reset();
                             Command::none()
                         }
                     },
@@ -383,6 +384,7 @@ impl Application for LocalNative {
                             &page_bar.offset,
                         );
                         middle_data.encode(data_view, page_bar);
+                        data_view.reset();
                         Command::none()
                     }
 
@@ -442,6 +444,7 @@ impl Application for LocalNative {
                                     &page_bar.offset,
                                 );
                                 middle_data.encode(data_view, page_bar);
+                                data_view.reset();
                                 Command::none()
                             }
                             _ => Command::none(),
@@ -452,6 +455,13 @@ impl Application for LocalNative {
                         if let Err(e) = res {
                             log::error!("fail: {:?}", e);
                         } else {
+                            let middle_data = MiddleData::from_select(
+                                &resource.conn,
+                                search_bar.search_text.as_str(),
+                                &setting_view.config.limit,
+                                &page_bar.offset,
+                            );
+                            middle_data.encode(data_view, page_bar);
                             log::debug!("success!");
                         }
                         Command::none()

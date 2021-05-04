@@ -66,7 +66,17 @@ pub struct DataView {
     pub tags: Vec<TagView>,
     pub state: State,
 }
-
+impl DataView {
+    pub fn reset(&mut self) {
+        let Self { state, .. } = self;
+        let State {
+            tags_scrollable,
+            notes_scrollable,
+        } = state;
+        tags_scrollable.scroll_to(0.0, iced::Rectangle::default(), iced::Rectangle::default());
+        notes_scrollable.scroll_to(0.0, iced::Rectangle::default(), iced::Rectangle::default());
+    }
+}
 #[derive(Debug, Default)]
 pub struct State {
     pub tags_scrollable: scrollable::State,

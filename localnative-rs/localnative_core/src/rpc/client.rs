@@ -98,15 +98,21 @@ pub fn sync(addr: &str) -> Result<String, String> {
     let server_addr = addr
         .parse()
         .unwrap_or_else(|e| panic!(r#"server_addr {} invalid: {}"#, addr, e));
-    let rt = Runtime::new().unwrap();
+    let rt = Runtime::new().map_err(|e| format!("runtime init error:{:?}", e))?;
     rt.block_on(async {
-        run_sync_to_server(&server_addr).await;
-        eprintln!("sync to server done");
+        if let Err(e) = run_sync_to_server(&server_addr).await {
+            eprintln!("sync to server error:{:?}", e);
+        } else {
+            eprintln!("sync to server done");
+        }
     });
     let rt2 = Runtime::new().unwrap();
     rt2.block_on(async {
-        run_sync_from_server(&server_addr).await;
-        eprintln!("sync from server done");
+        if let Err(e) = run_sync_from_server(&server_addr).await {
+            eprintln!("sync from server error:{:?}", e);
+        } else {
+            eprintln!("sync from server done");
+        }
     });
     Ok("sync ok".to_string())
 }
@@ -133,9 +139,11 @@ pub fn stop_server(addr: &str) -> Result<String, String> {
     let server_addr: SocketAddr = addr
         .parse()
         .unwrap_or_else(|e| panic!(r#"server_addr {} invalid: {}"#, addr, e));
-    let rt = Runtime::new().unwrap();
+    let rt = Runtime::new().map_err(|e| format!("runtime init error:{:?}", e))?;
     rt.block_on(async {
-        run_stop_server(&server_addr).await;
+        if let Err(e) = run_stop_server(&server_addr).await {
+            eprintln!("stop server error:{:?}", e);
+        }
     });
     Ok("stop ok".to_string())
 }
