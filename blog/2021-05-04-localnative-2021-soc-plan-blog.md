@@ -1,4 +1,12 @@
-# 2021 SoC 计划 Blog
+---
+title: "Local Native 2021 SoC 计划 Blog"
+author: Cupnfish
+authorURL: https://gitlab.com/Cupnfish 
+authorImageURL: https://gitlab.com/uploads/-/system/user/avatar/3555827/avatar.png
+
+categories: ["2021 Summer of Code"]
+tags: ["all", "localnative", "2021", "SoC", "druid", "iced"]
+---
 
 使用iced实现LocalNative的跨平台桌面GUI，大致上要实现electron版本的基本功能，总结如下：
 
