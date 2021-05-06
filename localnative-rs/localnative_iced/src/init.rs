@@ -384,7 +384,6 @@ async fn try_init_file(kind: WebKind) {
             }
             Err(e) => {
                 log::error!("init host file error:{:?}", e);
-                return;
             }
         };
     }
@@ -404,7 +403,6 @@ async fn try_init_file(kind: WebKind) {
             }
             Err(e) => {
                 log::error!("init host file error:{:?}", e);
-                return;
             }
         };
     }

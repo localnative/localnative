@@ -21,7 +21,7 @@ use data_view::{DataView, MiddleData};
 use font_kit::family_name::FamilyName;
 use font_kit::properties::Properties;
 use font_kit::source::SystemSource;
-use localnative_core::{cmd, exe::get_sqlite_connection, rusqlite::Connection};
+use localnative_core::{cmd, exe::get_sqlite_connection, rpc::server::Stop, rusqlite::Connection};
 use once_cell::sync::OnceCell;
 use page_bar::PageBar;
 use search_bar::SearchBar;
@@ -133,8 +133,7 @@ enum LocalNative {
 pub enum Message {
     Loaded(Result<Config, setting_view::ConfigError>),
     ResultHandle(anyhow::Result<()>),
-    StartServerResult(anyhow::Result<()>),
-    StopServerResult(anyhow::Result<()>),
+    Server(anyhow::Result<Stop>),
     NeedCreate(Config),
     PageBar(page_bar::Message),
     UnknowError,
@@ -309,25 +308,23 @@ impl Application for LocalNative {
                             }
                         }
                         setting_view::Message::Server => match state {
-                            State::Contents | State::Settings => {
+                            State::Settings | State::Contents => {
                                 *state = State::Sync;
-                                if let ServerState::Closed = server_state {
-                                    return Command::perform(
-                                        helper::start_server(),
-                                        Message::StartServerResult,
-                                    );
+                                if server_state.is_none() {
+                                    Command::perform(helper::start_server(), Message::Server)
+                                } else {
+                                    Command::none()
                                 }
-                                Command::none()
                             }
                             State::Sync => {
                                 *state = State::Contents;
-                                if let ServerState::Opening = server_state {
-                                    return Command::perform(
-                                        helper::stop_server(),
-                                        Message::StopServerResult,
-                                    );
+                                match server_state.take() {
+                                    Some(rec) => Command::perform(
+                                        helper::stop_server(rec),
+                                        Message::ResultHandle,
+                                    ),
+                                    None => Command::none(),
                                 }
-                                Command::none()
                             }
                         },
                         setting_view::Message::SelectSettingBoard => {
@@ -368,6 +365,15 @@ impl Application for LocalNative {
                         }
                         setting_view::Message::OpenFile => {
                             Command::perform(helper::get_sync_file_path(), Message::SyncViaFile)
+                        }
+                        setting_view::Message::BackContent => {
+                            match state {
+                                State::Contents => (),
+                                State::Sync | State::Settings => {
+                                    *state = State::Contents;
+                                }
+                            }
+                            Command::none()
                         }
                         sm => {
                             setting_view.update(sm);
@@ -470,18 +476,6 @@ impl Application for LocalNative {
                     Message::UnknowError => Command::none(),
                     Message::NeedUpdate => Command::none(),
                     Message::Ignore => Command::none(),
-                    Message::StartServerResult(res) => {
-                        if res.is_ok() {
-                            *server_state = ServerState::Opening;
-                        }
-                        Command::none()
-                    }
-                    Message::StopServerResult(res) => {
-                        if res.is_ok() {
-                            *server_state = ServerState::Closed;
-                        }
-                        Command::none()
-                    }
                     Message::BackendRes(res) => match res {
                         std::result::Result::Ok(backend) => {
                             setting_view.board_state.backend_org = backend;
@@ -496,6 +490,18 @@ impl Application for LocalNative {
                     Message::Empty(_) => Command::none(),
                     Message::SyncViaFile(path) => {
                         Command::perform(helper::sync_via_file(path), Message::ResultHandle)
+                    }
+                    Message::Server(res) => {
+                        match res {
+                            Ok(rec) => {
+                                log::info!("trigger init ok...");
+                                server_state.replace(rec);
+                            }
+                            Err(e) => {
+                                log::error!("server open error:{:?}", e);
+                            }
+                        }
+                        Command::none()
                     }
                 }
             }
@@ -528,19 +534,8 @@ pub struct Data {
     setting_view: SettingView,
     search_bar: SearchBar,
     page_bar: PageBar,
-    server_state: ServerState,
+    server_state: Option<Stop>,
     state: State,
-}
-#[derive(Debug)]
-pub enum ServerState {
-    Opening,
-    Closed,
-}
-
-impl Default for ServerState {
-    fn default() -> Self {
-        Self::Closed
-    }
 }
 
 #[derive(Debug)]
@@ -563,28 +558,25 @@ impl Data {
             ..
         } = self;
         config_view
-            .sync_board_open_view()
+            .sync_board_open_view(self.server_state.is_some())
             .map(Message::SettingMessage)
     }
     fn setting_view(&mut self) -> Element<Message> {
-        let Data {
-            setting_view: config_view,
-            ..
-        } = self;
-        config_view
-            .setting_board_open_view()
+        let Data { setting_view, .. } = self;
+        setting_view
+            .setting_board_open_view(self.server_state.is_some())
             .map(Message::SettingMessage)
     }
     fn contents_view(&mut self) -> Element<Message> {
         let Data {
             data_view,
-            setting_view: config_view,
+            setting_view,
             search_bar,
             page_bar,
             ..
         } = self;
         let DataView { notes, tags, state } = data_view;
-        let limit = config_view.limit();
+        let limit = setting_view.limit();
         let data_view::State {
             tags_scrollable,
             notes_scrollable,
@@ -592,7 +584,11 @@ impl Data {
         let search_text_is_empty = search_bar.search_text.is_empty();
         Row::new()
             .align_items(iced::Align::Start)
-            .push(config_view.viwe().map(Message::SettingMessage))
+            .push(
+                setting_view
+                    .viwe(self.server_state.is_some())
+                    .map(Message::SettingMessage),
+            )
             .push(
                 iced::Container::new(
                     Column::new()
