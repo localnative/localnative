@@ -40,3 +40,5 @@ name = "localnative_core"
 # crate-type = ["cdylib"]
 # ios works as below
 # crate-type = ["staticlib"]
+# desktop release will need this
+# crate-type = ["rlib"]

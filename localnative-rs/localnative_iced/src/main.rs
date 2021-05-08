@@ -12,6 +12,8 @@ mod style;
 mod tags;
 
 #[allow(dead_code)]
+mod logger;
+#[allow(dead_code)]
 mod wrap;
 
 use iced::window;
@@ -26,7 +28,10 @@ use once_cell::sync::OnceCell;
 use page_bar::PageBar;
 use search_bar::SearchBar;
 use setting_view::{Backend, Config, SettingView};
-use std::{path::PathBuf, sync::Arc};
+use std::{
+    path::PathBuf,
+    sync::{mpsc::Sender, Arc},
+};
 use wrap::Wrap;
 
 pub const BACKEND: &str = "WGPU_BACKEND";
@@ -66,7 +71,7 @@ fn main() -> anyhow::Result<()> {
     })
     .map_err(|iced_err| anyhow::anyhow!("iced err:{:?}", iced_err))
 }
-async fn setup_logger() -> anyhow::Result<()> {
+async fn setup_logger(sender: Sender<String>) -> anyhow::Result<()> {
     let dispatch = fern::Dispatch::new().format(|out, message, record| {
         out.finish(format_args!(
             "{}[{}][{}] {}",
@@ -81,13 +86,15 @@ async fn setup_logger() -> anyhow::Result<()> {
         tokio::fs::create_dir_all(&log_dir).await?;
     }
     dispatch
-        .level(log::LevelFilter::Debug)
+        .level(log::LevelFilter::Info)
         .level_for("tracing", log::LevelFilter::Warn)
-        .level_for("wgpu_core", log::LevelFilter::Warn)
+        .level_for("wgpu_core", log::LevelFilter::Error)
         .level_for("gpu_alloc", log::LevelFilter::Warn)
         .level_for("wgpu", log::LevelFilter::Warn)
         .level_for("iced_wgpu", log::LevelFilter::Warn)
         .level_for("gfx_backend_dx12", log::LevelFilter::Warn)
+        .level_for("trapc", log::LevelFilter::Warn)
+        .chain(sender)
         .chain(std::io::stdout())
         .chain(fern::log_file(log_dir.join("localnative.log"))?)
         .apply()
@@ -125,7 +132,9 @@ fn font() -> &'static Arc<Vec<u8>> {
 
 #[allow(clippy::large_enum_variant)]
 enum LocalNative {
-    Loading,
+    Loading {
+        logger: Option<std::sync::mpsc::Receiver<String>>,
+    },
     Loaded(Data),
 }
 
@@ -155,21 +164,26 @@ impl Application for LocalNative {
     type Flags = bool;
 
     fn new(is_first: Self::Flags) -> (Self, iced::Command<Self::Message>) {
+        let (sender, recevier) = std::sync::mpsc::channel();
         if is_first {
             (
-                Self::Loading,
+                Self::Loading {
+                    logger: Some(recevier),
+                },
                 Command::batch(vec![
                     Command::perform(setting_view::Config::load(), Message::Loaded),
                     Command::perform(init::init_app_host(), Message::ResultHandle),
-                    Command::perform(setup_logger(), Message::ResultHandle),
+                    Command::perform(setup_logger(sender), Message::ResultHandle),
                 ]),
             )
         } else {
             (
-                Self::Loading,
+                Self::Loading {
+                    logger: Some(recevier),
+                },
                 Command::batch(vec![
                     Command::perform(setting_view::Config::load(), Message::Loaded),
-                    Command::perform(setup_logger(), Message::ResultHandle),
+                    Command::perform(setup_logger(sender), Message::ResultHandle),
                 ]),
             )
         }
@@ -185,7 +199,7 @@ impl Application for LocalNative {
         _clipboard: &mut iced::Clipboard,
     ) -> iced::Command<Self::Message> {
         match self {
-            LocalNative::Loading => match message {
+            LocalNative::Loading { logger } => match message {
                 Message::Loaded(config) => {
                     if let Ok(mut config) = config {
                         let resource = Resource::default();
@@ -206,13 +220,26 @@ impl Application for LocalNative {
                         );
                         let mut data_view = DataView::default();
                         middle_data.encode(&mut data_view, &mut page_bar);
-                        let data = Data {
-                            data_view,
-                            resource,
-                            setting_view,
-                            search_bar,
-                            page_bar,
-                            ..Default::default()
+                        let data = if logger.is_some() {
+                            let logger = logger.take().unwrap();
+                            Data {
+                                data_view,
+                                resource,
+                                setting_view,
+                                search_bar,
+                                page_bar,
+                                logger: Some(logger::Logger::new(logger, "")),
+                                ..Default::default()
+                            }
+                        } else {
+                            Data {
+                                data_view,
+                                resource,
+                                setting_view,
+                                search_bar,
+                                page_bar,
+                                ..Default::default()
+                            }
                         };
                         *self = LocalNative::Loaded(data);
                         Command::none()
@@ -493,7 +520,7 @@ impl Application for LocalNative {
     }
     fn view(&mut self) -> iced::Element<'_, Self::Message> {
         match self {
-            LocalNative::Loading => Container::new(
+            LocalNative::Loading { .. } => Container::new(
                 Text::new("Loading...")
                     .horizontal_alignment(iced::HorizontalAlignment::Center)
                     .size(50),
@@ -520,6 +547,7 @@ pub struct Data {
     page_bar: PageBar,
     server_state: ServerState,
     state: State,
+    logger: Option<logger::Logger>,
 }
 #[derive(Debug)]
 pub enum ServerState {
@@ -550,19 +578,21 @@ impl Data {
     fn sync_view(&mut self) -> Element<Message> {
         let Data {
             setting_view: config_view,
+            logger,
             ..
         } = self;
         config_view
-            .sync_board_open_view()
+            .sync_board_open_view(logger)
             .map(Message::SettingMessage)
     }
     fn setting_view(&mut self) -> Element<Message> {
         let Data {
             setting_view: config_view,
+            logger,
             ..
         } = self;
         config_view
-            .setting_board_open_view()
+            .setting_board_open_view(logger)
             .map(Message::SettingMessage)
     }
     fn contents_view(&mut self) -> Element<Message> {
@@ -571,6 +601,7 @@ impl Data {
             setting_view: config_view,
             search_bar,
             page_bar,
+            logger,
             ..
         } = self;
         let DataView { notes, tags, state } = data_view;
@@ -582,7 +613,7 @@ impl Data {
         let search_text_is_empty = search_bar.search_text.is_empty();
         Row::new()
             .align_items(iced::Align::Start)
-            .push(config_view.viwe().map(Message::SettingMessage))
+            .push(config_view.viwe(logger).map(Message::SettingMessage))
             .push(
                 iced::Container::new(
                     Column::new()

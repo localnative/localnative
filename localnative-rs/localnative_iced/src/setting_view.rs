@@ -7,9 +7,12 @@ use iced::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::style::{
-    symbol::{self, Symbol},
-    Theme,
+use crate::{
+    logger::{Logger, Record},
+    style::{
+        symbol::{self, Symbol},
+        Theme,
+    },
 };
 
 #[derive(Debug, Clone)]
@@ -29,6 +32,7 @@ pub enum Message {
     Reset,
     ClearAddrInput,
     FixHost,
+    Empty,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, Copy)]
@@ -269,31 +273,38 @@ impl SettingView {
                 }
             }
             Message::FixHost => {}
+            Message::Empty => {}
         }
     }
-    pub fn viwe(&mut self) -> Element<Message> {
+    pub fn viwe<'a>(&'a mut self, logger: &'a mut Option<Logger>) -> Element<'a, Message> {
         let SettingView { config, state, .. } = self;
-        left_bar_viwe(state, config.theme)
+        left_bar_viwe(state, config.theme, logger)
     }
-    pub fn setting_board_open_view(&mut self) -> Element<Message> {
+    pub fn setting_board_open_view<'a>(
+        &'a mut self,
+        logger: &'a mut Option<Logger>,
+    ) -> Element<'a, Message> {
         let SettingView {
             config,
             state,
             board_state,
             ..
         } = self;
-        let left_bar = left_bar_viwe(state, config.theme);
+        let left_bar = left_bar_viwe(state, config.theme, logger);
         let setting_board = setting_board_view(board_state, &*config);
         Row::new().push(left_bar).push(setting_board).into()
     }
-    pub fn sync_board_open_view(&mut self) -> Element<Message> {
+    pub fn sync_board_open_view<'a>(
+        &'a mut self,
+        logger: &'a mut Option<Logger>,
+    ) -> Element<'a, Message> {
         let SettingView {
             config,
             state,
             sync_state,
             ..
         } = self;
-        let left_bar = left_bar_viwe(state, config.theme);
+        let left_bar = left_bar_viwe(state, config.theme, logger);
         let sync_board = sync_board_view(&*sync_state);
         Row::new().push(left_bar).push(sync_board).into()
     }
@@ -317,7 +328,11 @@ fn sync_board_view(state: &SyncState) -> Element<Message> {
         .push(iced::QRCode::new(qr_code).cell_size(10))
         .into()
 }
-fn left_bar_viwe(state: &mut State, theme: Theme) -> Element<Message> {
+fn left_bar_viwe<'a>(
+    state: &'a mut State,
+    theme: Theme,
+    logger: &'a mut Option<Logger>,
+) -> Element<'a, Message> {
     let State {
         theme_button,
         setting_button,
@@ -369,14 +384,21 @@ fn left_bar_viwe(state: &mut State, theme: Theme) -> Element<Message> {
     )
     .style(Symbol)
     .on_press(Message::SelectSettingBoard);
-    Column::new()
+
+    let mut content = Column::new()
         .align_items(iced::Align::Center)
         .height(iced::Length::Fill)
         .width(iced::Length::FillPortion(2))
         .spacing(10)
         .push(open_file_button)
         .push(server_button)
-        .push(addr_row)
+        .push(addr_row);
+    content = if let Some(ref mut logger) = logger {
+        content.push(Record::new(logger.state()))
+    } else {
+        content
+    };
+    content
         .push(Rule::vertical(50).style(symbol::Symbol))
         .push(theme_button)
         .push(setting_button)
