@@ -7,7 +7,7 @@ authorImageURL: https://secure.gravatar.com/avatar/1484b2bde1c0027dab9b135a1e051
 categories: ["2021 Summer of Code"]
 tags: ["all", "localnative", "2021", "SoC"]
 ---
-<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/O4QkEvdRR0o" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/r5xlfirTJf0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 - Cupnfish
     - decide to simplify release as compressed file

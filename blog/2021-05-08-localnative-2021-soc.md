@@ -7,26 +7,26 @@ authorImageURL:
 categories: ["2021 Summer of Code"]
 tags: ["all", "localnative", "2021", "SoC"]
 ---
-<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/O4QkEvdRR0o" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/r5xlfirTJf0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 - Cupnfish
-    - Add log to display op information
+    - Add log section to GUI displaying op information
     - fix open server and close server
-    - intend to do i18n and date filter
+    - iced specific sync functions
+    - i18n WIP
   
 - yi
-    - suggest the ui for pc
-    - crash when sync on ios and android
+    - suggest moving pagination UI component up
 
 - Conan
-    - Start ci/cd pipeline for localnative-rs
+    - Start ci/cd pipeline for `localnative-rs`
 
 TODO
 - Cupnfish 
-    - 计划 Blog
+  - record video for sync on Windows using Sandbox
     
 - Hill
-  - release script to package iced and web ext targets together
+  - prepare PR for release script to package iced and web ext targets together
 
 - Conan
   - Change by sperating multiple jobs
