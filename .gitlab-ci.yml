@@ -1,0 +1,12 @@
+stages:
+  - build
+
+image: "rust:latest"
+
+build-code-job:
+  stage: build
+
+  script:
+    - echo "Check the rust and cargo version:"
+    - rustc --version && cargo --version
+    - cd localnative-rs && cargo build
