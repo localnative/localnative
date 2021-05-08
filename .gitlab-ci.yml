@@ -5,7 +5,9 @@ image: "rust:latest"
 
 build-code-job:
   stage: build
-
+  only:
+    - master
+    - merge_requests
   script:
     - echo "Check the rust and cargo version:"
     - rustc --version && cargo --version
