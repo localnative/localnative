@@ -5,6 +5,7 @@ use iced::{
     button, pick_list, qr_code, slider, text_input, Button, Column, Element, PickList, Row, Rule,
     Slider, Text, TextInput,
 };
+
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -33,6 +34,7 @@ pub enum Message {
     ClearAddrInput,
     FixHost,
     Empty,
+    BackContent,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, Copy)]
@@ -137,6 +139,7 @@ pub struct State {
     open_file_button: button::State,
     clear_button: button::State,
     addr_input: text_input::State,
+    back_content_button: button::State,
     addr: String,
     pub socket: Option<SocketAddr>,
     offset: slider::State,
@@ -274,14 +277,20 @@ impl SettingView {
             }
             Message::FixHost => {}
             Message::Empty => {}
+            Message::BackContent => {}
         }
     }
-    pub fn viwe<'a>(&'a mut self, logger: &'a mut Option<Logger>) -> Element<'a, Message> {
+    pub fn viwe<'a>(
+        &'a mut self,
+        server_state: bool,
+        logger: &'a mut Option<Logger>,
+    ) -> Element<'a, Message> {
         let SettingView { config, state, .. } = self;
-        left_bar_viwe(state, config.theme, logger)
+        left_bar_viwe(state, config.theme, server_state, logger)
     }
     pub fn setting_board_open_view<'a>(
         &'a mut self,
+        server_state: bool,
         logger: &'a mut Option<Logger>,
     ) -> Element<'a, Message> {
         let SettingView {
@@ -290,12 +299,13 @@ impl SettingView {
             board_state,
             ..
         } = self;
-        let left_bar = left_bar_viwe(state, config.theme, logger);
+        let left_bar = left_bar_viwe(state, config.theme, server_state, logger);
         let setting_board = setting_board_view(board_state, &*config);
         Row::new().push(left_bar).push(setting_board).into()
     }
     pub fn sync_board_open_view<'a>(
         &'a mut self,
+        server_state: bool,
         logger: &'a mut Option<Logger>,
     ) -> Element<'a, Message> {
         let SettingView {
@@ -304,7 +314,7 @@ impl SettingView {
             sync_state,
             ..
         } = self;
-        let left_bar = left_bar_viwe(state, config.theme, logger);
+        let left_bar = left_bar_viwe(state, config.theme, server_state, logger);
         let sync_board = sync_board_view(&*sync_state);
         Row::new().push(left_bar).push(sync_board).into()
     }
@@ -328,9 +338,11 @@ fn sync_board_view(state: &SyncState) -> Element<Message> {
         .push(iced::QRCode::new(qr_code).cell_size(10))
         .into()
 }
+
 fn left_bar_viwe<'a>(
     state: &'a mut State,
     theme: Theme,
+    server_state: bool,
     logger: &'a mut Option<Logger>,
 ) -> Element<'a, Message> {
     let State {
@@ -341,6 +353,7 @@ fn left_bar_viwe<'a>(
         clear_button,
         addr_input,
         addr,
+        back_content_button,
         ..
     } = state;
 
@@ -353,7 +366,11 @@ fn left_bar_viwe<'a>(
     })
     .style(Symbol)
     .on_press(Message::ThemeChanged);
-
+    let server_state = if server_state {
+        "server opened"
+    } else {
+        "server closed"
+    };
     let server_button = Button::new(server_button, Text::new("server")).on_press(Message::Server);
     let clear_button = Button::new(
         clear_button,
@@ -384,6 +401,8 @@ fn left_bar_viwe<'a>(
     )
     .style(Symbol)
     .on_press(Message::SelectSettingBoard);
+    let back_button =
+        Button::new(back_content_button, Text::new("back contents")).on_press(Message::BackContent);
 
     let mut content = Column::new()
         .align_items(iced::Align::Center)
@@ -392,6 +411,7 @@ fn left_bar_viwe<'a>(
         .spacing(10)
         .push(open_file_button)
         .push(server_button)
+        .push(Text::new(server_state))
         .push(addr_row);
     content = if let Some(ref mut logger) = logger {
         content.push(Record::new(logger.state()))
@@ -400,6 +420,7 @@ fn left_bar_viwe<'a>(
     };
     content
         .push(Rule::vertical(50).style(symbol::Symbol))
+        .push(back_button)
         .push(theme_button)
         .push(setting_button)
         .into()

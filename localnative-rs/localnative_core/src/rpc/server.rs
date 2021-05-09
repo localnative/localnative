@@ -29,6 +29,7 @@ use futures::{
     prelude::*,
 };
 use std::{io, net::SocketAddr};
+use stream_cancel::Trigger;
 use tarpc::{
     context,
     server::{self, Channel, Incoming},
@@ -87,16 +88,12 @@ impl LocalNative for LocalNativeServer {
     #[allow(unreachable_code)]
     fn stop(self, _: context::Context) -> Self::StopFut {
         eprintln!("server stopping");
-        if cfg!(feature = "iced") {
-            drop(self);
-        } else {
-            process::exit(0);
-        }
+        process::exit(0);
         future::ready(())
     }
 }
 
-pub async fn start_server(addr: &SocketAddr) -> io::Result<()> {
+async fn start_server(addr: SocketAddr) -> io::Result<()> {
     tarpc::serde_transport::tcp::listen(addr, Bincode::default)
         .await?
         .filter_map(|r| future::ready(r.ok()))
@@ -114,6 +111,33 @@ pub async fn start_server(addr: &SocketAddr) -> io::Result<()> {
 
     Ok(())
 }
+use tokio::sync::oneshot::Receiver;
+pub type Stop = Receiver<Trigger>;
+pub async fn iced_start_server(addr: SocketAddr) -> io::Result<Stop> {
+    use stream_cancel::Valved;
+    let (exit_sender, exit_receiver) = tokio::sync::oneshot::channel();
+    let listener = tarpc::serde_transport::tcp::listen(addr, Bincode::default).await?;
+
+    tokio::spawn(async move {
+        let (exit, incoming) = Valved::new(listener);
+        exit_sender.send(exit).unwrap();
+        incoming
+            .filter_map(|r| future::ready(r.ok()))
+            .map(server::BaseChannel::with_defaults)
+            // Limit channels to 2 per IP.
+            .max_channels_per_key(2, |t| t.as_ref().peer_addr().unwrap().ip())
+            .map(|channel| {
+                let server = LocalNativeServer(channel.as_ref().as_ref().peer_addr().unwrap());
+                channel.execute(server.serve())
+            })
+            // Max 10 channels.
+            .buffer_unordered(10)
+            .for_each(|_| async {})
+            .await
+    });
+
+    Ok(exit_receiver)
+}
 
 pub fn start(addr: &str) -> Result<(), &'static str> {
     let server_addr: SocketAddr = addr
@@ -121,7 +145,7 @@ pub fn start(addr: &str) -> Result<(), &'static str> {
         .unwrap_or_else(|e| panic!(r#"server_addr {} invalid: {}"#, addr, e));
     let rt = Runtime::new().unwrap();
     rt.block_on(async {
-        start_server(&server_addr).await.unwrap();
+        start_server(server_addr).await.unwrap();
     });
     Ok(())
 }

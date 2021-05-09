@@ -3,6 +3,7 @@ use std::{
     path::PathBuf,
 };
 
+use localnative_core::rpc::server::Stop;
 use native_dialog::FileDialog;
 
 // use iced::{button, text_input, tooltip, Element, PickList, Row, Text, TextInput};
@@ -39,14 +40,15 @@ pub fn get_ip() -> Option<String> {
     }
 }
 
-pub async fn start_server() -> anyhow::Result<()> {
+pub async fn start_server() -> anyhow::Result<Stop> {
     let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), 2345);
-    localnative_core::rpc::server::start_server(&addr).await?;
-    Ok(())
+    localnative_core::rpc::server::iced_start_server(addr)
+        .await
+        .map_err(|e| anyhow::anyhow!("server error:{:?}", e))
 }
-pub async fn stop_server() -> anyhow::Result<()> {
-    let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 2345);
-    localnative_core::rpc::client::run_stop_server(&addr).await?;
+pub async fn stop_server(stop: Stop) -> anyhow::Result<()> {
+    let res = stop.await?;
+    drop(res);
     Ok(())
 }
 pub async fn client_sync_from_server(addr: SocketAddr) -> anyhow::Result<()> {

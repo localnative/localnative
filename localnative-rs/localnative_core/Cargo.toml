@@ -29,10 +29,7 @@ tokio-serde = { version = "0.8", features = ["bincode"] }
 futures = "0.3"
 tarpc = { version = "0.26", features = ["full"]}
 get_if_addrs = "0.5.3"
-
-[features]
-default = []
-iced = []
+stream-cancel = "0.8"
 
 [lib]
 name = "localnative_core"
