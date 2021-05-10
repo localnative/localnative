@@ -1,4 +1,6 @@
-use iced::{button, Button, Element, Row, Text};
+use iced::{button, Button, Element, Row, Rule, Text};
+
+use crate::style::symbol::Symbol;
 
 #[derive(Debug)]
 pub struct PageBar {
@@ -54,10 +56,10 @@ impl PageBar {
         } = &mut self.state;
         let pre = Button::new(pre_button, Text::new("<-"))
             .on_press(Message::Pre)
-            .style(crate::style::symbol::Symbol);
+            .style(Symbol);
         let next = Button::new(next_button, Text::new("->"))
             .on_press(Message::Next)
-            .style(crate::style::symbol::Symbol);
+            .style(Symbol);
         let page = Text::new(format!(
             "{}-{}/{}",
             {
@@ -72,11 +74,12 @@ impl PageBar {
         ));
 
         Row::new()
+            .push(Rule::horizontal(10).style(Symbol))
             .push(pre)
             .push(page)
             .push(next)
+            .push(Rule::horizontal(10).style(Symbol))
             .spacing(20)
-            .align_items(iced::Align::Center)
             .into()
     }
 }

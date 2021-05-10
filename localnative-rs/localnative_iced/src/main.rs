@@ -38,9 +38,10 @@ pub const BACKEND: &str = "WGPU_BACKEND";
 static INSTANCE: OnceCell<Option<Arc<Vec<u8>>>> = OnceCell::new();
 
 fn main() -> anyhow::Result<()> {
-    let logo = style::icon::Icon::logo().ok()
-    .and_then(|logo|window::Icon::from_rgba(logo, 64, 64).ok());
-    
+    let logo = style::icon::Icon::logo()
+        .ok()
+        .and_then(|logo| window::Icon::from_rgba(logo, 64, 64).ok());
+
     LocalNative::run(Settings {
         flags: is_first(),
         antialiasing: true,
@@ -94,32 +95,30 @@ async fn setup_logger(sender: Sender<String>) -> anyhow::Result<()> {
     Ok(())
 }
 fn font() -> Option<&'static [u8]> {
-    INSTANCE.get_or_init(|| {
-        SystemSource::new().select_best_match(
-            &[
-                FamilyName::Title("PingFang SC".to_owned()),
-                FamilyName::Title("Hiragino Sans GB".to_owned()),
-                FamilyName::Title("Heiti SC".to_owned()),
-                FamilyName::Title("Microsoft YaHei".to_owned()),
-                FamilyName::Title("WenQuanYi Micro Hei".to_owned()),
-                FamilyName::Title("Microsoft YaHei".to_owned()),
-                // TODO:目前不能英文字体优先使用，需要iced支持
-                FamilyName::Title("Helvetica".to_owned()),
-                FamilyName::Title("Tahoma".to_owned()),
-                FamilyName::Title("Arial".to_owned()),
-                FamilyName::SansSerif,
-            ],
-            &Properties::new(),
-        )
-        .ok()
-        .and_then(|handle| {
-            handle.load()
-            .ok()
-            .and_then(|font| font.copy_font_data())
+    INSTANCE
+        .get_or_init(|| {
+            SystemSource::new()
+                .select_best_match(
+                    &[
+                        FamilyName::Title("PingFang SC".to_owned()),
+                        FamilyName::Title("Hiragino Sans GB".to_owned()),
+                        FamilyName::Title("Heiti SC".to_owned()),
+                        FamilyName::Title("Microsoft YaHei".to_owned()),
+                        FamilyName::Title("WenQuanYi Micro Hei".to_owned()),
+                        FamilyName::Title("Microsoft YaHei".to_owned()),
+                        // TODO:目前不能英文字体优先使用，需要iced支持
+                        FamilyName::Title("Helvetica".to_owned()),
+                        FamilyName::Title("Tahoma".to_owned()),
+                        FamilyName::Title("Arial".to_owned()),
+                        FamilyName::SansSerif,
+                    ],
+                    &Properties::new(),
+                )
+                .ok()
+                .and_then(|handle| handle.load().ok().and_then(|font| font.copy_font_data()))
         })
-    })
-    .as_ref()
-    .map(|f|f.as_slice())
+        .as_ref()
+        .map(|f| f.as_slice())
 }
 
 #[allow(clippy::large_enum_variant)]
@@ -658,13 +657,16 @@ impl Data {
                                         .align_items(iced::Align::Center)
                                         .spacing(30)
                                         .push(notes_cloumn)
-                                        .push(page_bar.view(limit).map(Message::PageBar))
                                 }
                             })
                             .center_x()
                             .center_y()
-                            .height(iced::Length::Shrink)
-                        }),
+                            .height(iced::Length::Fill)
+                        })
+                        .push(
+                            Container::new(page_bar.view(limit).map(Message::PageBar))
+                                .height(iced::Length::Shrink),
+                        ),
                 )
                 .width(iced::Length::FillPortion(8))
                 .center_x()
