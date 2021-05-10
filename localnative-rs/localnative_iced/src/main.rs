@@ -35,33 +35,16 @@ use std::{
 use wrap::Wrap;
 
 pub const BACKEND: &str = "WGPU_BACKEND";
+static INSTANCE: OnceCell<Option<Arc<Vec<u8>>>> = OnceCell::new();
 
 fn main() -> anyhow::Result<()> {
-    let font = font();
-    let logo = if let Ok(logo) = style::icon::Icon::logo() {
-        if let Ok(logo) = window::Icon::from_rgba(logo, 64, 64) {
-            Some(logo)
-        } else {
-            None
-        }
-    } else {
-        None
-    };
-    let path = setting_view::app_dir().join(".env");
-    let is_first = dotenv::from_path(path).is_err();
-    if std::env::var(BACKEND).is_err() {
-        std::env::set_var(BACKEND, &Backend::default().to_string());
-    }
+    let logo = style::icon::Icon::logo().ok()
+    .and_then(|logo|window::Icon::from_rgba(logo, 64, 64).ok());
+    
     LocalNative::run(Settings {
-        flags: is_first,
+        flags: is_first(),
         antialiasing: true,
-        default_font: {
-            if font.is_empty() {
-                None
-            } else {
-                Some(font)
-            }
-        },
+        default_font: font(),
         window: window::Settings {
             icon: logo,
             size: (1080, 720),
@@ -70,6 +53,15 @@ fn main() -> anyhow::Result<()> {
         ..Default::default()
     })
     .map_err(|iced_err| anyhow::anyhow!("iced err:{:?}", iced_err))
+}
+
+fn is_first() -> bool {
+    let path = setting_view::app_dir().join(".env");
+    let is_first = dotenv::from_path(path).is_err();
+    if std::env::var(BACKEND).is_err() {
+        std::env::set_var(BACKEND, &Backend::default().to_string());
+    }
+    is_first
 }
 async fn setup_logger(sender: Sender<String>) -> anyhow::Result<()> {
     let dispatch = fern::Dispatch::new().format(|out, message, record| {
@@ -101,10 +93,9 @@ async fn setup_logger(sender: Sender<String>) -> anyhow::Result<()> {
         .map_err(|e| anyhow::anyhow!("set logger error :{:?}", e))?;
     Ok(())
 }
-fn font() -> &'static Arc<Vec<u8>> {
-    static INSTANCE: OnceCell<Arc<Vec<u8>>> = OnceCell::new();
+fn font() -> Option<&'static [u8]> {
     INSTANCE.get_or_init(|| {
-        if let Ok(handle) = SystemSource::new().select_best_match(
+        SystemSource::new().select_best_match(
             &[
                 FamilyName::Title("PingFang SC".to_owned()),
                 FamilyName::Title("Hiragino Sans GB".to_owned()),
@@ -119,15 +110,16 @@ fn font() -> &'static Arc<Vec<u8>> {
                 FamilyName::SansSerif,
             ],
             &Properties::new(),
-        ) {
-            if let Ok(font) = handle.load() {
-                if let Some(data) = font.copy_font_data() {
-                    return data;
-                }
-            }
-        }
-        Arc::new(Vec::new())
+        )
+        .ok()
+        .and_then(|handle| {
+            handle.load()
+            .ok()
+            .and_then(|font| font.copy_font_data())
+        })
     })
+    .as_ref()
+    .map(|f|f.as_slice())
 }
 
 #[allow(clippy::large_enum_variant)]
