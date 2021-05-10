@@ -1,15 +1,13 @@
 #!/bin/bash
-cd localnative_iced/
+cd ../localnative-rs/
 pwd
-cargo build --release
-cd ../localnative_cli/
+cargo build --bin localnative_iced --release
+cargo build --bin localnative-web-ext-host --release
+cd target/release
 pwd
-cargo build --release
-cd ..
-pwd
-mkdir localnative_bin_linux
-cp target/release/localnative_iced localnative_bin_linux/
-cp target/release/localnative-web-ext-host localnative_bin_linux/
-tar -zcvf localnative_bin_linux.tar.gz localnative_bin_linux/
-
-
+mkdir localnative_linux_bin
+cp localnative_iced localnative_linux_bin/
+cp localnative-web-ext-host localnative_linux_bin/
+cp ../../LICENSE localnative_linux_bin/
+cp ../../README.md localnative_linux_bin/
+tar -zcvf localnative_linux_bin.tar.gz localnative_linux_bin/
