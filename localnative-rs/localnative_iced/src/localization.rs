@@ -53,7 +53,7 @@ async fn init_bundles(
 ) -> anyhow::Result<&'static FluentBundle<FluentResource, IntlLangMemoizer>> {
     let ress = BUNDLES.get_or_init(|| async { FrozenMap::new() }).await;
     ress.get(&locale)
-        .ok_or(anyhow::anyhow!("ress not have this."))
+        .ok_or_else(|| anyhow::anyhow!("ress not have this."))
         .or({
             let bundle = create_bundle(locale).await?;
             Ok(ress.insert(locale, Arc::new(bundle)))
@@ -85,13 +85,13 @@ pub fn tr_with_args<'a, 'arg: 'a>(
                 bundle
                     .get_message(key)
                     .and_then(|msg| msg.value())
-                    .and_then(|p| {
+                    .map(|p| {
                         let mut errors = vec![];
                         let res = bundle.format_pattern(p, args, &mut errors);
                         for e in errors {
                             log::error!("fluent get error:{:?}", e);
                         }
-                        Some(res)
+                        res
                     })
             })
         })

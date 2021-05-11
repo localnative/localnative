@@ -128,7 +128,7 @@ where
     fn layout(&self, renderer: &Renderer, limits: &layout::Limits) -> layout::Node {
         let limits = limits.width(self.width).height(self.height);
 
-        let size = self.size.unwrap_or(renderer.default_size());
+        let size = self.size.unwrap_or_else(|| renderer.default_size());
 
         let bounds = limits.max();
 
@@ -151,7 +151,7 @@ where
             defaults,
             layout.bounds(),
             &self.state.content,
-            self.size.unwrap_or(renderer.default_size()),
+            self.size.unwrap_or_else(|| renderer.default_size()),
             self.font,
             self.color,
             self.horizontal_alignment,
