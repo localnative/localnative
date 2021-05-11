@@ -9,11 +9,14 @@ use iced::{
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    args,
+    localization::Language,
     logger::{Logger, Record},
     style::{
         symbol::{self, Symbol},
         Theme,
     },
+    tr,
 };
 
 #[derive(Debug, Clone)]
@@ -29,7 +32,7 @@ pub enum Message {
     ThemeChanged,
     OpenSlider,
     HideSlider,
-    Apply,
+    ApplySave,
     Reset,
     ClearAddrInput,
     FixHost,
@@ -151,7 +154,7 @@ pub struct BoardState {
     is_open: bool,
     limit_button: button::State,
     limit_slider: slider::State,
-    apply_button: button::State,
+    save_button: button::State,
     reset_button: button::State,
     fix_web_host_button: button::State,
     language: pick_list::State<Language>,
@@ -197,8 +200,8 @@ impl SettingView {
             })
         } else {
             qr_data = "0.0.0.0:2345".to_owned();
-            let data = "抱歉，获取本地ip失败。";
-            qr_code::State::new(&data).unwrap_or_else(|e| {
+            let data = tr!("get-ip-fail");
+            qr_code::State::new(data.to_string()).unwrap_or_else(|e| {
                 qr_code::State::new(format!("Error in qrcode generation: {:?}", e)).unwrap()
             })
         };
@@ -238,7 +241,7 @@ impl SettingView {
             Message::HideSlider => {
                 self.board_state.is_open = false;
             }
-            Message::Apply => {
+            Message::ApplySave => {
                 self.config.limit = self.board_state.limit_temp;
                 self.config.language = self.board_state.language_temp;
             }
@@ -321,20 +324,17 @@ impl SettingView {
 }
 fn sync_board_view(state: &SyncState) -> Element<Message> {
     let SyncState { qr_code, qr_data } = state;
+    let args = args!("ip"=>qr_data.clone());
     Column::new()
         .height(iced::Length::Fill)
         .width(iced::Length::FillPortion(10))
         .align_items(iced::Align::Center)
-        .push(Text::new(
-            "Click Stop Server button in main window to stop server.",
-        ))
-        .push(Text::new(format!(
-            "Use {} in Local Native desktop app for server address and port to start sync.",
-            qr_data
+        .push(Text::new(tr!("server-p0")))
+        .push(Text::new(tr!(
+            "server-p1";
+            &args
         )))
-        .push(Text::new(
-            "Use Local Native mobile app to scan this barcode to start sync.",
-        ))
+        .push(Text::new(tr!("server-p3")))
         .push(iced::QRCode::new(qr_code).cell_size(10))
         .into()
 }
@@ -366,12 +366,8 @@ fn left_bar_viwe<'a>(
     })
     .style(Symbol)
     .on_press(Message::ThemeChanged);
-    let server_state = if server_state {
-        "server opened"
-    } else {
-        "server closed"
-    };
-    let server_button = Button::new(server_button, Text::new("server")).on_press(Message::Server);
+    let server_button =
+        Button::new(server_button, Text::new(tr!("server"))).on_press(Message::Server);
     let clear_button = Button::new(
         clear_button,
         crate::style::icon::Icon::close()
@@ -388,22 +384,26 @@ fn left_bar_viwe<'a>(
     )
     .on_submit(Message::Sync);
     let addr_row = Column::new()
-        .push(Text::new("start client sync"))
+        .push(Text::new(tr!("start-sync")))
         .push(Row::new().push(addr_input).push(clear_button))
-        .push(Text::new("input format:\n [server address]:[port]"));
-    let open_file_button = Button::new(open_file_button, Text::new("sync via attach file"))
-        .on_press(Message::OpenFile);
+        .push(Text::new(tr!("input-tip")));
+    let open_file_button =
+        Button::new(open_file_button, Text::new(tr!("sync-via-file"))).on_press(Message::OpenFile);
     let setting_button = Button::new(
         setting_button,
         Row::new()
             .push(crate::style::icon::Icon::settings())
-            .push(Text::new("setting")),
+            .push(Text::new(tr!("setting"))),
     )
     .style(Symbol)
     .on_press(Message::SelectSettingBoard);
     let back_button =
-        Button::new(back_content_button, Text::new("back contents")).on_press(Message::BackContent);
-
+        Button::new(back_content_button, Text::new(tr!("back"))).on_press(Message::BackContent);
+    let server_state = if server_state {
+        tr!("server-opened")
+    } else {
+        tr!("server-closed")
+    };
     let mut content = Column::new()
         .align_items(iced::Align::Center)
         .height(iced::Length::Fill)
@@ -432,14 +432,15 @@ fn setting_board_view<'a>(
     let BoardState {
         limit_button,
         limit_slider,
-        apply_button,
+        save_button,
         language,
         backend,
         reset_button,
         fix_web_host_button,
         ..
     } = board_state;
-    let limit_text = Text::new(format!("limit: {}", board_state.limit_temp));
+    let args = args!("num"=>board_state.limit_temp);
+    let limit_text = Text::new(tr!("limit";&args));
     let setting_column = if board_state.is_open {
         let limit_ctrl = Slider::new(
             limit_slider,
@@ -458,7 +459,7 @@ fn setting_board_view<'a>(
     };
     let language = Row::new()
         .spacing(300)
-        .push(Text::new("language"))
+        .push(Text::new(tr!("language")))
         .push(PickList::new(
             language,
             &[Language::Chinese, Language::English][..],
@@ -476,7 +477,7 @@ fn setting_board_view<'a>(
     };
     let backend = Row::new()
         .spacing(300)
-        .push(Text::new("render backend"))
+        .push(Text::new(tr!("render-backend")))
         .push(PickList::new(
             backend,
             backends,
@@ -498,28 +499,28 @@ fn setting_board_view<'a>(
                         Row::new()
                             .align_items(iced::Align::Center)
                             .push(crate::style::icon::Icon::reset())
-                            .push(Text::new("reset")),
+                            .push(Text::new(tr!("reset"))),
                     )
                     .style(symbol::Symbol)
                     .on_press(Message::Reset),
                 )
                 .push(
                     Button::new(
-                        apply_button,
+                        save_button,
                         Row::new()
                             .align_items(iced::Align::Center)
                             .push(crate::style::icon::Icon::enter())
-                            .push(Text::new("apply setting")),
+                            .push(Text::new(tr!("save-setting"))),
                     )
                     .style(symbol::Symbol)
-                    .on_press(Message::Apply),
+                    .on_press(Message::ApplySave),
                 ),
         )
     } else {
         None
     };
-    let fix_button = Button::new(fix_web_host_button, Text::new("Try fix your web ext host"))
-        .on_press(Message::FixHost);
+    let fix_button =
+        Button::new(fix_web_host_button, Text::new(tr!("fix-ext-host"))).on_press(Message::FixHost);
     let res = setting_column
         .align_items(iced::Align::Center)
         .height(iced::Length::Fill)
@@ -605,25 +606,6 @@ pub fn app_dir() -> std::path::PathBuf {
     } else {
         log::error!("init app dir fial.");
         std::env::current_dir().unwrap().join("LocalNative")
-    }
-}
-
-#[derive(Copy, Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub enum Language {
-    English,
-    Chinese,
-}
-impl Default for Language {
-    fn default() -> Self {
-        Language::English
-    }
-}
-impl Display for Language {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Language::English => write!(f, "english"),
-            Language::Chinese => write!(f, "中文"),
-        }
     }
 }
 

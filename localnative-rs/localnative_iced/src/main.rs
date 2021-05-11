@@ -4,6 +4,7 @@ mod data_view;
 mod days;
 mod helper;
 mod init;
+mod localization;
 mod note;
 mod page_bar;
 mod search_bar;
@@ -13,6 +14,7 @@ mod tags;
 
 #[allow(dead_code)]
 mod logger;
+mod translate;
 #[allow(dead_code)]
 mod wrap;
 
@@ -192,6 +194,7 @@ impl Application for LocalNative {
             LocalNative::Loading { logger } => match message {
                 Message::Loaded(config) => {
                     if let Ok(mut config) = config {
+                        let locale = config.language;
                         let resource = Resource::default();
                         if !config.is_created_db {
                             cmd::create(&resource.conn);
@@ -232,7 +235,7 @@ impl Application for LocalNative {
                             }
                         };
                         *self = LocalNative::Loaded(data);
-                        Command::none()
+                        Command::perform(localization::init_bundle(locale), Message::ResultHandle)
                     } else {
                         Command::perform(Config::new(), Message::NeedCreate)
                     }
@@ -298,7 +301,7 @@ impl Application for LocalNative {
                     },
 
                     Message::SettingMessage(sm) => match sm {
-                        setting_view::Message::Apply | setting_view::Message::ThemeChanged => {
+                        setting_view::Message::ApplySave | setting_view::Message::ThemeChanged => {
                             setting_view.update(sm);
                             if setting_view.board_state.backend_org
                                 != setting_view.board_state.backend_temp
@@ -392,6 +395,13 @@ impl Application for LocalNative {
                                 }
                             }
                             Command::none()
+                        }
+                        setting_view::Message::LanguageChanged(locale) => {
+                            setting_view.update(setting_view::Message::LanguageChanged(locale));
+                            Command::perform(
+                                localization::init_bundle(locale),
+                                Message::ResultHandle,
+                            )
                         }
                         sm => {
                             setting_view.update(sm);
@@ -629,9 +639,9 @@ impl Data {
                                 if notes.is_empty() {
                                     scrollable = scrollable.push({
                                         let text = if search_text_is_empty {
-                                            "您还没有任何一个note，您可以通过浏览器扩展添加note。"
+                                            tr!("nothing")
                                         } else {
-                                            "抱歉，没找到您想要的结果..."
+                                            tr!("not-found")
                                         };
                                         Container::new(Text::new(text).size(50))
                                     });
@@ -659,8 +669,6 @@ impl Data {
                                         .push(notes_cloumn)
                                 }
                             })
-                            .center_x()
-                            .center_y()
                             .height(iced::Length::Fill)
                         })
                         .push(
@@ -687,7 +695,7 @@ impl Data {
                                     line_height: 30,
                                     ..Default::default()
                                 }
-                                .push(Text::new("tags:")),
+                                .push(Text::new(tr!("tags"))),
                                 |wrap, tag| {
                                     wrap.push(tag.view().map(|tm| match tm {
                                         tags::Message::Search(text) => Message::Search(text),

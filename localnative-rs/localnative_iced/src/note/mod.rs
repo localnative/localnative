@@ -7,7 +7,7 @@ use iced::{
 
 use iced::Element;
 
-use crate::style::icon::Icon;
+use crate::{style::icon::Icon, tr};
 use editable::Editables;
 use tag::{focused_input, Tag};
 #[derive(Debug, Clone)]
@@ -203,7 +203,7 @@ impl NoteView {
                         cancel: button::State::new(),
                         add_editable: pick_list::State::default(),
                         add_tag: tag::Tag::new(
-                            "Add new tag",
+                            &tr!("add-new-tag"),
                             tag::State::Edit {
                                 temp: String::new(),
                                 edit: button::State::new(),
