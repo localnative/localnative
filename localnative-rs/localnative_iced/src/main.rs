@@ -14,7 +14,7 @@ mod tags;
 
 #[allow(dead_code)]
 mod logger;
-pub mod translate;
+mod translate;
 #[allow(dead_code)]
 mod wrap;
 
