@@ -19,12 +19,13 @@ pub struct MiddleData {
 }
 
 impl MiddleData {
-    pub fn encode(self, data_view: &mut DataView, page_info: &mut PageBar) {
+    pub fn encode(mut self, data_view: &mut DataView, page_info: &mut PageBar) {
         let notes: Vec<NoteView> = self
             .notes
             .into_iter()
             .map(move |note| note.into())
             .collect();
+        self.tags.sort_by(|a, b| b.count.cmp(&a.count));
         let tags: Vec<TagView> = self
             .tags
             .into_iter()
