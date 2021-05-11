@@ -538,7 +538,7 @@ impl Application for LocalNative {
     fn view(&mut self) -> iced::Element<'_, Self::Message> {
         match self {
             LocalNative::Loading { .. } => Container::new(
-                Text::new(tr!("loading"))
+                Text::new("Loading...")
                     .horizontal_alignment(iced::HorizontalAlignment::Center)
                     .size(50),
             )

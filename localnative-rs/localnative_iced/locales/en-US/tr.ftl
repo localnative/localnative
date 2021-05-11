@@ -1,7 +1,6 @@
 tags = tags
 not-found = Sorry, the result you want was not found...
 nothing = You don’t have any notes yet, you can add notes through the browser extension.
-loading = Loading...
 add-title-info = Type to add title.
 add-url-info = Type to add url.
 add-desp-info = Type to add desription.

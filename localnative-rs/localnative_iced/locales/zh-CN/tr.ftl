@@ -1,7 +1,6 @@
 tags = 标签
 not-found = 对不起，没有您想要的结果。
 nothing = 您还没有任何note，您可以通过浏览器扩展添加note。
-loading = 加载中...
 add-title-info = 点击添加标题。
 add-url-info = 点击添加网址。
 add-desp-info = 点击添加描述。
