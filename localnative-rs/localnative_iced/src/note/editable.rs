@@ -1,4 +1,4 @@
-use crate::style::icon::Icon;
+use crate::{style::icon::Icon, tr};
 use iced::{button, text_input, Button, Column, Element, Row, Text, TextInput};
 use std::fmt::Display;
 
@@ -23,11 +23,11 @@ pub enum Editable {
 impl Display for Editable {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Editable::Title => f.write_str("add title"),
-            Editable::Url => f.write_str("add url"),
-            Editable::Description => f.write_str("add description"),
-            Editable::Comments => f.write_str("add comments"),
-            Editable::Menu => f.write_str("Add more things"),
+            Editable::Title => f.write_str(&tr!("add-title")),
+            Editable::Url => f.write_str(&tr!("add-url")),
+            Editable::Description => f.write_str(&tr!("add-desp")),
+            Editable::Comments => f.write_str(&tr!("add-comments")),
+            Editable::Menu => f.write_str(&tr!("add-more")),
         }
     }
 }
@@ -128,7 +128,7 @@ impl Edit {
             ,
         }
     }
-    pub fn view(&mut self, text: &str, kind: Editable) -> Element<EditMessage> {
+    pub fn view(&mut self, text: &str, info_text: &str) -> Element<EditMessage> {
         match self {
             Edit::Empty => unreachable!(),
             Edit::Nonempty {
@@ -164,13 +164,7 @@ impl Edit {
                         text_bar,
                         {
                             if text.is_empty() {
-                                match kind {
-                                    Editable::Title => "Type to add title",
-                                    Editable::Url => "Type to add url",
-                                    Editable::Description => "Type to add description",
-                                    Editable::Comments => "Type to add comments",
-                                    Editable::Menu => unreachable!(),
-                                }
+                                info_text
                             } else {
                                 text
                             }
@@ -432,28 +426,28 @@ impl Editables {
                 column = match title_edit {
                     Edit::Empty => column,
                     edit => column.push(
-                        edit.view(title.as_str(), Editable::Title)
+                        edit.view(title.as_str(), &tr!("add-title-info"))
                             .map(|m| Message::Edit(Editable::Title, m)),
                     ),
                 };
                 column = match url_edit {
                     Edit::Empty => column,
                     edit => column.push(
-                        edit.view(url.as_str(), Editable::Url)
+                        edit.view(url.as_str(), &tr!("add-url-info"))
                             .map(|m| Message::Edit(Editable::Url, m)),
                     ),
                 };
                 column = match description_edit {
                     Edit::Empty => column,
                     edit => column.push(
-                        edit.view(description.as_str(), Editable::Description)
+                        edit.view(description.as_str(), &tr!("add-desp-info"))
                             .map(|m| Message::Edit(Editable::Description, m)),
                     ),
                 };
                 column = match comments_edit {
                     Edit::Empty => column,
                     edit => column.push(
-                        edit.view(comments.as_str(), Editable::Comments)
+                        edit.view(comments.as_str(), &tr!("add-comments-info"))
                             .map(|m| Message::Edit(Editable::Comments, m)),
                     ),
                 };

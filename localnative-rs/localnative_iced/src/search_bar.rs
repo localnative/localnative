@@ -1,6 +1,6 @@
 use iced::{button, text_input, Button, Element, Row, TextInput};
 
-use crate::style;
+use crate::{style, tr};
 
 #[derive(Debug, Default)]
 pub struct SearchBar {
@@ -31,7 +31,7 @@ impl SearchBar {
         } = &mut self.state;
         let input = TextInput::new(
             input,
-            "Type your search...",
+            &tr!("search"),
             self.search_text.as_str(),
             Message::Search,
         )
