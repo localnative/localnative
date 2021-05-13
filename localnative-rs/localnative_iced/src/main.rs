@@ -18,7 +18,7 @@ mod translate;
 #[allow(dead_code)]
 mod wrap;
 
-use iced::{futures::lock::Mutex, window};
+use iced::{futures::lock::Mutex, window, Rule};
 use iced::{scrollable, Application, Column, Command, Container, Element, Row, Settings, Text};
 
 use data_view::{DataView, MiddleData};
@@ -35,6 +35,7 @@ use std::{
     path::PathBuf,
     sync::{mpsc::Sender, Arc},
 };
+use style::symbol::Symbol;
 use tags::TagView;
 use wrap::Wrap;
 
@@ -357,6 +358,7 @@ impl Application for LocalNative {
                                     None => Command::none(),
                                 }
                             }
+                            _ => unreachable!(),
                         },
                         setting_view::Message::SelectSettingBoard => {
                             match state {
@@ -366,6 +368,7 @@ impl Application for LocalNative {
                                 State::Settings => {
                                     *state = State::Contents;
                                 }
+                                _ => unreachable!(),
                             }
                             Command::none()
                         }
@@ -403,6 +406,7 @@ impl Application for LocalNative {
                                 State::Sync | State::Settings => {
                                     *state = State::Contents;
                                 }
+                                _ => unreachable!(),
                             }
                             Command::none()
                         }
@@ -552,6 +556,9 @@ impl Application for LocalNative {
                                 log::error!("encode fail:{:?}", e);
                             }
                         }
+                        if let State::Init = state {
+                            *state = State::Contents;
+                        }
                         Command::none()
                     }
                     Message::EncodeAndReset(res) => {
@@ -572,19 +579,39 @@ impl Application for LocalNative {
     }
     fn view(&mut self) -> iced::Element<'_, Self::Message> {
         match self {
-            LocalNative::Loading { .. } => Container::new(
-                Text::new("Loading...")
-                    .horizontal_alignment(iced::HorizontalAlignment::Center)
-                    .size(50),
-            )
-            .width(iced::Length::Fill)
-            .height(iced::Length::Fill)
-            .center_y()
-            .into(),
+            LocalNative::Loading { .. } => Column::new()
+                .push(Rule::vertical(10).style(Symbol))
+                .push(
+                    Row::new()
+                        .push(Rule::horizontal(10).style(Symbol))
+                        .push(Text::new("Loading...").size(50))
+                        .push(Rule::horizontal(10).style(Symbol)),
+                )
+                .push(Rule::vertical(10).style(Symbol))
+                .into(),
             LocalNative::Loaded(data) => match data.state {
                 State::Contents => data.contents_view(),
                 State::Settings => data.setting_view(),
                 State::Sync => data.sync_view(),
+                State::Init => {
+                    let text = match data.setting_view.config.language {
+                        localization::Language::English => {
+                            Text::new("Initializing, please wait. . .")
+                        }
+                        localization::Language::Chinese => Text::new("正在初始化，请稍后..."),
+                    }
+                    .size(50);
+                    Column::new()
+                        .push(Rule::vertical(10).style(Symbol))
+                        .push(
+                            Row::new()
+                                .push(Rule::horizontal(10).style(Symbol))
+                                .push(text)
+                                .push(Rule::horizontal(10).style(Symbol)),
+                        )
+                        .push(Rule::vertical(10).style(Symbol))
+                        .into()
+                }
             },
         }
     }
@@ -604,6 +631,7 @@ pub struct Data {
 
 #[derive(Debug)]
 pub enum State {
+    Init,
     Contents,
     Settings,
     Sync,
@@ -611,7 +639,7 @@ pub enum State {
 
 impl Default for State {
     fn default() -> Self {
-        Self::Contents
+        Self::Init
     }
 }
 
