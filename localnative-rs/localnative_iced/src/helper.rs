@@ -6,6 +6,8 @@ use std::{
 use localnative_core::rpc::server::Stop;
 use native_dialog::FileDialog;
 
+use crate::tr;
+
 // use iced::{button, text_input, tooltip, Element, PickList, Row, Text, TextInput};
 
 // pub fn tip_button<E,M,'a>(state:&'a mut button::State,content:E,msg:M,button_style:impl Into<Renderer::Style>,tip:String) -> Element<'a,M>
@@ -71,7 +73,7 @@ pub async fn get_sync_file_path() -> anyhow::Result<PathBuf> {
     let file = tokio::task::spawn_blocking(|| {
         FileDialog::new()
             .set_location(&crate::setting_view::app_dir())
-            .add_filter("need sync file", &["sqlite3"])
+            .add_filter(&tr!("sync-file"), &["sqlite3"])
             .show_open_single_file()
     })
     .await??;
