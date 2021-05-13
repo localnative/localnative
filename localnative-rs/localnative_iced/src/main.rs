@@ -18,14 +18,15 @@ mod translate;
 #[allow(dead_code)]
 mod wrap;
 
-use iced::window;
+use iced::{futures::lock::Mutex, window};
 use iced::{scrollable, Application, Column, Command, Container, Element, Row, Settings, Text};
 
 use data_view::{DataView, MiddleData};
 use font_kit::family_name::FamilyName;
 use font_kit::properties::Properties;
 use font_kit::source::SystemSource;
-use localnative_core::{cmd, exe::get_sqlite_connection, rpc::server::Stop, rusqlite::Connection};
+use localnative_core::{exe::get_sqlite_connection, rpc::server::Stop, rusqlite::Connection};
+use note::NoteView;
 use once_cell::sync::OnceCell;
 use page_bar::PageBar;
 use search_bar::SearchBar;
@@ -34,6 +35,7 @@ use std::{
     path::PathBuf,
     sync::{mpsc::Sender, Arc},
 };
+use tags::TagView;
 use wrap::Wrap;
 
 pub const BACKEND: &str = "WGPU_BACKEND";
@@ -149,6 +151,8 @@ pub enum Message {
     Search(String),
     BackendRes(anyhow::Result<Backend>),
     Empty(()),
+    Encode(anyhow::Result<(Vec<NoteView>, Vec<TagView>, u32)>),
+    EncodeAndReset(anyhow::Result<(Vec<NoteView>, Vec<TagView>, u32)>),
 }
 impl Application for LocalNative {
     type Executor = iced::executor::Default;
@@ -196,23 +200,19 @@ impl Application for LocalNative {
                     if let Ok(mut config) = config {
                         let locale = config.language;
                         let resource = Resource::default();
+                        let is_created_db = config.is_created_db;
                         if !config.is_created_db {
-                            cmd::create(&resource.conn);
                             config.is_created_db = true;
                         }
                         let setting_view = SettingView::init(config, helper::get_ip());
-                        MiddleData::upgrade(&resource.conn);
+                        // MiddleData::upgrade(&resource.conn);
                         let search_bar = SearchBar::default();
-                        let mut page_bar = PageBar::default();
-
-                        let middle_data = MiddleData::from_select(
-                            &resource.conn,
-                            search_bar.search_text.as_str(),
-                            &setting_view.config.limit,
-                            &page_bar.offset,
-                        );
-                        let mut data_view = DataView::default();
-                        middle_data.encode(&mut data_view, &mut page_bar);
+                        let page_bar = PageBar::default();
+                        let data_view = DataView::default();
+                        let limit = setting_view.config.limit;
+                        let offset = page_bar.offset;
+                        let query = search_bar.search_text.clone();
+                        let conn = resource.conn.clone();
                         let data = if logger.is_some() {
                             let logger = logger.take().unwrap();
                             Data {
@@ -235,7 +235,16 @@ impl Application for LocalNative {
                             }
                         };
                         *self = LocalNative::Loaded(data);
-                        Command::perform(localization::init_bundle(locale), Message::ResultHandle)
+                        Command::batch(vec![
+                            Command::perform(
+                                localization::init_bundle(locale),
+                                Message::ResultHandle,
+                            ),
+                            Command::perform(
+                                MiddleData::upgrade(conn, query, limit, offset, is_created_db),
+                                Message::Encode,
+                            ),
+                        ])
                     } else {
                         Command::perform(Config::new(), Message::NeedCreate)
                     }
@@ -269,14 +278,15 @@ impl Application for LocalNative {
                         if let Ok(config) = config {
                             setting_view.config = config;
 
-                            let middle_data = MiddleData::from_select(
-                                &resource.conn,
-                                search_bar.search_text.as_str(),
-                                &setting_view.config.limit,
-                                &page_bar.offset,
-                            );
-                            middle_data.encode(data_view, page_bar);
-                            Command::none()
+                            Command::perform(
+                                MiddleData::from_select(
+                                    resource.conn.clone(),
+                                    search_bar.search_text.clone(),
+                                    setting_view.config.limit,
+                                    page_bar.offset,
+                                ),
+                                Message::Encode,
+                            )
                         } else {
                             Command::perform(Config::new(), Message::NeedCreate)
                         }
@@ -288,15 +298,15 @@ impl Application for LocalNative {
                         }
                         search_bar::Message::Clear => {
                             search_bar.update(sm);
-                            let middle_data = MiddleData::from_select(
-                                &resource.conn,
-                                search_bar.search_text.as_str(),
-                                &setting_view.config.limit,
-                                &page_bar.offset,
-                            );
-                            middle_data.encode(data_view, page_bar);
-                            data_view.reset();
-                            Command::none()
+                            Command::perform(
+                                MiddleData::from_select(
+                                    resource.conn.clone(),
+                                    search_bar.search_text.clone(),
+                                    setting_view.config.limit,
+                                    page_bar.offset,
+                                ),
+                                Message::EncodeAndReset,
+                            )
                         }
                     },
 
@@ -411,31 +421,30 @@ impl Application for LocalNative {
                     Message::Search(text) => {
                         search_bar.search_text = text;
                         page_bar.offset = 0;
-                        let middle_data = MiddleData::from_select(
-                            &resource.conn,
-                            search_bar.search_text.as_str(),
-                            &setting_view.config.limit,
-                            &page_bar.offset,
-                        );
-                        middle_data.encode(data_view, page_bar);
-                        data_view.reset();
-                        Command::none()
+                        Command::perform(
+                            MiddleData::from_select(
+                                resource.conn.clone(),
+                                search_bar.search_text.clone(),
+                                setting_view.config.limit,
+                                page_bar.offset,
+                            ),
+                            Message::EncodeAndReset,
+                        )
                     }
 
                     Message::NoteMessage(idx, nm) => {
                         if let Some(note) = data_view.notes.get_mut(idx) {
                             match nm {
-                                note::Message::Delete => {
-                                    cmd::delete(&resource.conn, note.rowid);
-                                    let middle_data = MiddleData::from_select(
-                                        &resource.conn,
-                                        search_bar.search_text.as_str(),
-                                        &setting_view.config.limit,
-                                        &page_bar.offset,
-                                    );
-                                    middle_data.encode(data_view, page_bar);
-                                    Command::none()
-                                }
+                                note::Message::Delete => Command::perform(
+                                    MiddleData::delete(
+                                        resource.conn.clone(),
+                                        search_bar.search_text.clone(),
+                                        setting_view.config.limit,
+                                        page_bar.offset,
+                                        note.rowid,
+                                    ),
+                                    Message::Encode,
+                                ),
                                 note::Message::Enter => {
                                     let old_note = note.old_note();
                                     log::debug!("old note:{:?}", &old_note);
@@ -444,18 +453,21 @@ impl Application for LocalNative {
                                     let mut new_note = note::Note::from(&*note);
                                     log::debug!("new note:{:?}", &new_note);
                                     if new_note != old_note {
-                                        cmd::delete(&resource.conn, rowid);
                                         new_note.uuid4 = uuid::Uuid::new_v4().to_string();
-                                        cmd::insert(new_note);
+                                        Command::perform(
+                                            MiddleData::insert(
+                                                resource.conn.clone(),
+                                                search_bar.search_text.clone(),
+                                                setting_view.config.limit,
+                                                page_bar.offset,
+                                                rowid,
+                                                new_note,
+                                            ),
+                                            Message::Encode,
+                                        )
+                                    } else {
+                                        Command::none()
                                     }
-                                    let middle_data = MiddleData::from_select(
-                                        &resource.conn,
-                                        search_bar.search_text.as_str(),
-                                        &setting_view.config.limit,
-                                        &page_bar.offset,
-                                    );
-                                    middle_data.encode(data_view, page_bar);
-                                    Command::none()
                                 }
                                 nm => {
                                     note.update(nm);
@@ -470,17 +482,15 @@ impl Application for LocalNative {
                     Message::PageBar(pm) => {
                         let cm = page_bar.update(pm, (&*setting_view).limit());
                         match cm {
-                            Message::NeedUpdate => {
-                                let middle_data = MiddleData::from_select(
-                                    &resource.conn,
-                                    search_bar.search_text.as_str(),
-                                    &setting_view.config.limit,
-                                    &page_bar.offset,
-                                );
-                                middle_data.encode(data_view, page_bar);
-                                data_view.reset();
-                                Command::none()
-                            }
+                            Message::NeedUpdate => Command::perform(
+                                MiddleData::from_select(
+                                    resource.conn.clone(),
+                                    search_bar.search_text.clone(),
+                                    setting_view.config.limit,
+                                    page_bar.offset,
+                                ),
+                                Message::EncodeAndReset,
+                            ),
                             _ => Command::none(),
                         }
                     }
@@ -488,17 +498,19 @@ impl Application for LocalNative {
                     Message::ResultHandle(res) => {
                         if let Err(e) = res {
                             log::error!("fail: {:?}", e);
+                            Command::none()
                         } else {
-                            let middle_data = MiddleData::from_select(
-                                &resource.conn,
-                                search_bar.search_text.as_str(),
-                                &setting_view.config.limit,
-                                &page_bar.offset,
-                            );
-                            middle_data.encode(data_view, page_bar);
                             log::debug!("success!");
+                            Command::perform(
+                                MiddleData::from_select(
+                                    resource.conn.clone(),
+                                    search_bar.search_text.clone(),
+                                    setting_view.config.limit,
+                                    page_bar.offset,
+                                ),
+                                Message::Encode,
+                            )
                         }
-                        Command::none()
                     }
                     Message::NeedCreate(_) => Command::none(),
                     Message::UnknowError => Command::none(),
@@ -527,6 +539,29 @@ impl Application for LocalNative {
                             }
                             Err(e) => {
                                 log::error!("server open error:{:?}", e);
+                            }
+                        }
+                        Command::none()
+                    }
+                    Message::Encode(res) => {
+                        match res {
+                            Ok(mdata) => {
+                                data_view::encode(data_view, page_bar, mdata);
+                            }
+                            Err(e) => {
+                                log::error!("encode fail:{:?}", e);
+                            }
+                        }
+                        Command::none()
+                    }
+                    Message::EncodeAndReset(res) => {
+                        match res {
+                            Ok(mdata) => {
+                                data_view::encode(data_view, page_bar, mdata);
+                                data_view.reset();
+                            }
+                            Err(e) => {
+                                log::error!("encode fail:{:?}", e);
                             }
                         }
                         Command::none()
@@ -714,12 +749,12 @@ impl Data {
 
 #[derive(Debug)]
 pub struct Resource {
-    conn: Connection,
+    conn: Arc<Mutex<Connection>>,
 }
 impl Default for Resource {
     fn default() -> Self {
         Self {
-            conn: get_sqlite_connection(),
+            conn: Arc::new(Mutex::new(get_sqlite_connection())),
         }
     }
 }
