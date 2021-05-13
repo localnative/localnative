@@ -21,11 +21,12 @@ mod wrap;
 use iced::{
     futures::lock::Mutex,
     window::{self, Icon},
-    Rule,
+    Rule, Subscription,
 };
 use iced::{scrollable, Application, Column, Command, Container, Element, Row, Settings, Text};
 
 use data_view::{DataView, MiddleData};
+use iced_native::Event;
 use localnative_core::{exe::get_sqlite_connection, rpc::server::Stop, rusqlite::Connection};
 use note::NoteView;
 use once_cell::sync::OnceCell;
@@ -147,9 +148,10 @@ pub enum Message {
     Ignore,
     Search(String),
     BackendRes(anyhow::Result<Backend>),
-    Empty(()),
     Encode(anyhow::Result<(Vec<NoteView>, Vec<TagView>, u32)>),
     EncodeAndReset(anyhow::Result<(Vec<NoteView>, Vec<TagView>, u32)>),
+    Events(iced_native::Event),
+    Empty(()),
 }
 impl Application for LocalNative {
     type Executor = iced::executor::Default;
@@ -257,6 +259,7 @@ impl Application for LocalNative {
                     }
                     Command::none()
                 }
+                Message::Events(_) => Command::none(),
                 _ => unreachable!(),
             },
             LocalNative::Loaded(data) => {
@@ -569,6 +572,14 @@ impl Application for LocalNative {
                         }
                         Command::none()
                     }
+                    Message::Events(event) => {
+                        if let Event::Window(iced_native::window::Event::FileDropped(path)) = event
+                        {
+                            Command::perform(helper::sync_via_file(Ok(path)), Message::ResultHandle)
+                        } else {
+                            Command::none()
+                        }
+                    }
                 }
             }
         }
@@ -610,6 +621,9 @@ impl Application for LocalNative {
                 }
             },
         }
+    }
+    fn subscription(&self) -> Subscription<Self::Message> {
+        iced_native::subscription::events().map(Message::Events)
     }
 }
 
