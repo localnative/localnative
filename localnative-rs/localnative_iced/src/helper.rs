@@ -66,17 +66,13 @@ pub async fn client_sync_to_server(addr: SocketAddr) -> anyhow::Result<()> {
     Ok(())
 }
 pub async fn get_sync_file_path() -> anyhow::Result<PathBuf> {
-    // let file_path =
-    // let file = tokio::task::block_in_place(|| FileDialog::new()
-    // .add_filter("need sync file", &["sqlite3"])
-    // .show_open_single_file());
-    let file = tokio::task::spawn_blocking(|| {
-        FileDialog::new()
-            .set_location(&crate::setting_view::app_dir())
-            .add_filter(&tr!("sync-file"), &["sqlite3"])
-            .show_open_single_file()
-    })
-    .await??;
+    sync_get_sync_file_path()
+}
+pub fn sync_get_sync_file_path() -> anyhow::Result<PathBuf> {
+    let file = FileDialog::new()
+        .set_location(&crate::setting_view::app_dir())
+        .add_filter(&tr!("sync-file"), &["sqlite3"])
+        .show_open_single_file()?;
     match file {
         Some(path) => Ok(path),
         None => Err(anyhow::anyhow!("get file path fial.")),

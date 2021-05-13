@@ -17,9 +17,10 @@ impl AppHost {
         let mut name = String::from("localnative-web-ext-host");
         // TODO: add version
         // name += "-0.4.2";
-        if cfg!(target_os = "windows") {
+        #[cfg(target_os = "windows")]
+        {
             name += ".exe";
-        };
+        }
         let mut path = std::env::current_dir()?;
         path = path.join(name);
         let mut res = path
