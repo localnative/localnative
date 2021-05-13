@@ -1900,7 +1900,6 @@ dependencies = [
  "elsa",
  "fern",
  "fluent-bundle",
- "font-kit",
  "iced",
  "iced_graphics",
  "iced_native",

@@ -18,13 +18,14 @@ mod translate;
 #[allow(dead_code)]
 mod wrap;
 
-use iced::{futures::lock::Mutex, window, Rule};
+use iced::{
+    futures::lock::Mutex,
+    window::{self, Icon},
+    Rule,
+};
 use iced::{scrollable, Application, Column, Command, Container, Element, Row, Settings, Text};
 
 use data_view::{DataView, MiddleData};
-use font_kit::family_name::FamilyName;
-use font_kit::properties::Properties;
-use font_kit::source::SystemSource;
 use localnative_core::{exe::get_sqlite_connection, rpc::server::Stop, rusqlite::Connection};
 use note::NoteView;
 use once_cell::sync::OnceCell;
@@ -40,27 +41,25 @@ use tags::TagView;
 use wrap::Wrap;
 
 pub const BACKEND: &str = "WGPU_BACKEND";
-static INSTANCE: OnceCell<Option<Arc<Vec<u8>>>> = OnceCell::new();
-
-fn main() -> anyhow::Result<()> {
-    let logo = style::icon::Icon::logo()
-        .ok()
-        .and_then(|logo| window::Icon::from_rgba(logo, 64, 64).ok());
-
+static FONT: OnceCell<Option<Vec<u8>>> = OnceCell::new();
+fn main() -> iced::Result {
     LocalNative::run(Settings {
         flags: is_first(),
-        antialiasing: true,
+        antialiasing: false,
         default_font: font(),
         window: window::Settings {
-            icon: logo,
+            icon: logo(),
             size: (1080, 720),
             ..Default::default()
         },
         ..Default::default()
     })
-    .map_err(|iced_err| anyhow::anyhow!("iced err:{:?}", iced_err))
 }
-
+fn logo() -> Option<Icon> {
+    style::icon::Icon::logo()
+        .ok()
+        .and_then(|logo| window::Icon::from_rgba(logo, 64, 64).ok())
+}
 fn is_first() -> bool {
     let path = setting_view::app_dir().join(".env");
     let is_first = dotenv::from_path(path).is_err();
@@ -100,30 +99,27 @@ async fn setup_logger(sender: Sender<String>) -> anyhow::Result<()> {
     Ok(())
 }
 fn font() -> Option<&'static [u8]> {
-    INSTANCE
-        .get_or_init(|| {
-            SystemSource::new()
-                .select_best_match(
-                    &[
-                        FamilyName::Title("PingFang SC".to_owned()),
-                        FamilyName::Title("Hiragino Sans GB".to_owned()),
-                        FamilyName::Title("Heiti SC".to_owned()),
-                        FamilyName::Title("Microsoft YaHei".to_owned()),
-                        FamilyName::Title("WenQuanYi Micro Hei".to_owned()),
-                        FamilyName::Title("Microsoft YaHei".to_owned()),
-                        // TODO:目前不能英文字体优先使用，需要iced支持
-                        FamilyName::Title("Helvetica".to_owned()),
-                        FamilyName::Title("Tahoma".to_owned()),
-                        FamilyName::Title("Arial".to_owned()),
-                        FamilyName::SansSerif,
-                    ],
-                    &Properties::new(),
-                )
-                .ok()
-                .and_then(|handle| handle.load().ok().and_then(|font| font.copy_font_data()))
-        })
-        .as_ref()
-        .map(|f| f.as_slice())
+    FONT.get_or_init(|| {
+        use iced_graphics::font::Family;
+        let source = iced_graphics::font::Source::new();
+        source
+            .load(&[
+                Family::Title("PingFang SC".to_owned()),
+                Family::Title("Hiragino Sans GB".to_owned()),
+                Family::Title("Heiti SC".to_owned()),
+                Family::Title("Microsoft YaHei".to_owned()),
+                Family::Title("WenQuanYi Micro Hei".to_owned()),
+                Family::Title("Microsoft YaHei".to_owned()),
+                // TODO:iced 目前没有字体fallback，所以我们只能尽可能选择中英文支持的字体
+                Family::Title("Helvetica".to_owned()),
+                Family::Title("Tahoma".to_owned()),
+                Family::Title("Arial".to_owned()),
+                Family::SansSerif,
+            ])
+            .ok()
+    })
+    .as_ref()
+    .map(|f| f.as_slice())
 }
 
 #[allow(clippy::large_enum_variant)]
