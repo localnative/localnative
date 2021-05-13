@@ -120,7 +120,7 @@ impl Language {
     }
     pub fn path(&self) -> String {
         let locale = self.locale().to_string();
-        format!("{}/locales/{}/tr.ftl", env!("CARGO_MANIFEST_DIR"), locale)
+        format!("./locales/{}/tr.ftl", locale)
     }
 }
 impl Default for Language {
