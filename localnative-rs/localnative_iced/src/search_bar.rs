@@ -37,13 +37,13 @@ impl SearchBar {
         )
         .on_submit(Message::Search(self.search_text.clone()))
         .size(35);
-        let clear = Button::new(clear_button, style::icon::Icon::close())
+        let clear = Button::new(clear_button, style::icon::Icon::close(38))
             .on_press(Message::Clear)
             .style(style::symbol::Symbol);
         iced::Container::new(
             Row::new()
                 .padding(10)
-                .push(style::icon::Icon::search())
+                .push(style::icon::Icon::search().size(38))
                 .push(input)
                 .push(clear),
         )

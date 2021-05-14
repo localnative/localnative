@@ -21,7 +21,7 @@ mod wrap;
 use iced::{
     futures::lock::Mutex,
     window::{self, Icon},
-    Rule, Subscription,
+    Font, Rule, Subscription,
 };
 use iced::{scrollable, Application, Column, Command, Container, Element, Row, Settings, Text};
 
@@ -43,6 +43,10 @@ use wrap::Wrap;
 
 pub const BACKEND: &str = "WGPU_BACKEND";
 static FONT: OnceCell<Option<Vec<u8>>> = OnceCell::new();
+pub const ICONS: Font = Font::External {
+    name: "Icons",
+    bytes: include_bytes!("../fonts/icons.ttf"),
+};
 fn main() -> iced::Result {
     LocalNative::run(Settings {
         flags: is_first(),

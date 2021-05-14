@@ -35,4 +35,19 @@ winreg = "0.8"
 
 [dependencies.iced]
 git = "https://github.com/hecrj/iced.git"
-features = ["default","tokio","qr_code","svg"]
+
+[features]
+default = ["wgpu"]
+wgpu = [
+    "iced/default",
+    "iced/tokio",
+    "iced/qr_code",
+    "iced/canvas"
+    ]
+open_gl = [
+    "iced/glow",
+    "iced/tokio",
+    "iced/glow_qr_code",
+    "iced/glow_canvas",
+    "iced/glow_default_system_font"
+    ]

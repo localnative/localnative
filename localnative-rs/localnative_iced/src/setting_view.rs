@@ -368,14 +368,9 @@ fn left_bar_viwe<'a>(
     .on_press(Message::ThemeChanged);
     let server_button =
         Button::new(server_button, Text::new(tr!("server"))).on_press(Message::Server);
-    let clear_button = Button::new(
-        clear_button,
-        crate::style::icon::Icon::close()
-            .width(iced::Length::Units(18))
-            .height(iced::Length::Units(18)),
-    )
-    .style(symbol::Symbol)
-    .on_press(Message::ClearAddrInput);
+    let clear_button = Button::new(clear_button, crate::style::icon::Icon::close(18))
+        .style(symbol::Symbol)
+        .on_press(Message::ClearAddrInput);
     let addr_input = TextInput::new(
         addr_input,
         "xxx.xxx.xxx.xxx:2345",

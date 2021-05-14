@@ -1,17 +1,23 @@
-use iced::Svg;
+use iced::{HorizontalAlignment, Text, VerticalAlignment};
+
+use crate::ICONS;
+
 pub struct Icon;
 
 const ICON_SIZE: u16 = 25;
+fn icon(unicode: char) -> Text {
+    Text::new(&unicode.to_string())
+        .font(ICONS)
+        .horizontal_alignment(HorizontalAlignment::Center)
+        .vertical_alignment(VerticalAlignment::Top)
+        .size(ICON_SIZE)
+}
 impl Icon {
-    pub fn dark() -> Svg {
-        Svg::from_path("./icons/dark.svg")
-            .width(iced::Length::Units(ICON_SIZE))
-            .height(iced::Length::Units(ICON_SIZE))
+    pub fn dark() -> Text {
+        icon('\u{E90E}')
     }
-    pub fn light() -> Svg {
-        Svg::from_path("./icons/light.svg")
-            .width(iced::Length::Units(ICON_SIZE))
-            .height(iced::Length::Units(ICON_SIZE))
+    pub fn light() -> Text {
+        icon('\u{E909}')
     }
     pub fn logo() -> anyhow::Result<Vec<u8>> {
         let ico_buffer = include_bytes!("../../../icons/icon.ico");
@@ -20,74 +26,46 @@ impl Icon {
             .as_raw()
             .clone())
     }
-    pub fn qr_code() -> Svg {
-        Svg::from_path("./icons/qr-code.svg")
-            .width(iced::Length::Units(ICON_SIZE))
-            .height(iced::Length::Units(ICON_SIZE))
+    pub fn qr_code() -> Text {
+        icon('\u{E905}')
     }
-    pub fn delete_bin() -> Svg {
-        Svg::from_path("./icons/delete-bin.svg")
-            .width(iced::Length::Units(ICON_SIZE))
-            .height(iced::Length::Units(ICON_SIZE))
+    pub fn delete_bin() -> Text {
+        icon('\u{E90C}')
     }
-    pub fn delete_back() -> Svg {
-        Svg::from_path("./icons/delete-back.svg")
-            .width(iced::Length::Units(ICON_SIZE))
-            .height(iced::Length::Units(ICON_SIZE))
+    pub fn delete_back() -> Text {
+        icon('\u{E90D}')
     }
-    pub fn close() -> Svg {
-        Svg::from_path("./icons/close.svg")
-            .width(iced::Length::Units(ICON_SIZE))
-            .height(iced::Length::Units(ICON_SIZE))
+    pub fn close(size: u16) -> Text {
+        icon('\u{E90F}').size(size)
     }
-    pub fn list_settings() -> Svg {
-        Svg::from_path("./icons/list-settings.svg")
-            .width(iced::Length::Units(ICON_SIZE))
-            .height(iced::Length::Units(ICON_SIZE))
+    pub fn list_settings() -> Text {
+        icon('\u{E908}')
     }
-    pub fn settings() -> Svg {
-        Svg::from_path("./icons/settings.svg")
-            .width(iced::Length::Units(ICON_SIZE))
-            .height(iced::Length::Units(ICON_SIZE))
+    pub fn settings() -> Text {
+        icon('\u{E901}')
     }
-    pub fn maxmize() -> Svg {
-        Svg::from_path("./icons/maxmize.svg")
-            .width(iced::Length::Units(ICON_SIZE))
-            .height(iced::Length::Units(ICON_SIZE))
+    pub fn maxmize() -> Text {
+        icon('\u{E907}')
     }
-    pub fn minmize() -> Svg {
-        Svg::from_path("./icons/minmize.svg")
-            .width(iced::Length::Units(ICON_SIZE))
-            .height(iced::Length::Units(ICON_SIZE))
+    pub fn minmize() -> Text {
+        icon('\u{E906}')
     }
-    pub fn reset() -> Svg {
-        Svg::from_path("./icons/reset.svg")
-            .width(iced::Length::Units(ICON_SIZE))
-            .height(iced::Length::Units(ICON_SIZE))
+    pub fn reset() -> Text {
+        icon('\u{E903}')
     }
-    pub fn refresh() -> Svg {
-        Svg::from_path("./icons/refresh.svg")
-            .width(iced::Length::Units(ICON_SIZE))
-            .height(iced::Length::Units(ICON_SIZE))
+    pub fn refresh() -> Text {
+        icon('\u{E904}')
     }
-    pub fn search() -> Svg {
-        Svg::from_path("./icons/search.svg")
-            .width(iced::Length::Units(38))
-            .height(iced::Length::Units(38))
+    pub fn search() -> Text {
+        icon('\u{E902}')
     }
-    pub fn enter() -> Svg {
-        Svg::from_path("./icons/enter.svg")
-            .width(iced::Length::Units(ICON_SIZE))
-            .height(iced::Length::Units(ICON_SIZE))
+    pub fn enter() -> Text {
+        icon('\u{E90A}')
     }
-    pub fn cancel() -> Svg {
-        Svg::from_path("./icons/cancel.svg")
-            .width(iced::Length::Units(ICON_SIZE))
-            .height(iced::Length::Units(ICON_SIZE))
+    pub fn cancel() -> Text {
+        icon('\u{E910}')
     }
-    pub fn edit() -> Svg {
-        Svg::from_path("./icons/edit.svg")
-            .width(iced::Length::Units(ICON_SIZE))
-            .height(iced::Length::Units(ICON_SIZE))
+    pub fn edit() -> Text {
+        icon('\u{E90B}')
     }
 }
