@@ -1,10 +1,11 @@
-use std::{fmt::Display, net::SocketAddr, str::FromStr};
-
 use directories_next::BaseDirs;
 use iced::{
     button, pick_list, qr_code, slider, text_input, Button, Column, Element, PickList, Row, Rule,
     Slider, Text, TextInput,
 };
+#[cfg(feature = "wgpu")]
+use std::fmt::Display;
+use std::{net::SocketAddr, str::FromStr};
 
 use serde::{Deserialize, Serialize};
 
@@ -23,6 +24,7 @@ use crate::{
 pub enum Message {
     LimitChanged(u32),
     LanguageChanged(Language),
+    #[cfg(feature = "wgpu")]
     BackendChanged(Backend),
     AddrsChanged(String),
     OpenFile,
@@ -47,6 +49,7 @@ pub struct Config {
     pub theme: Theme,
     pub is_created_db: bool,
 }
+#[cfg(feature = "wgpu")]
 #[derive(Debug, Deserialize, Serialize, Clone, Copy, PartialEq, Eq)]
 pub enum Backend {
     Gl,
@@ -58,6 +61,7 @@ pub enum Backend {
     #[cfg(target_os = "macos")]
     Metal,
 }
+#[cfg(feature = "wgpu")]
 impl Backend {
     pub fn from_env() -> Backend {
         let backend = std::env::var(crate::BACKEND);
@@ -95,6 +99,7 @@ impl Backend {
         }
     }
 }
+#[cfg(feature = "wgpu")]
 impl Display for Backend {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -109,7 +114,7 @@ impl Display for Backend {
         }
     }
 }
-
+#[cfg(feature = "wgpu")]
 impl Default for Backend {
     fn default() -> Self {
         #[cfg(target_os = "windows")]
@@ -159,8 +164,11 @@ pub struct BoardState {
     fix_web_host_button: button::State,
     language: pick_list::State<Language>,
     language_temp: Language,
+    #[cfg(feature = "wgpu")]
     backend: pick_list::State<Backend>,
+    #[cfg(feature = "wgpu")]
     pub backend_temp: Backend,
+    #[cfg(feature = "wgpu")]
     pub backend_org: Backend,
 }
 
@@ -205,6 +213,7 @@ impl SettingView {
                 qr_code::State::new(format!("Error in qrcode generation: {:?}", e)).unwrap()
             })
         };
+        #[cfg(feature = "wgpu")]
         let backend = Backend::from_env();
         Self {
             config,
@@ -212,7 +221,9 @@ impl SettingView {
                 limit_temp: config.limit,
                 language_temp: config.language,
                 is_open: false,
+                #[cfg(feature = "wgpu")]
                 backend_temp: backend,
+                #[cfg(feature = "wgpu")]
                 backend_org: backend,
                 ..Default::default()
             },
@@ -255,10 +266,12 @@ impl SettingView {
                     Err(_) => self.state.socket.take(),
                 };
             }
+            #[cfg(feature = "wgpu")]
             Message::BackendChanged(backend) => {
                 self.board_state.backend_temp = backend;
             }
             Message::Reset => {
+                #[cfg(feature = "wgpu")]
                 if self.board_state.backend_temp != Backend::from_env() {
                     self.board_state.backend_temp = Backend::from_env();
                 }
@@ -429,6 +442,7 @@ fn setting_board_view<'a>(
         limit_slider,
         save_button,
         language,
+        #[cfg(feature = "wgpu")]
         backend,
         reset_button,
         fix_web_host_button,
@@ -461,6 +475,7 @@ fn setting_board_view<'a>(
             Some(board_state.language_temp),
             Message::LanguageChanged,
         ));
+    #[cfg(feature = "wgpu")]
     let backends = {
         #[cfg(target_os = "windows")]
         let res = &[Backend::Gl, Backend::Vulkan, Backend::Dx11, Backend::Dx12][..];
@@ -470,6 +485,7 @@ fn setting_board_view<'a>(
         let res = &[Backend::Gl, Backend::Vulkan][..];
         res
     };
+    #[cfg(feature = "wgpu")]
     let backend = Row::new()
         .spacing(300)
         .push(Text::new(tr!("render-backend")))
@@ -479,11 +495,19 @@ fn setting_board_view<'a>(
             Some(board_state.backend_temp),
             Message::BackendChanged,
         ));
-
-    let apply = if config.language != board_state.language_temp
-        || config.limit != board_state.limit_temp
-        || board_state.backend_org != board_state.backend_temp
+    let is_need_apply;
+    #[cfg(feature = "wgpu")]
     {
+        is_need_apply = config.language != board_state.language_temp
+            || config.limit != board_state.limit_temp
+            || board_state.backend_org != board_state.backend_temp;
+    }
+    #[cfg(feature = "opengl")]
+    {
+        is_need_apply =
+            config.language != board_state.language_temp || config.limit != board_state.limit_temp;
+    }
+    let apply = if is_need_apply {
         Some(
             Row::new()
                 .push(Rule::horizontal(50).style(symbol::Symbol))
@@ -520,8 +544,10 @@ fn setting_board_view<'a>(
         .align_items(iced::Align::Center)
         .height(iced::Length::Fill)
         .width(iced::Length::FillPortion(10))
-        .push(language)
-        .push(backend)
+        .push(language);
+    #[cfg(feature = "wgpu")]
+    let res = res.push(backend);
+    let res = res
         .push(fix_button)
         .push(Rule::vertical(50).style(symbol::Symbol));
     if let Some(apply) = apply {

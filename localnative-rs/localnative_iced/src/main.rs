@@ -32,7 +32,9 @@ use note::NoteView;
 use once_cell::sync::OnceCell;
 use page_bar::PageBar;
 use search_bar::SearchBar;
-use setting_view::{Backend, Config, SettingView};
+#[cfg(feature = "wgpu")]
+use setting_view::Backend;
+use setting_view::{Config, SettingView};
 use std::{
     path::PathBuf,
     sync::{mpsc::Sender, Arc},
@@ -41,7 +43,9 @@ use style::symbol::Symbol;
 use tags::TagView;
 use wrap::Wrap;
 
+#[cfg(feature = "wgpu")]
 pub const BACKEND: &str = "WGPU_BACKEND";
+
 static FONT: OnceCell<Option<Vec<u8>>> = OnceCell::new();
 pub const ICONS: Font = Font::External {
     name: "Icons",
@@ -65,11 +69,21 @@ fn logo() -> Option<Icon> {
         .ok()
         .and_then(|logo| window::Icon::from_rgba(logo, 64, 64).ok())
 }
+
 fn is_first() -> bool {
-    let path = setting_view::app_dir().join(".env");
-    let is_first = dotenv::from_path(path).is_err();
-    if std::env::var(BACKEND).is_err() {
-        std::env::set_var(BACKEND, &Backend::default().to_string());
+    let is_first;
+    let app_dir = setting_view::app_dir();
+    #[cfg(feature = "wgpu")]
+    {
+        let path = app_dir.join(".env");
+        is_first = dotenv::from_path(path).is_ok() && !(app_dir.is_dir() && app_dir.exists());
+        if std::env::var(BACKEND).is_err() {
+            std::env::set_var(BACKEND, &Backend::default().to_string());
+        }
+    }
+    #[cfg(feature = "opengl")]
+    {
+        is_first = !(app_dir.is_dir() && app_dir.exists());
     }
     is_first
 }
@@ -151,6 +165,7 @@ pub enum Message {
     NeedUpdate,
     Ignore,
     Search(String),
+    #[cfg(feature = "wgpu")]
     BackendRes(anyhow::Result<Backend>),
     Encode(anyhow::Result<(Vec<NoteView>, Vec<TagView>, u32)>),
     EncodeAndReset(anyhow::Result<(Vec<NoteView>, Vec<TagView>, u32)>),
@@ -317,6 +332,7 @@ impl Application for LocalNative {
                     Message::SettingMessage(sm) => match sm {
                         setting_view::Message::ApplySave | setting_view::Message::ThemeChanged => {
                             setting_view.update(sm);
+                            #[cfg(feature = "wgpu")]
                             if setting_view.board_state.backend_org
                                 != setting_view.board_state.backend_temp
                             {
@@ -341,6 +357,11 @@ impl Application for LocalNative {
                                     Message::Loaded,
                                 )
                             }
+                            #[cfg(feature = "opengl")]
+                            Command::perform(
+                                setting_view::Config::save(setting_view.config),
+                                Message::Loaded,
+                            )
                         }
                         setting_view::Message::Server => match state {
                             State::Settings | State::Contents => {
@@ -396,6 +417,7 @@ impl Application for LocalNative {
                         setting_view::Message::FixHost => {
                             Command::perform(init::fix_app_host(), Message::Empty)
                         }
+                        #[cfg(feature = "wgpu")]
                         setting_view::Message::BackendChanged(backend) => {
                             setting_view.update(setting_view::Message::BackendChanged(backend));
                             Command::perform(Backend::from_file(), Message::BackendRes)
@@ -523,6 +545,7 @@ impl Application for LocalNative {
                     Message::UnknowError => Command::none(),
                     Message::NeedUpdate => Command::none(),
                     Message::Ignore => Command::none(),
+                    #[cfg(feature = "wgpu")]
                     Message::BackendRes(res) => match res {
                         std::result::Result::Ok(backend) => {
                             setting_view.board_state.backend_org = backend;

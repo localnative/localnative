@@ -23,7 +23,6 @@ log = { version = "0.4", features = ["max_level_debug", "release_max_level_info"
 fern = "0.6"
 uuid = { version = "0.8", features = ["v4"] }
 image = "0.23"
-dotenv = "0.15"
 native-dialog = "0.5"
 fluent-bundle = "0.15"
 unic-langid = { version = "0.9",features = ["macros"] }
@@ -36,15 +35,20 @@ winreg = "0.8"
 [dependencies.iced]
 git = "https://github.com/hecrj/iced.git"
 
+[dependencies.dotenv]
+version = "0.15"
+optional = true
+
 [features]
 default = ["wgpu"]
 wgpu = [
     "iced/default",
     "iced/tokio",
     "iced/qr_code",
-    "iced/canvas"
+    "iced/canvas",
+    "dotenv"
     ]
-open_gl = [
+opengl = [
     "iced/glow",
     "iced/tokio",
     "iced/glow_qr_code",

@@ -1,7 +1,7 @@
+#[cfg(feature = "wgpu")]
+use crate::setting_view;
 use serde::Serialize;
 use std::path::{Path, PathBuf};
-
-use crate::setting_view;
 
 #[derive(Debug, Default, Serialize)]
 pub struct AppHost {
@@ -60,11 +60,14 @@ impl AppHost {
 
 pub async fn init_app_host() -> anyhow::Result<()> {
     WebKind::init_all().await;
-    create_env().await
+    #[cfg(feature = "wgpu")]
+    create_env().await?;
+    Ok(())
 }
 pub async fn fix_app_host() {
     WebKind::init_all().await
 }
+#[cfg(feature = "wgpu")]
 pub async fn create_env() -> anyhow::Result<()> {
     let app_dir = setting_view::app_dir();
     if !app_dir.exists() {
@@ -87,6 +90,7 @@ pub async fn create_env() -> anyhow::Result<()> {
     .await?;
     Ok(())
 }
+#[cfg(feature = "wgpu")]
 pub async fn change_env(backend: setting_view::Backend) -> anyhow::Result<setting_view::Backend> {
     let app_dir = setting_view::app_dir();
     if !app_dir.exists() {
