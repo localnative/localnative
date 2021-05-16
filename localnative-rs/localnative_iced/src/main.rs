@@ -76,7 +76,7 @@ fn is_first() -> bool {
     #[cfg(feature = "wgpu")]
     {
         let path = app_dir.join(".env");
-        is_first = dotenv::from_path(path).is_ok() && !(app_dir.is_dir() && app_dir.exists());
+        is_first = dotenv::from_path(path).is_err() || !(app_dir.is_dir() && app_dir.exists());
         if std::env::var(BACKEND).is_err() {
             std::env::set_var(BACKEND, &Backend::default().to_string());
         }
@@ -178,6 +178,7 @@ impl Application for LocalNative {
     type Flags = bool;
 
     fn new(is_first: Self::Flags) -> (Self, iced::Command<Self::Message>) {
+        println!("is first init:{}",is_first);
         let (sender, recevier) = std::sync::mpsc::channel();
         if is_first {
             (
