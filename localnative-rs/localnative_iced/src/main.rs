@@ -424,7 +424,15 @@ impl Application for LocalNative {
                             Command::perform(Backend::from_file(), Message::BackendRes)
                         }
                         setting_view::Message::OpenFile => {
-                            Command::perform(helper::get_sync_file_path(), Message::SyncViaFile)
+                            #[cfg(not(target_os = "macos"))]
+                            {
+                                Command::perform(helper::get_sync_file_path(), Message::SyncViaFile)
+                            }
+                            #[cfg(target_os = "macos")]
+                            {
+                                let path = helper::sync_get_sync_file_path();
+                                Command::perform(async { path }, Message::SyncViaFile)
+                            }
                         }
                         setting_view::Message::BackContent => {
                             match state {
