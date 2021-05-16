@@ -178,7 +178,7 @@ impl Application for LocalNative {
     type Flags = bool;
 
     fn new(is_first: Self::Flags) -> (Self, iced::Command<Self::Message>) {
-        println!("is first init:{}",is_first);
+        println!("is first init:{}", is_first);
         let (sender, recevier) = std::sync::mpsc::channel();
         if is_first {
             (
