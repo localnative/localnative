@@ -34,6 +34,7 @@ winreg = "0.8"
 
 [dependencies.iced]
 git = "https://github.com/hecrj/iced.git"
+default-features = false
 
 [dependencies.dotenv]
 version = "0.15"

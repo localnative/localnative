@@ -4,3 +4,4 @@ members = [
     "localnative_core",
     "localnative_cli",
 ]
+resolver = "2"
