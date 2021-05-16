@@ -3,6 +3,7 @@ use std::{borrow::Cow, fmt::Display, sync::Arc};
 use elsa::sync::FrozenMap;
 use fluent_bundle::FluentResource;
 use fluent_bundle::{bundle::FluentBundle, FluentArgs};
+use iced::futures::lock::Mutex;
 use intl_memoizer::concurrent::IntlLangMemoizer;
 use serde::{Deserialize, Serialize};
 use tokio::sync::OnceCell;
@@ -12,7 +13,7 @@ use unic_langid::LanguageIdentifier;
 static BUNDLES: OnceCell<FrozenMap<Language, Arc<FluentBundle<FluentResource, IntlLangMemoizer>>>> =
     OnceCell::const_new();
 
-pub static mut BUNDLE: OnceCell<Option<&FluentBundle<FluentResource, IntlLangMemoizer>>> =
+pub static BUNDLE: OnceCell<Mutex<&FluentBundle<FluentResource, IntlLangMemoizer>>> =
     OnceCell::const_new();
 
 async fn read_file(path: &str) -> anyhow::Result<String> {
@@ -61,16 +62,15 @@ async fn init_bundles(
 }
 pub async fn init_bundle(locale: Language) -> anyhow::Result<()> {
     let bundle = init_bundles(locale).await?;
-    unsafe {
-        if BUNDLE.initialized() {
-            let bundle_inner = BUNDLE.get_mut().unwrap();
-            bundle_inner.replace(bundle);
-        } else {
-            BUNDLE
-                .set(Some(bundle))
-                .map_err(|_| anyhow::anyhow!("bundle set error"))?;
-        }
+    if BUNDLE.initialized() {
+        let mut bundle_inner = BUNDLE.get().unwrap().lock().await;
+        *bundle_inner = bundle;
+    } else {
+        BUNDLE
+            .set(Mutex::new(bundle))
+            .map_err(|_| anyhow::anyhow!("bundle set error"))?;
     }
+
     Ok(())
 }
 
@@ -79,23 +79,22 @@ pub fn tr_with_args<'a, 'arg: 'a>(
     key: &'a str,
     args: Option<&'a FluentArgs<'arg>>,
 ) -> Cow<'a, str> {
-    let res = unsafe {
-        BUNDLE.get().and_then(|bundle| {
-            bundle.and_then(|bundle| {
-                bundle
-                    .get_message(key)
-                    .and_then(|msg| msg.value())
-                    .map(|p| {
-                        let mut errors = vec![];
-                        let res = bundle.format_pattern(p, args, &mut errors);
-                        for e in errors {
-                            log::error!("fluent get error:{:?}", e);
-                        }
-                        res
-                    })
-            })
-        })
-    };
+    let res = BUNDLE
+        .get()
+        .and_then(|bundle| bundle.try_lock())
+        .and_then(|bundle| {
+            bundle
+                .get_message(key)
+                .and_then(|msg| msg.value())
+                .map(|p| {
+                    let mut errors = vec![];
+                    let res = bundle.format_pattern(p, args, &mut errors);
+                    for e in errors {
+                        log::error!("fluent get error:{:?}", e);
+                    }
+                    res
+                })
+        });
     if let Some(res) = res {
         res
     } else {
