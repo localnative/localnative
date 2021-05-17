@@ -50,8 +50,9 @@ pub struct Config {
     pub is_created_db: bool,
 }
 #[cfg(feature = "wgpu")]
-#[derive(Debug, Deserialize, Serialize, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Backend {
+    Primary,
     Gl,
     Vulkan,
     #[cfg(target_os = "windows")]
@@ -68,6 +69,7 @@ impl Backend {
         log::debug!("backend from env:{:?}", &backend);
         if let Ok(backend) = backend {
             match backend.to_ascii_lowercase().as_str() {
+                "primary" => Backend::Primary,
                 "opengl" => Backend::Gl,
                 "vulkan" => Backend::Vulkan,
                 #[cfg(target_os = "windows")]
@@ -82,27 +84,12 @@ impl Backend {
             Backend::default()
         }
     }
-    pub async fn from_file() -> anyhow::Result<Backend> {
-        let file_path = app_dir().join(".env");
-        let backend = String::from_utf8(tokio::fs::read(file_path).await?)?;
-        log::debug!("backend: {}", &backend[15..]);
-        match backend[15..].to_ascii_lowercase().as_str() {
-            "opengl" => Ok(Backend::Gl),
-            "vulkan" => Ok(Backend::Vulkan),
-            #[cfg(target_os = "windows")]
-            "dx12" => Ok(Backend::Dx12),
-            #[cfg(target_os = "windows")]
-            "dx11" => Ok(Backend::Dx11),
-            #[cfg(target_os = "macos")]
-            "metal" => Ok(Backend::Metal),
-            s => Err(anyhow::anyhow!("Unknow Backend:{:?}", s)),
-        }
-    }
 }
 #[cfg(feature = "wgpu")]
 impl Display for Backend {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            Backend::Primary => f.write_str("Default"),
             Backend::Gl => f.write_str("OpenGL"),
             Backend::Vulkan => f.write_str("Vulkan"),
             #[cfg(target_os = "windows")]
@@ -117,13 +104,7 @@ impl Display for Backend {
 #[cfg(feature = "wgpu")]
 impl Default for Backend {
     fn default() -> Self {
-        #[cfg(target_os = "windows")]
-        let res = Self::Dx11;
-        #[cfg(target_os = "macos")]
-        let res = Self::Metal;
-        #[cfg(target_os = "linux")]
-        let res = Self::Vulkan;
-        res
+        Self::Primary
     }
 }
 
@@ -478,11 +459,16 @@ fn setting_board_view<'a>(
     #[cfg(feature = "wgpu")]
     let backends = {
         #[cfg(target_os = "windows")]
-        let res = &[Backend::Gl, Backend::Vulkan, Backend::Dx11, Backend::Dx12][..];
+        let res = &[
+            Backend::Primary,
+            Backend::Vulkan,
+            Backend::Dx11,
+            Backend::Dx12,
+        ][..];
         #[cfg(target_os = "macos")]
-        let res = &[Backend::Gl, Backend::Vulkan, Backend::Metal][..];
+        let res = &[Backend::Primary, Backend::Vulkan, Backend::Metal][..];
         #[cfg(target_os = "linux")]
-        let res = &[Backend::Gl, Backend::Vulkan][..];
+        let res = &[Backend::Primary, Backend::Vulkan][..];
         res
     };
     #[cfg(feature = "wgpu")]

@@ -77,9 +77,6 @@ fn is_first() -> bool {
     {
         let path = app_dir.join(".env");
         is_first = dotenv::from_path(path).is_err() || !(app_dir.is_dir() && app_dir.exists());
-        if std::env::var(BACKEND).is_err() {
-            std::env::set_var(BACKEND, &Backend::default().to_string());
-        }
     }
     #[cfg(feature = "opengl")]
     {
@@ -421,7 +418,27 @@ impl Application for LocalNative {
                         #[cfg(feature = "wgpu")]
                         setting_view::Message::BackendChanged(backend) => {
                             setting_view.update(setting_view::Message::BackendChanged(backend));
-                            Command::perform(Backend::from_file(), Message::BackendRes)
+                            Command::perform(
+                                async {
+                                    std::env::var(BACKEND)
+                                        .ok()
+                                        .map(|backend| {
+                                            match backend.to_ascii_lowercase().as_str() {
+                                                "opengl" => Backend::Gl,
+                                                "vulkan" => Backend::Vulkan,
+                                                #[cfg(target_os = "windows")]
+                                                "dx12" => Backend::Dx12,
+                                                #[cfg(target_os = "windows")]
+                                                "dx11" => Backend::Dx11,
+                                                #[cfg(target_os = "macos")]
+                                                "metal" => Backend::Metal,
+                                                _ => Backend::Primary,
+                                            }
+                                        })
+                                        .ok_or_else(|| anyhow::anyhow!("get backend fail."))
+                                },
+                                Message::BackendRes,
+                            )
                         }
                         setting_view::Message::OpenFile => {
                             #[cfg(not(target_os = "macos"))]

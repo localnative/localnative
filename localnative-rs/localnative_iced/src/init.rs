@@ -81,14 +81,7 @@ pub async fn create_env() -> anyhow::Result<()> {
     if env_path.exists() && env_path.is_dir() {
         tokio::fs::remove_dir(&env_path).await?;
     }
-    tokio::fs::write(
-        env_path,
-        format!(
-            "WGPU_BACKEND = {}",
-            setting_view::Backend::default().to_string()
-        ),
-    )
-    .await?;
+    tokio::fs::write(env_path, "WGPU_BACKEND=primary").await?;
     Ok(())
 }
 #[cfg(feature = "wgpu")]
