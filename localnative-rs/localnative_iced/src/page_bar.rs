@@ -34,8 +34,11 @@ impl PageBar {
     pub fn update(&mut self, message: Message, limit: u32) -> crate::Message {
         match message {
             Message::Pre => {
-                if self.offset > 0 {
+                if self.offset >= limit {
                     self.offset -= limit;
+                    return crate::Message::NeedUpdate;
+                }else if self.offset != 0{
+                    self.offset = 0;
                     return crate::Message::NeedUpdate;
                 }
             }
