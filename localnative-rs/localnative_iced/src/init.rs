@@ -85,7 +85,7 @@ pub async fn create_env() -> anyhow::Result<()> {
     Ok(())
 }
 #[cfg(feature = "wgpu")]
-pub async fn change_env(backend: setting_view::Backend) -> Result<setting_view::Backend> {
+pub async fn change_env(backend: setting_view::Backend) -> anyhow::Result<setting_view::Backend> {
     let app_dir = setting_view::app_dir();
     if !app_dir.exists() {
         tokio::fs::create_dir_all(&app_dir).await?;
