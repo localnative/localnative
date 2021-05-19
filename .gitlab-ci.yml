@@ -1,14 +1,17 @@
 stages:
-  - build
+  - format-lint-check 
+
 
 image: "rust:latest"
 
 build-code-job:
-  stage: build
+  stage: format-lint-check 
   script:
     - echo "Check the rust and cargo version:"
     - rustc --version && cargo --version
-    - cd localnative-rs && cargo build
+    - cd localnative-rs && cargo fmt-check
+    - cargo olint
+    - cargo wlint
   only:
     - branches
     - tags
