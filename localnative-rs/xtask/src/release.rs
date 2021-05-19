@@ -50,7 +50,7 @@ impl Release {
         let core_src = src.join("liblocalnative_core.rlib");
         let core_dst = dst.join("liblocalnative_core.rlib");
         let readme = Path::new("README.md");
-        cp(&readme,&dst)?;
+        cp(&readme, &dst)?;
         cp(&iced_src, &iced_dst)?;
         cp(&host_src, &host_dst)?;
         cp(&core_src, &core_dst)?;
@@ -103,7 +103,7 @@ fn compress(
             file.read_to_end(&mut buffer)?;
             encoder.write_all(&*buffer)?;
             buffer.clear();
-        } else if name.len() != 0 {
+        } else if !name.is_empty() {
             encoder.add_directory(name, options)?;
             compress(read_dir(path)?, encoder, options, src_path)?;
         }
