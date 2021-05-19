@@ -1,0 +1,7 @@
+[alias]
+xtask = "run --package xtask --bin xtask --release"
+fmt-check = "fmt --all -- --check"
+lint = "clippy --workspace --all-targets --all-features -- -D warnings -A clippy::type_complexity"
+
+[target.x86_64-pc-windows-msvc]
+linker = "rust-lld"

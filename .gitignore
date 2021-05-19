@@ -2,5 +2,6 @@ release/*
 external-libs/*
 .idea/*
 .*
+!.cargo
 !.gitignore
 !.mrconfig-template
