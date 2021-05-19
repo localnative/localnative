@@ -37,7 +37,7 @@ impl PageBar {
                 if self.offset >= limit {
                     self.offset -= limit;
                     return crate::Message::NeedUpdate;
-                }else if self.offset != 0{
+                } else if self.offset != 0 {
                     self.offset = 0;
                     return crate::Message::NeedUpdate;
                 }

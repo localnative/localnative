@@ -355,7 +355,7 @@ impl Application for LocalNative {
                                     Message::Loaded,
                                 )
                             }
-                            #[cfg(feature = "opengl")]
+                            #[cfg(not(feature = "wgpu"))]
                             Command::perform(
                                 setting_view::Config::save(setting_view.config),
                                 Message::Loaded,

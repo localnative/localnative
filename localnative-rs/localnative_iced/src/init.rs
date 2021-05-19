@@ -14,12 +14,14 @@ pub struct AppHost {
 }
 impl AppHost {
     pub fn path() -> anyhow::Result<String> {
-        let mut name = String::from("localnative-web-ext-host");
-        // TODO: add version
-        // name += "-0.4.2";
+        let name;
         #[cfg(target_os = "windows")]
         {
-            name += ".exe";
+            name = "localnative-web-ext-host.exe";
+        }
+        #[cfg(not(target_os = "windows"))]
+        {
+            name = String::from("localnative-web-ext-host");
         }
         let mut path = std::env::current_dir()?;
         path = path.join(name);

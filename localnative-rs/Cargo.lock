@@ -235,6 +235,27 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b700ce4376041dcd0a327fd0097c41095743c4c8af8887265942faf1100bd040"
 
 [[package]]
+name = "bzip2"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "42b7c3cbf0fa9c1b82308d57191728ca0256cb821220f4e2fd410a72ade26e3b"
+dependencies = [
+ "bzip2-sys",
+ "libc",
+]
+
+[[package]]
+name = "bzip2-sys"
+version = "0.1.10+1.0.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "17fa3d1ac1ca21c5c4e36a97f3c3eb25084576f6fc47bf0139c1123434216c6c"
+dependencies = [
+ "cc",
+ "libc",
+ "pkg-config",
+]
+
+[[package]]
 name = "c_linked_list"
 version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -886,6 +907,18 @@ name = "fixedbitset"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "37ab347416e802de484e4d03c7316c48f1ecb56574dfd4a46a80f173ce1de04d"
+
+[[package]]
+name = "flate2"
+version = "1.0.20"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cd3aec53de10fe96d7d8c565eb17f2c687bb5518a2ec453b5b1252964526abe0"
+dependencies = [
+ "cfg-if 1.0.0",
+ "crc32fast",
+ "libc",
+ "miniz_oxide 0.4.4",
+]
 
 [[package]]
 name = "float-ord"
@@ -1977,7 +2010,7 @@ dependencies = [
 
 [[package]]
 name = "localnative_cli"
-version = "0.4.2"
+version = "0.5.0"
 dependencies = [
  "clap",
  "localnative_core",
@@ -1985,7 +2018,7 @@ dependencies = [
 
 [[package]]
 name = "localnative_core"
-version = "0.4.2"
+version = "0.5.0"
 dependencies = [
  "base64",
  "dirs 3.0.2",
@@ -2009,7 +2042,7 @@ dependencies = [
 
 [[package]]
 name = "localnative_iced"
-version = "0.1.0"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -4170,6 +4203,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d089681aa106a86fade1b0128fb5daf07d5867a509ab036d99988dec80429a57"
 
 [[package]]
+name = "xflags"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "59ad6ce6a0b7224130015b4ebac796478ac04e0079f5d222a690efea06a9208a"
+dependencies = [
+ "xflags-macros",
+]
+
+[[package]]
+name = "xflags-macros"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c8037d3ca14996158b03c0fa905d0834906ef0fc7044df72c1f5ff690e5e62c9"
+dependencies = [
+ "proc-macro2",
+]
+
+[[package]]
 name = "xi-unicode"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4180,3 +4231,42 @@ name = "xml-rs"
 version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b07db065a5cf61a7e4ba64f29e67db906fb1787316516c4e6e5ff0fea1efcd8a"
+
+[[package]]
+name = "xshell"
+version = "0.1.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4e3f93d5e767c73e5b2604549613ce051d3d2880ec5ae7f346900f6ee4eec6bf"
+dependencies = [
+ "xshell-macros",
+]
+
+[[package]]
+name = "xshell-macros"
+version = "0.1.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "58d215d6837186f9f3d0d2d835545c7bf19142296e9184279ad240f90101af30"
+
+[[package]]
+name = "xtask"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "xflags",
+ "xshell",
+ "zip",
+]
+
+[[package]]
+name = "zip"
+version = "0.5.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9c83dc9b784d252127720168abd71ea82bf8c3d96b17dc565b5e2a02854f2b27"
+dependencies = [
+ "byteorder",
+ "bzip2",
+ "crc32fast",
+ "flate2",
+ "thiserror",
+ "time 0.1.43",
+]

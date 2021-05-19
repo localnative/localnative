@@ -1,6 +1,6 @@
 [package]
 name = "localnative_iced"
-version = "0.1.0"
+version = "0.5.0"
 authors = ["Cupnfish <yrainbxqc@gmail.com>"]
 edition = "2018"
 
@@ -41,7 +41,7 @@ version = "0.15"
 optional = true
 
 [features]
-default = ["wgpu"]
+default = ["opengl"]
 wgpu = [
     "iced/default",
     "iced/tokio",
