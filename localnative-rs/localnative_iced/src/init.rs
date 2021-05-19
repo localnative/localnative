@@ -101,7 +101,11 @@ pub async fn change_env(backend: setting_view::Backend) -> anyhow::Result<settin
         tokio::fs::remove_dir(&env_path).await?;
     }
     log::debug!("{} backend will write in env.💥💥💢", backend.to_string());
-    tokio::fs::write(env_path, format!("WGPU_BACKEND = {}", backend.to_string()))
+    let backend_str = match backend {
+        setting_view::Backend::Primary => "primary".to_owned(),
+        backend => backend.to_string()
+    };
+    tokio::fs::write(env_path, format!("WGPU_BACKEND = {}", backend_str))
         .await
         .map(|_| backend)
         .map_err(|e| anyhow::anyhow!("write env fail:{:?}", e))
