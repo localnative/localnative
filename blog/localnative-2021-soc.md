@@ -19,9 +19,6 @@ tags: ["all", "localnative", "2021", "SoC"]
 - yi
     - Review all tickets and pull requests
 
-- Conan
-    -
-
 TODO
 - Cupnfish 
   - popup alert with cancel/ok button when clicked on delete
