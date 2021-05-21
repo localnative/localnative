@@ -9,7 +9,11 @@ build-code-job:
   script:
     - echo "Check the rust and cargo version:"
     - rustc --version && cargo --version
+    - echo "Add rustfmt"
+    - rustup component add rustfmt
+    - echo "Check formt"
     - cd localnative-rs && cargo fmt-check
+    - echo "Check code lint"
     - cargo olint
     - cargo wlint
   only:
