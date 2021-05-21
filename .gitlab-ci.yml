@@ -1,6 +1,8 @@
 stages:
   - format-lint-check 
   - build-localnative-core
+  - build-localnative-iced
+  - build-localnative-cli
 
 
 image: "rust:latest"
@@ -11,7 +13,7 @@ before_script:
     - rustup component add clippy
     - echo "have a try"
 
-build-code-job:
+format-lint-check :
   stage: format-lint-check 
   script:
     - echo "Check the rust and cargo version:"
@@ -27,6 +29,19 @@ build-localnative-core:
   script:
     - echo "Build localnative core"
     - cd localnative-rs/localnative_core && cargo build
+
+build-localnative-iced:
+  stage: build-localnative-iced
+  script:
+    - echo "Build localnative iced"
+    - cd localnative-rs/localnative_iced && cargo build
+
+build-localnative-cli:
+  stage: build-localnative-cli
+  script:
+    - echo "Build localnative cli"
+    - cd localnative-rs/localnative_cli && cargo build
+
   only:
     - branches
     - tags
