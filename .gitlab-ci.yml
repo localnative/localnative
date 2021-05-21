@@ -8,6 +8,7 @@ before_script:
     - echo "Add the rustfmt and clippy:"
     - rustup component add rustfmt
     - rustup component add clippy
+    - echo "have a try"
 
 build-code-job:
   stage: format-lint-check 
