@@ -4,13 +4,16 @@ stages:
 
 image: "rust:latest"
 
+before_script:
+    - echo "Add the rustfmt and clippy:"
+    - rustup component add rustfmt
+    - rustup component add clippy
+
 build-code-job:
   stage: format-lint-check 
   script:
     - echo "Check the rust and cargo version:"
     - rustc --version && cargo --version
-    - echo "Add rustfmt"
-    - rustup component add rustfmt
     - echo "Check formt"
     - cd localnative-rs && cargo fmt-check
     - echo "Check code lint"
