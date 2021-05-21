@@ -103,7 +103,7 @@ pub async fn change_env(backend: setting_view::Backend) -> anyhow::Result<settin
     log::debug!("{} backend will write in env.💥💥💢", backend.to_string());
     let backend_str = match backend {
         setting_view::Backend::Primary => "primary".to_owned(),
-        backend => backend.to_string()
+        backend => backend.to_string(),
     };
     tokio::fs::write(env_path, format!("WGPU_BACKEND = {}", backend_str))
         .await
