@@ -1,5 +1,6 @@
 stages:
   - format-lint-check 
+  - build-localnative-core
 
 
 image: "rust:latest"
@@ -20,6 +21,12 @@ build-code-job:
     - echo "Check code lint"
     - cargo olint
     - cargo wlint
+
+build-localnative-core:
+  stage: build-localnative-core
+  script:
+    - echo "Build localnative core"
+    - cd localnative-rs/localnative_core && cargo build
   only:
     - branches
     - tags
