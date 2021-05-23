@@ -12,6 +12,8 @@
     "@docusaurus/core": "^2.0.0-alpha.54",
     "@docusaurus/preset-classic": "^2.0.0-alpha.54",
     "classnames": "^2.2.6",
+    "firebase-tools": "^9.11.0",
+    "g": "^2.0.1",
     "react": "^16.8.4",
     "react-dom": "^16.8.4"
   },

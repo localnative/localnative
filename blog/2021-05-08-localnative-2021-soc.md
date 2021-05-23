@@ -29,5 +29,5 @@ TODO
   - prepare PR for release script to package iced and web ext targets together
 
 - Conan
-  - Change by sperating multiple jobs
+  - Change by separating multiple jobs
   - Make merge_request trigger pipeline work
