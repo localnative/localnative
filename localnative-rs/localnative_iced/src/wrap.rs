@@ -6,7 +6,6 @@ use iced_native::{
     Widget,
 };
 
-// TODO：wrap是一个很实用的组件，所以最好将现有实现广泛化，加入到iced的源码中
 pub struct Wrap<'a, B, Message>
 where
     B: Backend,
