@@ -2,11 +2,13 @@ pub mod editable;
 pub mod tag;
 
 use iced::{
-    button, pick_list, qr_code, Align, Button, Column, Container, PickList, QRCode, Row, Text,
+    button, pick_list, qr_code, Align, Button, Checkbox, Column, Container, PickList, QRCode, Row,
+    Text,
 };
 
 use iced::Element;
 
+use crate::style::symbol::Symbol;
 use crate::{style::icon::Icon, tr};
 use editable::Editables;
 use tag::{focused_input, Tag};
@@ -20,6 +22,10 @@ pub enum Message {
     Cancel,
     Enter,
     Delete,
+    EnterDelete,
+    CancelDelete,
+    TurnTip,
+    Tips(bool),
     AddTag(String),
     AddTagMessage(tag::Message),
     AddEdit(editable::Editable),
@@ -36,6 +42,7 @@ pub struct NoteView {
     pub tags: Vec<tag::Tag>,
     pub created_at: String,
     pub is_public: bool,
+    two_button: TwoButtonState,
     view_state: ViewState,
     qr_state: QrState,
 }
@@ -48,16 +55,25 @@ pub struct QrState {
 }
 #[derive(Debug)]
 pub enum ViewState {
-    Normal {
-        edit: button::State,
-        delete: button::State,
-    },
+    Confirm,
+    Normal,
     Edit {
-        enter: button::State,
-        cancel: button::State,
         add_editable: pick_list::State<editable::Editable>,
         add_tag: tag::Tag,
     },
+}
+#[derive(Debug)]
+struct TwoButtonState {
+    state_a: button::State,
+    state_b: button::State,
+}
+impl TwoButtonState {
+    fn new() -> Self {
+        Self {
+            state_a: button::State::new(),
+            state_b: button::State::new(),
+        }
+    }
 }
 impl From<Note> for NoteView {
     fn from(note: Note) -> Self {
@@ -93,10 +109,8 @@ impl From<Note> for NoteView {
             tags,
             created_at: note.created_at,
             is_public: note.is_public,
-            view_state: ViewState::Normal {
-                edit: button::State::new(),
-                delete: button::State::new(),
-            },
+            two_button: TwoButtonState::new(),
+            view_state: ViewState::Normal,
             qr_state: QrState {
                 is_show: false,
                 qrcode_button: button::State::new(),
@@ -199,8 +213,6 @@ impl NoteView {
 
                 if let ViewState::Normal { .. } = view_state {
                     *view_state = ViewState::Edit {
-                        enter: button::State::new(),
-                        cancel: button::State::new(),
                         add_editable: pick_list::State::default(),
                         add_tag: tag::Tag::new(
                             &tr!("add-new-tag"),
@@ -220,10 +232,7 @@ impl NoteView {
                 self.cancel_tags();
                 let NoteView { view_state, .. } = self;
                 if let ViewState::Edit { .. } = view_state {
-                    *view_state = ViewState::Normal {
-                        edit: button::State::new(),
-                        delete: button::State::new(),
-                    };
+                    *view_state = ViewState::Normal;
                 }
             }
             Message::Enter => {
@@ -314,6 +323,16 @@ impl NoteView {
                     _ => unreachable!(),
                 }
             }
+            Message::EnterDelete => {
+                self.update(Message::Delete);
+            }
+            Message::CancelDelete => {
+                self.view_state = ViewState::Normal;
+            }
+            Message::Tips(_) => {}
+            Message::TurnTip => {
+                self.view_state = ViewState::Confirm;
+            }
         }
     }
     pub fn new(note: Note, view_state: ViewState, qr_state: QrState) -> Self {
@@ -322,7 +341,10 @@ impl NoteView {
             .split(',')
             .map(|name| {
                 let tag_state = match view_state {
-                    ViewState::Normal { .. } => tag::State::Normal {
+                    ViewState::Confirm => {
+                        todo!()
+                    }
+                    ViewState::Normal => tag::State::Normal {
                         search: button::State::new(),
                     },
                     ViewState::Edit { .. } => tag::State::Edit {
@@ -356,6 +378,7 @@ impl NoteView {
             is_public: note.is_public,
             view_state,
             qr_state,
+            two_button: TwoButtonState::new(),
         }
     }
     pub fn cancel_tags(&mut self) {
@@ -371,7 +394,7 @@ impl NoteView {
             })
             .collect::<Vec<Tag>>();
     }
-    pub fn view(&mut self) -> Element<Message> {
+    pub fn view(&mut self, disabel_tip: bool) -> Element<Message> {
         let NoteView {
             uuid4,
             editables,
@@ -379,6 +402,7 @@ impl NoteView {
             created_at,
             view_state,
             qr_state,
+            two_button,
             ..
         } = self;
         let QrState {
@@ -391,7 +415,7 @@ impl NoteView {
             if qr_state.is_show {
                 qrcode_button = Button::new(qrcode_button_state, Icon::qr_code())
                     .on_press(Message::DisableQrcode)
-                    .style(crate::style::symbol::Symbol);
+                    .style(Symbol);
                 if let Some(ref qrcode) = qrcode {
                     Some(QRCode::new(qrcode))
                 } else {
@@ -401,7 +425,7 @@ impl NoteView {
             } else {
                 qrcode_button = Button::new(qrcode_button_state, Icon::qr_code())
                     .on_press(Message::EnableQrcode)
-                    .style(crate::style::symbol::Symbol);
+                    .style(Symbol);
                 None
             }
         };
@@ -427,13 +451,47 @@ impl NoteView {
         );
 
         match view_state {
-            ViewState::Normal { edit, delete } => {
+            ViewState::Confirm => {
+                let TwoButtonState {
+                    state_a: enter,
+                    state_b: cancel,
+                } = two_button;
+                let enter_button = Button::new(enter, Icon::refresh())
+                    .style(Symbol)
+                    .on_press(Message::EnterDelete);
+                let cancel_button = Button::new(cancel, Icon::cancel())
+                    .style(Symbol)
+                    .on_press(Message::CancelDelete);
+                println!("disabel: {}", disabel_tip);
+                let check_need_tip = Checkbox::new(disabel_tip, tr!("tips"), Message::Tips);
+                let button_row = Row::new()
+                    .push(enter_button)
+                    .push(Text::new(tr!("enter")))
+                    .push(cancel_button)
+                    .push(Text::new(tr!("cancel")));
+                Column::new()
+                    .push(Text::new(tr!("delete-tip")))
+                    .push(check_need_tip)
+                    .push(button_row)
+                    .align_items(iced::Align::Center)
+                    .into()
+            }
+            ViewState::Normal => {
+                let TwoButtonState {
+                    state_a: edit,
+                    state_b: delete,
+                } = two_button;
                 let edit_button = Button::new(edit, Icon::edit())
-                    .style(crate::style::symbol::Symbol)
+                    .style(Symbol)
                     .on_press(Message::Editable);
+                let delete_msg = if disabel_tip {
+                    Message::Delete
+                } else {
+                    Message::TurnTip
+                };
                 let delete_button = Button::new(delete, Icon::delete_bin())
-                    .style(crate::style::symbol::Symbol)
-                    .on_press(Message::Delete);
+                    .style(Symbol)
+                    .on_press(delete_msg);
                 let op = Column::new()
                     .align_items(iced::Align::End)
                     .width(iced::Length::Fill)
@@ -462,16 +520,18 @@ impl NoteView {
             }
 
             ViewState::Edit {
-                enter,
-                cancel,
                 add_editable,
                 add_tag,
             } => {
+                let TwoButtonState {
+                    state_a: enter,
+                    state_b: cancel,
+                } = two_button;
                 let enter_button = Button::new(enter, Icon::enter())
-                    .style(crate::style::symbol::Symbol)
+                    .style(Symbol)
                     .on_press(Message::Enter);
                 let cancel_button = Button::new(cancel, Icon::cancel())
-                    .style(crate::style::symbol::Symbol)
+                    .style(Symbol)
                     .on_press(Message::Cancel);
                 let empty = editables.empty();
                 let op = if !empty.is_empty() {

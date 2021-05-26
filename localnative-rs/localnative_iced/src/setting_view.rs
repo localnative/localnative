@@ -39,6 +39,7 @@ pub enum Message {
     ClearAddrInput,
     FixHost,
     Empty,
+    Tips(bool),
     BackContent,
 }
 
@@ -48,6 +49,7 @@ pub struct Config {
     pub language: Language,
     pub theme: Theme,
     pub is_created_db: bool,
+    pub disabel_delete_tip: bool,
 }
 #[cfg(feature = "wgpu")]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -138,6 +140,7 @@ pub struct State {
 pub struct BoardState {
     limit_temp: u32,
     is_open: bool,
+    pub disabel_delete_tip: bool,
     limit_button: button::State,
     limit_slider: slider::State,
     save_button: button::State,
@@ -202,6 +205,7 @@ impl SettingView {
                 limit_temp: config.limit,
                 language_temp: config.language,
                 is_open: false,
+                disabel_delete_tip: config.disabel_delete_tip,
                 #[cfg(feature = "wgpu")]
                 backend_temp: backend,
                 #[cfg(feature = "wgpu")]
@@ -236,6 +240,7 @@ impl SettingView {
             Message::ApplySave => {
                 self.config.limit = self.board_state.limit_temp;
                 self.config.language = self.board_state.language_temp;
+                self.config.disabel_delete_tip = self.board_state.disabel_delete_tip;
             }
             Message::SelectSettingBoard => {}
             Message::Server => {}
@@ -262,6 +267,9 @@ impl SettingView {
                 if self.board_state.language_temp != self.config.language {
                     self.board_state.language_temp = self.config.language;
                 }
+                if self.board_state.disabel_delete_tip != self.config.disabel_delete_tip {
+                    self.board_state.disabel_delete_tip = self.config.disabel_delete_tip;
+                }
             }
             Message::AddrsChanged(addr) => {
                 self.state.addr = addr;
@@ -275,6 +283,9 @@ impl SettingView {
             Message::FixHost => {}
             Message::Empty => {}
             Message::BackContent => {}
+            Message::Tips(disable) => {
+                self.board_state.disabel_delete_tip = disable;
+            }
         }
     }
     pub fn viwe<'a>(
@@ -289,6 +300,7 @@ impl SettingView {
         &'a mut self,
         server_state: bool,
         logger: &'a mut Option<Logger>,
+        note_tips: bool,
     ) -> Element<'a, Message> {
         let SettingView {
             config,
@@ -297,7 +309,7 @@ impl SettingView {
             ..
         } = self;
         let left_bar = left_bar_viwe(state, config.theme, server_state, logger);
-        let setting_board = setting_board_view(board_state, &*config);
+        let setting_board = setting_board_view(board_state, &*config, note_tips);
         Row::new().push(left_bar).push(setting_board).into()
     }
     pub fn sync_board_open_view<'a>(
@@ -417,6 +429,7 @@ fn left_bar_viwe<'a>(
 fn setting_board_view<'a>(
     board_state: &'a mut BoardState,
     config: &'a Config,
+    note_tips: bool,
 ) -> Element<'a, Message> {
     let BoardState {
         limit_button,
@@ -431,6 +444,11 @@ fn setting_board_view<'a>(
     } = board_state;
     let args = args!("num"=>board_state.limit_temp);
     let limit_text = Text::new(tr!("limit";&args));
+    let tip = iced::Checkbox::new(
+        board_state.disabel_delete_tip,
+        tr!("setting-tip"),
+        Message::Tips,
+    );
     let setting_column = if board_state.is_open {
         let limit_ctrl = Slider::new(
             limit_slider,
@@ -486,12 +504,14 @@ fn setting_board_view<'a>(
     {
         is_need_apply = config.language != board_state.language_temp
             || config.limit != board_state.limit_temp
-            || board_state.backend_org != board_state.backend_temp;
+            || board_state.backend_org != board_state.backend_temp
+            || (config.disabel_delete_tip != board_state.disabel_delete_tip && !note_tips);
     }
     #[cfg(feature = "opengl")]
     {
-        is_need_apply =
-            config.language != board_state.language_temp || config.limit != board_state.limit_temp;
+        is_need_apply = config.language != board_state.language_temp
+            || config.limit != board_state.limit_temp
+            || (config.disabel_delete_tip != board_state.disabel_delete_tip && !note_tips);
     }
     let apply = if is_need_apply {
         Some(
@@ -534,6 +554,7 @@ fn setting_board_view<'a>(
     #[cfg(feature = "wgpu")]
     let res = res.push(backend);
     let res = res
+        .push(tip)
         .push(fix_button)
         .push(Rule::vertical(50).style(symbol::Symbol));
     if let Some(apply) = apply {
@@ -623,6 +644,7 @@ impl Default for Config {
             theme: Theme::Light,
             language: Language::English,
             is_created_db: false,
+            disabel_delete_tip: false,
         }
     }
 }

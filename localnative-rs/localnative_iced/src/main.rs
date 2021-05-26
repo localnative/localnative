@@ -237,6 +237,7 @@ impl Application for LocalNative {
                                 setting_view,
                                 search_bar,
                                 page_bar,
+                                note_tips: false,
                                 logger: Some(logger::Logger::new(logger, "")),
                                 ..Default::default()
                             }
@@ -247,6 +248,7 @@ impl Application for LocalNative {
                                 setting_view,
                                 search_bar,
                                 page_bar,
+                                note_tips: false,
                                 ..Default::default()
                             }
                         };
@@ -468,6 +470,11 @@ impl Application for LocalNative {
                                 Message::ResultHandle,
                             )
                         }
+                        setting_view::Message::Tips(tip) => {
+                            setting_view.update(setting_view::Message::Tips(tip));
+                            data.note_tips = false;
+                            Command::none()
+                        }
                         sm => {
                             setting_view.update(sm);
                             Command::none()
@@ -490,16 +497,18 @@ impl Application for LocalNative {
                     Message::NoteMessage(idx, nm) => {
                         if let Some(note) = data_view.notes.get_mut(idx) {
                             match nm {
-                                note::Message::Delete => Command::perform(
-                                    MiddleData::delete(
-                                        resource.conn.clone(),
-                                        search_bar.search_text.clone(),
-                                        setting_view.config.limit,
-                                        page_bar.offset,
-                                        note.rowid,
-                                    ),
-                                    Message::Encode,
-                                ),
+                                note::Message::Delete | note::Message::EnterDelete => {
+                                    Command::perform(
+                                        MiddleData::delete(
+                                            resource.conn.clone(),
+                                            search_bar.search_text.clone(),
+                                            setting_view.config.limit,
+                                            page_bar.offset,
+                                            note.rowid,
+                                        ),
+                                        Message::Encode,
+                                    )
+                                }
                                 note::Message::Enter => {
                                     let old_note = note.old_note();
                                     log::debug!("old note:{:?}", &old_note);
@@ -523,6 +532,11 @@ impl Application for LocalNative {
                                     } else {
                                         Command::none()
                                     }
+                                }
+                                note::Message::Tips(disable) => {
+                                    setting_view.board_state.disabel_delete_tip = disable;
+                                    data.note_tips = true;
+                                    Command::none()
                                 }
                                 nm => {
                                     note.update(nm);
@@ -626,9 +640,29 @@ impl Application for LocalNative {
                         Command::none()
                     }
                     Message::Events(event) => {
-                        if let Event::Window(iced_native::window::Event::FileDropped(path)) = event
-                        {
-                            Command::perform(helper::sync_via_file(Ok(path)), Message::ResultHandle)
+                        if let Event::Window(window_event) = event {
+                            match window_event {
+                                iced_native::window::Event::FileDropped(path) => Command::perform(
+                                    helper::sync_via_file(Ok(path)),
+                                    Message::ResultHandle,
+                                ),
+                                iced_native::window::Event::CloseRequested => {
+                                    if setting_view.board_state.disabel_delete_tip
+                                        != setting_view.config.disabel_delete_tip
+                                        && data.note_tips
+                                    {
+                                        setting_view.config.disabel_delete_tip =
+                                            setting_view.board_state.disabel_delete_tip;
+                                        Command::perform(
+                                            setting_view::Config::save(setting_view.config),
+                                            Message::Loaded,
+                                        )
+                                    } else {
+                                        Command::none()
+                                    }
+                                }
+                                _ => Command::none(),
+                            }
                         } else {
                             Command::none()
                         }
@@ -690,6 +724,7 @@ pub struct Data {
     server_state: Option<Stop>,
     state: State,
     logger: Option<logger::Logger>,
+    note_tips: bool,
 }
 
 #[derive(Debug)]
@@ -724,7 +759,7 @@ impl Data {
             ..
         } = self;
         setting_view
-            .setting_board_open_view(self.server_state.is_some(), logger)
+            .setting_board_open_view(self.server_state.is_some(), logger, self.note_tips)
             .map(Message::SettingMessage)
     }
     fn contents_view(&mut self) -> Element<Message> {
@@ -743,6 +778,7 @@ impl Data {
             notes_scrollable,
         } = state;
         let search_text_is_empty = search_bar.search_text.is_empty();
+        let disabel_delete_tip = setting_view.board_state.disabel_delete_tip;
         Row::new()
             .align_items(iced::Align::Start)
             .push(
@@ -779,13 +815,15 @@ impl Data {
                                         .fold(
                                             Column::new().align_items(iced::Align::Start),
                                             |column, (idx, note)| {
-                                                column.push(note.view().map(move |nm| match nm {
-                                                    note::Message::TagMessage(
-                                                        _,
-                                                        note::tag::Message::Search(text),
-                                                    ) => Message::Search(text),
-                                                    nm => Message::NoteMessage(idx, nm),
-                                                }))
+                                                column.push(note.view(disabel_delete_tip).map(
+                                                    move |nm| match nm {
+                                                        note::Message::TagMessage(
+                                                            _,
+                                                            note::tag::Message::Search(text),
+                                                        ) => Message::Search(text),
+                                                        nm => Message::NoteMessage(idx, nm),
+                                                    },
+                                                ))
                                             },
                                         )
                                         .padding(30);
