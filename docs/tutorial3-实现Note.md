@@ -1,10 +1,13 @@
-# 第三章 实现Note
+---
+id: tutorial3
+title: 3. 实现Note
+---
 
 在之前的章节，我们已经初始化好了程序的整体框架，是时候向这个框架里填入内容了。
 
 本章我们将实现如下图所示的Note结构体的视图，并且通过`preview`这个feature来预览我们实现的效果。
 
-![Note演示](../static/img/tutorial-03-00.png)
+![Note演示](/img/tutorial-03-00.png)
 
 ### 创建新模块
 
@@ -354,9 +357,9 @@ fn main() -> iced::Result {
 cargo run --bin noteview
 ```
 
-![noteview qrcode disable](../static/img/tutorial-03-01.png)
+![noteview qrcode disable](/img/tutorial-03-01.png)
 
-![noteview qrcode enable](../static/img/tutorial-03-02.png)
+![noteview qrcode enable](/img/tutorial-03-02.png)
 
 正如上图所展示的，当前我们获得了一个十分简陋的UI，接下来我们将要解决以下问题：
 
@@ -613,7 +616,7 @@ impl iced::Sandbox for NoteView {
 cargo run --bin noteview
 ```
 
-![简单重构](../static/img/tutorial-03-03.png)
+![简单重构](/img/tutorial-03-03.png)
 
 接下来我们将引入`Wrap`控件，将我们的tag给放入这里面，这样我们的问题3也就同样被解决了。首先我们引入`iced_aw`这个crate，这是一个`iced`官方的额外控件crate，目前还没有发布到crate.io，因此我们只能通过git的方式引入到我们的项目中，还是老方法，如果网速不佳，请用国内镜像：
 
@@ -661,8 +664,8 @@ open = "1"
 
 运行之后：
 
-![添加wrap之后](../static/img/tutorial-03-04.png)
+![添加wrap之后](/img/tutorial-03-04.png)
 
 至此，note的简单实现到此结束，下一章将会介绍第二个部分tags，同时也会介绍如何将多个实现的部分组合到一块：
 
-![标签集](../static/img/tutorial-03-05.png)
+![标签集](/img/tutorial-03-05.png)

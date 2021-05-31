@@ -1,4 +1,7 @@
-# 第二章 运行简单示例
+---
+id: tutorial2
+title: 2. 运行简单示例
+---
 
 在上一章里，我们已经初始化项目结构，本章主要是介绍这样一个项目结构是如何运行的。
 
@@ -199,7 +202,7 @@ cargo run --bin ln
 
 编译没有问题的话，会得到以下结果（编译过程中出现的warning请暂时忽略）：
 
-![简单示例](../static/img/tutorial-02-00.png)
+![简单示例](/img/tutorial-02-00.png)
 
 > 关于WSL的一个warning：
 >
