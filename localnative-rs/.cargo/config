@@ -3,8 +3,8 @@ xtask = "run --package xtask --bin xtask --release"
 fmt-check = "fmt --all -- --check"
 wlint = "clippy --workspace --all-targets --features wgpu --no-default-features -- -D warnings -A clippy::type_complexity"
 olint = "clippy --workspace --all-targets --features opengl --no-default-features -- -D warnings -A clippy::type_complexity"
-wiced = "run --bin localnative_iced --features wgpu --no-default-features"
-oiced = "run --bin localnative_iced --features opengl --no-default-features"
+wiced = "run --bin localnative_iced_old --features wgpu --no-default-features"
+oiced = "run --bin localnative_iced_old --features opengl --no-default-features"
 
 [target.x86_64-pc-windows-msvc]
 linker = "rust-lld"

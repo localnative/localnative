@@ -39,7 +39,7 @@ impl Release {
             .run()?;
         let suffix = exe_suffix(&target);
         let src = Path::new("target").join(&target).join("release");
-        let iced_src = src.join(format!("localnative_iced{}", suffix));
+        let iced_src = src.join(format!("localnative_iced_old{}", suffix));
         let host_src = src.join(format!("localnative-web-ext-host{}", suffix));
         let dst =
             Path::new("dist").join(format!("localnative-{}-{}-{}", target, features, version));

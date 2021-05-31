@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "localnative_iced",
+    "localnative_iced_old",
     "localnative_core",
     "localnative_cli",
     "xtask",

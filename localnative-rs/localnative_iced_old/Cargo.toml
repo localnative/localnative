@@ -1,5 +1,5 @@
 [package]
-name = "localnative_iced"
+name = "localnative_iced_old"
 version = "0.5.0"
 authors = ["Cupnfish <yrainbxqc@gmail.com>"]
 edition = "2018"
