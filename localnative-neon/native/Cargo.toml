@@ -1,6 +1,6 @@
 [package]
 name = "localnative-neon"
-version = "0.4.2"
+version = "0.5.0"
 authors = ["Yi Wang"]
 license = "AGPL-3.0"
 build = "build.rs"
@@ -17,5 +17,5 @@ neon-build = "0.8"
 neon = "0.8"
 
 [dependencies.localnative_core]
-version = "0.4.2"
+version = "0.5.0"
 path = "../../localnative-rs/localnative_core"
