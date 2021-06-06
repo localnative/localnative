@@ -141,17 +141,6 @@ pub fn create(conn: &Connection) {
          is_public      BOOLEAN NOT NULL default 0
          );
 
-         CREATE TABLE IF NOT EXISTS ssb (
-         note_rowid         INTEGER NOT NULL UNIQUE,
-         author             TEXT PRIMARY KEY,
-         is_active_author   BOOLEAN NOT NULL,
-         is_last_note       BOOLEAN NOT NULL,
-         ts                 INTEGER NOT NULL,
-         seq                INTEGER NOT NULL,
-         key                TEXT    NOT NULL,
-         prev               TEXT    NOT NULL
-         ) WITHOUT ROWID;
-
          CREATE TABLE IF NOT EXISTS meta (
          meta_key        TEXT PRIMARY KEY,
          meta_value      TEXT NOT NULL
