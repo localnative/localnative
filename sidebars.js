@@ -9,6 +9,11 @@ module.exports = {
       , "translation"
       , "license"
     ],
-    "Lecture & Talk": ["lecture", "talk"]
+    "Lecture & Talk": ["lecture", "talk"],
+    "Tutorials": [
+      "tutorial0",
+      "tutorial1",
+      "tutorial2",
+      "tutorial3"]
   },
 };
