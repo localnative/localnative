@@ -18,7 +18,7 @@
 
 use super::utils;
 use super::uuid::Uuid;
-use rusqlite::{Connection, Result, ToSql};
+use rusqlite::{Connection, Result};
 
 pub fn drop_ssb_table(conn: &Connection) -> Result<()> {
     eprintln!("to_0_5_0 drop_ssb_table");
