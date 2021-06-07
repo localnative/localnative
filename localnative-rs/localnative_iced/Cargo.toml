@@ -7,3 +7,66 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+localnative_core = { path = "../localnative_core" }
+open = "1"
+once_cell = "1.7"
+
+# -- impl tags start --
+serde = {version = "1",features = ["derive"]}
+serde_json = "1"
+# -- impl tags end --
+
+[dependencies.rand]
+version = "0.8"
+optional = true
+
+
+
+[dependencies.iced_aw]
+git = "https://github.com/iced-rs/iced_aw"
+branch = "main"
+default-features = false
+features = ["wrap"] 
+
+[dependencies.iced]
+version = "0.3.0"
+default-features = false
+
+[features]
+default = ["preview"]
+wgpu = [
+    "iced/default",
+    "iced/tokio",
+    "iced/qr_code",
+    "iced/canvas",
+    ]
+opengl = [
+    "iced/glow",
+    "iced/tokio",
+    "iced/glow_qr_code",
+    "iced/glow_canvas",
+    "iced/glow_default_system_font"
+    ]
+preview = [
+    "wgpu",
+    "rand"
+]
+
+[[bin]]
+name = "ln"
+path = "./src/bin.rs"
+
+[[bin]]
+name = "preview-example"
+path = "./previews/exam.rs"
+required-features = ["preview"]
+
+[[bin]]
+name = "noteview"
+path = "./previews/noteview.rs"
+required-features = ["preview"]
+
+[[bin]]
+name = "tagview"
+path = "./previews/tagview.rs"
+required-features = ["preview"]

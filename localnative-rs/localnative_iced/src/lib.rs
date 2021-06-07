@@ -4,8 +4,7 @@ mod style;
 mod tags;
 use iced::Command;
 pub use note::NoteView;
-#[cfg(feature = "preview")]
-pub use tags::Tags;
+pub use tags::TagView;
 
 pub enum LocalNative {
     Loading,
