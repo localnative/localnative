@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+# set -e
 n 10
 cd `dirname $0`/..
 
