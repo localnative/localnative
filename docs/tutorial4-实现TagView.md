@@ -1,64 +1,28 @@
 ---
 id: tutorial4
-title: 4. 实现tags
+title: 4. 实现TagView
 ---
 
-
-
+有了实现`NoteView`的经验，接下来实现`TagView`会快很多。我们将按照之前的思路，声明一个由`Tag`结构体`into`的`Tagview`结构，通过给`TagView`实现`view`方法和`update`方法，并进行一些美化。
 
 
 ### 添加依赖
 
-有了实现`NoteView`的经验，接下来实现`tags`会快很多，在构建tags模块之前，我们先添加上一会儿会用到的依赖：
+在实现`TagView`之前，我们先添加上一会儿会用到的依赖：
+
 
 ```diff
 # 在 Cargo.toml 内
+    [dependencies]
+    localnative_core = { path = "../localnative_core" }
+    open = "1"
+    once_cell = "1.7"
 
 ++  serde = {version = "1",features = ["derive"]}
 ++  serde_json = "1"
-
-++  [dependencies.rand]
-++  version = "0.8"
-++  optional = true
-
-    [dependencies.iced_aw]
-    git = "https://github.com/iced-rs/iced_aw"
-    branch = "main"
-    default-features = false
-    features = ["wrap"] 
-
-    [dependencies.iced]
-    version = "0.3.0"
-    default-features = false
-
-    [features]
-    default = ["preview"]
-    wgpu = [
-        "iced/default",
-        "iced/tokio",
-        "iced/qr_code",
-        "iced/canvas",
-        ]
-    opengl = [
-        "iced/glow",
-        "iced/tokio",
-        "iced/glow_qr_code",
-        "iced/glow_canvas",
-        "iced/glow_default_system_font"
-        ]
-    preview = [
-        "wgpu",
-++      "rand"
-    ]
 ```
 
-总得来说就是添加了三个依赖，以及将其中一个依赖放入了特定features下才会开启。
-
-> 你可以像我一样给依赖开启optional，并且在特定feature里指定该依赖的名字，这样这个依赖在编译的时候，只会在该feature开启的情况下参与编译。
-
-我们需要使用rand产生一些随机数帮助我们测试接下来的一些用例。
-
-除此之外还添加了`serde`和`serde_json`两个依赖，前者我们还开启了`deriver`feature，可以帮助我们更简单的实现序列化。后者是因为`core`的返回值是`json`，我们之后会需要将从`core`获取的值转化为绘制GUI所需要的数据结构，也就需要用到这个依赖了。
+我们新增了`serde`和`serde_json`两个依赖，前者我们还开启了其`deriver`feature，可以帮助我们更简单的实现序列化。后者是因为`localnative_core`的返回值是`json`，我们之后会需要将从`localnative_core`获取的值转化为绘制GUI所需要的数据，也就需要用到这个依赖了。
 
 ### 开始构建
 
@@ -69,8 +33,7 @@ title: 4. 实现tags
 ++  mod tags;
     use iced::Command;
     pub use note::NoteView;
-++  #[cfg(feature = "preview")]
-++  pub use tags::Tags;
+++  pub use tags::TagView;
 ```
 
 我们需要先在`lib.rs`内添加上新的模块名，同时创建对应的`tags.rs`文件：
@@ -88,7 +51,6 @@ pub enum Message {
 }
 // 此处我们没有和NoteView中那样，直接使用core里面的Tag
 // 实际上，在core代码里没有对应的Tag，而是使用这样的一个结构体：
-// #[allow(clippy::upper_case_acronyms)]
 // #[derive(Serialize, Deserialize, Debug)]
 // pub struct KVStringI64 {
 //     pub k: String,
@@ -129,7 +91,7 @@ impl TagView {
                     &mut self.search_button,
                     Text::new(self.tag.name.as_str()).size(16),
                 )
-                // 直接使用NoteView时定义的style
+                // 直接使用NoteView时定义的tag风格
                 .style(style::tag(theme))
                 .on_press(Message::Search(self.tag.name.clone())),
             )
@@ -145,49 +107,89 @@ impl TagView {
             .into()
     }
 }
-// 为了方便预览，我们构建一个Vec来预览多个tag
+
+// 给TagView实现SandBox
 #[cfg(feature = "preview")]
-pub struct Tags {
-    tags: Vec<TagView>,
-}
-// 同样要实现SandBox
-#[cfg(feature = "preview")]
-impl iced::Sandbox for Tags {
+impl iced::Sandbox for TagView {
     type Message = Message;
 
     fn new() -> Self {
-        let mut tags =Vec::new();
-        // 这里使用随机数帮我们生成一些不一样的数据进行预览
-        for _ in 0..50 {
-            tags.push(
-                Tag {
-                    name: format!("test {}",rand::random::<i32>()),
-                    count: rand::random()
-                }
-            );
-        }
-        Self {
-            tags: tags.into_iter().map(|tag| TagView::from(tag)).collect(),
-        }
+        Tag {
+            name:"testtag".to_owned(),
+            count: 16
+        }.into()
     }
 
     fn title(&self) -> String {
-        "tags preview".to_owned()
+        "tagview preview".to_owned()
     }
 
     fn update(&mut self, message: Self::Message) {
+        // 简单打印即可，后续需要交给更高的层次处理
         match message {
             Message::Search(s) => println!("{}", s),
         }
     }
-//	使用wrap将所有的tag包裹起来
+//	再view里调用TagView的view方法，预览部分提供自己想要预览的主题即可
     fn view(&mut self) -> Element<'_, Self::Message> {
-        let wrap = iced_aw::Wrap::new().push(Text::new("tags:"));
-        self.tags
-            .iter_mut()
-            .fold(wrap, |wrap, tag| wrap.push(tag.view(Theme::Light)))
-            .into()
+        self.view(Theme::Light)
     }
 }
 ```
-同时我们
+同时不要忘记了给`count`定义风格：
+```rust
+// 在 style.rs 内
+pub struct Count {
+    theme: Theme
+}
+
+impl button::StyleSheet for Count {
+    fn active(&self) -> button::Style {
+        // 只需要简单定义颜色即可，同时将边框置为透明
+        let text_color = match self.theme {
+            Theme::Light => Color::from_rgb(1.0, 0.0, 0.0),
+            Theme::Dark =>  Color::from_rgb(0.2, 0.1, 1.0)
+        };
+        button::Style {
+            background: None,
+            border_radius: 0.0,
+            border_width: 0.0,
+            border_color: Color::TRANSPARENT,
+            text_color: text_color,
+            ..Default::default()
+        }
+    }
+}
+pub fn count(theme: Theme) -> Count {
+    Count {
+        theme
+    }
+}
+```
+和之前调用`NoteView`的预览一样，我们也需要在`preview`文件夹下新建一个`tagview.rs`文件：
+```rust
+// 在 preview/tagview.rs 下
+use iced::Sandbox;
+use localnative_iced::TagView;
+
+fn main() -> iced::Result {
+    TagView::run(localnative_iced::settings())
+}
+```
+并且将bin属性给添加到`Cargo.toml`内：
+```diff
+# 在 Cargo.toml 内
+++ [[bin]]
+++ name = "tagview"
+++ path = "./previews/tagview.rs"
+++ required-features = ["preview"]
+```
+完成这些常规操作之后我们可以运行看一下我们的最终结果了：
+```shell
+cargo run --bin tagview
+```
+得到以下结果：
+
+![tagview](../static/img/tutorial-04-00.png)
+
+到这里，我们的`TagView`就实现结束了，你可以根据你自己的喜好反复修改主题风格，直到满足你的要求。在下一节我们将会实现一个完整的搜索页面和一个完整的tags页面。

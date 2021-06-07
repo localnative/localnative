@@ -1,9 +1,7 @@
 ---
 id: tutorial3
-title: 3. 实现Note
+title: 3. 实现NoteView
 ---
-
-# 第三章 实现Note
 
 在之前的章节，我们已经初始化好了程序的整体框架，是时候向这个框架里填入内容了。
 
