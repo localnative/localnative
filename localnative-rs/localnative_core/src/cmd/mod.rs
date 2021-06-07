@@ -111,17 +111,6 @@ pub fn insert(note: Note) {
             ],
         ).unwrap();
     }
-    {
-        // mark is_last_note = 0 to indicate out of sync, i.e. db > ssb
-        tx.execute(
-            "
-        UPDATE ssb SET is_last_note = 0
-        WHERE is_active_author = 1
-        ",
-            [],
-        )
-        .unwrap();
-    }
     tx.commit().unwrap();
 }
 
