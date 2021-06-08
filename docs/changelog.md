@@ -4,6 +4,14 @@ title: Changelog
 ---
 [Updates](https://chuanyan.live/tags/localnative)
 
+## v0.5.0
+- ios and android: upgrade localnative_core dependencies
+- dmg and appimage: may be the last release of electron build
+- schema change: remove ssb table
+
+## v0.4.2
+- mac dmg: update dependencies
+
 ## v0.4.1
 - ios: fix input keyboard not show up in share extension, use SwiftUI
 - android: use fetch title status text
