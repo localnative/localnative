@@ -16,8 +16,6 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use super::utils;
-use super::uuid::Uuid;
 use rusqlite::{Connection, Result};
 
 pub fn drop_ssb_table(conn: &Connection) -> Result<()> {
