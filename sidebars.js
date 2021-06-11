@@ -16,6 +16,7 @@ module.exports = {
       "tutorial2",
       "tutorial3",
       "tutorial4",
+      "tutorial5",
     ]
   },
 };
