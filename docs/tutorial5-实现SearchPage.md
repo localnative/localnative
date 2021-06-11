@@ -212,11 +212,11 @@ fn main() -> iced::Result {
 cargo run --bin search_page
 ```
 可以得到以下结果：
-![preview0](../static/img/tutorial-05-00.png)
+![preview0](/img/tutorial-05-00.png)
 可以看到这个界面很简陋，我们会在后续一步一步的改进结果，在此之前，有些地方和我们的预期不一致，比如我们明显在页面的下方加入了页面信息的一行，但是并没有显示出来。
 
 出现这个问题的原因是因为我们的notes使用了`Scrollable`控件，同时在其外又包裹了一层`Container`控件，`Container`控件的默认`height`属性是`iced::Length::Shrink`,该字段的官方文档指填充最小空间，就我们当前的用例来说，最小空间已经超过了我们的窗口大小，如果此时你将我们的用例中note的数量5减少为2或3，那你就能看到之前被布局挤压下看不到的页面控制行了：
-![preview1](../static/img/tutorial-05-01.png)
+![preview1](/img/tutorial-05-01.png)
 
 知道了问题的所在原因，我们现在就来修复这个Bug，修复的方法也很简单，将默认的`height`给改成`Fill`:
 ```diff
@@ -235,7 +235,7 @@ cargo run --bin search_page
 ++      .height(iced::Length::Fill);
 ```
 改好之后，我们在运行5个note的示例，当前就符合我们的预期了：
-![preview2](../static/img/tutorial-05-02.png)
+![preview2](/img/tutorial-05-02.png)
 
 除了这个问题之外，还有一个问题也挺明显的，我们的note遮挡住了`Scrollable`的拖动栏，解决的方法也很简单，在创建`Scrollable`的时候，给其指定`padding`，指定的值根据自己的喜好来设置：
 
@@ -256,7 +256,7 @@ cargo run --bin search_page
 ```
 更改后运行：
 
-![preview3](../static/img/tutorial-05-03.png)
+![preview3](/img/tutorial-05-03.png)
 
 至此，我们粗略的完成了一个需要组合的页面的搭建，在接下来我们将先实现`update`方法，在大致完成更新方法之后我们再来优化页面样式。
 
@@ -770,7 +770,7 @@ pub fn vertical_rules<'a, Msg: 'a>(n: usize) -> Vec<Element<'a, Msg>> {
 
 修改之后运行,得到结果：
 
-![preview4](../static/img/tutorial-05-04.png)
+![preview4](/img/tutorial-05-04.png)
 
 ### 集成到lib.rs
 
@@ -940,7 +940,7 @@ impl iced::Application for LocalNative {
 cargo run --bin ln
 ```
 你可以看到以下结果：
-![preview5](../static/img/tutorial-05-05.png)
+![preview5](/img/tutorial-05-05.png)
 
 什么？你的程序里没有数据？是空白的？那就对了，你本身就没有向数据库写入过数据，所以是空白的，这很合理。如何解决这个问题呢？
 

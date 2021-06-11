@@ -7,7 +7,7 @@ title: 3. 实现NoteView
 
 本章我们将实现如下图所示的Note结构体的视图，并且通过`preview`这个feature来预览我们实现的效果。
 
-![Note演示](../static/img/tutorial-03-00.png)
+![Note演示](/img/tutorial-03-00.png)
 
 ### 创建新模块
 
@@ -357,9 +357,9 @@ fn main() -> iced::Result {
 cargo run --bin noteview
 ```
 
-![noteview qrcode disable](../static/img/tutorial-03-01.png)
+![noteview qrcode disable](/img/tutorial-03-01.png)
 
-![noteview qrcode enable](../static/img/tutorial-03-02.png)
+![noteview qrcode enable](/img/tutorial-03-02.png)
 
 正如上图所展示的，当前我们获得了一个十分简陋的UI，接下来我们将要解决以下问题：
 
@@ -616,7 +616,7 @@ impl iced::Sandbox for NoteView {
 cargo run --bin noteview
 ```
 
-![简单重构](../static/img/tutorial-03-03.png)
+![简单重构](/img/tutorial-03-03.png)
 
 接下来我们将引入`Wrap`控件，将我们的tag给放入这里面，这样我们的问题3也就同样被解决了。首先我们引入`iced_aw`这个crate，这是一个`iced`官方的额外控件crate，目前还没有发布到crate.io，因此我们只能通过git的方式引入到我们的项目中，还是老方法，如果网速不佳，请用国内镜像：
 
@@ -664,7 +664,7 @@ open = "1"
 
 运行之后：
 
-![添加wrap之后](../static/img/tutorial-03-04.png)
+![添加wrap之后](/img/tutorial-03-04.png)
 
 我们得到了一个还算不错的结果，但是说实话实在是太丑了，接下来我们将要给他做一些美化，同时也要为之后我们即将实现的暗色主题做准备。同时，如果你注意到之前的代码，会发现有不少地方是可以进行抽象的，比如我们在构建一个7:1位置的delete按钮时，重复的push了一堆Rule：
 
@@ -772,7 +772,7 @@ pub fn rule() -> iced::Rule {
 
 完成以上操作之后，我们可以看看实现的效果，只要继续运行`NoteView`的预览即可：
 
-![image-20210605180158673](../static/img/tutorial-03-06.png)
+![image-20210605180158673](/img/tutorial-03-06.png)
 
 细节上大家可以根据自己的喜好进行修改，现在我们给tag也实现风格：
 
@@ -815,7 +815,7 @@ pub fn rule() -> iced::Rule {
 
 再次运行：
 
-![image-20210605181911676](../static/img/tutorial-03-07.png)
+![image-20210605181911676](/img/tutorial-03-07.png)
 
 接下来是二维码，仔细看的话，可以注意到底部是白色，和我们当前的Note背景色显得格格不入，因此我们同样将它设置成Note背景色：
 
@@ -861,10 +861,10 @@ pub fn rule() -> iced::Rule {
 
 再次运行：
 
-![image-20210605200142431](../static/img/tutorial-03-08.png)
+![image-20210605200142431](/img/tutorial-03-08.png)
 
 比之前稍微好看了一丢丢，配色上可能确实不太行，后续有更好的设计，可以再切过来更改，现在还剩下二维码按钮和删除按钮没有进行添加样式，我们将在后续添加图标来替代，将会在添加字体的章节详细介绍。
 
 至此，note的简单实现到此结束，下一章将会介绍第二个部分tags，同时也会介绍如何将多个实现的部分组合到一块：
 
-![标签集](../static/img/tutorial-03-05.png)
+![标签集](/img/tutorial-03-05.png)

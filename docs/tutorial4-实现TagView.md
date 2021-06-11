@@ -190,6 +190,6 @@ cargo run --bin tagview
 ```
 得到以下结果：
 
-![tagview](../static/img/tutorial-04-00.png)
+![tagview](/img/tutorial-04-00.png)
 
 到这里，我们的`TagView`就实现结束了，你可以根据你自己的喜好反复修改主题风格，直到满足你的要求。在下一节我们将会实现一个完整的搜索页面和一个完整的tags页面。
