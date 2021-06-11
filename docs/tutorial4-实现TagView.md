@@ -93,7 +93,7 @@ impl TagView {
                 )
                 // 直接使用NoteView时定义的tag风格
                 .style(style::tag(theme))
-                .on_press(Message::Search(self.tag.name.clone())),
+                .on_press(Message::Search(self.tag.name.to_string())),
             )
             .push(
                 Button::new(

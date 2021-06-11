@@ -71,7 +71,7 @@ pub struct Tag {
 }
 // 最后，就像是我们在实现Application的时候一样
 // 如果我们想要处理消息，我们就需要定义一个Message来保存我们可能会用到的结构体
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub enum Message {
 	// 我们将会在需要对应msg的时候再来补充
 }
@@ -81,7 +81,7 @@ pub enum Message {
 
 ```rust
 // localnative_core内部
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
 pub struct Note {
     pub rowid: i64,
     pub uuid4: String,
@@ -153,7 +153,7 @@ impl From<Note> for NoteView {
 use iced::{button, qr_code, Button, Column, Element, QRCode, Row, Text};
 
 impl NoteView {
-    // 我们返回一个Element结构体，这个结构体需要一个msg泛型，该泛型要求实现Clone、Debug
+    // 我们返回一个Element结构体，这个结构体需要一个msg泛型，该泛型要求实现Send + Debug
     // iced中的组件都实现了Into<Element>，所以我们只需要正常写组件，最后返回的时候into()即可
     pub fn view(&mut self) -> Element<Message> {
         // 我们在以下操作中需要同一个结构体的不同部分的多个可变应用
