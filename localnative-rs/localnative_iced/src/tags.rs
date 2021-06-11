@@ -8,14 +8,14 @@ pub enum Message {
     Search(String),
 }
 
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Debug, Default, Deserialize, Serialize, Clone)]
 pub struct Tag {
     #[serde(rename = "k")]
     pub name: String,
     #[serde(rename = "v")]
     pub count: i32,
 }
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct TagView {
     pub tag: Tag,
     pub search_button: button::State,
@@ -31,7 +31,7 @@ impl From<Tag> for TagView {
     }
 }
 impl TagView {
-    pub fn view(&mut self,theme:Theme) -> Element<Message> {
+    pub fn view(&mut self, theme: Theme) -> Element<Message> {
         Row::new()
             .push(
                 Button::new(
@@ -53,16 +53,16 @@ impl TagView {
     }
 }
 
-
 #[cfg(feature = "preview")]
 impl iced::Sandbox for TagView {
     type Message = Message;
 
     fn new() -> Self {
         Tag {
-            name:"testtag".to_owned(),
-            count: 16
-        }.into()
+            name: "testtag".to_owned(),
+            count: 16,
+        }
+        .into()
     }
 
     fn title(&self) -> String {

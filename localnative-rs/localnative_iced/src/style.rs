@@ -1,6 +1,6 @@
 use iced::futures::stream::Collect;
 // ------impl note start-----
-use iced::{button, qr_code, rule, Element};
+use iced::{button, qr_code, rule, text_input, Element};
 use iced::{container, Background, Color};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -74,26 +74,36 @@ impl rule::StyleSheet for TransparentRule {
         }
     }
 }
-pub fn rule() -> iced::Rule {
+pub fn horizontal_rule() -> iced::Rule {
     iced::Rule::horizontal(0).style(TransparentRule)
 }
-pub fn rules<'a, Msg: 'a>(n: usize) -> Vec<Element<'a, Msg>> {
+pub fn horizontal_rules<'a, Msg: 'a>(n: usize) -> Vec<Element<'a, Msg>> {
     let mut res = Vec::with_capacity(n);
     for _ in 0..n {
-        res.push(rule().into());
+        res.push(horizontal_rule().into());
+    }
+    res
+}
+pub fn vertical_rule() -> iced::Rule {
+    iced::Rule::vertical(0).style(TransparentRule)
+}
+pub fn vertical_rules<'a, Msg: 'a>(n: usize) -> Vec<Element<'a, Msg>> {
+    let mut res = Vec::with_capacity(n);
+    for _ in 0..n {
+        res.push(vertical_rule().into());
     }
     res
 }
 pub struct Note {
     theme: Theme,
 }
-const LIGHT_NOTE_BG: Color = Color::from_rgb(0.941, 0.972, 1.0);
-const DARK_NOTE_BG: Color = Color::from_rgb(0.0784, 0.0863, 0.141);
+const LIGHT_BG: Color = Color::from_rgb(0.941, 0.972, 1.0);
+const DARK_BG: Color = Color::from_rgb(0.0784, 0.0863, 0.141);
 impl container::StyleSheet for Note {
     fn style(&self) -> container::Style {
         let (tcolor, bg_color, bd_color) = match self.theme {
-            Theme::Light => (Color::BLACK, LIGHT_NOTE_BG, Color::from_rgb8(240, 255, 255)),
-            Theme::Dark => (Color::WHITE, DARK_NOTE_BG, Color::from_rgb8(20, 36, 36)),
+            Theme::Light => (Color::BLACK, LIGHT_BG, Color::from_rgb8(240, 255, 255)),
+            Theme::Dark => (Color::WHITE, DARK_BG, Color::from_rgb8(20, 36, 36)),
         };
         container::Style {
             text_color: Some(tcolor),
@@ -139,22 +149,22 @@ pub fn tag(theme: Theme) -> Tag {
 }
 pub fn qr_code(mut qr_code: qr_code::QRCode, theme: Theme) -> qr_code::QRCode {
     let (dark, light) = match theme {
-        Theme::Light => (Color::BLACK, LIGHT_NOTE_BG),
-        Theme::Dark => (Color::WHITE, DARK_NOTE_BG),
+        Theme::Light => (Color::BLACK, LIGHT_BG),
+        Theme::Dark => (Color::WHITE, DARK_BG),
     };
     qr_code.color(dark, light)
 }
 // --------impl note end------
 // --------impl tags start------
 pub struct Count {
-    theme: Theme
+    theme: Theme,
 }
 
 impl button::StyleSheet for Count {
     fn active(&self) -> button::Style {
         let text_color = match self.theme {
             Theme::Light => Color::from_rgb(1.0, 0.0, 0.0),
-            Theme::Dark =>  Color::from_rgb(0.2, 0.1, 1.0)
+            Theme::Dark => Color::from_rgb(0.2, 0.1, 1.0),
         };
         button::Style {
             background: None,
@@ -167,8 +177,56 @@ impl button::StyleSheet for Count {
     }
 }
 pub fn count(theme: Theme) -> Count {
-    Count {
-        theme
+    Count { theme }
+}
+// --------impl tags end ------
+// --------impl search page start------
+pub struct Normal {
+    theme: Theme,
+}
+
+impl container::StyleSheet for Normal {
+    fn style(&self) -> container::Style {
+        let (tcolor, bg_color) = match self.theme {
+            Theme::Light => (Color::BLACK, LIGHT_BG),
+            Theme::Dark => (Color::WHITE, DARK_BG),
+        };
+        container::Style {
+            text_color: Some(tcolor),
+            background: Some(Background::Color(bg_color)),
+            border_radius: 0.0,
+            border_width: 0.0,
+            border_color: Color::TRANSPARENT,
+        }
     }
 }
-// --------impl tags end------
+
+pub fn normal(theme: Theme) -> Normal {
+    Normal { theme }
+}
+
+pub struct SearchInput {
+    theme: Theme,
+}
+impl text_input::StyleSheet for SearchInput {
+    fn active(&self) -> text_input::Style {
+        todo!()
+    }
+
+    fn focused(&self) -> text_input::Style {
+        todo!()
+    }
+
+    fn placeholder_color(&self) -> Color {
+        todo!()
+    }
+
+    fn value_color(&self) -> Color {
+        todo!()
+    }
+
+    fn selection_color(&self) -> Color {
+        todo!()
+    }
+}
+// --------impl search page end------

@@ -132,7 +132,7 @@ pub struct Ssb {
     pub prev: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
 pub struct Note {
     pub rowid: i64,
     pub uuid4: String,

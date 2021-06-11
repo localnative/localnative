@@ -2,7 +2,7 @@ use iced::{button, qr_code, Button, Column, Element, QRCode, Row, Text};
 use localnative_core::Note;
 
 use crate::style;
-
+#[derive(Debug)]
 pub struct NoteView {
     note: Note,
     tags: Vec<Tag>,
@@ -11,6 +11,7 @@ pub struct NoteView {
     delete: button::State,
     qrcode: Option<qr_code::State>,
 }
+#[derive(Debug, Clone)]
 pub struct Tag {
     name: String,
     open_tag: button::State,
@@ -19,7 +20,7 @@ pub struct Tag {
 #[derive(Debug, Clone)]
 pub enum Message {
     OpenUrl,
-    Delete,
+    Delete(i64),
     QRCode,
     Search(String),
 }
@@ -63,7 +64,7 @@ impl NoteView {
             .style(style::link(theme))
             .padding(0)
             .on_press(Message::OpenUrl);
-        let delete = Button::new(delete, Text::new("delete")).on_press(Message::Delete);
+        let delete = Button::new(delete, Text::new("delete")).on_press(Message::Delete(note.rowid));
         let qrcode_button = Button::new(open_qrcode, Text::new("qr")).on_press(Message::QRCode);
         let row = Row::new()
             .spacing(5)
@@ -84,9 +85,9 @@ impl NoteView {
         if let Some(qrcode) = qrcode {
             column = column.push(
                 Row::new()
-                    .push(style::rule())
+                    .push(style::horizontal_rule())
                     .push(qrcode)
-                    .push(style::rule()),
+                    .push(style::horizontal_rule()),
             );
         }
         if !note.title.is_empty() {
@@ -103,9 +104,9 @@ impl NoteView {
         }
 
         column = column.push(
-            Row::with_children(style::rules::<Message>(7))
+            Row::with_children(style::horizontal_rules::<Message>(7))
                 .push(delete)
-                .push(style::rule()),
+                .push(style::horizontal_rule()),
         );
         iced::Container::new(column)
             .style(style::note(theme))
@@ -115,8 +116,9 @@ impl NoteView {
     pub fn update(&mut self, msg: Message) {
         match msg {
             Message::OpenUrl => open(self.note.url.as_str()),
-            Message::Delete => {
+            Message::Delete(ruid) => {
                 // 上层处理
+                // TODO:
                 println!("delete");
             }
             Message::QRCode => match self.qrcode {

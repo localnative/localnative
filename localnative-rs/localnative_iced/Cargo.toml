@@ -70,3 +70,8 @@ required-features = ["preview"]
 name = "tagview"
 path = "./previews/tagview.rs"
 required-features = ["preview"]
+
+[[bin]]
+name = "search_page"
+path = "./previews/search_page.rs"
+required-features = ["preview"]
