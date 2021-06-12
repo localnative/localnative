@@ -73,6 +73,17 @@ function Home() {
       'button button--outline button--secondary button--lg',
       styles.getStarted,
     )}
+    to="https://gitlab.com/localnative/localnative-release/tree/master/v0.5.0">
+    Windows
+          </Link>
+          </div>
+
+          <div className={styles.buttons}>
+          <Link
+    className={classnames(
+      'button button--outline button--secondary button--lg',
+      styles.getStarted,
+    )}
     to="https://itunes.apple.com/us/app/local-native/id1443968309">
     iOS & iPadOS
           </Link>
