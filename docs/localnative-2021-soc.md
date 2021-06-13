@@ -122,7 +122,7 @@ TODO
   - Make merge_request trigger pipeline work
 
 ### 2021-05-01
-<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/r5xlfirTJf0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/O4QkEvdRR0o" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 - Cupnfish
   - decide to simplify release as compressed file
