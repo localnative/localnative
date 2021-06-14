@@ -44,25 +44,23 @@ use localnative_core::Note;
 ```rust
 // 在 note.rs 内
 // 我们定义一个NoteView的结构体，给该结构体实现相关方法
+#[derive(Debug)]
 pub struct NoteView {
     note: Note,
-    // 当前的实现需求过于简单，因此没有必要通过构建一个State结构体来实现状态保存
-    // 但大多数时候，我们通常需要构建一个State枚举体来管理状态，在复杂情况下这通常很有用
-    // state: State,
-    // 我们通过bool值来保存当前note是否开启
-    qrcode: bool,
     // 标签的数量不是固定的，因此我们需要Vec来保存标签
     // Note中的标签使用String来保存，通过逗号隔离每个标签
     // 我们需要自己处理，将标签装换成tags
-    tags: Vec<Tag>, // Tag我们将会下面定义
+    tags: Vec<Tag>,// Tag我们将会下面定义
     // iced 中的button在构建的时候，需要我们提供一个&mut State
     // 我们将State放到NoteView里面保存
     // 我们只需要两个State就够了，因为Tag按钮的State我们将单独放到每个Tag结构体中去
     open_url: iced::button::State,
     open_qrcode: iced::button::State,
+    delete: iced::button::State,
+    // 我们通过bool值来保存当前note是否开启
     // 和button一样qr_code组件需要提供&mut qr_code::State
     // 默认的note是关闭二维码的，因此我们在此处的state设置为Option
-    qrcode_state: Option<iced::qr_code::State>
+    qrcode: Option<iced::qr_code::State>,
 }
 // 我们只需要保存标签的名字和对应按钮的状态即可
 pub struct Tag {
@@ -132,13 +130,12 @@ impl From<Note> for NoteView {
         .collect();
         NoteView {
             note,
-            // 默认关闭二维码
-            qrcode: false,
             tags,
             open_url: button::State::new(),
             open_qrcode: button::State::new(),
+            delete: button::State::new(),
             // 默认关闭二维码
-            qrcode_state: None
+            qrcode: None,
         }
     }
 }
@@ -150,7 +147,7 @@ impl From<Note> for NoteView {
 // ... 紧接上面代码
 // 在 note.rs 内
 // 引用应当凡在当前模块最顶端更为合适
-use iced::{button, qr_code, Button, Column, Element, QRCode, Row, Text};
+use iced::{button, qr_code, Button, Column, Element, QRCode, Row, Text, Rule};
 
 impl NoteView {
     // 我们返回一个Element结构体，这个结构体需要一个msg泛型，该泛型要求实现Send + Debug
