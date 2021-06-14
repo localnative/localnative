@@ -11,7 +11,7 @@ tags: ["all", "why", "localnative"]
 It seems applications today are "Cloud Native" by default. For end user, it becomes expected for a "meaningful" application to have all its data available on all the devices all the time. However this assumed convenience comes with drawbacks:
 
 - performance for certain feature
-<!--truncate-->
+
 Network is still slow, hence caching and syncing cache with remote datastore is a normal practice to boost user experience at the cost of draining device battery.
 
 *What if things are stored locally natively?*

@@ -1,5 +1,5 @@
 ---
-title: "2021-03-30 详解 Rust 实现的跨平台去中心的应用 Local Native"
+title: "详解 Rust 实现的跨平台去中心的应用 Local Native"
 author: Yi Wang
 authorURL: https://www.yi-wang.me
 authorImageURL: https://secure.gravatar.com/avatar/1484b2bde1c0027dab9b135a1e051b3b?s=180&d=identicon
