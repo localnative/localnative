@@ -33,7 +33,7 @@ localnative_core = { path = "../localnative/localnative-rs/localnative_core" }
 ++     "iced/tokio",
 ++     "iced/glow_qr_code",
 ++     "iced/glow_default_system_font"
-+++     ]
+++     ]
 ++ preview = [
 ++     "wgpu"
 ++ ]
@@ -51,7 +51,7 @@ localnative_core = { path = "../localnative/localnative-rs/localnative_core" }
 
 ### 创建可预览程序集
 
-在接下来的开发过程中，我们会构建各种GUI组件，最后会将这些组件组合成一个完整的应用程序，为了方便教学中进行调试，我们需要构建一个可预览的程序集，因此我们在原有项目目录下创建一个叫做`previews`文件夹：
+在接下来的开发过程中，我们会构建各种GUI组件，最后会将这些组件组合成一个完整的应用程序，为了方便教学中进行调试，我们需要构建一个可预览的程序集，因此我们在`ln-iced/`目录下创建一个叫做`previews`文件夹：
 
 ```diff
 // befor:
@@ -114,7 +114,7 @@ fn main() {
 }
 ```
 
-我们通过一下命令来运行我们想要运行的可执行文件：
+我们通过以下命令来运行我们想要运行的可执行文件：
 
 ```shell
 # 运行名字叫做ln的可执行文件

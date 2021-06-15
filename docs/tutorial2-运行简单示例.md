@@ -54,7 +54,7 @@ pub fn settings() -> iced::Settings<()> {
 }
 ```
 
-同时`bin.rs`复制以下内容到该文件内：
+同时复制以下内容到`bin.rs`文件内：
 
 ```rust
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
@@ -194,7 +194,7 @@ pub fn settings() -> iced::Settings<()> {
 >
 > 我们之前创建项目的时候使用的名字是:`ln-iced`，但是在`bin.rs`里引用的时候，使用的是`ln_iced`，这是Rust自动转换的结果，另外你也只能通过`ln_iced`引用到你想引用的值，用`ln-iced`是没有用的。
 
-在完成以上操作之后，保存之后就可以跑以下程序试试了：
+在完成上述操作之后，保存之后就可以跑一下程序试试了：
 
 ```shell
 cargo run --bin ln

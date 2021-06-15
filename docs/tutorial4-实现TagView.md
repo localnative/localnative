@@ -130,7 +130,7 @@ impl iced::Sandbox for TagView {
             Message::Search(s) => println!("{}", s),
         }
     }
-//	再view里调用TagView的view方法，预览部分提供自己想要预览的主题即可
+//	在view里调用TagView的view方法，预览部分提供自己想要预览的主题即可
     fn view(&mut self) -> Element<'_, Self::Message> {
         self.view(Theme::Light)
     }

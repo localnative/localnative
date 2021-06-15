@@ -67,7 +67,7 @@ pub struct Tag {
     name: String,
     open_tag: iced::button::State, 
 }
-// 最后，就像是我们在实现Application的时候一样
+// 最后，就像是我们当初实现Application的时候一样
 // 如果我们想要处理消息，我们就需要定义一个Message来保存我们可能会用到的结构体
 #[derive(Debug,Clone)]
 pub enum Message {
@@ -94,7 +94,7 @@ pub struct Note {
     pub description: String,
     pub comments: String,
     // annotations这个字段是一个历史遗留字段
-    // 在note的前端我们不需要对齐进行任何展示
+    // 在note的前端我们不需要对其进行任何展示
     pub annotations: String,
     pub created_at: String,
     // is_public是后端内部使用字段，同样不需要我们关注
@@ -146,7 +146,7 @@ impl From<Note> for NoteView {
 ```rust
 // ... 紧接上面代码
 // 在 note.rs 内
-// 引用应当凡在当前模块最顶端更为合适
+// 引用应当放在当前模块最顶端更为合适
 use iced::{button, qr_code, Button, Column, Element, QRCode, Row, Text, Rule};
 
 impl NoteView {
@@ -245,7 +245,7 @@ impl NoteView {
                 }
             },
             Message::Search(tag) => {
-                // 通delete，需要上册处理
+                // 同delete，需要上层处理
                 println!("search tag: {}", tag);
             }
         }
@@ -404,7 +404,7 @@ mod note;
 ++ mod style;
 ```
 
-同时新建`style.rs`文件：
+同时新建`src/style.rs`文件：
 
 ```rust
 // 在 style.rs 内
@@ -684,8 +684,8 @@ open = "1"
 pub fn rule() -> iced::Rule {
     iced::Rule::horizontal(0).style(TransparentRule)
 }
-// 到了大家都讨厌的标注生存期环节了，我们将在后续给出事如何一步步标注出生存期的
-// 这个函数本身很简单，只需要知道事为了将Rule转换到Element并且收集到同一个Vec即可
+// 到了大家都讨厌的标注生存期环节了，我们将在后续给出是如何一步步标注出生存期的
+// 这个函数本身很简单，只需要知道是为了将Rule转换到Element并且收集到同一个Vec即可
 ++ pub fn rules<'a, Msg: 'a>(n: usize) -> Vec<Element<'a, Msg>> {
 ++     let mut res = Vec::with_capacity(n);
 ++     for _ in 0..n {
@@ -710,7 +710,7 @@ pub fn rule() -> iced::Rule {
         );
 ```
 
-> 现在让我们来看看rules这个函数事如何标注其生命期的，标注生命期的情况只有返回值带生命期的时候，才需要我们考虑，因为生命期本身代表的就是参数和返回值的生存期关系。当前我们需要返回一个`Vec<Element<'a,Msg>>`，我们声明所需要的生命期参数:`'a`，同时也声明我们需要的`Msg`泛型，接着我们就可以正常写完我们的函数了。将函数补全之后，如果你直接编译的话，编译器会高随你`Msg`活的时间不够长，这时候只需要在声明`Msg`的时候给它一个生存期限制，让它至少要活得比返回值`Vec<Element<'a,Msg>>`的生存期要长：`Msg:'a`。
+> 现在让我们来看看rules这个函数是如何标注其生命期的，标注生命期的情况只有返回值带生命期的时候，才需要我们考虑，因为生命期本身代表的就是参数和返回值的生存期关系。当前我们需要返回一个`Vec<Element<'a,Msg>>`，我们声明所需要的生命期参数:`'a`，同时也声明我们需要的`Msg`泛型，接着我们就可以正常写完我们的函数了。将函数补全之后，如果你直接编译的话，编译器会告诉你`Msg`活的时间不够长，这时候只需要在声明`Msg`的时候给它一个生存期限制，让它至少要活得比返回值`Vec<Element<'a,Msg>>`的生存期要长：`Msg:'a`。
 
 如果熟悉Rust的数组，应该知道有个宏叫做`vec!`，可以方便的构建多个重复元素，因此这里我们应该还可以这样使用：
 
