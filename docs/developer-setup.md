@@ -83,15 +83,15 @@ You can use [DB Browser for SQLite](http://sqlitebrowser.org/) to explore the da
 
 ##  Desktop
 
-#### Mac and GNU/Linux
+#### Rust GUI using Iced
+see tutorial
+
+#### Electron - only Mac and GNU/Linux - deprecated
 ```
 cd localnative-electron
 npm i
 npm run build
 npm run dev
-```
-#### Windows
-```
 ```
 
 ## Mobile
