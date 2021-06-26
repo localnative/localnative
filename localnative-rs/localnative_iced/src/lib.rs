@@ -7,6 +7,7 @@ mod tags;
 
 use std::sync::Arc;
 
+pub use days::Chart;
 pub use days::DateView;
 use days::HandleDays;
 use iced::{futures::lock::Mutex, Column, Command, Row, Text, Vector};
@@ -16,7 +17,6 @@ pub use note::NoteView;
 pub use search_page::SearchPage;
 use style::Theme;
 pub use tags::TagView;
-pub use days::Chart;
 
 pub enum LocalNative {
     Loading,
