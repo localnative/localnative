@@ -2,6 +2,16 @@
 id: localnative-2021-soc
 title: Local Native 2021 SoC
 ---
+
+### 2021-06-26
+<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/_sIxnoAAep0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+- Cupnfish
+  - 2nd view for timeseries visualization
+  
+- yi started tutorial translation
+- Hill to review and improve current tutorial content
+
 ### 2021-06-19
 <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/jdVv5ds0OoQ" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
