@@ -2,6 +2,11 @@
 id: localnative-2021-soc
 title: Local Native 2021 SoC
 ---
+### 2021-06-19
+<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/jdVv5ds0OoQ" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+- Cupnfish 
+  - progress and code review on timeseries visualization using Canvas
 
 ### 2021-06-12
 <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/Zv5SzXtRA5k" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>

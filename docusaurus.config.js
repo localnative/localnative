@@ -78,10 +78,6 @@ module.exports = {
               label: 'Open Collective',
               href: 'https://opencollective.com/localnative',
             },
-            {
-              label: 'Pateron',
-              href: 'https://www.patreon.com/localnative',
-            },
           ],
         },
         {

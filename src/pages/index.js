@@ -28,7 +28,7 @@ const features = [
     ),
   },
   {
-    title: <>Cross Platfom</>,
+    title: <>Cross Platform</>,
     imageUrl: 'img/localnative-desktop-0.3.10-qrcode.jpg',
     description: (
       <>
@@ -60,8 +60,8 @@ function Home() {
   const {siteConfig = {}} = context;
   return (
     <Layout
-      title={`Hello from ${siteConfig.title}`}
-      description="Description will go into a meta tag in <head />">
+      title={`${siteConfig.title}`}
+      description="Fast, Decentralized and Cross Platform bookmark tool <head />">
       <header className={classnames('hero hero--primary', styles.heroBanner)}>
         <div className="container">
           <h1 className="hero__title">{siteConfig.title}</h1>
@@ -137,6 +137,10 @@ function Home() {
 
           <div class="container">
           <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/DBsVscpSp6w" frameBorder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowFullScreen class="video"></iframe>
+          </div>
+
+          <div class="container">
+            <img src="img/wechat/localnative-wechat-qrcode-white.png" width="400" />
           </div>
 
         </div>
