@@ -147,7 +147,7 @@ impl button::StyleSheet for Tag {
 pub fn tag(theme: Theme) -> Tag {
     Tag { theme }
 }
-pub fn qr_code(mut qr_code: qr_code::QRCode, theme: Theme) -> qr_code::QRCode {
+pub fn qr_code(qr_code: qr_code::QRCode, theme: Theme) -> qr_code::QRCode {
     let (dark, light) = match theme {
         Theme::Light => (Color::BLACK, LIGHT_BG),
         Theme::Dark => (Color::WHITE, DARK_BG),
@@ -210,23 +210,41 @@ pub struct SearchInput {
 }
 impl text_input::StyleSheet for SearchInput {
     fn active(&self) -> text_input::Style {
-        todo!()
+        text_input::Style {
+            background: Background::Color(Color::TRANSPARENT),
+            border_radius: 5.0,
+            border_width: 1.0,
+            border_color: Color::TRANSPARENT,
+        }
     }
 
     fn focused(&self) -> text_input::Style {
-        todo!()
+        text_input::Style {
+            border_color: Color::from_rgb(0.5, 0.5, 0.5),
+            ..self.active()
+        }
     }
 
     fn placeholder_color(&self) -> Color {
-        todo!()
+        match self.theme {
+            Theme::Light => Color::from_rgb(0.7, 0.7, 0.7),
+            Theme::Dark => todo!(),
+        }
     }
 
     fn value_color(&self) -> Color {
-        todo!()
+        match self.theme {
+            Theme::Light => Color::from_rgb(0.3, 0.3, 0.3),
+            Theme::Dark => todo!(),
+        }
     }
 
     fn selection_color(&self) -> Color {
-        todo!()
+        match self.theme {
+            Theme::Light => Color::from_rgb(0.8, 0.8, 1.0),
+            Theme::Dark => todo!(),
+        }
     }
 }
+
 // --------impl search page end------

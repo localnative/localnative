@@ -13,7 +13,7 @@ pub struct Tag {
     #[serde(rename = "k")]
     pub name: String,
     #[serde(rename = "v")]
-    pub count: i32,
+    pub count: i64,
 }
 #[derive(Debug, Default, Clone)]
 pub struct TagView {

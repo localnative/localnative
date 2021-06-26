@@ -10,12 +10,14 @@ use crate::{
     middle_date::MiddleDate,
     style::{self, Theme},
     tags::Tag,
-    NoteView, TagView,
+    DateView, NoteView, TagView,
 };
 #[derive(Default)]
 pub struct SearchPage {
     pub notes: Vec<NoteView>,
     pub tags: Vec<TagView>,
+    pub days: DateView,
+    pub range: Option<(time::Date, time::Date)>,
     search_value: String,
     pub offset: u32,
     pub count: u32,
@@ -32,6 +34,7 @@ pub enum Message {
     Receiver(Option<MiddleDate>),
     NoteMessage(crate::note::Message, usize),
     TagMessage(crate::tags::Message),
+    DayMessage(crate::days::Message),
     Search,
     SearchInput(String),
     Clear,
@@ -40,11 +43,12 @@ pub enum Message {
     PrePage,
 }
 impl SearchPage {
-    pub fn new(count: u32, notes: Vec<NoteView>, tags: Vec<TagView>) -> Self {
+    pub fn new(count: u32, notes: Vec<NoteView>, tags: Vec<TagView>, days: DateView) -> Self {
         Self {
             count,
             notes,
             tags,
+            days,
             ..Default::default()
         }
     }
@@ -52,6 +56,7 @@ impl SearchPage {
         let Self {
             notes,
             tags,
+            days,
             search_value,
             input_state,
             clear_button,
@@ -71,7 +76,7 @@ impl SearchPage {
             )
             .on_submit(Message::Search),
         );
-        if !self.search_value.is_empty() {
+        if !self.search_value.is_empty() || self.range.is_some() {
             search_bar =
                 search_bar.push(Button::new(clear_button, Text::new("X")).on_press(Message::Clear));
         }
@@ -83,6 +88,28 @@ impl SearchPage {
                 |tags, tag| tags.push(tag.view(theme).map(Message::TagMessage)),
             )))
             .width(iced::Length::FillPortion(2));
+        let is_show = days.is_show;
+        let days = Container::new(days.view(theme).map(Message::DayMessage)).height({
+            if is_show {
+                iced::Length::FillPortion(4)
+            } else {
+                iced::Length::Shrink
+            }
+        });
+        let next_button = Button::new(next_button, Text::new("->")).on_press(Message::NextPage);
+        let pre_button = Button::new(pre_button, Text::new("<-")).on_press(Message::PrePage);
+        let page_info = Text::new(format!(
+            "{}-{}/{}",
+            self.offset + 1,
+            (self.offset + limit).min(self.count),
+            self.count
+        ));
+        let page_ctrl = Row::new()
+            .push(style::horizontal_rule())
+            .push(pre_button)
+            .push(page_info)
+            .push(next_button)
+            .push(style::horizontal_rule());
         let note_page = if self.count > 0 {
             let notes = Container::new(notes.iter_mut().enumerate().fold(
                 Scrollable::new(notes_scrollable).padding(10),
@@ -94,34 +121,31 @@ impl SearchPage {
                     )
                 },
             ))
-            .height(iced::Length::Fill);
-            let next_button = Button::new(next_button, Text::new("->")).on_press(Message::NextPage);
-            let pre_button = Button::new(pre_button, Text::new("<-")).on_press(Message::PrePage);
-            let page_info = Text::new(format!(
-                "{}-{}/{}",
-                self.offset + 1,
-                (self.offset + limit).min(self.count),
-                self.count
-            ));
-            let page_ctrl = Row::new()
-                .push(style::horizontal_rule())
-                .push(pre_button)
-                .push(page_info)
-                .push(next_button)
-                .push(style::horizontal_rule());
+            .height(iced::Length::FillPortion(8));
 
-            Column::new().push(search_bar).push(notes).push(page_ctrl)
+            Column::new()
+                .push(search_bar)
+                .push(days)
+                .push(notes)
+                .push(page_ctrl)
         } else {
-            let tip = if self.search_value.is_empty() {
+            let tip = if self.search_value.is_empty() && self.range.is_none() {
                 "Not Created"
             } else {
                 "Not Founded"
             };
+            let tip = Container::new(
+                Column::new()
+                    .push(style::vertical_rule())
+                    .push(Text::new(tip).size(50))
+                    .push(style::vertical_rule()),
+            )
+            .height(iced::Length::FillPortion(8));
             Column::new()
                 .push(search_bar)
-                .push(style::vertical_rule())
-                .push(Text::new(tip).size(50))
-                .push(style::vertical_rule())
+                .push(days)
+                .push(tip)
+                .push(page_ctrl)
         }
         .align_items(iced::Align::Center)
         .width(iced::Length::FillPortion(8));
@@ -134,21 +158,53 @@ impl SearchPage {
         conn: Arc<Mutex<Connection>>,
     ) -> Command<Message> {
         match message {
-            Message::Search => search(conn, self.search_value.to_owned(), limit, self.offset),
+            Message::Search => search(
+                conn,
+                self.search_value.to_owned(),
+                limit,
+                self.offset,
+                self.range,
+            ),
             Message::SearchInput(search_value) => {
                 self.search_value = search_value;
-                search(conn, self.search_value.to_owned(), limit, self.offset)
+                search(
+                    conn,
+                    self.search_value.to_owned(),
+                    limit,
+                    self.offset,
+                    self.range,
+                )
             }
             Message::Clear => {
                 self.search_value.clear();
-                search(conn, self.search_value.to_owned(), limit, self.offset)
+                self.range.take();
+                self.days.clear_cache_and_convert_selected_range();
+                search(
+                    conn,
+                    self.search_value.to_owned(),
+                    limit,
+                    self.offset,
+                    self.range,
+                )
             }
-            Message::Refresh => search(conn, self.search_value.to_owned(), limit, self.offset),
+            Message::Refresh => search(
+                conn,
+                self.search_value.to_owned(),
+                limit,
+                self.offset,
+                self.range,
+            ),
             Message::NextPage => {
                 let current_count = self.offset + limit;
                 if current_count < self.count {
                     self.offset = current_count;
-                    search(conn, self.search_value.to_owned(), limit, self.offset)
+                    search(
+                        conn,
+                        self.search_value.to_owned(),
+                        limit,
+                        self.offset,
+                        self.range,
+                    )
                 } else {
                     Command::none()
                 }
@@ -156,10 +212,22 @@ impl SearchPage {
             Message::PrePage => {
                 if self.offset >= limit {
                     self.offset -= limit;
-                    search(conn, self.search_value.to_owned(), limit, self.offset)
+                    search(
+                        conn,
+                        self.search_value.to_owned(),
+                        limit,
+                        self.offset,
+                        self.range,
+                    )
                 } else if self.offset != 0 {
                     self.offset = 0;
-                    search(conn, self.search_value.to_owned(), limit, self.offset)
+                    search(
+                        conn,
+                        self.search_value.to_owned(),
+                        limit,
+                        self.offset,
+                        self.range,
+                    )
                 } else {
                     Command::none()
                 }
@@ -177,7 +245,13 @@ impl SearchPage {
                 ),
                 crate::note::Message::Search(s) => {
                     self.search_value = s;
-                    search(conn, self.search_value.to_owned(), limit, self.offset)
+                    search(
+                        conn,
+                        self.search_value.to_owned(),
+                        limit,
+                        self.offset,
+                        self.range,
+                    )
                 }
                 msg => {
                     if let Some(note) = self.notes.get_mut(idx) {
@@ -192,8 +266,65 @@ impl SearchPage {
                 match tag_msg {
                     crate::tags::Message::Search(text) => self.search_value = text,
                 }
-                search(conn, self.search_value.to_owned(), limit, self.offset)
+                search(
+                    conn,
+                    self.search_value.to_owned(),
+                    limit,
+                    self.offset,
+                    self.range,
+                )
             }
+            Message::DayMessage(dm) => match dm {
+                crate::days::Message::DayOrMonth => {
+                    self.days.day_or_month();
+                    self.days.clear_cache_and_convert_selected_range();
+                    Command::none()
+                }
+                crate::days::Message::Close => {
+                    //TODO
+                    Command::none()
+                }
+                crate::days::Message::ChartMsg(crate::days::ChartMsg::ClearRange) => {
+                    self.days.clear_cahce();
+                    self.days.chart.selected.take();
+                    self.range.take();
+                    if self.days.is_full {
+                        match self.days.chart.level {
+                            crate::days::ChartLevel::Day => {
+                                self.days.chart.full_days = self.days.full_days;
+                                self.days.chart.last_day = self.days.last_day;
+                            }
+                            crate::days::ChartLevel::Month => {
+                                self.days.chart.full_months = self.days.full_months;
+                                self.days.chart.last_month = self.days.last_month;
+                            }
+                        }
+                    }
+                    search(
+                        conn,
+                        self.search_value.to_owned(),
+                        limit,
+                        self.offset,
+                        self.range,
+                    )
+                }
+                crate::days::Message::ChartMsg(crate::days::ChartMsg::FilterSearch(selected)) => {
+                    self.days.clear_cahce();
+                    let range = self.days.get_range(selected);
+                    self.range = Some(range);
+                    search(
+                        conn,
+                        self.search_value.to_owned(),
+                        limit,
+                        self.offset,
+                        self.range,
+                    )
+                }
+                dm => {
+                    self.days.update(dm);
+                    Command::none()
+                }
+            },
         }
     }
 }
@@ -203,11 +334,19 @@ fn search(
     query: String,
     limit: u32,
     offset: u32,
+    range: Option<(time::Date, time::Date)>,
 ) -> Command<Message> {
-    Command::perform(
-        MiddleDate::from_select(conn, query, limit, offset),
-        Message::Receiver,
-    )
+    if let Some((from, to)) = range {
+        Command::perform(
+            MiddleDate::from_filter(conn, query, limit, offset, from, to),
+            Message::Receiver,
+        )
+    } else {
+        Command::perform(
+            MiddleDate::from_select(conn, query, limit, offset),
+            Message::Receiver,
+        )
+    }
 }
 
 #[cfg(feature = "preview")]
@@ -215,7 +354,7 @@ impl iced::Sandbox for SearchPage {
     type Message = Message;
 
     fn new() -> Self {
-        let count = 0;
+        let count = 20;
         let mut notes = Vec::with_capacity(count as usize);
         for _ in 0..count {
             notes.push(NoteView::new());
@@ -230,10 +369,12 @@ impl iced::Sandbox for SearchPage {
         .into_iter()
         .map(TagView::from)
         .collect();
+        let days = DateView::default();
         Self {
             notes,
             tags,
             offset: 0,
+            days,
             count,
             ..Default::default()
         }

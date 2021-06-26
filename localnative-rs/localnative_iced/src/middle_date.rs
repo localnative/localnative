@@ -14,7 +14,7 @@ use crate::{days::Day, tags::Tag};
 pub struct MiddleDate {
     pub count: u32,
     pub notes: Vec<Note>,
-    pub days: Vec<Day>,
+    pub days: Option<Vec<Day>>,
     pub tags: Vec<Tag>,
 }
 
@@ -70,6 +70,30 @@ impl MiddleDate {
         let conn = &*conn.lock().await;
         Self::from_select_inner(conn, query, limit, offset)
     }
+    pub async fn from_filter(
+        conn: Arc<Mutex<Connection>>,
+        query: String,
+        limit: u32,
+        offset: u32,
+        from: time::Date,
+        to: time::Date,
+    ) -> Option<Self> {
+        let conn = &*conn.lock().await;
+        let from = from.to_string();
+        let to = to.to_string();
+        Self::from_filter_inner(conn, &query, &limit, &offset, &from, &to)
+    }
+    pub async fn from_someday(
+        conn: Arc<Mutex<Connection>>,
+        query: String,
+        limit: u32,
+        offset: u32,
+        day: time::Date,
+    ) -> Option<Self> {
+        let conn = &*conn.lock().await;
+        let day = day.to_string();
+        Self::from_filter_inner(conn, &query, &limit, &offset, &day, &day)
+    }
     fn from_select_inner(
         conn: &Connection,
         query: String,
@@ -77,6 +101,19 @@ impl MiddleDate {
         offset: u32,
     ) -> Option<Self> {
         let search_result = localnative_core::exe::do_search(conn, &query, &limit, &offset);
+
         serde_json::from_str::<Self>(&search_result).ok()
+    }
+    fn from_filter_inner(
+        conn: &Connection,
+        query: &str,
+        limit: &u32,
+        offset: &u32,
+        from: &str,
+        to: &str,
+    ) -> Option<Self> {
+        let filter_result = localnative_core::exe::do_filter(conn, query, limit, offset, from, to);
+
+        serde_json::from_str::<Self>(&filter_result).ok()
     }
 }

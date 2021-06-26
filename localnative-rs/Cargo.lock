@@ -1519,6 +1519,7 @@ dependencies = [
  "iced_native",
  "iced_style",
  "iced_web",
+ "num-traits",
  "wasm-bindgen",
  "web-sys",
 ]
@@ -1870,7 +1871,7 @@ dependencies = [
  "serde_json",
  "stream-cancel",
  "tarpc",
- "time 0.3.0-alpha-1",
+ "time 0.3.0-alpha-2",
  "tokio",
  "tokio-serde",
  "uuid",
@@ -1882,12 +1883,17 @@ version = "0.1.0"
 dependencies = [
  "iced",
  "iced_aw",
+ "iced_graphics",
+ "iced_native",
+ "iced_style",
  "localnative_core",
+ "num-traits",
  "once_cell",
  "open",
  "rand 0.8.3",
  "serde",
  "serde_json",
+ "time 0.3.0-alpha-2",
 ]
 
 [[package]]
@@ -3110,25 +3116,23 @@ dependencies = [
 
 [[package]]
 name = "time"
-version = "0.3.0-alpha-1"
+version = "0.3.0-alpha-2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f8419882a5e0cd27338b64443529357471f5e4b029bee90a9d8f2d33d44b74cd"
+checksum = "0f906d7af3f9c93ef57452c3c7d577f0dcfa1700516dcd15c7ba75ede4f0ed08"
 dependencies = [
  "const_fn",
  "itoa",
  "libc",
+ "serde",
  "standback",
  "time-macros",
 ]
 
 [[package]]
 name = "time-macros"
-version = "0.2.0-alpha.0"
+version = "0.2.0-alpha.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "06871c63832e5091df3d04d5777d742dabc86159651d161afa8e3133fa6a41b0"
-dependencies = [
- "standback",
-]
+checksum = "36234b149f749cc36d38c30f77426ba421f63aada9ac919a2853da2a0fc9f465"
 
 [[package]]
 name = "tinyvec"

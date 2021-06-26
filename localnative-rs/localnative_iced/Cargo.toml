@@ -16,6 +16,13 @@ serde = {version = "1",features = ["derive"]}
 serde_json = "1"
 # -- impl tags end --
 
+iced_style = "0.3"
+num-traits = "0.2"
+iced_native = "0.4"
+iced_graphics = "0.2"
+time = { version = "0.3.0-alpha-2",features = ["serde-human-readable","macros"] }
+# time = { version = "0.3.0-alpha-2",features = ["serde","macros","formatting","parsing"] }
+
 [dependencies.rand]
 version = "0.8"
 optional = true
@@ -26,7 +33,7 @@ optional = true
 git = "https://github.com/iced-rs/iced_aw"
 branch = "main"
 default-features = false
-features = ["wrap"] 
+features = ["wrap","number_input","modal"] 
 
 [dependencies.iced]
 version = "0.3.0"
@@ -74,4 +81,9 @@ required-features = ["preview"]
 [[bin]]
 name = "search_page"
 path = "./previews/search_page.rs"
+required-features = ["preview"]
+
+[[bin]]
+name = "chart"
+path = "./previews/days.rs"
 required-features = ["preview"]

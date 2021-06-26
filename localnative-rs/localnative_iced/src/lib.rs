@@ -5,15 +5,18 @@ mod search_page;
 mod style;
 mod tags;
 
-use std::{array::IntoIter, sync::Arc};
+use std::sync::Arc;
 
-use iced::{futures::lock::Mutex, Column, Command, Row, Text};
-use localnative_core::{exe::get_sqlite_connection, rusqlite::Connection};
+pub use days::DateView;
+use days::HandleDays;
+use iced::{futures::lock::Mutex, Column, Command, Row, Text, Vector};
+use localnative_core::{exe::get_sqlite_connection, rusqlite::Connection, Note};
 use middle_date::MiddleDate;
 pub use note::NoteView;
 pub use search_page::SearchPage;
 use style::Theme;
 pub use tags::TagView;
+pub use days::Chart;
 
 pub enum LocalNative {
     Loading,
@@ -33,6 +36,7 @@ pub enum Message {
     SearchPageMessage(search_page::Message),
     NoteView(Vec<NoteView>),
     TagView(Vec<TagView>),
+    DayView(HandleDays),
 }
 
 impl iced::Application for LocalNative {
@@ -90,7 +94,8 @@ impl iced::Application for LocalNative {
                             days,
                         } = md;
                         data.search_page.count = count;
-                        Command::batch(IntoIter::new([
+
+                        Command::batch([
                             Command::perform(
                                 async move {
                                     let mut tags = tags;
@@ -103,7 +108,17 @@ impl iced::Application for LocalNative {
                                 async move { notes.into_iter().map(NoteView::from).collect() },
                                 Message::NoteView,
                             ),
-                        ]))
+                            {
+                                if let Some(days) = days {
+                                    Command::perform(
+                                        async move { days::Day::handle_days(days) },
+                                        Message::DayView,
+                                    )
+                                } else {
+                                    Command::none()
+                                }
+                            },
+                        ])
                     }
                     msg => data
                         .search_page
@@ -119,6 +134,32 @@ impl iced::Application for LocalNative {
                     Command::none()
                 }
                 Message::Loading(..) => Command::none(),
+                Message::DayView(HandleDays {
+                    days,
+                    months,
+                    max_day_count,
+                    max_month_count,
+                    full_days,
+                    full_months,
+                    last_day,
+                    last_month,
+                }) => {
+                    data.search_page.days.days = days;
+                    data.search_page.days.months = months;
+                    data.search_page.days.full_days = full_days;
+                    data.search_page.days.full_months = full_months;
+                    data.search_page.days.last_day = last_day;
+                    data.search_page.days.last_month = last_month;
+                    data.search_page.days.chart.last_day = last_day;
+                    data.search_page.days.chart.last_month = last_month;
+                    data.search_page.days.chart.max_day_count = max_day_count;
+                    data.search_page.days.chart.max_month_count = max_month_count;
+                    if data.search_page.range.is_none() {
+                        data.search_page.days.align();
+                    }
+                    data.search_page.days.clear_cahce();
+                    Command::none()
+                }
             },
         }
     }
@@ -149,4 +190,11 @@ pub fn settings() -> iced::Settings<()> {
     iced::Settings {
         ..Default::default()
     }
+}
+
+pub fn handle_notes(notes: Vec<Note>) -> (Vec<NoteView>) {
+    for note in notes {
+        let time = note.created_at;
+    }
+    todo!()
 }
