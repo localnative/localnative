@@ -138,12 +138,12 @@ function Home() {
           <div class="container">
           <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/DBsVscpSp6w" frameBorder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowFullScreen class="video"></iframe>
           </div>
+        </div>
 
           <div class="container">
-            <img src="img/wechat/localnative-wechat-qrcode-white.png" width="400" />
+            <div><h3> WeChat </h3> </div>
+            <img src="img/wechat/localnative-wechat-qrcode_344.jpg" width="150" />
           </div>
-
-        </div>
       </header>
       <main>
         {features && features.length && (
