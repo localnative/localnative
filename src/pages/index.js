@@ -140,10 +140,6 @@ function Home() {
           </div>
         </div>
 
-          <div class="container">
-            <div><h3> WeChat </h3> </div>
-            <img src="img/wechat/localnative-wechat-qrcode_344.jpg" width="150" />
-          </div>
       </header>
       <main>
         {features && features.length && (
@@ -158,6 +154,10 @@ function Home() {
           </section>
         )}
       </main>
+          <div class="container">
+            <div><h3> WeChat </h3> </div>
+            <img src="img/wechat/localnative-wechat-qrcode_344.jpg" width="150" />
+          </div>
     </Layout>
   );
 }
