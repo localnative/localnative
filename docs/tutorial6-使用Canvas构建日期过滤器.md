@@ -17,11 +17,11 @@ pub struct MiddleDate {
     pub tags: Vec<Tag>,
 }
 ```
-但是实际上在使用`electron`构建的GUI里，立面包含的日志过滤器控件使用的数据并不是后端返回的days字段，而是`Note`结构体内的`created_at`字段。今天我们不用考虑这么多，我们就直接用days字段即可。当然，还需要做一些小的修改。
+但是实际上在使用`electron`构建的GUI里，里面包含的日志过滤器控件使用的数据并不是后端返回的days字段，而是`Note`结构体内的`created_at`字段。今天我们不用考虑这么多，我们就直接用days字段即可。当然，还需要做一些小的修改。
 1. 首先添加一个后端的过滤方法：
 ```rust
 // 在 middle_date.rs -> impl MiddleDate 内
-// 在有了之前的经验之后，这里的接口对接都很简单，因此不需要过度关注
+// 有了之前的经验，这里的接口对接都很简单，因此不需要过度关注
     // 这是指定某个时间段的查询
     pub async fn from_filter(
         conn: Arc<Mutex<Connection>>,
@@ -62,7 +62,7 @@ pub struct MiddleDate {
         serde_json::from_str::<Self>(&filter_result).ok()
     }
 ```
-需要注意的是，因为之前设计后端的时候，最终并没有将days作为需要渲染的数据，因此  `localnative_core::exe::do_filter(conn, query, limit, offset, from, to)`返回的结果并没有days字段，如果只是为了接收结果，可以将现有的`MiddleDate`结构体的days字段变为：`Option<Vec<Day>>`。但是我更推介直接在后端的返回值内加上days字段（拉取最新的代码库，立面的do_filter函数返回的是四个字段）。
+需要注意的是，因为之前设计后端的时候，始终没有将days作为需要渲染的数据，因此  `localnative_core::exe::do_filter(conn, query, limit, offset, from, to)`返回的结果并没有days字段，如果只是为了接收结果，可以将现有的`MiddleDate`结构体的days字段变为：`Option<Vec<Day>>`。但是我更推介直接在后端的返回值内加上days字段（拉取最新的代码库，立面的do_filter函数返回的是四个字段）。
 
 ### 另一个小准备
 此前我们定义Day结构体是这样的：
@@ -96,7 +96,7 @@ pub struct Day {
 # now：
 time = { version = "0.3.0-alpha-2",features = ["serde-human-readable","macros"] }
 ```
-`serde-human-readable`本身包含了`formatting`、`parsing`、`serde`三个feature，因此开启这个feature之后可以将另外几个feature关闭。单单在原来的基础上加上`serde`并不能满足我们的需求，查看`time`的文档可以了解到更多信息。
+`serde-human-readable`本身包含了`formatting`、`parsing`、`serde`三个feature，因此开启这个feature之后可以将另外几个feature关闭。仅在原来的基础上加上`serde`并不能满足我们的需求，查看`time`的文档可以了解到更多信息。
 
 ### 一个完整的简单小实现
 
@@ -278,9 +278,9 @@ fn main() -> iced::Result {
 最后我们运行：`cargo run --bin chart`，即可得到一个绘制方框的Canvas。
 
 ### 一个较为复杂的实现
-经过一个简答的实例，我们已经掌握了实现一个Canvas控件的过程，简单实现`Program`trait即可获得一个Canvas控件，在draw方法内，我们可以绘制上我们想要绘制的内容，`iced`内部提供了多种绘制方法，目前我们的需求仅仅需要方框和文本，方框我们已经见过了，接下来的一节将介绍文本绘制。
+经过一个简单的实例，我们已经掌握了实现一个Canvas控件的过程，简单实现`Program`trait即可获得一个Canvas控件，在draw方法内，我们可以绘制上我们想要绘制的内容，`iced`内部提供了多种绘制方法，目前我们的需求仅仅需要方框和文本，方框我们已经见过了，接下来的一节将介绍文本绘制。
 
-在介绍这章之前，我们需要介绍一下`fill_text`这个[方法](https://docs.rs/iced/0.3.0/iced/widget/canvas/struct.Frame.html#method.fill_text)：
+在这之前，我们需要介绍一下`fill_text`这个[方法](https://docs.rs/iced/0.3.0/iced/widget/canvas/struct.Frame.html#method.fill_text)：
 ```rust
 pub fn fill_text(&mut self, text: impl Into<Text>)
 ```
@@ -733,7 +733,7 @@ impl Day {
         let Size { width, height } = frame.size();
         let num = (width / uw).max(0.0).min(10000.0) as i64;
         let overflow_num = (translation / uw).max(0.0).min(10000.0) as i64;
-        // 计算出当前需要绘制的最右边的那天
+        // 计算出当前需要绘制的最右边的日期
         let rightmost_day = base_day - Duration::days(overflow_num + 1);
 
         let mut date_pointer = rightmost_day;
@@ -1052,7 +1052,7 @@ impl MonthView {
                 res.push(sub_frame.into_geometry());
             }
         };
-        // 以下都是和之前一致的了，需要注意的是，在绘制月份的时候，出了月份本身外，
+        // 以下都是和之前一致的了，需要注意的是，在绘制月份的时候，除了月份本身外，
         // 我们还绘制了月份内选择范围之后，天份的预览，作为sub_frame进行绘制。
         if let Some(selected) = self.selected.map(|selected| {
             self.selected_cache.draw(size, |frame| {
@@ -1315,7 +1315,7 @@ impl DateView {
         let mut ctrl_row = Row::new();
 
         if !self.is_full {
-            // 记得需要在Cargo.toml内开启numer_input的feature
+            // 记得，要在Cargo.toml内开启numer_input的feature
             let uw_input = iced_aw::NumberInput::new(uw_input, chart.uw(), 30.0, Message::UwChange)
                 .min(1.0)
                 .step(0.1);

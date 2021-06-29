@@ -8,7 +8,7 @@ title: 4. 实现TagView
 
 ### 添加依赖
 
-在实现`TagView`之前，我们先添加上一会儿会用到的依赖：
+在实现`TagView`之前，我们先添加接下来会用到的依赖：
 
 
 ```diff
@@ -101,7 +101,7 @@ impl TagView {
                     Text::new(self.tag.count.to_string()).color([1.0, 0.0, 0.0]),
                 )
                 .on_press(Message::Search(self.tag.count.to_string()))
-                // 这是专门个Count定义的，接下来会介绍
+                // 这是专门给Count定义的，接下来会介绍
                 .style(style::count(theme)),
             )
             .into()
@@ -176,7 +176,7 @@ fn main() -> iced::Result {
     TagView::run(localnative_iced::settings())
 }
 ```
-并且将bin属性给添加到`Cargo.toml`内：
+并且将bin属性添加到`Cargo.toml`内：
 ```diff
 # 在 Cargo.toml 内
 ++ [[bin]]
@@ -184,7 +184,7 @@ fn main() -> iced::Result {
 ++ path = "./previews/tagview.rs"
 ++ required-features = ["preview"]
 ```
-完成这些常规操作之后我们可以运行看一下我们的最终结果了：
+完成这些常规操作之后我们运行`tagview`,看一下我们的最终结果了：
 ```shell
 cargo run --bin tagview
 ```
@@ -192,4 +192,4 @@ cargo run --bin tagview
 
 ![tagview](/img/tutorial-04-00.png)
 
-到这里，我们的`TagView`就实现结束了，你可以根据你自己的喜好反复修改主题风格，直到满足你的要求。在下一节我们将会实现一个完整的搜索页面和一个完整的tags页面。
+到这里，我们已经实现了`TagView`，你可以根据你自己的喜好反复修改主题风格，直到满足你的要求。在下一节我们将会实现一个完整的搜索页面和一个完整的tags页面。

@@ -75,7 +75,7 @@ pub enum Message {
 }
 ```
 
-虽然我们已经用到了Note，但是实际上仍然不知道这个结构体时怎样构建的，通过IDE的代码跳转功能，我们很容易能看到Note的定义：
+虽然我们已经用到了Note，但是实际上仍然不知道这个结构体是怎样构建的，通过IDE的代码跳转功能，我们很容易能看到Note的定义：
 
 ```rust
 // localnative_core内部
@@ -168,7 +168,7 @@ impl NoteView {
         // qrcode构建需要一个&State，因此我们通过as_ref()将&mut Option<State>转变为Option<&State>
         // 最后使用map将state映射到我们需要构建的QRCode组件即可
         let qrcode = qrcode.as_ref().map(|state| QRCode::new(state));
-        // 接着是三个简单的Button组件，值的注意的是on_press方法传递的是一个Message
+        // 接着是三个简单的Button组件，值得注意的是on_press方法传递的是一个Message
         // 这部分相当有趣，我们将在后续内容中介绍这相当有趣的部分
         let url = Button::new(open_url, Text::new(note.url.as_str())).on_press(Message::OpenUrl);
         let delete = Button::new(delete, Text::new("delete")).on_press(Message::Delete);
@@ -188,7 +188,8 @@ impl NoteView {
         });
         // 我们需要展示的是多行，因此在创建号row之后，需要一个column来储存不同的行
         let mut column = Column::new().push(row);
-        // 判断是否存在qrcode，存在就放入，不存在就跳过，同理后续判断四个数据是否为空，不为空的情况下放入column中
+        // 判断是否存在qrcode，存在就放入，不存在就跳过，
+        //同理后续判断四个数据是否为空，不为空的情况下放入column中
         if let Some(qrcode) = qrcode {
             column = column.push(qrcode);
         }
@@ -280,7 +281,7 @@ pub enum Message {
 // SandBox只有preview开启的时候才用到，因此不单独引入，直接iced::SandBox
 // 这个trait是iced::Applicaltion的简略版本，简化了很多实现，用来实现预览最为合适
 impl iced::Sandbox for NoteView {
-    // 通Application一致，需要我们指定关联类型
+    // 同Application一致，需要我们指定关联类型
     type Message = Message;
 	// 我们任意构建一个Note来预览我们的视图
     fn new() -> Self {
