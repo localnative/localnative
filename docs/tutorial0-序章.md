@@ -36,7 +36,7 @@ title: 0. 序章
 
 6. 你需要安装有[Git](https://git-scm.com/)命令行工具，我们将使用它作为版本管理工具。
 
-当你做好上面的准备之后，我们将在开发之前做一些小工作，方便我们之后的开发。
+当你做好上面的准备之后，我们还需要做一些小工作，方便我们之后的开发。
 
 首先我们需要获取`LocalNative`的代码核心库，这部分代码同样是用Rust编写的，它作为跨平台支持的核心库，不仅仅是桌面端，移动端同样依赖于它，因此单独作为一个`crate`进行管理。
 
@@ -46,7 +46,7 @@ title: 0. 序章
 git clone https://gitlab.com/localnative/localnative.git
 ```
 
-如果在克隆的过程中出现网络异常的问题，我建议通过国内git托管平台作为中转站，具体操作方法是在[`gitee`](https://gitee.com/)等类似平台内导入仓库，接着再从`gitee`克隆就可以了，在此我已经帮大家建了一个中转仓库了：
+中国读者如果在克隆的过程中出现网络异常的问题，建议通过国内git托管平台作为中转站，具体操作方法是在[`gitee`](https://gitee.com/)等类似平台内导入仓库，接着再从`gitee`克隆就可以了，在此我已经帮大家建了一个中转仓库了：
 
 ```shell
 git clone https://gitee.com/localnative/localnative.git

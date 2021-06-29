@@ -7,7 +7,7 @@ title: 5. 实现SearchPage
 
 ### 粗略实现
 
-有了之前实现的经验，我们很容易知道`iced`实现的流程就是通过给指定结构体实现两个主要方法：`view`和`update`。
+有了前几章的经验，我们很容易知道`iced`的实现流程就是通过给指定结构体实现两个主要方法：`view`和`update`。
 ```rust
 use iced::{
     button, scrollable, text_input, Button, Column, Container, Element, Row, Scrollable, Text,
@@ -79,10 +79,14 @@ impl SearchPage {
         // 我们判断以下搜索的文本是否为空，不为空的情况下在搜索输入框一行后面加入清除文本的按钮
         if !self.search_value.is_empty() {
             search_bar =
-                search_bar.push(Button::new(clear_button, Text::new("X")).on_press(Message::Clear));
+                search_bar.push(
+                    Button::new(clear_button, Text::new("X"))
+                    .on_press(Message::Clear)
+                );
         }
         // 属性按钮
-        let refresh_button = Button::new(refresh_button, Text::new("O")).on_press(Message::Refresh);
+        let refresh_button = Button::new(refresh_button, Text::new("O"))
+            .on_press(Message::Refresh);
         search_bar = search_bar.push(refresh_button);
         // 我们调用noteview的view方法,得到对应的Element<note::Message>
         // 并且将其note::Message映射为Message::NoteMessage(note::Message,usize)
@@ -184,7 +188,7 @@ impl iced::Sandbox for SearchPage {
  
  > 关于`'static`：一般理解为带有完整所有权的变量，或者本身就是``static`生命期的变量，后者通常使用`static`关键字、`OnceCell`等方法获取,虽然是`'static`，实际上只要能保证比所在函数存活的时间更久即可。
 
-和前几次一样，我们需要将`SearchPage`给pub出去，同时，还需要再preview内创建`search_page.rs`用于保存预览的可执行文件`main`函数：
+和前几次一样，我们需要将`SearchPage`给pub出去，同时，还需要在preview内创建`search_page.rs`用于保存预览的可执行文件`main`函数：
 ```rust
 // 在 preview/search_page.rs 内
 use iced::Sandbox;
@@ -278,11 +282,11 @@ cargo run --bin search_page
 
 实际上`Command`除了`none()`方法之外，常用的方法还有`perform()`、`batch()`，其中`perform`需要两个参数，第一个参数是`future: impl Future<Output = T> + 'static + Send,`,我们一般传递异步方法即可，需要注意的是该异步方法必须满足`'static`和`Send`，前者此前已经介绍过了，在这里可以介绍一下`Send`。
 
-说到`Send`就不能不提一下`Sync`，这两个是Rust里常用的两个标记trait，大部分时候不会需要我们手动实现这两个trait，我们只需要知道这两个trait是用来标记在线程间安全传递的即可，其中实现`Send`的结构体能够在线程间安全传递所有权，实现了`Sync`的结构体则可以在线程间安全传递不可变引用，对立的trait分别是`!Send`和`!Sync`，分别是不能在线程间传递所有权，和不能再线程间传递不可变引用。Rust的内建结构体都默认实现了这四个trait中的其中两个，你通过这些结构体组合得到的新的结构体编译器也会默认给你实现其中两个。通常来说如果组成你结构体的所有字段都是`Send`的，你的结构体默认实现的就是`Send`，`Sync`也同理。
+说到`Send`就不能不提一下`Sync`，这两个是Rust里常用的两个标记trait，大部分时候不会需要我们手动实现这两个trait，我们只需要知道这两个trait是用来标记在线程间安全传递的即可，其中实现`Send`的结构体能够在线程间安全传递所有权，实现了`Sync`的结构体则可以在线程间安全传递不可变引用，对立的trait分别是`!Send`和`!Sync`，分别是不能在线程间传递所有权，和不能在线程间传递不可变引用。Rust的内建结构体都默认实现了这四个trait中的其中两个，你通过这些结构体组合得到的新的结构体编译器也会默认给你实现其中两个。通常来说如果组成你结构体的所有字段都是`Send`的，你的结构体默认实现的就是`Send`，`Sync`也同理。
 
 说了这么多，实际写的时候不需要考虑的很复杂，我们只需要简单查一下文档，看看需要传递的结构体是否满足需求即可，不满足需求，我们就给它套娃，让它足以满足我们的需求即可。（通常实际连文档都不需要看，编译时不满足需求的情况下编译器会给你贴心的指出来的）
 
-那么问题就来到了，如何将一个不满足需求的结构体转换成满足的结构体呢？社区已经有大量此类转换的文档、图表集合了，当然，再看图表之前，最好先找文档看看，实践一下，熟练了，能一眼看懂图表的时候，再考虑看文档。文档好找，甚至直接看`std.rs`的都可以，图不太好找，在这里贴一下[地址](https://github.com/usagi/rust-memory-container-cs)：https://github.com/usagi/rust-memory-container-cs
+那么问题就来到了，如何将一个不满足需求的结构体转换成满足的结构体呢？社区已经有大量此类转换的文档、图表集合了，当然，再看图表之前，最好先找文档看看，实践一下，熟练了，能一眼看懂图表的时候，再考虑看图表。文档好找，甚至直接看`std.rs`的都可以，图不太好找，在这里贴一下[地址](https://github.com/usagi/rust-memory-container-cs)：https://github.com/usagi/rust-memory-container-cs
 
 `Command::batch()`也很简单，需要的参数就是一个支持迭代器的`Command`集合，我相信通常大家都会这样调用：
 ```rust
@@ -294,7 +298,10 @@ cargo run --bin search_page
     ) -> Command<Self::Message> {
         // 返回的Command可以指定为多个，但是以下的调用方式是错误的
         Command::batch(
-            // 需要一个实现迭代器的收集器，数组并没有实现into_iter()，查看文档的话，会看到当前版本的Rust调用数组的into_iter()会转换成调用iter()，返回值不是T而是&T
+            // 需要一个实现迭代器的收集器，
+            //数组并没有实现into_iter()，查看文档的话，
+            //会看到当前版本的Rust调用数组的into_iter()会转换成调用iter()，
+            //返回值不是T而是&T
             [
                 Command::perform(cmd0(),Message::Cmd0),
                 Command::perform(cmd1(),Message::Cmd1),
@@ -381,7 +388,9 @@ pub struct MiddleDate {
 
 impl MiddleDate {
     // 需要一个&Connection，
-    // Connection这个结构体实现了`Send`和`!Sync`，也就是它自己可以在线程间安全传递，但是它的引用却不可以，这很重要，为后续我们定义该字段的时候埋下伏笔。
+    // Connection这个结构体实现了`Send`和`!Sync`，
+    //也就是它自己可以在线程间安全传递，但是它的引用却不可以，
+    //这很重要，为后续我们定义该字段的时候埋下伏笔。
     fn from_select_inner(
         conn: &Connection,
         query: String,
@@ -391,7 +400,9 @@ impl MiddleDate {
         // 其它几个参数都是localnative_core里需要的，我们跟着声明即可
         let search_result = localnative_core::exe::do_search(conn, &query, &limit, &offset);
         // 返回的结果是字符串，我们需要用序列化工具帮我们从字符串转化到实际的MiddleData结构体
-        // 这个过程是有可能出错的，因此serde_json::from_str::<Self>(&search_result)这部分返回的是一个Result，我们不需要关心错误原因，只需要将Result转换为Option即可
+        // 这个过程是有可能出错的，
+        //因此serde_json::from_str::<Self>(&search_result)这部分返回的是一个Result，
+        //我们不需要关心错误原因，只需要将Result转换为Option即可
         // 也就是当发生任何错误时返回None，正确转换了就返回Some(MiddleData)
         // 从Result到Option只需要调用ok()即可
         serde_json::from_str::<Self>(&search_result).ok()
@@ -400,7 +411,13 @@ impl MiddleDate {
     // 定义一个异步函数，这里面的步骤都会在运行时的调度下在UI线程外运行
     // 删除一个note需要指定其rowid号，该号码是note的一个字段
     // 和from_select_inner有区别的地方在于此处的conn传递的是Arc和Mutex包裹的
-    // 关于Arc和Mutex，Arc是引用计数，不过不是普通的Rc，而是原子引用计数，比Rc更耗性能，但是相对的它可以在多线程间安全使用，而Rc却不可以。使用引用计数的最大问题是可能会遇到循环引用，我们不在此讨论。Mutex是互斥锁，通常情况下使用锁的话，需要考虑是否可能更细粒度化，比如能使用读写锁就不要使用互斥锁，在Rust社区里有各类不同情况下的互斥锁，std的互斥锁通常不是性能最优解，甚至还有专门给异步函数设计的互斥锁，我们此处使用iced官方提供的互斥锁即可。
+    // 关于Arc和Mutex，Arc是引用计数，不过不是普通的Rc，而是原子引用计数，比Rc更耗性能，
+    //但是相对的它可以在多线程间安全使用，而Rc却不可以。
+    //使用引用计数的最大问题是可能会遇到循环引用，我们不在此讨论。
+    //Mutex是互斥锁，通常情况下使用锁的话，
+    //需要考虑是否可能更细粒度化，比如能使用读写锁就不要使用互斥锁，
+    //在Rust社区里有各类不同情况下的互斥锁，std的互斥锁通常不是性能最优解，
+    //甚至还有专门给异步函数设计的互斥锁，我们此处使用iced官方提供的互斥锁即可。
     pub async fn delete(
         conn: Arc<Mutex<Connection>>,
         query: String,
@@ -408,7 +425,8 @@ impl MiddleDate {
         offset: u32,
         rowid: i64,
     ) -> Option<Self> {
-        // 异步互斥锁的使用，需要先锁住，同时因为lock这个操作并不是百分百成功，因此在异步操作里，lock这个函数编程了异步的，也就是只有锁住了才会接着往下执行。
+        // 异步互斥锁的使用，需要先锁住，同时因为lock这个操作并不是百分百成功，
+        //因此在异步操作里，lock这个函数编程了异步的，也就是只有锁住了才会接着往下执行。
         let conn = &*conn.lock().await;
         //得到conn之后，调用localnative_core内的delete方法（具体路径看顶部）
         delete(conn, rowid);
@@ -435,7 +453,10 @@ impl MiddleDate {
         Self::from_select_inner(conn, query, limit, offset)
     }
     // 实际上目前用不到的插入方法，考虑到后续很有可能会加入增改tag功能，因此保留到了教程内
-    // 关于为啥不用update，而是insert，因为localnative_core内部有个分布式框架，在不同设备间同步时是通过rowid号来进行判断是否存在，目前没有改动后端的动力，因此实际上做更新是需要删除对应rowid的note之后再插入新的note，这也是这个insert内部有delete的原因。
+    // 关于为啥不用update，而是insert，因为localnative_core内部有个分布式框架，
+    //在不同设备间同步时是通过rowid号来进行判断是否存在，目前没有改动后端的动力，
+    //因此实际上做更新是需要删除对应rowid的note之后再插入新的note，
+    //这也是这个insert内部有delete的原因。
     // 我们暂时不会用到，所以，你甚至可以不需要这个方法。
     pub async fn insert(
         conn: Arc<Mutex<Connection>>,
@@ -464,7 +485,7 @@ impl MiddleDate {
 }
 ```
 
-距离我们实现`update`又进了一步，我们完成了一个简单的前后端交互，现在可以将这些异步函数放到我们的`update`里去了。
+距离我们实现`update`又近了一步，我们完成了一个简单的前后端交互，现在可以将这些异步函数放到我们的`update`里去了。
 
 ```rust
 // 在 search_page.rs > impl SearchPage 内
@@ -503,8 +524,14 @@ impl SearchPage {
         limit: u32,
         conn: Arc<Mutex<Connection>>,
     ) -> Command<Message> {
-        // 相对于之前的函数签名，我们多了limit和conn两个参数，其中conn要保存到Data内，现在我们不急，可以暂且不用管Data那边。
-        // 除此之外还有一个limit参数，这是用来限制默认页面展示note的最大数量的，这个值也可以写死，比如使用10来代替，但是考虑到后续设置部分能够更改这个参数，因此作为一个值转递进来。
+        // 相对于之前的函数签名，我们多了limit和conn两个参数，
+        //其中conn要保存到Data内，现在我们不急，
+        //可以暂且不用管Data那边。
+        // 除此之外还有一个limit参数，
+        //这是用来限制默认页面展示note的最大数量的，
+        //这个值也可以写死，比如使用10来代替，
+        //但是考虑到后续设置部分能够更改这个参数，
+        //因此作为一个值转递进来。
         // 大部分实现都很简单，我们直接看最后几条即可
         match message {
             Message::Search => search(conn, self.search_value.to_owned(), limit, self.offset),
@@ -657,8 +684,10 @@ impl SearchPage {
                 },
             ))
             .height(iced::Length::Fill);
-            let next_button = Button::new(next_button, Text::new("->")).on_press(Message::NextPage);
-            let pre_button = Button::new(pre_button, Text::new("<-")).on_press(Message::PrePage);
+            let next_button = Button::new(next_button, Text::new("->"))
+                .on_press(Message::NextPage);
+            let pre_button = Button::new(pre_button, Text::new("<-"))
+                .on_press(Message::PrePage);
             let page_info = Text::new(format!(
                 "{}-{}/{}",
                 self.offset + 1,
@@ -816,7 +845,8 @@ impl iced::Application for LocalNative {
     fn new(flags: Self::Flags) -> (Self, Command<Self::Message>) {
         (
             LocalNative::Loading,
-            // 当前我们的Command是暂且执行一个空异步函数，后续添加Config之后将从配置文件读取构建Data所需要的数据
+            // 当前我们的Command是暂且执行一个空异步函数，
+            //后续添加Config之后将从配置文件读取构建Data所需要的数据
             Command::perform(async {}, Message::Loading),
         )
     }
@@ -841,7 +871,8 @@ impl iced::Application for LocalNative {
                         theme: Theme::Light,
                         limit: 10,
                     };
-                    // 简单构建一个Data，其中theme和limit将在之后调整到Config内，届时我们将通过Loading读取到Config，然后由Config获取Data
+                    // 简单构建一个Data，其中theme和limit将在之后调整到Config内，
+                    //届时我们将通过Loading读取到Config，然后由Config获取Data
                     // 获取Data之后切换self的状态，
                     *self = LocalNative::Loaded(data);
                     if let LocalNative::Loaded(data) = self {
@@ -861,7 +892,8 @@ impl iced::Application for LocalNative {
             // 加载到了数据时，如何处理Message
             LocalNative::Loaded(data) => match message {
                 Message::SearchPageMessage(search_page_msg) => match search_page_msg {
-                    // 将此前遗留到上层处理的message优先处理，预留一个问题，为什么这个message不在SearchPage层进行处理？
+                    // 将此前遗留到上层处理的message优先处理，预留一个问题，
+                    //为什么这个message不在SearchPage层进行处理？
                     search_page::Message::Receiver(Some(md)) => {
                         let MiddleDate {
                             tags,
@@ -913,7 +945,8 @@ impl iced::Application for LocalNative {
 
     fn view(&mut self) -> iced::Element<'_, Self::Message> {
         match self {
-            // 加载页面当前很快就略过了，不排除在性能不是很好的机器上会长时间加载，因此加载部分我们也简单设计了一个页面
+            // 加载页面当前很快就略过了，不排除在性能不是很好的机器上会长时间加载，
+            //因此加载部分我们也简单设计了一个页面
             LocalNative::Loading => Column::new()
                 .push(style::vertical_rule())
                 .push(
@@ -939,7 +972,7 @@ impl iced::Application for LocalNative {
 ```shell
 cargo run --bin ln
 ```
-你可以看到以下结果：
+你可以看到如下结果：
 ![preview5](/img/tutorial-05-05.png)
 
 什么？你的程序里没有数据？是空白的？那就对了，你本身就没有向数据库写入过数据，所以是空白的，这很合理。如何解决这个问题呢？
