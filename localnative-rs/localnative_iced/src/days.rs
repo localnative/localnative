@@ -1,5 +1,3 @@
-use std::convert::TryFrom;
-
 use iced::{
     button,
     canvas::{self, Cache, Cursor, Fill, Frame, Geometry, Program},
@@ -9,9 +7,14 @@ use iced::{
 
 use iced_aw::number_input;
 use serde::{Deserialize, Serialize};
-use time::{macros::date, Date, Duration, Month};
+use time::{Date, Duration, Month};
 
-use crate::style::{self, Theme};
+use crate::{
+    args,
+    icons::{icon, Icons},
+    style::{self, Theme},
+    tr,
+};
 
 #[derive(Debug, Deserialize, Serialize, Clone, Copy)]
 pub struct Day {
@@ -73,10 +76,8 @@ impl<'a> DateChart<'a> {
                 if let Some(num) = self.full_days {
                     let uw = (size.width as i64 / (num + 3)).max(1).min(50);
                     if let Some(s) = selected {
-                        *translation = Vector::new(
-                            ((s.end.max(1) - 1) * uw as usize).max(0).min(10000) as f32,
-                            0.0,
-                        )
+                        *translation =
+                            Vector::new(((s.end as i64 - 1) * uw).max(0).min(10000) as f32, 0.0)
                     } else {
                         last_day.map(|last| {
                             *translation =
@@ -194,45 +195,47 @@ impl Day {
         let gt9_offset = 0.5 * (uw - font_size);
         let lt9_offset = 0.5 * (uw - 0.5 * font_size);
 
-        for idx in 1..=num {
-            let day = date_pointer.day();
-            let x = width - idx as f32 * uw - translation;
-            if !skip_text {
-                if idx == num || (date_pointer.month() == Month::January && date_pointer.day() == 1)
-                {
-                    let year = canvas::Text {
-                        content: date_pointer.year().to_string(),
-                        position: Point::new(x, 0.0),
-                        size: big_font_size,
-                        ..Default::default()
-                    };
-                    frame.fill_text(year);
+            for idx in 1..=num {
+                let day = date_pointer.day();
+                let x = width - idx as f32 * uw - translation;
+                if !skip_text {
+                    if idx == num || (date_pointer.month() == Month::January && date_pointer.day() == 1)
+                    {
+                        let year = canvas::Text {
+                            content: date_pointer.year().to_string(),
+                            position: Point::new(x, 0.0),
+                            size: big_font_size,
+                            ..Default::default()
+                        };
+                        frame.fill_text(year);
+                    }
+                    if day == 1 && uw > 1.0{
+                        let month = canvas::Text {
+                            content: date_pointer.month().to_string(),
+                            position: Point::new(x, big_font_size),
+                            size: big_font_size,
+                            ..Default::default()
+                        };
+                        frame.fill_text(month);
+                    }
+                    if uw >= font_size * 1.5 {
+                        let day_text_offset = if day > 9 { gt9_offset } else { lt9_offset };
+                        let position = Point::new(x + day_text_offset, day_text_y);
+                        let day = canvas::Text {
+                            content: day.to_string(),
+                            position,
+                            size: font_size,
+                            ..Default::default()
+                        };
+                        frame.fill_text(day);
+                    }
                 }
-                if day == 1 || idx == num {
-                    let month = canvas::Text {
-                        content: date_pointer.month().to_string(),
-                        position: Point::new(x, big_font_size),
-                        size: big_font_size,
-                        ..Default::default()
-                    };
-                    frame.fill_text(month);
-                }
-                if uw >= font_size * 1.8 {
-                    let day_text_offset = if day > 9 { gt9_offset } else { lt9_offset };
-                    let position = Point::new(x + day_text_offset, day_text_y);
-                    let day = canvas::Text {
-                        content: day.to_string(),
-                        position,
-                        size: font_size,
-                        ..Default::default()
-                    };
-                    frame.fill_text(day);
+                if let Some(pd) = date_pointer.previous_day() {
+                    date_pointer = pd;
                 }
             }
-            if let Some(pd) = date_pointer.previous_day() {
-                date_pointer = pd;
-            }
-        }
+        
+
         // 绘制方块
         let uh = height / max_count as f32;
         for day in days {
@@ -246,7 +249,7 @@ impl Day {
             let num = (base_day - day.date).whole_days().max(0).min(10000) as f32;
             let x = width - num * uw;
             let dh = uh * day.count as f32;
-            if uw >= font_size * 1.8 && (height - dh < day_text_y - font_size) {
+            if uw >= font_size * 1.5 && (height - dh < day_text_y - font_size) {
                 let count_offset = if day.count > 9 {
                     gt9_offset
                 } else {
@@ -423,7 +426,7 @@ impl MonthView {
             }
 
             let content = month_to_num(month.1);
-            if uw >= font_size * 1.8 {
+            if uw >= font_size * 1.5 {
                 let month_text_offset = if content > 9 { gt9_offset } else { lt9_offset };
                 let position = Point::new(x + month_text_offset, month_text_y);
 
@@ -469,7 +472,7 @@ impl MonthView {
 
             let dh = uh * month.count as f32;
             let content = month.count.to_string();
-            if font_size * content.len() as f32 <= uw && height - dh < month_text_y - font_size {
+            if font_size * 1.5 <= uw && height - dh < month_text_y - font_size {
                 let count_offset = if month.count > 9 {
                     gt9_offset
                 } else {
@@ -498,12 +501,8 @@ pub fn months_num(start: &MonthView, end: &MonthView) -> i32 {
 
 #[derive(Clone, Debug)]
 pub enum ChartMsg {
-    ZoomLevel,
-    ReduceLevel,
-    Refresh,
     ClearRange,
     EnterRange,
-    AddSelcted(Selected),
     FilterSearch(Selected),
     Scroll(f32),
 }
@@ -608,51 +607,24 @@ impl<'a> Program<ChartMsg> for DateChart<'a> {
             }
             ChartLevel::Month => {
                 let months = &self.months[..];
+                let rects = self
+                    .cache
+                    .draw(Size::new(size.width, size.height), |frame| {
+                        frame.translate(translation);
+                        MonthView::draw_all_month(
+                            months,
+                            frame,
+                            self.maximal_month_count,
+                            self.style.fill_color,
+                            self.style.font_size,
+                            self.style.big_font_size,
+                            uw,
+                            translation.x,
+                            self.base_month,
+                        );
+                    });
 
-                let rects = self.cache.draw(size, |frame| {
-                    frame.translate(translation);
-                    MonthView::draw_all_month(
-                        months,
-                        frame,
-                        self.maximal_month_count,
-                        self.style.fill_color,
-                        self.style.font_size,
-                        self.style.big_font_size,
-                        uw,
-                        translation.x,
-                        self.base_month,
-                    );
-                });
-
-                let mut sub_frame = Frame::new(Size {
-                    width: size.width / 2.0,
-                    height: size.height / 2.0,
-                });
-
-                if let Some(s) = self.selected {
-                    let day_range = s.months_to_days(self.base_day, self.base_month);
-                    let day_uw = (size.width
-                        / (day_range.start as f32 - day_range.end as f32 + 3.0) as f32)
-                        .max(1.0)
-                        .min(50.0);
-                    let day_translation = Vector::new((day_range.end - 1) as f32 * day_uw, 0.0);
-                    sub_frame.translate(day_translation);
-                    let days = &self.days[..];
-                    Day::draw_all_day(
-                        days,
-                        &mut sub_frame,
-                        self.maximal_day_count,
-                        self.style.fill_color,
-                        self.style.font_size,
-                        self.style.big_font_size,
-                        day_uw,
-                        day_translation.x,
-                        self.base_day,
-                        true,
-                    );
-                }
                 res.push(rects);
-                res.push(sub_frame.into_geometry());
             }
         };
 
@@ -711,7 +683,7 @@ pub struct Selected {
 impl Selected {
     pub fn get_months_range(&self, base_month: &MonthView) -> (Date, Date) {
         (
-            get_offset_date(self.start, 1, base_month),
+            get_offset_date(self.start, 31, base_month),
             get_offset_date(self.end, 31, base_month),
         )
     }
@@ -732,11 +704,11 @@ impl Selected {
     }
     pub fn months_to_days(self, base_day: Date, base_month: &MonthView) -> Self {
         let (start, end) = self.get_months_range(base_month);
-        let start = (base_day - start).whole_days() as usize;
-        let end = (base_day - end).whole_days() as usize;
+        let start = (base_day - start).whole_days();
+        let end = (base_day - end).whole_days();
         Self {
-            start: start.max(1) - 1,
-            end: end.max(1) - 1,
+            start: start.max(1) as usize - 1,
+            end: end.max(1) as usize - 1,
         }
     }
     pub fn draw(&self, frame: &mut Frame, uw: f32) {
@@ -760,11 +732,11 @@ impl Selected {
 
 #[derive(Debug, Clone)]
 pub enum Message {
-    Close,
     MaxOrMin,
     FullOrAdjustable,
     DayOrMonth,
     ChartMsg(ChartMsg),
+    PreviewChartMsg(ChartMsg),
     UwChange(f32),
 }
 #[derive(Debug)]
@@ -773,11 +745,11 @@ pub struct DateView {
     pub months: Vec<MonthView>,
     pub is_show: bool,
     pub chart: Chart,
+    pub preview_chart: Chart,
     pub full_days: Option<i64>,
     pub full_months: Option<i32>,
     pub last_day: Option<i64>,
     pub last_month: Option<i32>,
-    close: button::State,
     full_or_adjustable: button::State,
     max_or_min: button::State,
     day_or_month: button::State,
@@ -791,7 +763,10 @@ impl Default for DateView {
             is_show: true,
             is_full: true,
             chart: Chart::new(),
-            close: button::State::new(),
+            preview_chart: Chart {
+                fill_color: Color::from_rgba(0.8, 0.2, 0.3, 0.6),
+                ..Chart::new()
+            },
             full_or_adjustable: button::State::new(),
             max_or_min: button::State::new(),
             day_or_month: button::State::new(),
@@ -808,54 +783,81 @@ impl Default for DateView {
 
 impl DateView {
     pub fn view(&mut self, theme: Theme) -> Element<Message> {
+        let range = self.get_current_range();
+
         let DateView {
-            close,
             full_or_adjustable,
             max_or_min,
             day_or_month,
             chart,
+            preview_chart,
             days,
             months,
             uw_input,
             ..
         } = self;
-        let close_button = Button::new(close, Text::new("X")).on_press(Message::Close);
+
         let minimize_or_maximize_button = Button::new(
             max_or_min,
-            Text::new(if self.is_show { "min" } else { "max" }),
+            if self.is_show {
+                icon(Icons::filter_off())
+            } else {
+                icon(Icons::filter())
+            },
         )
+        .padding(0)
+        .style(style::symbol(theme))
         .on_press(Message::MaxOrMin);
 
         let mut ctrl_row = Row::new();
 
+        if let Some(range_info) = range.map(|(start_date, end_date)| {
+            let args = args!("start"=>start_date.to_string(),"end"=>end_date.to_string());
+            Text::new(tr!("range";&args))
+        }) {
+            ctrl_row = ctrl_row.push(range_info);
+        };
         if !self.is_full {
             let uw_input = iced_aw::NumberInput::new(uw_input, chart.uw(), 30.0, Message::UwChange)
                 .min(1.0)
+                .padding(0)
                 .step(0.1);
-            ctrl_row = ctrl_row.push(uw_input);
+            ctrl_row = ctrl_row.push(Text::new(tr!("uw"))).push(uw_input);
         }
         ctrl_row = ctrl_row.push(style::horizontal_rule());
         if self.is_show {
             let full_or_adjustable_button = Button::new(
                 full_or_adjustable,
-                Text::new(if self.is_full { "adjustable" } else { "full" }),
+                if self.is_full {
+                    icon(Icons::full_exit())
+                } else {
+                    icon(Icons::full())
+                },
             )
+            .padding(0)
+            .style(style::symbol(theme))
             .on_press(Message::FullOrAdjustable);
-            let day_or_month_button =
-                Button::new(day_or_month, Text::new("changing view")).on_press(Message::DayOrMonth);
+            let day_or_month_button = Button::new(day_or_month, icon(Icons::time()))
+                .padding(0)
+                .style(style::symbol(theme))
+                .on_press(Message::DayOrMonth);
             ctrl_row = ctrl_row
                 .push(day_or_month_button)
                 .push(full_or_adjustable_button);
         }
-        ctrl_row = ctrl_row
-            .push(minimize_or_maximize_button)
-            .push(close_button);
+        ctrl_row = ctrl_row.push(minimize_or_maximize_button);
 
         let mut content = Column::new();
         content = content.push(ctrl_row);
         if self.is_show {
-            let chart = chart.chart_view(&*days, &*months).map(Message::ChartMsg);
-            content = content.push(chart);
+            if chart.selected.is_some() && matches!(chart.level, ChartLevel::Month) {
+                let preview_chart_view = preview_chart
+                    .chart_view(&*days, &*months)
+                    .map(Message::PreviewChartMsg);
+                content = content.push(preview_chart_view);
+            }
+            let chart_view = chart.chart_view(&*days, &*months).map(Message::ChartMsg);
+            content = content.push(chart_view);
         }
         Container::new(content).into()
     }
@@ -875,6 +877,22 @@ impl DateView {
         // self.chart.selected.take();
         self.clear_cahce();
     }
+    pub fn preview_chart(&mut self, selected: Selected) {
+        self.preview_chart.selected.replace(selected);
+        self.preview_chart.selected_cache.clear();
+        self.preview_chart.cache.clear();
+    }
+    pub fn preview_chart_update(&mut self, selected: Selected) {
+        self.preview_chart
+            .full_days
+            .replace(selected.start as i64 - selected.end as i64);
+        self.preview_chart.last_day.replace(selected.end as i64);
+    }
+    pub fn clear_preview_chart(&mut self) {
+        self.preview_chart.selected.take();
+        self.preview_chart.selected_cache.clear();
+        self.preview_chart.cache.clear();
+    }
     pub fn clear_cahce(&mut self) {
         self.chart.cache.clear();
         self.chart.selected_cache.clear();
@@ -886,11 +904,20 @@ impl DateView {
             ChartLevel::Month => selected.get_months_range(&self.chart.base_month),
         }
     }
+    pub fn get_current_range(&self) -> Option<(Date, Date)> {
+        self.chart.selected.map(|s| match self.chart.level {
+            ChartLevel::Day => s.get_days_range(self.chart.base_day),
+            ChartLevel::Month => {
+                if let Some(ds) = self.preview_chart.selected {
+                    ds.get_days_range(self.preview_chart.base_day)
+                } else {
+                    s.get_months_range(&self.chart.base_month)
+                }
+            }
+        })
+    }
     pub fn update(&mut self, message: Message) {
         match message {
-            Message::Close => {
-                // TODO: 上层处理
-            }
             Message::MaxOrMin => {
                 self.is_show = !self.is_show;
             }
@@ -914,6 +941,7 @@ impl DateView {
                 }
                 ChartMsg::ClearRange => {
                     self.chart.selected.take();
+                    self.clear_preview_chart();
                     self.clear_cahce();
                 }
                 ChartMsg::Scroll(x) => {
@@ -998,6 +1026,22 @@ impl DateView {
                 }
                 _ => {}
             },
+            Message::PreviewChartMsg(cm) => match cm {
+                ChartMsg::ClearRange => {
+                    self.preview_chart.selected.take();
+                    self.preview_chart.selected_cache.clear();
+                    self.preview_chart.cache.clear();
+                }
+                ChartMsg::EnterRange => {
+                    // 不用处理
+                }
+                ChartMsg::FilterSearch(_) => {
+                    // 上层处理
+                }
+                ChartMsg::Scroll(_) => {
+                    // 不用处理
+                }
+            },
             Message::DayOrMonth => {
                 // 上层处理
             }
@@ -1012,6 +1056,7 @@ impl DateView {
         match self.chart.level {
             ChartLevel::Day => {
                 self.chart.level = ChartLevel::Month;
+                self.clear_preview_chart();
             }
             ChartLevel::Month => {
                 self.chart.level = ChartLevel::Day;
@@ -1107,6 +1152,7 @@ pub struct Chart {
     pub translation: Vector,
     pub base_day: Date,
     pub base_month: MonthView,
+    pub fill_color: Color,
 }
 
 impl Default for Chart {
@@ -1139,6 +1185,7 @@ impl Chart {
             last_month: None,
             base_day: base_day(),
             base_month: base_month(),
+            fill_color: Color::from_rgba(0.0, 0.0, 0.8, 0.5),
         }
     }
     pub fn chart_view<'a>(
@@ -1156,8 +1203,8 @@ impl Chart {
             maximal_day_count: self.max_day_count,
             maximal_month_count: self.max_month_count,
             style: Style {
-                fill_color: Color::from_rgba(0.0, 0.0, 0.8, 0.5),
-                font_size: self.uw() * 2.0 / 3.0,
+                fill_color: self.fill_color,
+                font_size: (self.uw() * 2.0 / 3.0).max(10.0),
                 big_font_size: 17.0,
             },
             level: self.level,

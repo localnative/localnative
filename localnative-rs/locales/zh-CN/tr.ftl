@@ -1,4 +1,4 @@
-tags = 标签
+tags = 标签：
 not-found = 对不起，没有您想要的结果。
 nothing = 您还没有任何note，您可以通过浏览器扩展添加note。
 add-title-info = 点击添加标题。
@@ -37,3 +37,5 @@ tips = 下次删除不再警告
 setting-tip = 删除时不再警告
 enter = 确认
 cancel = 取消
+uw = 单位宽度：
+range = 当前过滤范围是{$start}到{$end}

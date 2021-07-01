@@ -1,4 +1,4 @@
-tags = tags
+tags = tags:
 not-found = Sorry, the result you want was not found...
 nothing = You don’t have any notes yet, you can add notes through the browser extension.
 add-title-info = Type to add title.
@@ -37,3 +37,5 @@ tips = No warning next time you delete
 setting-tip = No more warnings when deleting
 enter = Enter
 cancel = Cancel
+uw = Unit Width:
+range = The current filter range is { $start } to { $end } 

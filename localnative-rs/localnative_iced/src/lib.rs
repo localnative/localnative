@@ -1,19 +1,22 @@
 mod days;
+mod icons;
 mod middle_date;
 mod note;
 mod search_page;
 mod style;
 mod tags;
-
+mod translate;
+mod sidebar;
 use std::sync::Arc;
 
 pub use days::Chart;
 pub use days::DateView;
 use days::HandleDays;
-use iced::{futures::lock::Mutex, Column, Command, Row, Text, Vector};
+use iced::{futures::lock::Mutex, Column, Command, Row, Text};
 use localnative_core::{exe::get_sqlite_connection, rusqlite::Connection, Note};
 use middle_date::MiddleDate;
 pub use note::NoteView;
+use once_cell::sync::OnceCell;
 pub use search_page::SearchPage;
 use style::Theme;
 pub use tags::TagView;
@@ -33,6 +36,7 @@ pub struct Data {
 #[derive(Debug)]
 pub enum Message {
     Loading(()),
+    ApplyLanguage(Option<()>),
     SearchPageMessage(search_page::Message),
     NoteView(Vec<NoteView>),
     TagView(Vec<TagView>),
@@ -49,7 +53,13 @@ impl iced::Application for LocalNative {
     fn new(flags: Self::Flags) -> (Self, Command<Self::Message>) {
         (
             LocalNative::Loading,
-            Command::perform(async {}, Message::Loading),
+            Command::batch([
+                Command::perform(async {}, Message::Loading),
+                Command::perform(
+                    translate::init_bundle(translate::Language::Chinese),
+                    Message::ApplyLanguage,
+                ),
+            ]),
         )
     }
 
@@ -160,6 +170,7 @@ impl iced::Application for LocalNative {
                     data.search_page.days.clear_cahce();
                     Command::none()
                 }
+                Message::ApplyLanguage(..) => Command::none(),
             },
         }
     }
@@ -188,8 +199,35 @@ impl iced::Application for LocalNative {
 
 pub fn settings() -> iced::Settings<()> {
     iced::Settings {
+        default_font: font(),
         ..Default::default()
     }
+}
+
+static FONT: OnceCell<Option<Vec<u8>>> = OnceCell::new();
+
+fn font() -> Option<&'static [u8]> {
+    FONT.get_or_init(|| {
+        use iced_graphics::font::Family;
+        let source = iced_graphics::font::Source::new();
+        source
+            .load(&[
+                Family::Title("PingFang SC".to_owned()),
+                Family::Title("Hiragino Sans GB".to_owned()),
+                Family::Title("Heiti SC".to_owned()),
+                Family::Title("Microsoft YaHei".to_owned()),
+                Family::Title("WenQuanYi Micro Hei".to_owned()),
+                Family::Title("Microsoft YaHei".to_owned()),
+                // TODO:iced 目前没有字体fallback，所以我们只能尽可能选择中英文支持的字体
+                Family::Title("Helvetica".to_owned()),
+                Family::Title("Tahoma".to_owned()),
+                Family::Title("Arial".to_owned()),
+                Family::SansSerif,
+            ])
+            .ok()
+    })
+    .as_ref()
+    .map(|f| f.as_slice())
 }
 
 pub fn handle_notes(notes: Vec<Note>) -> (Vec<NoteView>) {

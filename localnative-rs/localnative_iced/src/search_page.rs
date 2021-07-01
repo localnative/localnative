@@ -7,10 +7,11 @@ use iced::{
 use localnative_core::rusqlite::Connection;
 
 use crate::{
+    icons::{icon, Icons},
     middle_date::MiddleDate,
     style::{self, Theme},
     tags::Tag,
-    DateView, NoteView, TagView,
+    tr, DateView, NoteView, TagView,
 };
 #[derive(Default)]
 pub struct SearchPage {
@@ -67,37 +68,47 @@ impl SearchPage {
             pre_button,
             ..
         } = self;
-        let mut search_bar = Row::new().push(
+        let mut search_bar = Row::new().push(icon(Icons::search())).push(
             TextInput::new(
                 input_state,
-                "Type your search...",
+                &tr!("search"),
                 &search_value,
                 Message::SearchInput,
             )
             .on_submit(Message::Search),
         );
         if !self.search_value.is_empty() || self.range.is_some() {
-            search_bar =
-                search_bar.push(Button::new(clear_button, Text::new("X")).on_press(Message::Clear));
+            search_bar = search_bar.push(
+                Button::new(clear_button, icon(Icons::close()))
+                    .style(style::symbol(theme))
+                    .padding(0)
+                    .on_press(Message::Clear),
+            );
         }
-        let refresh_button = Button::new(refresh_button, Text::new("O")).on_press(Message::Refresh);
+        let refresh_button = Button::new(refresh_button, icon(Icons::refresh()))
+            .padding(0)
+            .style(style::symbol(theme))
+            .on_press(Message::Refresh);
         search_bar = search_bar.push(refresh_button);
         let tags = Scrollable::new(tags_scrollable)
             .push(Container::new(tags.iter_mut().fold(
-                iced_aw::Wrap::new().spacing(5).push(Text::new("tags:")),
+                iced_aw::Wrap::new().spacing(5).push(Text::new(tr!("tags"))),
                 |tags, tag| tags.push(tag.view(theme).map(Message::TagMessage)),
             )))
             .width(iced::Length::FillPortion(2));
-        let is_show = days.is_show;
-        let days = Container::new(days.view(theme).map(Message::DayMessage)).height({
-            if is_show {
-                iced::Length::FillPortion(4)
-            } else {
-                iced::Length::Shrink
-            }
-        });
-        let next_button = Button::new(next_button, Text::new("->")).on_press(Message::NextPage);
-        let pre_button = Button::new(pre_button, Text::new("<-")).on_press(Message::PrePage);
+        let days = Container::new(days.view(theme).map(Message::DayMessage)).height(
+            iced::Length::Shrink
+        )
+        .padding(2)
+        .max_height(240);
+        let next_button = Button::new(next_button, icon(Icons::next()))
+            .style(style::symbol(theme))
+            .padding(0)
+            .on_press(Message::NextPage);
+        let pre_button = Button::new(pre_button, icon(Icons::pre()))
+            .style(style::symbol(theme))
+            .padding(0)
+            .on_press(Message::PrePage);
         let page_info = Text::new(format!(
             "{}-{}/{}",
             self.offset + 1,
@@ -112,7 +123,10 @@ impl SearchPage {
             .push(style::horizontal_rule());
         let note_page = if self.count > 0 {
             let notes = Container::new(notes.iter_mut().enumerate().fold(
-                Scrollable::new(notes_scrollable).padding(10),
+                Scrollable::new(notes_scrollable)
+                .padding(8)
+                .scroller_width(5)
+                .push(days),
                 |notes, (idx, note_view)| {
                     notes.push(
                         note_view
@@ -125,14 +139,13 @@ impl SearchPage {
 
             Column::new()
                 .push(search_bar)
-                .push(days)
                 .push(notes)
                 .push(page_ctrl)
         } else {
             let tip = if self.search_value.is_empty() && self.range.is_none() {
-                "Not Created"
+                tr!("nothing")
             } else {
-                "Not Founded"
+                tr!("not-found")
             };
             let tip = Container::new(
                 Column::new()
@@ -143,8 +156,12 @@ impl SearchPage {
             .height(iced::Length::FillPortion(8));
             Column::new()
                 .push(search_bar)
-                .push(days)
-                .push(tip)
+                .push(
+                    Column::new()
+                    .padding(8)
+                    .push(days)
+                    .push(tip)
+                )
                 .push(page_ctrl)
         }
         .align_items(iced::Align::Center)
@@ -280,10 +297,7 @@ impl SearchPage {
                     self.days.clear_cache_and_convert_selected_range();
                     Command::none()
                 }
-                crate::days::Message::Close => {
-                    //TODO
-                    Command::none()
-                }
+
                 crate::days::Message::ChartMsg(crate::days::ChartMsg::ClearRange) => {
                     self.days.clear_cahce();
                     self.days.chart.selected.take();
@@ -310,7 +324,29 @@ impl SearchPage {
                 }
                 crate::days::Message::ChartMsg(crate::days::ChartMsg::FilterSearch(selected)) => {
                     self.days.clear_cahce();
+                    if matches!(self.days.chart.level, crate::days::ChartLevel::Month) {
+                        let day_selected = selected
+                            .months_to_days(self.days.chart.base_day, &self.days.chart.base_month);
+                        self.days.preview_chart(day_selected);
+                        self.days.preview_chart_update(day_selected);
+                    }
+
                     let range = self.days.get_range(selected);
+                    self.range = Some(range);
+                    search(
+                        conn,
+                        self.search_value.to_owned(),
+                        limit,
+                        self.offset,
+                        self.range,
+                    )
+                }
+                crate::days::Message::PreviewChartMsg(crate::days::ChartMsg::FilterSearch(
+                    selected,
+                )) => {
+                    self.days.preview_chart(selected);
+                    self.days.preview_chart_update(selected);
+                    let range = selected.get_days_range(self.days.preview_chart.base_day);
                     self.range = Some(range);
                     search(
                         conn,
