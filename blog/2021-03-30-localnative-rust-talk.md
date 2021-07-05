@@ -8,4 +8,7 @@ categories: ["公告 Announcement"]
 tags: ["all", "localnative", "talk", "2021", "rust"]
 ---
 
+**2021-03-30《Rust唠嗑室》第21期**
+
 <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/hNOy_Z8qonA" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+

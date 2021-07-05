@@ -136,7 +136,7 @@ function Home() {
           </div>
 
           <div class="container">
-          <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/DBsVscpSp6w" frameBorder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowFullScreen class="video"></iframe>
+          <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/3dhB5gTtXNM" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
           </div>
         </div>
 
