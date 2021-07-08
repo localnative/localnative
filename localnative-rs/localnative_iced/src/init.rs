@@ -1,0 +1,318 @@
+use serde::Serialize;
+use std::path::{Path, PathBuf};
+
+use crate::error_handle;
+
+#[derive(Debug, Default, Serialize)]
+pub struct AppHost {
+    name: String,
+    description: String,
+    path: PathBuf,
+    #[serde(rename = "type")]
+    tp: String,
+    allowed_extensions: Vec<String>,
+}
+
+impl AppHost {
+    pub fn path() -> PathBuf {
+        let name = {
+            #[cfg(target_os = "windows")]
+            {
+                "localnative-web-ext-host.exe"
+            }
+            #[cfg(not(target_os = "windows"))]
+            {
+                "localnative-web-ext-host"
+            }
+        };
+
+        let mut path = std::env::current_dir().unwrap_or(
+            localnative_core::dirs::home_dir()
+                .map(|home| home.join("LocalNative"))
+                .unwrap_or(std::env::temp_dir().join("LocalNative")),
+        );
+
+        path = path.join(name);
+
+        path
+    }
+
+    pub fn firefox() -> Self {
+        Self {
+            name: "app.localnative".to_owned(),
+            description: "Local Native Host".to_owned(),
+            path: Self::path(),
+            tp: "stdio".to_owned(),
+            allowed_extensions: vec!["localnative@example.org".to_owned()],
+        }
+    }
+    pub fn chrome() -> Self {
+        Self {
+            name: "app.localnative".to_owned(),
+            description: "Local Native Host".to_owned(),
+            path: Self::path(),
+            tp: "stdio".to_owned(),
+            allowed_extensions: vec![
+                "chrome-extension://oclkmkeameccmgnajgogjlhdjeaconnb/".to_owned()
+            ],
+        }
+    }
+    pub fn raw_data(&self) -> Vec<u8> {
+        serde_json::to_vec(self).unwrap()
+    }
+}
+
+// TODO: 直接在Command里调用
+// pub async fn init_app_host() -> anyhow::Result<()> {
+//     WebKind::init_all().await;
+//     Ok(())
+// }
+
+// pub async fn fix_app_host() {
+//     WebKind::init_all().await
+// }
+
+//     Windows Registry Editor Version 5.00
+// [HKEY_CURRENT_USER\Software\Google\Chrome\NativeMessagingHosts\app.localnative]
+// @="PATH_TO_CHROME_MANIFEST\\app.localnative.json"
+//let hkey = winreg::RegKey::predef(HKEY_CURRENT_USER);
+
+// [HKEY_CURRENT_USER\Software\Chromium\NativeMessagingHosts\app.localnative]
+// @="PATH_TO_CHROME_MANIFEST\\app.localnative.json"
+
+// [HKEY_CURRENT_USER\Software\Mozilla\NativeMessagingHosts\app.localnative]
+// @="PATH_TO_FIREFOX_MANIFEST\\app.localnative.json"
+#[cfg(target_os = "windows")]
+fn registr(kind: WebKind) -> anyhow::Result<bool> {
+    use winreg::enums::*;
+    let path = kind.registr_path();
+    let write_path = path.join("app.localnative");
+    let json_path = kind.json_path()?;
+    let key = winreg::RegKey::predef(HKEY_CURRENT_USER);
+
+    if let Ok(k) = key.open_subkey(&path) {
+        if let Ok(k) = k.open_subkey(Path::new("app.localnative")) {
+            if let Ok(v) = k.get_value::<String, &str>("") {
+                if v != json_path {
+                    let writer = key.open_subkey_with_flags(&write_path, KEY_WRITE)?;
+                    writer.set_value("", &json_path)?;
+                } else {
+                }
+                return Ok(true);
+            } else {
+            }
+        } else {
+            let (writer, _disposition) = key.create_subkey_with_flags(&write_path, KEY_WRITE)?;
+            writer.set_value("", &json_path)?;
+            return Ok(true);
+        }
+    }
+    Ok(false)
+}
+
+pub fn firefox_path() -> Option<PathBuf> {
+    localnative_core::dirs::home_dir().map(|home_dir| {
+        #[cfg(target_os = "macos")]
+        {
+            home_dir
+                .join("Library")
+                .join("Application Support")
+                .join("Mozilla")
+        }
+        #[cfg(target_os = "linux")]
+        {
+            home_dir.join(".mozilla")
+        }
+        #[cfg(target_os = "windows")]
+        {
+            home_dir.join("LocalNative").join("config").join("mozilla")
+        }
+    })
+}
+
+pub fn chrome_path() -> Option<PathBuf> {
+    localnative_core::dirs::home_dir().map(|home_dir| {
+        #[cfg(target_os = "macos")]
+        {
+            home_dir
+                .join("Library")
+                .join("Application Support")
+                .join("Google")
+                .join("Chrome")
+        }
+        #[cfg(target_os = "linux")]
+        {
+            Ok(home_dir.join(".config").join("google-chrome"))
+        }
+        #[cfg(target_os = "windows")]
+        {
+            home_dir.join("LocalNative").join("config").join("chrome")
+        }
+    })
+}
+pub fn chromium_path() -> Option<PathBuf> {
+    localnative_core::dirs::home_dir().map(|home_dir| {
+        #[cfg(target_os = "macos")]
+        {
+            home_dir
+                .join("Library")
+                .join("Application Support")
+                .join("Chromium")
+        }
+        #[cfg(target_os = "linux")]
+        {
+            home_dir.join(".config").join("chromium")
+        }
+        #[cfg(target_os = "windows")]
+        {
+            home_dir.join("LocalNative").join("config").join("chrome")
+        }
+    })
+}
+pub fn edge_path() -> Option<PathBuf> {
+    localnative_core::dirs::home_dir().map(|home_dir| {
+        #[cfg(target_os = "macos")]
+        {
+            // TODO：需要测试
+            home_dir
+                .join("Library")
+                .join("Application Support")
+                .join("Microsoft")
+                .join("Edge")
+        }
+        #[cfg(target_os = "linux")]
+        {
+            // TODO:需要测试
+            home_dir.join(".config").join("Microsoft").join("Edge")
+        }
+        #[cfg(target_os = "windows")]
+        {
+            home_dir.join("LocalNative").join("config").join("edge")
+        }
+    })
+}
+#[derive(Debug, Clone, Copy)]
+pub enum WebKind {
+    FireFox,
+    Chrome,
+    Chromium,
+    Edge,
+}
+
+impl WebKind {
+    pub async fn init_all() {
+        tokio::join!(
+            try_init_file(Self::FireFox),
+            try_init_file(Self::Chrome),
+            try_init_file(Self::Chromium),
+            try_init_file(Self::Edge)
+        );
+    }
+    #[cfg(target_os = "windows")]
+    fn registr_path(&self) -> PathBuf {
+        match self {
+            WebKind::FireFox => Path::new("Software")
+                .join("Mozilla")
+                .join("NativeMessagingHosts"),
+            WebKind::Chrome => Path::new("Software")
+                .join("Google")
+                .join("Chrome")
+                .join("NativeMessagingHosts"),
+            WebKind::Chromium => Path::new("Software")
+                .join("Chromium")
+                .join("NativeMessagingHosts"),
+            WebKind::Edge => Path::new("Software")
+                .join("Microsoft")
+                .join("Edge")
+                .join("NativeMessagingHosts"),
+        }
+    }
+
+    fn path(&self) -> Option<PathBuf> {
+        self.browser_path().map(|browser_path| {
+            #[cfg(target_os = "macos")]
+            {
+                browser_path.join("NativeMessagingHosts")
+            }
+            #[cfg(target_os = "linux")]
+            match self {
+                WebKind::FireFox => browser_path.join("native-messaging-hosts"),
+                _ => browser_path.join("NativeMessagingHosts"),
+            }
+            #[cfg(target_os = "windows")]
+            browser_path
+        })
+    }
+    fn browser_path(&self) -> Option<PathBuf> {
+        match self {
+            WebKind::FireFox => firefox_path(),
+            WebKind::Chrome => chrome_path(),
+            WebKind::Chromium => chromium_path(),
+            WebKind::Edge => edge_path(),
+        }
+        .filter(|path| path.exists())
+    }
+    fn host(&self) -> AppHost {
+        if let WebKind::FireFox = self {
+            AppHost::firefox()
+        } else {
+            AppHost::chrome()
+        }
+    }
+    #[cfg(target_os = "windows")]
+    fn json_path(&self) -> Option<String> {
+        let path = self.path()?.join("app.localnative.json");
+        path.into_os_string()
+            .into_string()
+            .map_err(error_handle)
+            .ok()
+    }
+}
+async fn try_init_file(kind: WebKind) {
+    #[cfg(target_os = "windows")]
+    {
+        match registr(kind) {
+            Ok(false) => {
+                return Ok(());
+            }
+            Err(e) => {
+                return Err(e);
+            }
+            _ => {}
+        }
+    }
+
+    if let Some(dir_path) = kind.path() {
+        let raw_file = kind.host().raw_data();
+        init_file(&dir_path, &raw_file).await.unwrap();
+    }
+}
+
+async fn init_file(dir_path: &Path, raw_file: &[u8]) -> std::io::Result<()> {
+    let file_path = dir_path.join("app.localnative.json");
+    if file_path.exists() {
+        if file_path.is_file() {
+            let file = tokio::fs::read(&file_path).await?;
+            if file != *raw_file {
+                tokio::fs::write(&file_path, raw_file).await?;
+            }
+        } else {
+            tokio::fs::remove_dir(&file_path).await?;
+            create_and_write_file(dir_path, &file_path, raw_file).await?;
+        }
+    } else {
+        create_and_write_file(dir_path, &file_path, raw_file).await?;
+    }
+
+    Ok(())
+}
+
+async fn create_and_write_file(
+    dir_path: &Path,
+    file_path: &Path,
+    raw_file: &[u8],
+) -> std::io::Result<()> {
+    tokio::fs::create_dir_all(dir_path).await?;
+    tokio::fs::write(file_path, raw_file).await?;
+    Ok(())
+}
