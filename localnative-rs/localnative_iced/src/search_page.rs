@@ -1,17 +1,14 @@
-use std::sync::Arc;
-
 use iced::{
-    button, futures::lock::Mutex, scrollable, text_input, Button, Column, Command, Container,
-    Element, Row, Scrollable, Text, TextInput,
+    button, scrollable, text_input, Button, Column, Command, Container, Element, Row, Scrollable,
+    Text, TextInput,
 };
-use localnative_core::rusqlite::Connection;
 
 use crate::{
-    icons::{icon, Icons},
+    icons::IconItem,
     middle_date::MiddleDate,
     style::{self, Theme},
     tags::Tag,
-    tr, DateView, NoteView, TagView,
+    tr, Conn, DateView, NoteView, TagView,
 };
 #[derive(Default)]
 pub struct SearchPage {
@@ -19,7 +16,7 @@ pub struct SearchPage {
     pub tags: Vec<TagView>,
     pub days: DateView,
     pub range: Option<(time::Date, time::Date)>,
-    search_value: String,
+    pub search_value: String,
     pub offset: u32,
     pub count: u32,
     input_state: text_input::State,
@@ -68,7 +65,7 @@ impl SearchPage {
             pre_button,
             ..
         } = self;
-        let mut search_bar = Row::new().push(icon(Icons::search())).push(
+        let mut search_bar = Row::new().push(IconItem::Search).push(
             TextInput::new(
                 input_state,
                 &tr!("search"),
@@ -77,17 +74,17 @@ impl SearchPage {
             )
             .on_submit(Message::Search),
         );
-        if !self.search_value.is_empty() || self.range.is_some() {
+        if !self.search_value.is_empty() {
             search_bar = search_bar.push(
-                Button::new(clear_button, icon(Icons::close()))
-                    .style(style::symbol(theme))
+                Button::new(clear_button, IconItem::Clear)
+                    .style(style::transparent(theme))
                     .padding(0)
                     .on_press(Message::Clear),
             );
         }
-        let refresh_button = Button::new(refresh_button, icon(Icons::refresh()))
+        let refresh_button = Button::new(refresh_button, IconItem::Refresh)
             .padding(0)
-            .style(style::symbol(theme))
+            .style(style::transparent(theme))
             .on_press(Message::Refresh);
         search_bar = search_bar.push(refresh_button);
         let tags = Scrollable::new(tags_scrollable)
@@ -96,17 +93,16 @@ impl SearchPage {
                 |tags, tag| tags.push(tag.view(theme).map(Message::TagMessage)),
             )))
             .width(iced::Length::FillPortion(2));
-        let days = Container::new(days.view(theme).map(Message::DayMessage)).height(
-            iced::Length::Shrink
-        )
-        .padding(2)
-        .max_height(240);
-        let next_button = Button::new(next_button, icon(Icons::next()))
-            .style(style::symbol(theme))
+        let days = Container::new(days.view(theme).map(Message::DayMessage))
+            .height(iced::Length::Shrink)
+            .padding(2)
+            .max_height(240);
+        let next_button = Button::new(next_button, IconItem::Next)
+            .style(style::transparent(theme))
             .padding(0)
             .on_press(Message::NextPage);
-        let pre_button = Button::new(pre_button, icon(Icons::pre()))
-            .style(style::symbol(theme))
+        let pre_button = Button::new(pre_button, IconItem::Pre)
+            .style(style::transparent(theme))
             .padding(0)
             .on_press(Message::PrePage);
         let page_info = Text::new(format!(
@@ -122,25 +118,24 @@ impl SearchPage {
             .push(next_button)
             .push(style::horizontal_rule());
         let note_page = if self.count > 0 {
-            let notes = Container::new(notes.iter_mut().enumerate().fold(
-                Scrollable::new(notes_scrollable)
-                .padding(8)
-                .scroller_width(5)
-                .push(days),
-                |notes, (idx, note_view)| {
-                    notes.push(
-                        note_view
-                            .view(theme)
-                            .map(move |note_msg| Message::NoteMessage(note_msg, idx)),
-                    )
-                },
-            ))
+            let notes = Container::new(
+                notes.iter_mut().enumerate().fold(
+                    Scrollable::new(notes_scrollable)
+                        .padding(8)
+                        .scroller_width(5)
+                        .push(days),
+                    |notes, (idx, note_view)| {
+                        notes.push(
+                            note_view
+                                .view(theme)
+                                .map(move |note_msg| Message::NoteMessage(note_msg, idx)),
+                        )
+                    },
+                ),
+            )
             .height(iced::Length::FillPortion(8));
 
-            Column::new()
-                .push(search_bar)
-                .push(notes)
-                .push(page_ctrl)
+            Column::new().push(search_bar).push(notes).push(page_ctrl)
         } else {
             let tip = if self.search_value.is_empty() && self.range.is_none() {
                 tr!("nothing")
@@ -150,18 +145,18 @@ impl SearchPage {
             let tip = Container::new(
                 Column::new()
                     .push(style::vertical_rule())
-                    .push(Text::new(tip).size(50))
+                    .push(
+                        Row::new()
+                            .push(style::horizontal_rule())
+                            .push(Text::new(tip).size(50))
+                            .push(style::horizontal_rule()),
+                    )
                     .push(style::vertical_rule()),
             )
             .height(iced::Length::FillPortion(8));
             Column::new()
                 .push(search_bar)
-                .push(
-                    Column::new()
-                    .padding(8)
-                    .push(days)
-                    .push(tip)
-                )
+                .push(Column::new().padding(8).push(days).push(tip))
                 .push(page_ctrl)
         }
         .align_items(iced::Align::Center)
@@ -172,7 +167,9 @@ impl SearchPage {
         &mut self,
         message: Message,
         limit: u32,
-        conn: Arc<Mutex<Connection>>,
+        conn: Conn,
+        disabel_delete_tip: bool,
+        delete_tip: &mut crate::DeleteTip,
     ) -> Command<Message> {
         match message {
             Message::Search => search(
@@ -194,8 +191,6 @@ impl SearchPage {
             }
             Message::Clear => {
                 self.search_value.clear();
-                self.range.take();
-                self.days.clear_cache_and_convert_selected_range();
                 search(
                     conn,
                     self.search_value.to_owned(),
@@ -250,16 +245,24 @@ impl SearchPage {
                 }
             }
             Message::NoteMessage(msg, idx) => match msg {
-                crate::note::Message::Delete(rowid) => Command::perform(
-                    MiddleDate::delete(
-                        conn,
-                        self.search_value.to_string(),
-                        limit,
-                        self.offset,
-                        rowid,
-                    ),
-                    Message::Receiver,
-                ),
+                crate::note::Message::Delete(rowid) => {
+                    if disabel_delete_tip {
+                        Command::perform(
+                            MiddleDate::delete(
+                                conn,
+                                self.search_value.to_string(),
+                                limit,
+                                self.offset,
+                                rowid,
+                            ),
+                            Message::Receiver,
+                        )
+                    } else {
+                        delete_tip.tip_state.show(true);
+                        delete_tip.rowid = rowid;
+                        Command::none()
+                    }
+                }
                 crate::note::Message::Search(s) => {
                     self.search_value = s;
                     search(
@@ -366,7 +369,7 @@ impl SearchPage {
 }
 
 fn search(
-    conn: Arc<Mutex<Connection>>,
+    conn: Conn,
     query: String,
     limit: u32,
     offset: u32,
@@ -421,8 +424,9 @@ impl iced::Sandbox for SearchPage {
     }
 
     fn update(&mut self, message: Self::Message) {
-        let conn = localnative_core::exe::get_sqlite_connection();
-        self.update(message, 10, Arc::new(Mutex::new(conn)));
+        // TODO:
+        //let conn = localnative_core::exe::get_sqlite_connection();
+        //self.update(message, 10, Arc::new(Mutex::new(conn)),true);
     }
 
     fn view(&mut self) -> Element<'_, Self::Message> {
