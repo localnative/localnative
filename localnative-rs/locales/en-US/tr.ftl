@@ -1,41 +1,50 @@
-tags = tags:
-not-found = Sorry, the result you want was not found...
-nothing = You don’t have any notes yet, you can add notes through the browser extension.
-add-title-info = Type to add title.
-add-url-info = Type to add url.
-add-desp-info = Type to add desription.
-add-comments-info = Type to add comments.
-add-title = add title
-add-url = add url
-add-desp = add description
-add-comments = add comments
-add-more = add more things
-add-new-tag = Add new tag
-get-ip-fail = Sorry, local IP acquisition failed.
-server-opened = Server Opened
-server-closed = Server Closed
-server = server
-start-sync = start client sync
-input-tip = input format: 
-{"["}server address{"]"}:{"["}port{"]"}
-setting = setting
-back = back contents
-language = language
-render-backend = render backend
-reset = reset
-save-setting = save setting
-limit = limit number of per page: {$num}
-sync-via-file = sync via attach file
-server-p0 = Click server button in main window to stop server.
-server-p1 = Use {$ip} in Local Native desktop app for server address and port to start sync.
-server-p3 = Use Local Native mobile app to scan this barcode to start sync.
+# Sidebar
+notes = Notes
+sync = Sync
+
+# search page
+range = range is from
+to = to
 search = Type your search...
-fix-ext-host = Try fix your web ext host
-sync-file = File that need to be synchronized...
-delete-tip = Are you sure you want to delete? Delete is not recoverable, please consider carefully.
-tips = No warning next time you delete
-setting-tip = No more warnings when deleting
-enter = Enter
+tags = tags:
+
+# sync page 
+sync-waiting = Waiting for your operating...
+sync-error = Synchronization process error:
+sync-complete = Synchronization process was complete！
+sync-ip-parse-error = Your ip address input format error,please check it.
+sync-ip-parse-complete = Cool! Your up address format was passed.
+sync-file-path-error = The selected file path is incorrect. Please select the file again.
+sync-from-file-unknown-error = An unknown error occurred during file synchronization. The file you want to synchronize may not be the correct file.
+
+sync-client-tip = Enter the ip address and port number, and your device will connect to the synchronization service of other devices.
+sync-server-tip = After enabling the synchronization service, your device will be able to be synchronized by Local Native on other devices
+input-ip-tip = If you want to enter the IPv6 address, you can copy it and paste it into the ip input box via keyboard shortcuts.
+input-ip = IP address and port number:
+sync-from-server = Sync from server to local
+sync-to-server = Sync local to server
+sync-from-file = Sync from file to local
+
+closed = Local service is off
+opened = Local service is on
+starting = Starting local service
+closing = Closing local service
+unknow-error = Unknown error click to try again
+ip-qr = Use the Local Native app on the device that needs to be synchronized, scan the QR code to synchronize, or manually enter: {$ip} to synchronize.
+
+settings = Settings
+disable-delete-tip = When deleting, delete directly instead of warning.
+language = Language
+chinese = Chinese(简体中文)
+english = English
+limit = Maximum number of results per page search
+ok = Ok
 cancel = Cancel
-uw = Unit Width:
-range = The current filter range is { $start } to { $end } 
+
+delete-tip = Warning
+delete-tip-content = It cannot be restored after deletion, please operate carefully!
+
+not-found = Sorry, the result you want was not found!
+nothing = You have not yet created a label, you can sync from other devices to the local, or add a new label from the browser extension.
+
+try-fix-host = Your browser can’t communicate normally? Try clicking here to fix it.

@@ -1,14 +1,26 @@
-use iced::futures::stream::Collect;
+use std::ops::Not;
+
 // ------impl note start-----
 use iced::{button, qr_code, rule, text_input, Element};
 use iced::{container, Background, Color};
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Theme {
     Light,
     Dark,
 }
 
+impl Not for Theme {
+    type Output = Self;
+
+    fn not(self) -> Self::Output {
+        match self {
+            Theme::Light => Theme::Dark,
+            Theme::Dark => Theme::Light,
+        }
+    }
+}
 pub struct Transparent {
     theme: Theme,
 }
@@ -28,7 +40,7 @@ impl button::StyleSheet for Transparent {
         }
     }
 }
-pub fn symbol(theme: Theme) -> Transparent {
+pub fn transparent(theme: Theme) -> Transparent {
     Transparent { theme }
 }
 
@@ -201,13 +213,10 @@ impl container::StyleSheet for Normal {
     }
 }
 
-pub fn normal(theme: Theme) -> Normal {
-    Normal { theme }
-}
-
 pub struct SearchInput {
     theme: Theme,
 }
+
 impl text_input::StyleSheet for SearchInput {
     fn active(&self) -> text_input::Style {
         text_input::Style {
@@ -248,3 +257,62 @@ impl text_input::StyleSheet for SearchInput {
 }
 
 // --------impl search page end------
+
+// -- impl modal style start --
+
+impl iced_aw::style::modal::StyleSheet for Transparent {
+    fn active(&self) -> iced_aw::modal::Style {
+        iced_aw::style::modal::Style {
+            background: Background::Color(Color::TRANSPARENT),
+        }
+    }
+}
+
+// pub struct Warning {
+//     theme: Theme,
+// }
+
+// pub struct Settings {
+//     theme: Theme,
+// }
+
+// impl iced_aw::style::card::StyleSheet for Warning {
+//     fn active(&self) -> iced_aw::card::Style {
+//         let background = match self.theme {
+//             Theme::Light => LIGHT_BG,
+//             Theme::Dark => DARK_BG,
+//         };
+//         iced_aw::card::Style {
+//             background,
+//             border_radius: 0.5,
+//             border_width: 2.5,
+//             border_color: ,
+//             head_background: (),
+//             head_text_color: (),
+//             body_background: (),
+//             body_text_color: (),
+//             foot_background: (),
+//             foot_text_color: (),
+//             close_color: (),
+//         }
+//     }
+// }
+
+// impl iced_aw::style::card::StyleSheet for Settings {
+//     fn active(&self) -> iced_aw::card::Style {
+//         iced_aw::card::Style {
+//             background: (),
+//             border_radius: (),
+//             border_width: (),
+//             border_color: (),
+//             head_background: (),
+//             head_text_color: (),
+//             body_background: (),
+//             body_text_color: (),
+//             foot_background: (),
+//             foot_text_color: (),
+//             close_color: (),
+//         }
+//     }
+// }
+// -- impl modal style end --

@@ -1,68 +1,77 @@
-use iced::{Font, Text};
+use iced::{Element, Font, Text};
 
-pub const ICONS: Font = Font::External {
-    name: "Icons",
+const ICONS: Font = Font::External {
+    // 注意，如果使用诸如iiced_aw此类的crrate时，不要将自己的字体命名为Icons，因为会和内部的字体冲突
+    name: "LocalNativeIcons",
     bytes: include_bytes!("../fonts/icons.ttf"),
 };
 
-pub struct Icons;
+pub enum IconItem {
+    Search,
+    Clear,
+    Delete,
+    Settings,
+    Filter,
+    FilterOff,
+    Refresh,
+    Next,
+    Pre,
+    Full,
+    FullExit,
+    QRCode,
+    DayTime,
+    MonthTime,
+    SyncFromFile,
+    SyncFromServer,
+    SyncToServer,
+    OpenServer,
+    CloseServer,
+    Sync,
+    Dark,
+    Light,
+    Date,
+    Note,
+}
 
-impl Icons {
-    // .ri-search-line:before { content: "\f0d1"; }
-    // .ri-close-circle-fill:before { content: "\eb96"; }
-    // .ri-delete-back-2-fill:before { content: "\ec19"; }
-    // .ri-delete-bin-2-fill:before { content: "\ec1d"; }
-    // .ri-settings-4-line:before { content: "\f0e8"; }
-    // .ri-filter-line:before { content: "\ed27"; }
-    // .ri-refresh-fill:before { content: "\f063"; }
-    // .ri-arrow-right-s-line:before { content: "\ea6e"; }
-    // .ri-arrow-left-s-line:before { content: "\ea64"; }
-    // .ri-fullscreen-line:before { content: "\ed9c"; }
-    // .ri-fullscreen-exit-fill:before { content: "\ed99"; }
-    pub fn search() -> char {
-        '\u{f0d1}'
+impl IconItem {
+    fn into_char(self) -> char {
+        match self {
+            IconItem::Search => '\u{f0d1}',
+            IconItem::Clear => '\u{eb99}',
+            IconItem::Delete => '\u{ec1e}',
+            IconItem::Settings => '\u{f0e6}',
+            IconItem::Filter => '\u{ed27}',
+            IconItem::FilterOff => '\u{ed29}',
+            IconItem::Refresh => '\u{ed2a}',
+            IconItem::Next => '\u{ea6e}',
+            IconItem::Pre => '\u{ea64}',
+            IconItem::Full => '\u{ed9c}',
+            IconItem::FullExit => '\u{ed9a}',
+            IconItem::QRCode => '\u{f03d}',
+            IconItem::DayTime => '\u{f20f}',
+            IconItem::MonthTime => '\u{f20e}',
+            IconItem::SyncFromFile => '\u{eccf}',
+            IconItem::SyncFromServer => '\u{ec58}',
+            IconItem::SyncToServer => '\u{f24d}',
+            IconItem::OpenServer => '\u{eb9d}',
+            IconItem::CloseServer => '\u{eb9f}',
+            IconItem::Sync => '\u{eba1}',
+            IconItem::Dark => '\u{ef72}',
+            IconItem::Light => '\u{f1bf}',
+            IconItem::Date => '\u{eb29}',
+            IconItem::Note => '\u{ea7e}',
+        }
     }
-    pub fn close() -> char {
-        '\u{eb96}'
-    }
-    pub fn delete_back() -> char {
-        '\u{ec19}'
-    }
-    pub fn delete_bin() -> char {
-        '\u{ec1d}'
-    }
-    pub fn settings() -> char {
-        '\u{f0e8}'
-    }
-    pub fn filter() -> char {
-        '\u{ed27}'
-    }
-    pub fn refresh() -> char {
-        '\u{f063}'
-    }
-    pub fn next() -> char {
-        '\u{ea6e}'
-    }
-    pub fn pre() -> char {
-        '\u{ea64}'
-    }
-    pub fn full() -> char {
-        '\u{ed9c}'
-    }
-    pub fn full_exit() -> char {
-        '\u{ed99}'
-    }
-    pub fn qr_code() -> char {
-        '\u{f03d}'
-    }
-    pub fn time() -> char {
-        '\u{f20e}'
-    }
-    pub fn filter_off() -> char {
-        '\u{ed29}'
+    pub fn into_text(self) -> Text {
+        Text::new(&self.into_char().to_string()).font(ICONS)
     }
 }
 
-pub fn icon(unicode: char) -> Text {
-    Text::new(&unicode.to_string()).font(ICONS)
+impl<'a, Message> From<IconItem> for Element<'a, Message>
+where
+    Message: 'a,
+{
+    fn from(icon: IconItem) -> Element<'a, Message> {
+        Element::new(icon.into_text())
+    }
 }

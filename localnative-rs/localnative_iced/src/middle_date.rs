@@ -1,6 +1,3 @@
-use std::sync::Arc;
-
-use iced::futures::lock::Mutex;
 use localnative_core::{
     cmd::{create, delete, insert},
     rusqlite::Connection,
@@ -8,7 +5,7 @@ use localnative_core::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::{days::Day, tags::Tag};
+use crate::{days::Day, tags::Tag, Conn};
 
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]
 pub struct MiddleDate {
@@ -20,7 +17,7 @@ pub struct MiddleDate {
 
 impl MiddleDate {
     pub async fn delete(
-        conn: Arc<Mutex<Connection>>,
+        conn: Conn,
         query: String,
         limit: u32,
         offset: u32,
@@ -31,7 +28,7 @@ impl MiddleDate {
         Self::from_select_inner(conn, query, limit, offset)
     }
     pub async fn upgrade(
-        conn: Arc<Mutex<Connection>>,
+        conn: Conn,
         query: String,
         limit: u32,
         offset: u32,
@@ -49,7 +46,7 @@ impl MiddleDate {
         Self::from_select_inner(conn, query, limit, offset)
     }
     pub async fn insert(
-        conn: Arc<Mutex<Connection>>,
+        conn: Conn,
         query: String,
         limit: u32,
         offset: u32,
@@ -61,17 +58,12 @@ impl MiddleDate {
         insert(note);
         Self::from_select_inner(conn, query, limit, offset)
     }
-    pub async fn from_select(
-        conn: Arc<Mutex<Connection>>,
-        query: String,
-        limit: u32,
-        offset: u32,
-    ) -> Option<Self> {
+    pub async fn from_select(conn: Conn, query: String, limit: u32, offset: u32) -> Option<Self> {
         let conn = &*conn.lock().await;
         Self::from_select_inner(conn, query, limit, offset)
     }
     pub async fn from_filter(
-        conn: Arc<Mutex<Connection>>,
+        conn: Conn,
         query: String,
         limit: u32,
         offset: u32,
@@ -84,7 +76,7 @@ impl MiddleDate {
         Self::from_filter_inner(conn, &query, &limit, &offset, &from, &to)
     }
     pub async fn from_someday(
-        conn: Arc<Mutex<Connection>>,
+        conn: Conn,
         query: String,
         limit: u32,
         offset: u32,

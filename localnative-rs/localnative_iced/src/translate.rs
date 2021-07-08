@@ -10,6 +10,8 @@ use tokio::sync::OnceCell;
 use unic_langid::langid;
 use unic_langid::LanguageIdentifier;
 
+use crate::error_handle;
+
 static BUNDLE_CACHE: OnceCell<
     FrozenMap<Language, Arc<FluentBundle<FluentResource, IntlLangMemoizer>>>,
 > = OnceCell::const_new();
@@ -22,10 +24,6 @@ async fn read_file(path: &str) -> Option<String> {
         .await
         .map_err(error_handle)
         .ok()
-}
-
-pub fn error_handle(error: impl std::fmt::Debug) {
-    eprintln!("{:?}", error);
 }
 
 async fn create_resource(path: &str) -> Option<FluentResource> {

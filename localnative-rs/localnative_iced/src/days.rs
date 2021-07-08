@@ -5,13 +5,12 @@ use iced::{
     Vector,
 };
 
-use iced_aw::number_input;
+use iced_aw::{date_picker, number_input, DatePicker};
 use serde::{Deserialize, Serialize};
 use time::{Date, Duration, Month};
 
 use crate::{
-    args,
-    icons::{icon, Icons},
+    icons::IconItem,
     style::{self, Theme},
     tr,
 };
@@ -145,6 +144,23 @@ pub fn month_to_num(month: Month) -> i32 {
         Month::December => 12,
     }
 }
+pub fn num_to_month(num: i32) -> Month {
+    match num {
+        1 => Month::January,
+        2 => Month::February,
+        3 => Month::March,
+        4 => Month::April,
+        5 => Month::May,
+        6 => Month::June,
+        7 => Month::July,
+        8 => Month::August,
+        9 => Month::September,
+        10 => Month::October,
+        11 => Month::November,
+        12 => Month::December,
+        _ => unreachable!(),
+    }
+}
 pub fn base_month() -> MonthView {
     let today = time::OffsetDateTime::now_utc().date();
     let tomorrow = today.next_day().unwrap();
@@ -195,46 +211,45 @@ impl Day {
         let gt9_offset = 0.5 * (uw - font_size);
         let lt9_offset = 0.5 * (uw - 0.5 * font_size);
 
-            for idx in 1..=num {
-                let day = date_pointer.day();
-                let x = width - idx as f32 * uw - translation;
-                if !skip_text {
-                    if idx == num || (date_pointer.month() == Month::January && date_pointer.day() == 1)
-                    {
-                        let year = canvas::Text {
-                            content: date_pointer.year().to_string(),
-                            position: Point::new(x, 0.0),
-                            size: big_font_size,
-                            ..Default::default()
-                        };
-                        frame.fill_text(year);
-                    }
-                    if day == 1 && uw > 1.0{
-                        let month = canvas::Text {
-                            content: date_pointer.month().to_string(),
-                            position: Point::new(x, big_font_size),
-                            size: big_font_size,
-                            ..Default::default()
-                        };
-                        frame.fill_text(month);
-                    }
-                    if uw >= font_size * 1.5 {
-                        let day_text_offset = if day > 9 { gt9_offset } else { lt9_offset };
-                        let position = Point::new(x + day_text_offset, day_text_y);
-                        let day = canvas::Text {
-                            content: day.to_string(),
-                            position,
-                            size: font_size,
-                            ..Default::default()
-                        };
-                        frame.fill_text(day);
-                    }
+        for idx in 1..=num {
+            let day = date_pointer.day();
+            let x = width - idx as f32 * uw - translation;
+            if !skip_text {
+                if idx == num || (date_pointer.month() == Month::January && date_pointer.day() == 1)
+                {
+                    let year = canvas::Text {
+                        content: date_pointer.year().to_string(),
+                        position: Point::new(x, 0.0),
+                        size: big_font_size,
+                        ..Default::default()
+                    };
+                    frame.fill_text(year);
                 }
-                if let Some(pd) = date_pointer.previous_day() {
-                    date_pointer = pd;
+                if day == 1 && uw > 1.0 {
+                    let month = canvas::Text {
+                        content: date_pointer.month().to_string(),
+                        position: Point::new(x, big_font_size),
+                        size: big_font_size,
+                        ..Default::default()
+                    };
+                    frame.fill_text(month);
+                }
+                if uw >= font_size * 1.5 {
+                    let day_text_offset = if day > 9 { gt9_offset } else { lt9_offset };
+                    let position = Point::new(x + day_text_offset, day_text_y);
+                    let day = canvas::Text {
+                        content: day.to_string(),
+                        position,
+                        size: font_size,
+                        ..Default::default()
+                    };
+                    frame.fill_text(day);
                 }
             }
-        
+            if let Some(pd) = date_pointer.previous_day() {
+                date_pointer = pd;
+            }
+        }
 
         // 绘制方块
         let uh = height / max_count as f32;
@@ -387,21 +402,7 @@ impl MonthView {
                 m_num += 12;
                 year -= 1;
             }
-            month = match m_num {
-                1 => Month::January,
-                2 => Month::February,
-                3 => Month::March,
-                4 => Month::April,
-                5 => Month::May,
-                6 => Month::June,
-                7 => Month::July,
-                8 => Month::August,
-                9 => Month::September,
-                10 => Month::October,
-                11 => Month::November,
-                12 => Month::December,
-                _ => unreachable!(),
-            };
+            month = num_to_month(m_num);
         }
 
         let rightmost_month = (year, month);
@@ -693,6 +694,24 @@ impl Selected {
             base_day - Duration::days(self.end as i64 + 1),
         )
     }
+    pub fn date_into_days_selected(&mut self, start: Date, end: Date, base_day: Date) {
+        self.start = (base_day - start).whole_days().max(1) as usize - 1;
+        self.end = (base_day - end).whole_days().max(1) as usize - 1;
+    }
+    pub fn date_into_months_selected(
+        &mut self,
+        start: Date,
+        end: Date,
+        base_month: &MonthView,
+        base_day: Date,
+    ) {
+        let ds = Selected {
+            start: (base_day - start).whole_days().max(1) as usize - 1,
+            end: (base_day - end).whole_days().max(1) as usize - 1,
+        };
+        *self = ds.days_to_months(base_day, base_month);
+    }
+
     pub fn days_to_months(self, base_day: Date, base_month: &MonthView) -> Self {
         let (start, end) = self.get_days_range(base_day);
         let start = months_num(&MonthView::from_date(start, 0), base_month);
@@ -738,6 +757,12 @@ pub enum Message {
     ChartMsg(ChartMsg),
     PreviewChartMsg(ChartMsg),
     UwChange(f32),
+    CancelStartPick,
+    CancelEndPick,
+    PickStart,
+    PickEnd,
+    PickStartRes(date_picker::Date),
+    PickEndRes(date_picker::Date),
 }
 #[derive(Debug)]
 pub struct DateView {
@@ -753,7 +778,12 @@ pub struct DateView {
     full_or_adjustable: button::State,
     max_or_min: button::State,
     day_or_month: button::State,
+    clear_button: button::State,
     uw_input: number_input::State,
+    start_date_picker: date_picker::State,
+    end_date_picker: date_picker::State,
+    pick_start: button::State,
+    pick_end: button::State,
     pub is_full: bool,
 }
 
@@ -770,7 +800,12 @@ impl Default for DateView {
             full_or_adjustable: button::State::new(),
             max_or_min: button::State::new(),
             day_or_month: button::State::new(),
+            clear_button: button::State::new(),
             uw_input: number_input::State::new(),
+            start_date_picker: date_picker::State::now(),
+            end_date_picker: date_picker::State::now(),
+            pick_start: button::State::new(),
+            pick_end: button::State::new(),
             days: Vec::new(),
             months: Vec::new(),
             full_days: None,
@@ -782,6 +817,28 @@ impl Default for DateView {
 }
 
 impl DateView {
+    pub fn update_from_handle_days(&mut self, handle_days: HandleDays) {
+        let HandleDays {
+            days,
+            months,
+            max_day_count,
+            max_month_count,
+            full_days,
+            full_months,
+            last_day,
+            last_month,
+        } = handle_days;
+        self.days = days;
+        self.months = months;
+        self.full_days = full_days;
+        self.full_months = full_months;
+        self.last_day = last_day;
+        self.last_month = last_month;
+        self.chart.last_day = last_day;
+        self.chart.last_month = last_month;
+        self.chart.max_day_count = max_day_count;
+        self.chart.max_month_count = max_month_count;
+    }
     pub fn view(&mut self, theme: Theme) -> Element<Message> {
         let range = self.get_current_range();
 
@@ -794,26 +851,75 @@ impl DateView {
             days,
             months,
             uw_input,
+            clear_button,
+            start_date_picker,
+            end_date_picker,
+            pick_start,
+            pick_end,
             ..
         } = self;
 
         let minimize_or_maximize_button = Button::new(
             max_or_min,
             if self.is_show {
-                icon(Icons::filter_off())
+                IconItem::FilterOff
             } else {
-                icon(Icons::filter())
+                IconItem::Filter
             },
         )
         .padding(0)
-        .style(style::symbol(theme))
+        .style(style::transparent(theme))
         .on_press(Message::MaxOrMin);
 
         let mut ctrl_row = Row::new();
 
-        if let Some(range_info) = range.map(|(start_date, end_date)| {
-            let args = args!("start"=>start_date.to_string(),"end"=>end_date.to_string());
-            Text::new(tr!("range";&args))
+        if let Some(range_info) = range.map(move |(start_date, end_date)| {
+            let (start_year, start_month, start_day) = start_date.to_calendar_date();
+            start_date_picker.set_date(
+                start_year,
+                month_to_num(start_month) as u32,
+                start_day as u32,
+            );
+            let start_picker = DatePicker::new(
+                start_date_picker,
+                Button::new(
+                    pick_start,
+                    Row::new()
+                        .push(IconItem::Date)
+                        .push(Text::new(start_date.to_string())),
+                )
+                .style(style::transparent(theme))
+                .padding(0)
+                .on_press(Message::PickStart),
+                Message::CancelStartPick,
+                Message::PickStartRes,
+            );
+            let (end_year, end_month, end_day) = end_date.to_calendar_date();
+            end_date_picker.set_date(end_year, month_to_num(end_month) as u32, end_day as u32);
+            let end_picker = DatePicker::new(
+                end_date_picker,
+                Button::new(
+                    pick_end,
+                    Row::new()
+                        .push(IconItem::Date)
+                        .push(Text::new(end_date.to_string())),
+                )
+                .style(style::transparent(theme))
+                .padding(0)
+                .on_press(Message::PickEnd),
+                Message::CancelEndPick,
+                Message::PickEndRes,
+            );
+            let clear_button = Button::new(clear_button, IconItem::Clear)
+                .style(style::transparent(theme))
+                .padding(0)
+                .on_press(Message::ChartMsg(ChartMsg::ClearRange));
+            Row::new()
+                .push(Text::new(tr!("range")))
+                .push(start_picker)
+                .push(Text::new(tr!("to")))
+                .push(end_picker)
+                .push(clear_button)
         }) {
             ctrl_row = ctrl_row.push(range_info);
         };
@@ -829,18 +935,24 @@ impl DateView {
             let full_or_adjustable_button = Button::new(
                 full_or_adjustable,
                 if self.is_full {
-                    icon(Icons::full_exit())
+                    IconItem::FullExit
                 } else {
-                    icon(Icons::full())
+                    IconItem::Full
                 },
             )
             .padding(0)
-            .style(style::symbol(theme))
+            .style(style::transparent(theme))
             .on_press(Message::FullOrAdjustable);
-            let day_or_month_button = Button::new(day_or_month, icon(Icons::time()))
-                .padding(0)
-                .style(style::symbol(theme))
-                .on_press(Message::DayOrMonth);
+
+            let day_or_month_button = Button::new(day_or_month, {
+                match chart.level {
+                    ChartLevel::Day => IconItem::DayTime,
+                    ChartLevel::Month => IconItem::MonthTime,
+                }
+            })
+            .padding(0)
+            .style(style::transparent(theme))
+            .on_press(Message::DayOrMonth);
             ctrl_row = ctrl_row
                 .push(day_or_month_button)
                 .push(full_or_adjustable_button);
@@ -892,6 +1004,11 @@ impl DateView {
         self.preview_chart.selected.take();
         self.preview_chart.selected_cache.clear();
         self.preview_chart.cache.clear();
+    }
+    pub fn clear_chart(&mut self) {
+        self.chart.selected.take();
+        self.chart.selected_cache.clear();
+        self.chart.cache.clear();
     }
     pub fn clear_cahce(&mut self) {
         self.chart.cache.clear();
@@ -1050,6 +1167,54 @@ impl DateView {
                 self.clear_cahce();
                 self.align();
             }
+            Message::CancelStartPick => {
+                self.start_date_picker.show(false);
+            }
+            Message::CancelEndPick => {
+                self.end_date_picker.show(false);
+            }
+            Message::PickStart => {
+                self.start_date_picker.show(true);
+            }
+            Message::PickEnd => {
+                self.end_date_picker.show(true);
+            }
+            Message::PickStartRes(date) => {
+                self.start_date_picker.show(false);
+                let start_date = Date::from_calendar_date(
+                    date.year,
+                    num_to_month(date.month as i32),
+                    date.day as u8,
+                )
+                .unwrap();
+                let Self {
+                    chart,
+                    preview_chart,
+                    ..
+                } = self;
+                chart.set_range_from_start(preview_chart, start_date);
+                self.clear_cahce();
+                self.preview_chart.cache.clear();
+                self.preview_chart.selected_cache.clear();
+            }
+            Message::PickEndRes(date) => {
+                self.end_date_picker.show(false);
+                let end_date = Date::from_calendar_date(
+                    date.year,
+                    num_to_month(date.month as i32),
+                    date.day as u8,
+                )
+                .unwrap();
+                let Self {
+                    chart,
+                    preview_chart,
+                    ..
+                } = self;
+                chart.set_range_from_end(preview_chart, end_date);
+                self.clear_cahce();
+                self.preview_chart.cache.clear();
+                self.preview_chart.selected_cache.clear();
+            }
         }
     }
     pub fn day_or_month(&mut self) {
@@ -1067,16 +1232,10 @@ impl DateView {
     pub fn align(&mut self) {
         match self.chart.level {
             ChartLevel::Day => {
-                self.chart.last_day.map(|last| {
-                    self.chart.translation =
-                        Vector::new((last as f32 - 1.0) * self.chart.day_uw, 0.0)
-                });
+                self.chart.day_align();
             }
             ChartLevel::Month => {
-                self.chart.last_month.map(|last| {
-                    self.chart.translation =
-                        Vector::new((last - 1) as f32 * self.chart.month_uw, 0.0)
-                });
+                self.chart.month_align();
             }
         }
     }
@@ -1135,6 +1294,15 @@ fn get_offset_date(mut offset: usize, mut day: u8, base_month: &MonthView) -> Da
 
     res.unwrap()
 }
+
+#[inline]
+pub fn date_into_usize(date: Date, base_day: Date) -> usize {
+    if date > base_day {
+        return 0;
+    }
+    (base_day - date).whole_days() as usize - 1
+}
+
 #[derive(Debug)]
 pub struct Chart {
     pub cache: Cache,
@@ -1162,12 +1330,104 @@ impl Default for Chart {
 }
 
 impl Chart {
+    pub fn set_range_from_start(&mut self, preview_chart: &mut Chart, start: Date) {
+        match self.level {
+            ChartLevel::Day => {
+                let mut start = date_into_usize(start, self.base_day);
+                let ds = if let Some(ds) = self.selected {
+                    if start < ds.end {
+                        start = ds.end + 1;
+                    }
+                    Selected { start, end: ds.end }
+                } else {
+                    Selected { start, end: 0 }
+                };
+                self.full_days.replace(ds.start as i64 - ds.end as i64);
+                self.last_day.replace(ds.end as i64);
+                self.selected.replace(ds);
+            }
+            ChartLevel::Month => {
+                let ds = if let Some(ds) = self.selected {
+                    let mut ds = ds.months_to_days(self.base_day, &self.base_month);
+                    ds.start = date_into_usize(start, self.base_day).max(ds.end + 1);
+                    ds
+                } else {
+                    Selected {
+                        start: date_into_usize(start, self.base_day).max(1),
+                        end: 0,
+                    }
+                };
+                preview_chart
+                    .full_days
+                    .replace(ds.start as i64 - ds.end as i64);
+                preview_chart.last_day.replace(ds.end as i64);
+                preview_chart.selected.replace(ds);
+                let ms = ds.days_to_months(self.base_day, &self.base_month);
+                self.selected.replace(ms);
+                self.full_months.replace(ms.start as i32 - ms.end as i32);
+                self.last_month.replace(ms.end as i32);
+            }
+        }
+    }
+    pub fn set_range_from_end(&mut self, preview_chart: &mut Chart, end: Date) {
+        match self.level {
+            ChartLevel::Day => {
+                let mut end = date_into_usize(end, self.base_day);
+                let ds = if let Some(ds) = self.selected {
+                    if end > ds.start {
+                        end = ds.start - 1;
+                    }
+                    Selected {
+                        start: ds.start,
+                        end,
+                    }
+                } else {
+                    Selected {
+                        start: end + 5,
+                        end,
+                    }
+                };
+                self.full_days.replace((ds.start - ds.end) as i64);
+                self.last_day.replace(ds.end as i64);
+                self.selected.replace(ds);
+            }
+            ChartLevel::Month => {
+                let ds = if let Some(ds) = self.selected {
+                    let mut ds = ds.months_to_days(self.base_day, &self.base_month);
+                    ds.end = date_into_usize(end, self.base_day).min(ds.start.max(1) - 1);
+                    ds
+                } else {
+                    let end = date_into_usize(end, self.base_day);
+                    Selected {
+                        start: end + 5,
+                        end,
+                    }
+                };
+                preview_chart.full_days.replace((ds.start - ds.end) as i64);
+                preview_chart.last_day.replace(ds.end as i64);
+                preview_chart.selected.replace(ds);
+                let ms = ds.days_to_months(self.base_day, &self.base_month);
+                self.selected.replace(ms);
+                self.full_months.replace((ms.start - ms.end) as i32);
+                self.last_month.replace(ms.end as i32);
+            }
+        }
+    }
     pub fn uw(&self) -> f32 {
         match self.level {
             ChartLevel::Day => self.day_uw,
             ChartLevel::Month => self.month_uw,
         }
     }
+    pub fn day_align(&mut self) {
+        self.last_day
+            .map(|last| self.translation = Vector::new((last as f32 - 1.0) * self.day_uw, 0.0));
+    }
+    pub fn month_align(&mut self) {
+        self.last_month
+            .map(|last| self.translation = Vector::new((last - 1) as f32 * self.month_uw, 0.0));
+    }
+
     pub fn new() -> Self {
         Self {
             cache: Cache::new(),

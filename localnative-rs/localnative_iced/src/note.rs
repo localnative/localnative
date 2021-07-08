@@ -1,10 +1,7 @@
 use iced::{button, qr_code, Button, Column, Element, QRCode, Row, Text};
 use localnative_core::Note;
 
-use crate::{
-    icons::{icon, Icons},
-    style,
-};
+use crate::{icons::IconItem, style};
 #[derive(Debug)]
 pub struct NoteView {
     note: Note,
@@ -67,12 +64,12 @@ impl NoteView {
             .style(style::link(theme))
             .padding(0)
             .on_press(Message::OpenUrl);
-        let delete = Button::new(delete, icon(Icons::delete_bin()))
-            .style(style::symbol(theme))
+        let delete = Button::new(delete, IconItem::Delete)
+            .style(style::transparent(theme))
             .on_press(Message::Delete(note.rowid));
-        let qrcode_button = Button::new(open_qrcode, icon(Icons::qr_code()))
+        let qrcode_button = Button::new(open_qrcode, IconItem::QRCode)
             .padding(0)
-            .style(style::symbol(theme))
+            .style(style::transparent(theme))
             .on_press(Message::QRCode);
         let row = Row::new()
             .spacing(5)
@@ -86,6 +83,7 @@ impl NoteView {
                 let Tag { name, open_tag } = tag;
                 let tag_button = Button::new(open_tag, Text::new(name.as_str()))
                     .style(style::tag(theme))
+                    .padding(0)
                     .on_press(Message::Search(name.to_owned()));
                 wrap.push(tag_button)
             });
