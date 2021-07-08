@@ -1,46 +1,84 @@
+mod config;
 mod days;
+mod delete_tip;
 mod icons;
+mod init;
 mod middle_date;
 mod note;
 mod search_page;
+mod settings;
+mod sidebar;
 mod style;
+mod sync;
 mod tags;
 mod translate;
-mod sidebar;
+
 use std::sync::Arc;
 
+use config::Config;
 pub use days::Chart;
 pub use days::DateView;
 use days::HandleDays;
+use delete_tip::DeleteTip;
+use iced::Container;
 use iced::{futures::lock::Mutex, Column, Command, Row, Text};
+use iced_native::event::Status;
+use iced_native::window;
+use iced_native::Event;
+use localnative_core::rpc::server::Stop;
 use localnative_core::{exe::get_sqlite_connection, rusqlite::Connection, Note};
 use middle_date::MiddleDate;
 pub use note::NoteView;
 use once_cell::sync::OnceCell;
 pub use search_page::SearchPage;
+use sidebar::Sidebar;
 use style::Theme;
 pub use tags::TagView;
 
-pub enum LocalNative {
+use crate::sync::SyncView;
+
+pub struct LocalNative {
+    config: Config,
+    should_exit: bool,
+    state: State,
+}
+pub enum State {
     Loading,
     Loaded(Data),
 }
 
+pub type Conn = Arc<Mutex<Connection>>;
+
 pub struct Data {
     search_page: SearchPage,
-    conn: Arc<Mutex<Connection>>,
-    theme: Theme,
-    limit: u32,
+    sidebar: Sidebar,
+    delete_tip: DeleteTip,
+    settings: settings::Settings,
+    sync_view: SyncView,
+    conn: Conn,
 }
 
 #[derive(Debug)]
 pub enum Message {
     Loading(()),
-    ApplyLanguage(Option<()>),
     SearchPageMessage(search_page::Message),
+    SidebarMessage(sidebar::Message),
+    DeleteTipMessage(delete_tip::Message),
+    SyncClientMessage(sync::Message),
+    SettingsMessage(settings::Message),
     NoteView(Vec<NoteView>),
     TagView(Vec<TagView>),
     DayView(HandleDays),
+    RequestClosed,
+    LoadConfig(Option<Config>),
+    ApplyLanguage(Option<()>),
+    SaveConfig(Option<()>),
+    CloseWindow(Option<()>),
+    SyncResult(std::io::Result<()>),
+    SyncOption(Option<()>),
+    StartServerResult(std::io::Result<Stop>),
+    ServerOption(Option<()>),
+    InitHost(())
 }
 
 impl iced::Application for LocalNative {
@@ -48,17 +86,20 @@ impl iced::Application for LocalNative {
 
     type Message = Message;
 
-    type Flags = ();
+    type Flags = Option<Config>;
 
     fn new(flags: Self::Flags) -> (Self, Command<Self::Message>) {
+        let config = flags.unwrap_or_default();
+        let language = config.language;
         (
-            LocalNative::Loading,
+            LocalNative {
+                config,
+                should_exit: false,
+                state: State::Loading,
+            },
             Command::batch([
                 Command::perform(async {}, Message::Loading),
-                Command::perform(
-                    translate::init_bundle(translate::Language::Chinese),
-                    Message::ApplyLanguage,
-                ),
+                Command::perform(translate::init_bundle(language), Message::ApplyLanguage),
             ]),
         )
     }
@@ -70,23 +111,44 @@ impl iced::Application for LocalNative {
     fn update(
         &mut self,
         message: Self::Message,
-        clipboard: &mut iced::Clipboard,
+        _clipboard: &mut iced::Clipboard,
     ) -> Command<Self::Message> {
-        match self {
-            LocalNative::Loading => match message {
+        let LocalNative { config, state, .. } = self;
+        match state {
+            State::Loading => match message {
                 Message::Loading(..) => {
                     let conn = Arc::new(Mutex::new(get_sqlite_connection()));
+                    println!("🎩 {}", config.disable_delete_tip);
                     let data = Data {
                         search_page: Default::default(),
+                        sidebar: Sidebar::default(),
+                        delete_tip: DeleteTip {
+                            rowid: -1,
+                            tip_state: Default::default(),
+                        },
+                        sync_view: SyncView::new(),
+                        settings: settings::Settings {
+                            disable_delete_tip_temp: config.disable_delete_tip,
+                            language_temp: config.language,
+                            limit_temp: config.limit,
+                            state: Default::default(),
+                        },
                         conn,
-                        theme: Theme::Light,
-                        limit: 10,
                     };
 
-                    *self = LocalNative::Loaded(data);
-                    if let LocalNative::Loaded(data) = self {
+                    self.state = State::Loaded(data);
+                    if let State::Loaded(ref mut data) = self.state {
+                        let Data {
+                            delete_tip, conn, ..
+                        } = data;
                         data.search_page
-                            .update(search_page::Message::Refresh, data.limit, data.conn.clone())
+                            .update(
+                                search_page::Message::Refresh,
+                                config.limit,
+                                conn.clone(),
+                                config.disable_delete_tip,
+                                delete_tip,
+                            )
                             .map(Message::SearchPageMessage)
                     } else {
                         unreachable!()
@@ -94,7 +156,7 @@ impl iced::Application for LocalNative {
                 }
                 _ => Command::none(),
             },
-            LocalNative::Loaded(data) => match message {
+            State::Loaded(data) => match message {
                 Message::SearchPageMessage(search_page_msg) => match search_page_msg {
                     search_page::Message::Receiver(Some(md)) => {
                         let MiddleDate {
@@ -130,10 +192,17 @@ impl iced::Application for LocalNative {
                             },
                         ])
                     }
-                    msg => data
-                        .search_page
-                        .update(msg, data.limit, data.conn.clone())
-                        .map(Message::SearchPageMessage),
+
+                    msg => {
+                        let Data {
+                            search_page,
+                            delete_tip,
+                            ..
+                        } = data;
+                        search_page
+                            .update(msg, self.config.limit, data.conn.clone(), true, delete_tip)
+                            .map(Message::SearchPageMessage)
+                    }
                 },
                 Message::NoteView(notes) => {
                     data.search_page.notes = notes;
@@ -144,26 +213,8 @@ impl iced::Application for LocalNative {
                     Command::none()
                 }
                 Message::Loading(..) => Command::none(),
-                Message::DayView(HandleDays {
-                    days,
-                    months,
-                    max_day_count,
-                    max_month_count,
-                    full_days,
-                    full_months,
-                    last_day,
-                    last_month,
-                }) => {
-                    data.search_page.days.days = days;
-                    data.search_page.days.months = months;
-                    data.search_page.days.full_days = full_days;
-                    data.search_page.days.full_months = full_months;
-                    data.search_page.days.last_day = last_day;
-                    data.search_page.days.last_month = last_month;
-                    data.search_page.days.chart.last_day = last_day;
-                    data.search_page.days.chart.last_month = last_month;
-                    data.search_page.days.chart.max_day_count = max_day_count;
-                    data.search_page.days.chart.max_month_count = max_month_count;
+                Message::DayView(handle_days) => {
+                    data.search_page.days.update_from_handle_days(handle_days);
                     if data.search_page.range.is_none() {
                         data.search_page.days.align();
                     }
@@ -171,13 +222,161 @@ impl iced::Application for LocalNative {
                     Command::none()
                 }
                 Message::ApplyLanguage(..) => Command::none(),
+                Message::RequestClosed => {
+                    Command::perform(config.clone().save(), Message::CloseWindow)
+                }
+                Message::LoadConfig(cfg) => {
+                    if let Some(cfg) = cfg {
+                        self.config = cfg;
+                    }
+                    Command::none()
+                }
+                Message::SaveConfig(res) => {
+                    if res.is_some() {
+                        println!("ok!");
+                    }
+                    Command::none()
+                }
+                Message::CloseWindow(res) => {
+                    if res.is_some() {
+                        println!("ok!");
+                    }
+                    self.should_exit = true;
+                    Command::none()
+                }
+                Message::SidebarMessage(smsg) => {
+                    let Data {
+                        sidebar, settings, ..
+                    } = data;
+                    sidebar.update(smsg, settings, config)
+                }
+                Message::DeleteTipMessage(msg) => {
+                    let Data {
+                        search_page,
+                        delete_tip,
+                        conn,
+                        ..
+                    } = data;
+                    match msg {
+                        delete_tip::Message::Enter => {
+                            delete_tip.tip_state.show(false);
+                            Command::perform(
+                                MiddleDate::delete(
+                                    conn.clone(),
+                                    search_page.search_value.to_string(),
+                                    self.config.limit,
+                                    search_page.offset,
+                                    delete_tip.rowid,
+                                ),
+                                crate::search_page::Message::Receiver,
+                            )
+                            .map(Message::SearchPageMessage)
+                        }
+                        delete_tip::Message::SearchPageMessage(spmsg) => search_page
+                            .update(
+                                spmsg,
+                                self.config.limit,
+                                conn.clone(),
+                                self.config.disable_delete_tip,
+                                delete_tip,
+                            )
+                            .map(Message::SearchPageMessage),
+                        delete_tip::Message::Cancel => {
+                            delete_tip.tip_state.show(false);
+                            Command::none()
+                        }
+                    }
+                }
+                Message::SyncClientMessage(sync_msg) => {
+                    data.sync_view.update(sync_msg, data.conn.clone())
+                }
+                Message::SyncResult(res) => {
+                    if let Err(err) = res {
+                        data.sync_view.sync_state = sync::SyncState::SyncError(err.kind());
+                    } else {
+                        data.sync_view.sync_state = sync::SyncState::Complete;
+                    }
+                    Command::none()
+                }
+                Message::SyncOption(opt) => {
+                    if opt.is_none() {
+                        data.sync_view.sync_state = sync::SyncState::SyncFromFileUnknownError;
+                    } else {
+                        data.sync_view.sync_state = sync::SyncState::Complete;
+                    }
+                    Command::none()
+                }
+                Message::StartServerResult(res) => {
+                    match res {
+                        Ok(stop) => {
+                            if sync::get_ip()
+                                .and_then(|ip| {
+                                    let addr = ip + ":" + data.sync_view.port.to_string().as_str();
+                                    let state = iced::qr_code::State::new(&addr).ok();
+                                    state.map(|state| (addr, state))
+                                })
+                                .map(|(addr, state)| {
+                                    data.sync_view.server_state = sync::ServerState::Opened;
+                                    data.sync_view.server_addr = addr;
+                                    data.sync_view.ip_qr_code = state;
+                                })
+                                .is_none()
+                            {
+                                data.sync_view.server_state = sync::ServerState::Closed;
+                                if let Some(old_stop) = data.sync_view.stop.take() {
+                                    return Command::batch([
+                                        Command::perform(
+                                            sync::stop_server(old_stop),
+                                            Message::ServerOption,
+                                        ),
+                                        Command::perform(
+                                            sync::stop_server(stop),
+                                            Message::ServerOption,
+                                        ),
+                                    ]);
+                                }
+                            }
+
+                            if let Some(old_stop) = data.sync_view.stop.take() {
+                                data.sync_view.stop = Some(stop);
+                                return Command::perform(
+                                    sync::stop_server(old_stop),
+                                    Message::ServerOption,
+                                );
+                            }
+                            data.sync_view.stop = Some(stop);
+                        }
+                        Err(err) => {
+                            data.sync_view.sync_state = sync::SyncState::SyncError(err.kind());
+                        }
+                    }
+                    Command::none()
+                }
+                Message::ServerOption(opt) => {
+                    if opt.is_some() {
+                        data.sync_view.server_state = sync::ServerState::Closed;
+                    } else {
+                        data.sync_view.server_state = sync::ServerState::Error;
+                    }
+                    Command::none()
+                }
+                Message::SettingsMessage(msg) => {
+                    let Data {
+                        settings, sidebar, ..
+                    } = data;
+                    settings.update(msg, config, sidebar)
+                }
+                Message::InitHost(..) => {
+                    Command::none()
+                }
             },
         }
     }
 
     fn view(&mut self) -> iced::Element<'_, Self::Message> {
-        match self {
-            LocalNative::Loading => Column::new()
+        let LocalNative { config, state, .. } = self;
+        match state {
+            State::Loading => Column::new()
                 .push(style::vertical_rule())
                 .push(
                     Row::new()
@@ -187,23 +386,91 @@ impl iced::Application for LocalNative {
                 )
                 .push(style::vertical_rule())
                 .into(),
-            LocalNative::Loaded(data) => {
-                let Data { search_page, .. } = data;
-                search_page
-                    .view(data.theme, data.limit)
-                    .map(Message::SearchPageMessage)
+            State::Loaded(data) => {
+                let Data {
+                    search_page,
+                    sidebar,
+                    delete_tip,
+                    sync_view: sync_client,
+                    settings,
+                    ..
+                } = data;
+
+                let mut page = match sidebar.state {
+                    sidebar::State::SearchPage => {
+                        if config.disable_delete_tip {
+                            search_page
+                                .view(config.theme, config.limit)
+                                .map(Message::SearchPageMessage)
+                        } else {
+                            delete_tip
+                                .view(config.theme, config.limit, search_page)
+                                .map(Message::DeleteTipMessage)
+                        }
+                    }
+                    sidebar::State::SyncView => sync_client
+                        .view(config.theme)
+                        .map(Message::SyncClientMessage),
+                };
+                if sidebar.settings_is_open {
+                    page = settings
+                        .view(
+                            config.theme,
+                            page.map(|_| crate::settings::Message::Other(())),
+                            config,
+                        )
+                        .map(Message::SettingsMessage);
+                }
+                Row::new()
+                    .push(
+                        Container::new(sidebar.view(config.theme).map(Message::SidebarMessage))
+                            .width(iced::Length::Shrink),
+                    )
+                    .push(Container::new(page))
+                    .into()
             }
         }
     }
+
+    fn subscription(&self) -> iced::Subscription<Self::Message> {
+        iced_native::subscription::events_with(events_handler)
+    }
+
+    fn background_color(&self) -> iced::Color {
+        match self.config.theme {
+            Theme::Light => iced::Color::WHITE,
+            Theme::Dark => iced::Color::from_rgba(0.4, 0.6, 0.3, 0.8),
+        }
+    }
+
+    fn should_exit(&self) -> bool {
+        self.should_exit
+    }
+}
+fn events_handler(event: Event, states: Status) -> Option<Message> {
+    if states == Status::Ignored {
+        if let Event::Window(window::Event::CloseRequested) = event {
+            return Some(Message::RequestClosed);
+        }
+    }
+    None
 }
 
-pub fn settings() -> iced::Settings<()> {
+pub fn settings() -> iced::Settings<Option<Config>> {
     iced::Settings {
         default_font: font(),
+        exit_on_close_request: false,
+        flags: Config::sync_load(),
         ..Default::default()
     }
 }
-
+pub fn none_flags_settings() -> iced::Settings<()> {
+    iced::Settings {
+        default_font: font(),
+        exit_on_close_request: false,
+        ..Default::default()
+    }
+}
 static FONT: OnceCell<Option<Vec<u8>>> = OnceCell::new();
 
 fn font() -> Option<&'static [u8]> {
@@ -235,4 +502,7 @@ pub fn handle_notes(notes: Vec<Note>) -> (Vec<NoteView>) {
         let time = note.created_at;
     }
     todo!()
+}
+pub fn error_handle(error: impl std::error::Error) {
+    panic!("{:?}", error);
 }
