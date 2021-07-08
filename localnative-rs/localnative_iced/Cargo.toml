@@ -1,7 +1,7 @@
 [package]
 name = "localnative_iced"
 version = "0.1.0"
-authors = ["Downtime <yrainbxqc@gmail.com>"]
+authors = ["Cupnfish <yrainbxqc@gmail.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -32,6 +32,16 @@ fern = "0.6"
 tokio = {version = "1",features = ["fs","io-util","macros"]}
 # -- impl lang end --
 
+# -- impl ip input start --
+regex = "1.5"
+tinyfiledialogs = "3"
+# -- impl ip input end --
+
+# -- impl init start --
+[target."cfg(target_os = \"windows\")".dependencies]
+winreg = "0.8"
+# -- impl init end --
+
 
 [dependencies.rand]
 version = "0.8"
@@ -43,7 +53,8 @@ optional = true
 git = "https://github.com/iced-rs/iced_aw"
 branch = "main"
 default-features = false
-features = ["wrap","number_input","modal"] 
+features = [ "wrap", "number_input", "modal", "date_picker","icons","card"] 
+
 
 [dependencies.iced]
 version = "0.3.0"
