@@ -78,7 +78,7 @@ pub enum Message {
     SyncOption(Option<()>),
     StartServerResult(std::io::Result<Stop>),
     ServerOption(Option<()>),
-    InitHost(())
+    InitHost(()),
 }
 
 impl iced::Application for LocalNative {
@@ -366,9 +366,7 @@ impl iced::Application for LocalNative {
                     } = data;
                     settings.update(msg, config, sidebar)
                 }
-                Message::InitHost(..) => {
-                    Command::none()
-                }
+                Message::InitHost(..) => Command::none(),
             },
         }
     }
@@ -503,6 +501,8 @@ pub fn handle_notes(notes: Vec<Note>) -> (Vec<NoteView>) {
     }
     todo!()
 }
+// TODO： 需要在过滤之后将页面数据更新
+#[inline(always)]
 pub fn error_handle(error: impl std::error::Error) {
-    panic!("{:?}", error);
+    eprintln!("{:?}", error);
 }

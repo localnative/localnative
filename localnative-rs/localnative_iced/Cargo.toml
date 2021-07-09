@@ -7,7 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-localnative_core = { path = "../localnative_core" }
+localnative_core = { path = "../localnative_core",features = ["no_print"] }
 open = "1"
 
 # -- impl tags start --

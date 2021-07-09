@@ -48,3 +48,7 @@ not-found = 抱歉，没有找到您想要的结果！
 nothing = 您当前尚未创建标签，可以从其他设备同步到本地，或者从浏览器扩展添加新的标签。
 
 try-fix-host = 你的浏览器不能正常通讯？尝试点击这里进行修复。
+
+sync-file-title = 选择你将要用于同步的sqlite3文件
+
+sync-file = 用于同步的*.sqlite3文件

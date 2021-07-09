@@ -144,6 +144,7 @@ pub fn select(conn: &Connection, limit: &u32, offset: &u32) -> String {
     for note in note_iter {
         let mut note = note.unwrap();
         note.tags = make_tags(&note.tags);
+        //#[cfg(not(feature = "no_print"))]
         //eprintln!("Found note {:?}", note);
         j.push_str(&serde_json::to_string(&note).unwrap());
         j.push(',');

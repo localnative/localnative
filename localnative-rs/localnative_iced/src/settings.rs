@@ -54,8 +54,8 @@ impl Settings {
                 .on_press(Message::Cancel);
             let disable_delete_tip =
                 Checkbox::new(disable_delete_tip, "", Message::DisableTip).spacing(0);
-            let try_fix_host = Button::new(&mut state.try_fix_host,Text::new(tr!("try-fix-host")))
-            .on_press(Message::TryFixHost);
+            let try_fix_host = Button::new(&mut state.try_fix_host, Text::new(tr!("try-fix-host")))
+                .on_press(Message::TryFixHost);
             // TODO: picklist not normaly work with modal
             // let language_selector = PickList::new(
             //     &mut state.language_selector,

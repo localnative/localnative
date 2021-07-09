@@ -7,6 +7,7 @@ use crate::error_handle;
 pub struct AppHost {
     name: String,
     description: String,
+    
     path: PathBuf,
     #[serde(rename = "type")]
     tp: String,
@@ -33,7 +34,7 @@ impl AppHost {
         );
 
         path = path.join(name);
-
+        println!("path : {:?}", path);
         path
     }
 
@@ -58,19 +59,10 @@ impl AppHost {
         }
     }
     pub fn raw_data(&self) -> Vec<u8> {
+        println!("{:?}", serde_json::to_string_pretty(self));
         serde_json::to_vec(self).unwrap()
     }
 }
-
-// TODO: 直接在Command里调用
-// pub async fn init_app_host() -> anyhow::Result<()> {
-//     WebKind::init_all().await;
-//     Ok(())
-// }
-
-// pub async fn fix_app_host() {
-//     WebKind::init_all().await
-// }
 
 //     Windows Registry Editor Version 5.00
 // [HKEY_CURRENT_USER\Software\Google\Chrome\NativeMessagingHosts\app.localnative]
@@ -83,31 +75,31 @@ impl AppHost {
 // [HKEY_CURRENT_USER\Software\Mozilla\NativeMessagingHosts\app.localnative]
 // @="PATH_TO_FIREFOX_MANIFEST\\app.localnative.json"
 #[cfg(target_os = "windows")]
-fn registr(kind: WebKind) -> anyhow::Result<bool> {
+fn registr(kind: WebKind) {
     use winreg::enums::*;
     let path = kind.registr_path();
     let write_path = path.join("app.localnative");
-    let json_path = kind.json_path()?;
+    let json_path = kind.json_path().unwrap();
     let key = winreg::RegKey::predef(HKEY_CURRENT_USER);
-
-    if let Ok(k) = key.open_subkey(&path) {
-        if let Ok(k) = k.open_subkey(Path::new("app.localnative")) {
-            if let Ok(v) = k.get_value::<String, &str>("") {
-                if v != json_path {
-                    let writer = key.open_subkey_with_flags(&write_path, KEY_WRITE)?;
-                    writer.set_value("", &json_path)?;
-                } else {
-                }
-                return Ok(true);
-            } else {
-            }
-        } else {
-            let (writer, _disposition) = key.create_subkey_with_flags(&write_path, KEY_WRITE)?;
-            writer.set_value("", &json_path)?;
-            return Ok(true);
+    let value = key
+        .open_subkey(&path)
+        .and_then(|k| k.open_subkey(Path::new("app.localnative")))
+        .map_err(error_handle)
+        .and_then(|k| k.get_value::<String, &str>("").map_err(error_handle))
+        .ok();
+    if let Some(v) = value {
+        if v != json_path {
+            key.open_subkey_with_flags(&write_path, KEY_WRITE)
+                .map_err(error_handle)
+                .and_then(|writer| writer.set_value("", &json_path).map_err(error_handle))
+                .unwrap();
         }
+    } else {
+        key.create_subkey_with_flags(&write_path, KEY_WRITE)
+            .and_then(|(writer, _)| writer.set_value("", &json_path))
+            .map_err(error_handle)
+            .unwrap();
     }
-    Ok(false)
 }
 
 pub fn firefox_path() -> Option<PathBuf> {
@@ -262,27 +254,13 @@ impl WebKind {
     #[cfg(target_os = "windows")]
     fn json_path(&self) -> Option<String> {
         let path = self.path()?.join("app.localnative.json");
-        path.into_os_string()
-            .into_string()
-            .map_err(error_handle)
-            .ok()
+        path.into_os_string().into_string().ok()
     }
 }
 async fn try_init_file(kind: WebKind) {
-    #[cfg(target_os = "windows")]
-    {
-        match registr(kind) {
-            Ok(false) => {
-                return Ok(());
-            }
-            Err(e) => {
-                return Err(e);
-            }
-            _ => {}
-        }
-    }
-
     if let Some(dir_path) = kind.path() {
+        #[cfg(target_os = "windows")]
+        registr(kind);
         let raw_file = kind.host().raw_data();
         init_file(&dir_path, &raw_file).await.unwrap();
     }

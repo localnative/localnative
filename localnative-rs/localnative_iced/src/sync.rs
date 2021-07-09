@@ -346,7 +346,7 @@ pub fn get_sync_file_path() -> Option<PathBuf> {
             open_file_dialog(
                 &tr!("sync-file-title"),
                 path,
-                Some((&["sqlite3"], &tr!("sync-file"))),
+                Some((&["*.sqlite3"], &tr!("sync-file"))),
             )
         })
         .map(PathBuf::from)

@@ -48,3 +48,7 @@ not-found = Sorry, the result you want was not found!
 nothing = You have not yet created a label, you can sync from other devices to the local, or add a new label from the browser extension.
 
 try-fix-host = Your browser can’t communicate normally? Try clicking here to fix it.
+
+sync-file-title = Select the sqlite3 file you will use for synchronization
+
+sync-file = *.sqlite3 file for synchronization
