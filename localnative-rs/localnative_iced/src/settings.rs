@@ -32,7 +32,7 @@ pub enum Message {
     DisableTip(bool),
     LanguageChanged(Language),
     LimitChanged(u32),
-    Other(()),
+    Other,
 }
 impl Settings {
     pub fn view<'settings, 'underlay: 'settings>(
@@ -165,7 +165,7 @@ impl Settings {
             Message::TryFixHost => {
                 return Command::perform(crate::init::WebKind::init_all(), crate::Message::InitHost)
             }
-            Message::Other(_) => {}
+            Message::Other => {}
         }
         Command::none()
     }

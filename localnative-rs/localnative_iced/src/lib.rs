@@ -436,7 +436,7 @@ impl iced::Application for LocalNative {
                     page = settings
                         .view(
                             config.theme,
-                            page.map(|_| crate::settings::Message::Other(())),
+                            page.map(|_| crate::settings::Message::Other),
                             config,
                         )
                         .map(Message::SettingsMessage);
