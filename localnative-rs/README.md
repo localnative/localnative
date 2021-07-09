@@ -27,9 +27,6 @@ xtask release
   Release iced and web-ext-host
 
   OPTIONS:
-    --opengl
-      Select opengl as the backend
-
     -t, --target <target>
       You can specify a target
 
