@@ -3,10 +3,9 @@ use std::{borrow::Cow, fmt::Display, sync::Arc};
 use elsa::sync::FrozenMap;
 use fluent_bundle::FluentResource;
 use fluent_bundle::{bundle::FluentBundle, FluentArgs};
-use iced::futures::lock::Mutex;
 use intl_memoizer::concurrent::IntlLangMemoizer;
 use serde::{Deserialize, Serialize};
-use tokio::sync::OnceCell;
+use tokio::sync::{OnceCell, RwLock};
 use unic_langid::langid;
 use unic_langid::LanguageIdentifier;
 
@@ -16,7 +15,7 @@ static BUNDLE_CACHE: OnceCell<
     FrozenMap<Language, Arc<FluentBundle<FluentResource, IntlLangMemoizer>>>,
 > = OnceCell::const_new();
 
-pub static BUNDLE: OnceCell<Mutex<&FluentBundle<FluentResource, IntlLangMemoizer>>> =
+pub static BUNDLE: OnceCell<RwLock<&FluentBundle<FluentResource, IntlLangMemoizer>>> =
     OnceCell::const_new();
 
 async fn read_file(path: &str) -> Option<String> {
@@ -61,10 +60,13 @@ async fn init_bundle_cache(
 pub async fn init_bundle(locale: Language) -> Option<()> {
     let bundle = init_bundle_cache(locale).await?;
     if BUNDLE.initialized() {
-        let mut bundle_inner = BUNDLE.get()?.lock().await;
+        let mut bundle_inner = BUNDLE.get()?.write().await;
         *bundle_inner = bundle;
     } else {
-        BUNDLE.set(Mutex::new(bundle)).map_err(error_handle).ok()?;
+        BUNDLE
+            .set(RwLock::new(bundle))
+            //.map_err(error_handle)
+            .ok()?;
     }
     Some(())
 }
@@ -76,7 +78,7 @@ pub fn tr_with_args<'a, 'arg: 'a>(
 ) -> Cow<'a, str> {
     let res = BUNDLE
         .get()
-        .and_then(|bundle| bundle.try_lock())
+        .and_then(|bundle| bundle.try_read().ok())
         .and_then(|bundle| {
             bundle
                 .get_message(key)
