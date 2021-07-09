@@ -19,7 +19,6 @@ use crate::flags::Release;
 // gzip(&src, &dst.with_extension("gz"))?;
 impl Release {
     pub fn run(&self) -> anyhow::Result<()> {
-        let features = if self.opengl { "opengl" } else { "wgpu" };
         let target = if let Some(ref platform) = self.platform {
             match platform.as_str() {
                 "linux" => "x86_64-unknown-linux-gnu",
@@ -35,14 +34,14 @@ impl Release {
         } else {
             env!("CARGO_PKG_VERSION")
         };
-        cmd!("cargo build --target {target} --features {features} --no-default-features --release")
+        cmd!("cargo build --target {target}  --no-default-features --release")
             .run()?;
         let suffix = exe_suffix(&target);
         let src = Path::new("target").join(&target).join("release");
-        let iced_src = src.join(format!("localnative_iced_old{}", suffix));
+        let iced_src = src.join(format!("localnative_iced{}", suffix));
         let host_src = src.join(format!("localnative-web-ext-host{}", suffix));
         let dst =
-            Path::new("dist").join(format!("localnative-{}-{}-{}", target, features, version));
+            Path::new("dist").join(format!("localnative-{}-{}", target, version));
         rm_rf(&dst)?;
         mkdir_p(&dst)?;
         let iced_dst = dst.join(format!("localnative{}", suffix));

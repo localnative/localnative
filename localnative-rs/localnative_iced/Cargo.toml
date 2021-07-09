@@ -81,7 +81,7 @@ preview = [
 ]
 
 [[bin]]
-name = "ln"
+name = "local-native"
 path = "./src/bin.rs"
 
 [[bin]]

@@ -22,8 +22,6 @@ xflags::xflags! {
         /// Release iced and web-ext-host
         cmd release
         {
-            /// Select opengl as the backend
-            optional --opengl
             /// You can specify a target
             optional -t, --target target: String
             /// You can specify a platform, such as macos, windows, linux
@@ -54,7 +52,6 @@ pub struct Help {
 
 #[derive(Debug)]
 pub struct Release {
-    pub opengl: bool,
     pub target: Option<String>,
     pub platform: Option<String>,
     pub version: Option<String>,
