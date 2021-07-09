@@ -14,29 +14,29 @@ title: 1. 初始化项目结构
 ```diff
 # 在 Cargo.toml 内
 [dependencies]
--- iced = "0.3"
-localnative_core = { path = "../localnative/localnative-rs/localnative_core" }
+- iced = "0.3"
+localnative_core = { path = "../localnative/localnative-rs/localnative_core", features =["no_print"] }
 
-++ [dependencies.iced]
-++ version = "0.3"
-++ default-features = false
++ [dependencies.iced]
++ version = "0.3"
++ default-features = false
 
-++ [features]
-++ default = ["preview"]
-++ wgpu = [
-++     "iced/default",
-++     "iced/tokio",
-++     "iced/qr_code",
-++     ]
-++ opengl = [
-++     "iced/glow",
-++     "iced/tokio",
-++     "iced/glow_qr_code",
-++     "iced/glow_default_system_font"
-++     ]
-++ preview = [
-++     "wgpu"
-++ ]
++ [features]
++ default = ["preview"]
++ wgpu = [
++     "iced/default",
++     "iced/tokio",
++     "iced/qr_code",
++     ]
++ opengl = [
++     "iced/glow",
++     "iced/tokio",
++     "iced/glow_qr_code",
++     "iced/glow_default_system_font"
++     ]
++ preview = [
++     "wgpu"
++ ]
 ```
 
 我们删掉了之前`[dependencies]`下的`iced`依赖，转而添加了`[dependencies.iced]`。
@@ -67,10 +67,10 @@ localnative_core = { path = "../localnative/localnative-rs/localnative_core" }
     .
     ├── Cargo.lock
     ├── Cargo.toml
-++  ├── previews
-++  │   └── exam.rs
++  ├── previews
++  │   └── exam.rs
     ├── src
-++  │   ├── bin.rs
++  │   ├── bin.rs
     │   └── lib.rs
     └── target
         ... // taget generated files
@@ -84,14 +84,14 @@ localnative_core = { path = "../localnative/localnative-rs/localnative_core" }
 
 ```diff
 # 在 Cargo.toml 内
-++ [[bin]]
-++ name = "ln"
-++ path = "./src/bin.rs"
++ [[bin]]
++ name = "ln"
++ path = "./src/bin.rs"
 
-++ [[bin]]
-++ name = "preview-example"
-++ path = "./previews/exam.rs"
-++ required-features = ["preview"]
++ [[bin]]
++ name = "preview-example"
++ path = "./previews/exam.rs"
++ required-features = ["preview"]
 ```
 
 我们定义了两个`bin`，这两个同时指定了各自的路径，以及`required-features`。

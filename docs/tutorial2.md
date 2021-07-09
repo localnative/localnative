@@ -202,7 +202,7 @@ cargo run --bin ln
 
 编译没有问题的话，会得到以下结果（编译过程中出现的warning请暂时忽略）：
 
-![简单示例](/img/tutorial-02-00.png)
+![简单示例](/img/tutorial/2-00.png)
 
 > 关于WSL的一个warning：
 >

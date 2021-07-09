@@ -7,7 +7,7 @@ title: 3. 实现NoteView
 
 本章我们将实现如下图所示的Note结构体的视图，并且通过`preview`这个feature来预览我们实现的效果。
 
-![Note演示](/img/tutorial-03-00.png)
+![Note演示](/img/tutorial/3-00.png)
 
 ### 创建新模块
 
@@ -15,7 +15,7 @@ title: 3. 实现NoteView
 
 ```diff
 // 在 lib.rs 内
-++ mod note;
++  mod note;
 
 use iced::Command;
 
@@ -326,10 +326,10 @@ impl iced::Sandbox for NoteView {
     path = "./previews/exam.rs"
     required-features = ["preview"]
 
-++  [[bin]]
-++  name = "noteview"
-++  path = "./previews/noteview.rs"
-++  required-features = ["preview"]
++  [[bin]]
++  name = "noteview"
++  path = "./previews/noteview.rs"
++  required-features = ["preview"]
 ```
 
 ```rust
@@ -346,7 +346,7 @@ fn main() -> iced::Result {
 
 ```diff
 // 在 lib.rs 内
-++ pub use note::NoteView;
++ pub use note::NoteView;
 ```
 
 完成这些之后我们就可以run我们的预览了：
@@ -355,9 +355,9 @@ fn main() -> iced::Result {
 cargo run --bin noteview
 ```
 
-![noteview qrcode disable](/img/tutorial-03-01.png)
+![noteview qrcode disable](/img/tutorial/3-01.png)
 
-![noteview qrcode enable](/img/tutorial-03-02.png)
+![noteview qrcode enable](/img/tutorial/3-02.png)
 
 正如上图所展示的，当前我们获得了一个十分简陋的UI，接下来我们将要解决以下问题：
 
@@ -376,7 +376,7 @@ cargo run --bin noteview
 # 在 Cargo.toml 内
 [dependencies]
 localnative_core = { path = "../localnative/localnative-rs/localnative_core" }
-++ open = "1"
++ open = "1"
 [dependencies.iced]
 version = "0.3.0"
 default-features = false
@@ -387,9 +387,9 @@ default-features = false
 // 在 note.rs 内
 fn open(url: &str) {
 // 更好的处理方式是通过log打印，甚至保存下信息，当前只是简单实现，后续我们会替换为log
-++    if let Err(err) = open::that(url) {
-++    	println!("open url fail:{:?}", err);
-++    }
++    if let Err(err) = open::that(url) {
++    	println!("open url fail:{:?}", err);
++    }
 }
 ```
 
@@ -402,7 +402,7 @@ fn open(url: &str) {
 ```diff
 // 在 lib.rs 内
 mod note;
-++ mod style;
++ mod style;
 ```
 
 同时新建`src/style.rs`文件：
@@ -508,17 +508,17 @@ pub fn rule() -> iced::Rule {
 
 ```diff
 // 在 note.rs 内
--- use iced::{button, qr_code, Button, Column, Element, QRCode, Row, Rule, Text};
-++ use iced::{button, qr_code, Button, Column, Element, QRCode, Row, Text};
+- use iced::{button, qr_code, Button, Column, Element, QRCode, Row, Rule, Text};
++ use iced::{button, qr_code, Button, Column, Element, QRCode, Row, Text};
 use localnative_core::Note;
 
-++ use crate::style;
++ use crate::style;
 /*
 	... 其它之前中间的代码
 */
 impl NoteView {
---  pub fn view(&mut self) -> Element<Message> {
-++  pub fn view(&mut self, theme: style::Theme) -> Element<Message> {
+-  pub fn view(&mut self) -> Element<Message> {
++  pub fn view(&mut self, theme: style::Theme) -> Element<Message> {
         let Self {
             note,
             tags,
@@ -528,15 +528,15 @@ impl NoteView {
             qrcode,
         } = self;
         let qrcode = qrcode.as_ref().map(|state| QRCode::new(state));
---      let url = Button::new(open_url, Text::new(note.url.as_str())).on_press(Message::OpenUrl);
-++      let url = Button::new(open_url, Text::new(note.url.as_str()))
-++          .style(style::link(theme))
-++          .on_press(Message::OpenUrl);
+-      let url = Button::new(open_url, Text::new(note.url.as_str())).on_press(Message::OpenUrl);
++      let url = Button::new(open_url, Text::new(note.url.as_str()))
++          .style(style::link(theme))
++          .on_press(Message::OpenUrl);
 		let delete = Button::new(delete, Text::new("delete")).on_press(Message::Delete);
         let qrcode_button = Button::new(open_qrcode, Text::new("qr")).on_press(Message::QRCode);
         let row = Row::new()
         // 添加spacing属性之后，同一行每个元素都会有5的间隔
-++      	.spacing(5)
++      	.spacing(5)
             .push(Text::new(note.created_at.as_str()))
             .push(Text::new(note.uuid4.as_str()))
             .push(Text::new(format!("rowid {}", note.rowid)))
@@ -549,12 +549,12 @@ impl NoteView {
         });
         let mut column = Column::new().push(row);
         if let Some(qrcode) = qrcode {
---          column = column.push(qrcode);
-++          column = column.push(
-++              Row::new()
-++                  .push(style::rule())
-++                  .push(qrcode)
-++                  .push(style::rule()),
+-          column = column.push(qrcode);
++          column = column.push(
++              Row::new()
++                  .push(style::rule())
++                  .push(qrcode)
++                  .push(style::rule()),
             );
         }
         if !note.title.is_empty() {
@@ -571,24 +571,24 @@ impl NoteView {
         }
         column = column.push(
             Row::new()
---          .push(Rule::horizontal(0))
---          .push(Rule::horizontal(0))
---          .push(Rule::horizontal(0))
---          .push(Rule::horizontal(0))
---          .push(Rule::horizontal(0))
---          .push(Rule::horizontal(0))
---          .push(Rule::horizontal(0))
---          .push(delete)
---          .push(Rule::horizontal(0))
-++          .push(style::rule())
-++          .push(style::rule())
-++          .push(style::rule())
-++          .push(style::rule())
-++          .push(style::rule())
-++          .push(style::rule())
-++          .push(style::rule())
-++          .push(delete)
-++          .push(style::rule()),
+-          .push(Rule::horizontal(0))
+-          .push(Rule::horizontal(0))
+-          .push(Rule::horizontal(0))
+-          .push(Rule::horizontal(0))
+-          .push(Rule::horizontal(0))
+-          .push(Rule::horizontal(0))
+-          .push(Rule::horizontal(0))
+-          .push(delete)
+-          .push(Rule::horizontal(0))
++          .push(style::rule())
++          .push(style::rule())
++          .push(style::rule())
++          .push(style::rule())
++          .push(style::rule())
++          .push(style::rule())
++          .push(style::rule())
++          .push(delete)
++          .push(style::rule()),
         );
         column.into()
     }
@@ -601,9 +601,9 @@ impl iced::Sandbox for NoteView {
         ...其它的之前的实现
     */
     fn view(&mut self) -> Element<'_, Self::Message> {
--- 		self.view()
+- 		self.view()
 		// 我们暂时只需要使用Litght主题测试就好，后续添加主题切换按钮的时候再做切换
-++      self.view(style::Theme::Light)
++      self.view(style::Theme::Light)
     }
 }
 ```
@@ -614,7 +614,7 @@ impl iced::Sandbox for NoteView {
 cargo run --bin noteview
 ```
 
-![简单重构](/img/tutorial-03-03.png)
+![简单重构](/img/tutorial/3-03.png)
 
 接下来我们将引入`Wrap`控件，将我们的tag给放入这里面，这样我们的问题3也就同样被解决了。首先我们引入`iced_aw`这个crate，这是一个`iced`官方的额外控件crate，目前还没有发布到crate.io，因此我们只能通过git的方式引入到我们的项目中，还是老方法，如果网速不佳，请用国内镜像：
 
@@ -624,12 +624,12 @@ cargo run --bin noteview
 localnative_core = { path = "../localnative/localnative-rs/localnative_core" }
 open = "1"
 
-++ [dependencies.iced_aw]
++ [dependencies.iced_aw]
 # 网速太差可以考虑使用：https://gitee.com/downtime/iced_aw
-++ git = "https://github.com/iced-rs/iced_aw"
-++ branch = "main"
-++ default-features = false
-++ features = ["wrap"] 
++ git = "https://github.com/iced-rs/iced_aw"
++ branch = "main"
++ default-features = false
++ features = ["wrap"] 
 ```
 
 我们开启`wrap`的feature之后，便可以将tag都放到wrap内了：
@@ -642,27 +642,27 @@ open = "1"
             .push(Text::new(note.uuid4.as_str()))
             .push(Text::new(format!("rowid {}", note.rowid)))
             .push(qrcode_button);
---      let row = tags.iter_mut().fold(row, |row, tag| {
---          let Tag { name, open_tag } = tag;
---          let tag_button = Button::new(open_tag, Text::new(name.as_str()))
---              .on_press(Message::Search(name.to_owned()));
---          row.push(tag_button)
---      });
-++      let wrap = tags
-++          .iter_mut()
-++          .fold(iced_aw::Wrap::new().spacing(5).push(row), |wrap, tag| {
-++              let Tag { name, open_tag } = tag;
-++              let tag_button = Button::new(open_tag, Text::new(name.as_str()))
-++                  .on_press(Message::Search(name.to_owned()));
-++              wrap.push(tag_button)
-++          });
--- 		let mut column = Column::new().push(row);
-++      let mut column = Column::new().push(wrap);
+-       let row = tags.iter_mut().fold(row, |row, tag| {
+-           let Tag { name, open_tag } = tag;
+-           let tag_button = Button::new(open_tag, Text::new(name.as_str()))
+-               .on_press(Message::Search(name.to_owned()));
+-           row.push(tag_button)
+-       });
++       let wrap = tags
++           .iter_mut()
++           .fold(iced_aw::Wrap::new().spacing(5).push(row), |wrap, tag| {
++               let Tag { name, open_tag } = tag;
++               let tag_button = Button::new(open_tag, Text::new(name.as_str()))
++                   .on_press(Message::Search(name.to_owned()));
++               wrap.push(tag_button)
++           });
+-  		let mut column = Column::new().push(row);
++       let mut column = Column::new().push(wrap);
 ```
 
 运行之后：
 
-![添加wrap之后](/img/tutorial-03-04.png)
+![添加wrap之后](/img/tutorial/3-04.png)
 
 我们得到了一个还算不错的结果，但是说实话实在是太丑了，接下来我们将要给他做一些美化，同时也要为之后我们即将实现的暗色主题做准备。同时，如果你注意到之前的代码，会发现有不少地方是可以进行抽象的，比如我们在构建一个7:1位置的delete按钮时，重复的push了一堆Rule：
 
@@ -687,25 +687,25 @@ pub fn rule() -> iced::Rule {
 }
 // 到了大家都讨厌的标注生存期环节了，我们将在后续给出是如何一步步标注出生存期的
 // 这个函数本身很简单，只需要知道是为了将Rule转换到Element并且收集到同一个Vec即可
-++ pub fn rules<'a, Msg: 'a>(n: usize) -> Vec<Element<'a, Msg>> {
-++     let mut res = Vec::with_capacity(n);
-++     for _ in 0..n {
-++         res.push(rule().into());
-++     }
-++     res
-++ }
++  pub fn rules<'a, Msg: 'a>(n: usize) -> Vec<Element<'a, Msg>> {
++      let mut res = Vec::with_capacity(n);
++      for _ in 0..n {
++          res.push(rule().into());
++      }
++      res
++  }
 // 在添加了新的方法之后，我们可以将此前的代码变成这样：
 // 在 note.rs 内
 	column = column.push(
---      Row::new()
---  	.push(style::rule())
---      .push(style::rule())
---      .push(style::rule())
---      .push(style::rule())
---      .push(style::rule())
---      .push(style::rule())
---      .push(style::rule())
-++      Row::with_children(style::rules::<Message>(7))
+-       Row::new()
+-   	.push(style::rule())
+-       .push(style::rule())
+-       .push(style::rule())
+-       .push(style::rule())
+-       .push(style::rule())
+-       .push(style::rule())
+-       .push(style::rule())
++       Row::with_children(style::rules::<Message>(7))
         .push(delete)
         .push(style::rule()),
         );
@@ -717,8 +717,8 @@ pub fn rule() -> iced::Rule {
 
 ```diff
 // 在 note.rs 内
---      Row::with_children(style::rules::<Message>(7))
-++      Row::with_children(vec![style::rule().into();7])
+-      Row::with_children(style::rules::<Message>(7))
++      Row::with_children(vec![style::rule().into();7])
         .push(delete)
         .push(style::rule()),
 ```
@@ -730,139 +730,140 @@ pub fn rule() -> iced::Rule {
 ```diff
 // 在 note.rs > impl NoteView > view 内
 // 最后返回值，我们给他嵌套一个容器
---        column.into()
-++        iced::Container::new(column)
+-        column.into()
++        iced::Container::new(column)
 // 同时添加一个note的style，需要读取theme，根据不同的theme形成不同的style
-++            .style(style::note(theme))
-++            .padding(10)
-++            .into()
++             .style(style::note(theme))
++             .padding(10)
++             .into()
 
 // 在 style.rs 内
 // 我们定义一个Note结构体，用于表示Note的Style
-++ pub struct Note {
-++    theme: Theme,
-++ }
++  pub struct Note {
++     theme: Theme,
++  }
 // 我们给Note实现容器的StyleSheet
-++ impl container::StyleSheet for Note {
-++     fn style(&self) -> container::Style {
-++         let (tcolor, bg_color, bd_color) = match self.theme {
++  impl container::StyleSheet for Note {
++      fn style(&self) -> container::Style {
++          let (tcolor, bg_color, bd_color) = match self.theme {
 // 根据不同的theme提供不同的文本颜色，背景颜色和边框颜色，目前只考虑亮色主题
-++             Theme::Light => (
-++                 Color::BLACK,
-++                 Color::from_rgb8(240, 248, 255),
-++                 Color::from_rgb8(240, 255, 255),
-++             ),
-++             Theme::Dark => todo!(),
-++         };
-++         container::Style {
-++             text_color: Some(tcolor),
-++             background: Some(Background::Color(bg_color)),
-++             border_radius: 30.0,
-++             border_width: 3.0,
-++             border_color: bd_color,
-++         }
-++     }
-++ }
-++ pub fn note(theme: Theme) -> Note {
-++     Note { theme }
-++ }
++              Theme::Light => (
++                  Color::BLACK,
++                  Color::from_rgb8(240, 248, 255),
++                  Color::from_rgb8(240, 255, 255),
++              ),
++              Theme::Dark => todo!(),
++          };
++          container::Style {
++              text_color: Some(tcolor),
++              background: Some(Background::Color(bg_color)),
++              border_radius: 30.0,
++              border_width: 3.0,
++              border_color: bd_color,
++          }
++      }
++  }
++  pub fn note(theme: Theme) -> Note {
++      Note { theme }
++  }
 ```
 
 完成以上操作之后，我们可以看看实现的效果，只要继续运行`NoteView`的预览即可：
 
-![image-20210605180158673](/img/tutorial-03-06.png)
+![image-20210605180158673](/img/tutorial/3-06.png)
 
 细节上大家可以根据自己的喜好进行修改，现在我们给tag也实现风格：
 
 ```diff
 // 在 style.rs 内
-++ pub struct Tag {
-++     theme: Theme,
-++ }
-++ impl button::StyleSheet for Tag {
-++     fn active(&self) -> button::Style {
++  pub struct Tag {
++      theme: Theme,
++  }
++  impl button::StyleSheet for Tag {
++      fn active(&self) -> button::Style {
 // 颜色这些随意，根据自己的喜好来就行
-++         let (text_color, bg) = match self.theme {
-++             Theme::Light => (
-++                 Color::BLACK,
-++                 Some(Background::Color(Color::from_rgb8(255, 182, 193))),
-++             ),
-++             Theme::Dark => (
-++                 Color::WHITE,
-++                 Some(Background::Color(Color::from_rgb8(173, 216, 230))),
-++             ),
-++         };
-++         button::Style {
-++             background: bg,
-++             border_radius: 10.0,
-++             border_width: 0.0,
-++             border_color: Color::TRANSPARENT,
-++             text_color,
-++             ..Default::default()
-++         }
-++     }
-++ }
-++ pub fn tag(theme: Theme) -> Tag {
-++     Tag { theme }
-++ }
++          let (text_color, bg) = match self.theme {
++              Theme::Light => (
++                  Color::BLACK,
++                  Some(Background::Color(Color::from_rgb8(255, 182, 193))),
++              ),
++              Theme::Dark => (
++                  Color::WHITE,
++                  Some(Background::Color(Color::from_rgb8(173, 216, 230))),
++              ),
++          };
++          button::Style {
++              background: bg,
++              border_radius: 10.0,
++              border_width: 0.0,
++              border_color: Color::TRANSPARENT,
++              text_color,
++              ..Default::default()
++          }
++      }
++  }
++  pub fn tag(theme: Theme) -> Tag {
++      Tag { theme }
++  }
 // 在 note.rs > impl NoteView > view 内
                 let tag_button = Button::new(open_tag, Text::new(name.as_str()))
-++                  .style(style::tag(theme))
++                   .style(style::tag(theme))
                     .on_press(Message::Search(name.to_owned()));
 ```
 
 再次运行：
 
-![image-20210605181911676](/img/tutorial-03-07.png)
+![image-20210605181911676](/img/tutorial/3-07.png)
 
 接下来是二维码，仔细看的话，可以注意到底部是白色，和我们当前的Note背景色显得格格不入，因此我们同样将它设置成Note背景色：
 
 ```diff
 // 在 style.rs 内
 // 我们将背景色定义为常量，方便后续更改，需要注意的是from_rgb8这个方法并不是const函数，我们只能用from_rgb来调用
-++  const LIGHT_NOTE_BG: Color = Color::from_rgb(0.941, 0.972, 1.0);
-++  const DARK_NOTE_BG: Color = Color::from_rgb(0.0784, 0.0863, 0.141);
-    impl container::StyleSheet for Note {
-        fn style(&self) -> container::Style {
-            let (tcolor, bg_color, bd_color) = match self.theme {
---                         Theme::Light => (
---                 Color::BLACK,
---                 Color::from_rgb8(240, 248, 255),
---                 Color::from_rgb8(240, 255, 255),
---             ),
---             Theme::Dark => todo!(),
-++              Theme::Light => (Color::BLACK, LIGHT_NOTE_BG, Color::from_rgb8(240, 255, 255)),
-++              Theme::Dark => (Color::WHITE, DARK_NOTE_BG, Color::from_rgb8(20, 36, 36)),
-            };
-            container::Style {
-                text_color: Some(tcolor),
-                background: Some(Background::Color(bg_color)),
-                border_radius: 30.0,
-                border_width: 3.0,
-                border_color: bd_color,
-            }
-        }
-    }
-++  pub fn qr_code(mut qr_code: qr_code::QRCode, theme: Theme) -> qr_code::QRCode {
-++      let (dark, light) = match theme {
-++          Theme::Light => (Color::BLACK, LIGHT_NOTE_BG),
-++          Theme::Dark => (Color::WHITE, DARK_NOTE_BG),
-++      };
-++      qr_code.color(dark, light)
-++  }
-// 在 note.rs > impl NoteView > view 内
---      let qrcode = qrcode.as_ref().map(|state| QRCode::new(state));
-++      let qrcode = qrcode
-++          .as_ref()
-++          .map(|state| style::qr_code(QRCode::new(state), theme));
+// 颜色随意，因为后续不好看还是需要改动的
++   const LIGHT_NOTE_BG: Color = Color::from_rgb(0.941, 0.972, 1.0);
++   const DARK_NOTE_BG: Color = Color::from_rgb(0.0784, 0.0863, 0.141);
+   impl container::StyleSheet for Note {
+       fn style(&self) -> container::Style {
+           let (tcolor, bg_color, bd_color) = match self.theme {
+-                          Theme::Light => (
+-                  Color::BLACK,
+-                  Color::from_rgb8(240, 248, 255),
+-                  Color::from_rgb8(240, 255, 255),
+-              ),
+-              Theme::Dark => todo!(),
++               Theme::Light => (Color::BLACK, LIGHT_NOTE_BG, Color::from_rgb8(240, 255, 255)),
++               Theme::Dark => (Color::WHITE, DARK_NOTE_BG, Color::from_rgb8(20, 36, 36)),
+           };
+           container::Style {
+               text_color: Some(tcolor),
+               background: Some(Background::Color(bg_color)),
+               border_radius: 30.0,
+               border_width: 3.0,
+               border_color: bd_color,
+           }
+       }
+   }
++   pub fn qr_code(mut qr_code: qr_code::QRCode, theme: Theme) -> qr_code::QRCode {
++       let (dark, light) = match theme {
++           Theme::Light => (Color::BLACK, LIGHT_NOTE_BG),
++           Theme::Dark => (Color::WHITE, DARK_NOTE_BG),
++       };
++       qr_code.color(dark, light)
++   }
+//  在 note.rs > impl NoteView > view 内
+-       let qrcode = qrcode.as_ref().map(|state| QRCode::new(state));
++       let qrcode = qrcode
++           .as_ref()
++           .map(|state| style::qr_code(QRCode::new(state), theme));
 ```
 
 再次运行：
 
-![image-20210605200142431](/img/tutorial-03-08.png)
+![](/img/tutorial/3-08.png)
 
 比之前稍微好看了一丢丢，配色上可能确实不太行，后续有更好的设计，可以再切过来更改，现在还剩下二维码按钮和删除按钮没有进行添加样式，我们将在后续添加图标来替代，将会在添加字体的章节详细介绍。
 
 至此，note的简单实现到此结束，下一章将会介绍第二个部分tags，同时也会介绍如何将多个实现的部分组合到一块：
 
-![标签集](/img/tutorial-03-05.png)
+![标签集](/img/tutorial/3-05.png)

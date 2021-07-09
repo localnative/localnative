@@ -201,26 +201,26 @@ fn main() -> iced::Result {
 ```diff
 // 在 lib.rs 内
     pub use note::NoteView;
-++  pub use search_page::SearchPage;
++   pub use search_page::SearchPage;
     pub use tags::TagView;
 ```
 ```diff
 # 在 Cargo.toml 内
-++  [[bin]]
-++  name = "search_page"
-++  path = "./previews/search_page.rs"
-++  required-features = ["preview"]
++   [[bin]]
++   name = "search_page"
++   path = "./previews/search_page.rs"
++   required-features = ["preview"]
 ```
 接着我们就可以运行我们的搜索页面的预览了：
 ```shell
 cargo run --bin search_page
 ```
 可以得到以下结果：
-![preview0](/img/tutorial-05-00.png)
+![preview0](/img/tutorial/5-00.png)
 可以看到这个界面很简陋，我们会在后续一步一步的改进结果，在此之前，有些地方和我们的预期不一致，比如我们明显在页面的下方加入了页面信息的一行，但是并没有显示出来。
 
 出现这个问题的原因是因为我们的notes使用了`Scrollable`控件，同时在其外又包裹了一层`Container`控件，`Container`控件的默认`height`属性是`iced::Length::Shrink`,该字段的官方文档指填充最小空间，就我们当前的用例来说，最小空间已经超过了我们的窗口大小，如果此时你将我们的用例中note的数量5减少为2或3，那你就能看到之前被布局挤压下看不到的页面控制行了：
-![preview1](/img/tutorial-05-01.png)
+![preview1](/img/tutorial/5-01.png)
 
 知道了问题的所在原因，我们现在就来修复这个Bug，修复的方法也很简单，将默认的`height`给改成`Fill`:
 ```diff
@@ -234,20 +234,20 @@ cargo run --bin search_page
                         .map(move |note_msg| Message::NoteMessage(note_msg, idx)),
                 )
             },
---      ));
-++		))
-++      .height(iced::Length::Fill);
+-       ));
++ 		))
++       .height(iced::Length::Fill);
 ```
 改好之后，我们再运行5个note的示例，当前就符合我们的预期了：
-![preview2](/img/tutorial-05-02.png)
+![preview2](/img/tutorial/5-02.png)
 
 除了这个问题之外，还有一个问题也挺明显的，我们的note遮挡住了`Scrollable`的拖动栏，解决的方法也很简单，在创建`Scrollable`的时候，给其指定`padding`，指定的值根据自己的喜好来设置：
 
 ```diff
 // 在 search_page.rs -> impl SearchPage -> view 内
 		let notes = Container::new(notes.iter_mut().enumerate().fold(
---		  Scrollable::new(scrollable_state),
-++        Scrollable::new(scrollable_state).padding(10),
+- 		  Scrollable::new(scrollable_state),
++         Scrollable::new(scrollable_state).padding(10),
             |notes, (idx, note_view)| {
                 notes.push(
                     note_view
@@ -260,7 +260,7 @@ cargo run --bin search_page
 ```
 更改后运行：
 
-![preview3](/img/tutorial-05-03.png)
+![preview3](/img/tutorial/5-03.png)
 
 至此，我们粗略的完成了一个需要组合的页面的搭建，在接下来我们将先实现`update`方法，在大致完成更新方法之后我们再来优化页面样式。
 
@@ -302,6 +302,7 @@ cargo run --bin search_page
             //数组并没有实现into_iter()，查看文档的话，
             //会看到当前版本的Rust调用数组的into_iter()会转换成调用iter()，
             //返回值不是T而是&T
+            //1.53版本后的Rust可以直接这样写
             [
                 Command::perform(cmd0(),Message::Cmd0),
                 Command::perform(cmd1(),Message::Cmd1),
@@ -605,9 +606,9 @@ impl SearchPage {
 ```diff
 // 在 search_page.rs > impl iced::Sandbox for SearchPage 内
     fn update(&mut self, message: Self::Message) {
---      self.update(message, 5)
-++      let conn = localnative_core::exe::get_sqlite_connection();
-++      self.update(message, 5, Arc::new(Mutex::new(conn)));
+-       self.update(message, 5)
++       let conn = localnative_core::exe::get_sqlite_connection();
++       self.update(message, 5, Arc::new(Mutex::new(conn)));
     }
 ```
 当前的预览已经不满足我们对数据库的测试支持了，不过也和此前的预期一致，预览用于对UI进行精修和测试，而更深层次的测试不需要通过预览来做。
@@ -621,7 +622,7 @@ impl SearchPage {
 #[derive(Default)]
 pub struct SearchPage {
     pub notes: Vec<NoteView>,
-++  pub tags: Vec<TagView>,
++   pub tags: Vec<TagView>,
     search_value: String,
     pub offset: u32,
     pub count: u32,
@@ -629,9 +630,9 @@ pub struct SearchPage {
     clear_button: button::State,
     refresh_button: button::State,
     // 我们需要一个可滑动空间帮助我们滑动tags
---  scrollable_state: scrollable::State,
-++  notes_scrollable: scrollable::State,
-++  tags_scrollable: scrollable::State,
+-   scrollable_state: scrollable::State,
++   notes_scrollable: scrollable::State,
++   tags_scrollable: scrollable::State,
     next_button: button::State,
     pre_button: button::State,
 }
@@ -639,7 +640,7 @@ pub struct SearchPage {
 pub enum Message {
     Receiver(Option<MiddleDate>),
     NoteMessage(crate::note::Message, usize),
-++  TagMessage(crate::tags::Message),
++   TagMessage(crate::tags::Message),
     Search,
     SearchInput(String),
     Clear,
@@ -651,28 +652,28 @@ impl SearchPage {
     pub fn view(&mut self, theme: Theme, limit: u32) -> Element<Message> {
         let Self {
             notes,
-++          tags,
++           tags,
             search_value,
             input_state,
             clear_button,
             refresh_button,
---          scrollable_state,
-++          notes_scrollable,
-++          tags_scrollable,
+-           scrollable_state,
++           notes_scrollable,
++           tags_scrollable,
             next_button,
             pre_button,
             ..
         } = self;
         // ...其它实现
-++      let tags = Scrollable::new(tags_scrollable).push(
-++          Container::new(tags.iter_mut().fold(
-++              iced_aw::Wrap::new().spacing(5).push(Text::new("tags:")),
-++              |tags, tag| tags.push(tag.view(theme).map(Message::TagMessage)),
-++          )),
++       let tags = Scrollable::new(tags_scrollable).push(
++           Container::new(tags.iter_mut().fold(
++               iced_aw::Wrap::new().spacing(5).push(Text::new("tags:")),
++               |tags, tag| tags.push(tag.view(theme).map(Message::TagMessage)),
++           )),
         // 我们给宽度定一个值，和后面的Note栏形成一个8，2开
-++      ).width(iced::Length::FillPortion(2));
++       ).width(iced::Length::FillPortion(2));
         // 判断count数，当大于零的时候返回正常的note页面
-++      let note_page = if self.count > 0 {
++       let note_page = if self.count > 0 {
             let notes = Container::new(notes.iter_mut().enumerate().fold(
                 Scrollable::new(notes_scrollable).padding(10),
                 |notes, (idx, note_view)| {
@@ -701,24 +702,24 @@ impl SearchPage {
                 .push(next_button)
                 .push(style::rule());
 
-++          Column::new().push(search_bar).push(notes).push(page_ctrl)
-            // 小于等于零的时候返回提示
-++        } else {
-++          let tip = if self.search_value.is_empty() {
-++              "Not Created"
-++          } else {
-++              "Not Founded"
-++          };
-++          Column::new()
-++              .push(search_bar)
-++              .push(style::vertical_rule())
-++              .push(Text::new(tip).size(50))
-++              .push(style::vertical_rule())
-++      }
-++      .align_items(iced::Align::Center)
-++      .width(iced::Length::FillPortion(8));
---      Container::new(Column::new().push(search_bar).push(notes).push(page_ctrl)).into()
-++      Container::new(Row::new().push(note_page).push(tags)).into()
++           Column::new().push(search_bar).push(notes).push(page_ctrl)
+           // 小于等于零的时候返回提示
++         } else {
++           let tip = if self.search_value.is_empty() {
++               "Not Created"
++           } else {
++               "Not Founded"
++           };
++           Column::new()
++               .push(search_bar)
++               .push(style::vertical_rule())
++               .push(Text::new(tip).size(50))
++               .push(style::vertical_rule())
++       }
++       .align_items(iced::Align::Center)
++       .width(iced::Length::FillPortion(8));
+-       Container::new(Column::new().push(search_bar).push(notes).push(page_ctrl)).into()
++       Container::new(Row::new().push(note_page).push(tags)).into()
     }
     pub fn update(
         &mut self,
@@ -728,12 +729,12 @@ impl SearchPage {
     ) -> Command<Message> {
         match message {
             // 和 note_message 一样处理即可
-++          Message::TagMessage(tag_msg) => {
-++              match tag_msg {
-++                  crate::tags::Message::Search(text) => self.search_value = text,
-++              }
-++              search(conn, self.search_value.to_owned(), limit, self.offset)
-++          }
++           Message::TagMessage(tag_msg) => {
++               match tag_msg {
++                   crate::tags::Message::Search(text) => self.search_value = text,
++               }
++               search(conn, self.search_value.to_owned(), limit, self.offset)
++           }
             // ...其它message
         }
     // ...其它方法
@@ -748,19 +749,19 @@ impl iced::Sandbox for SearchPage {
         for _ in 0..count {
             notes.push(NoteView::new());
         }
-++      let tags = vec![
-++          Tag {
-++              name: "testtag".to_owned(),
-++              count: 16,
-++          };
-++          50
-++      ]
-++       .into_iter()
-++      .map(TagView::from)
-++      .collect();
++       let tags = vec![
++           Tag {
++               name: "testtag".to_owned(),
++               count: 16,
++           };
++           50
++       ]
++        .into_iter()
++       .map(TagView::from)
++       .collect();
         Self {
             notes,
-++          tags,
++           tags,
             offset: 0,
             count,
             ..Default::default()
@@ -799,7 +800,7 @@ pub fn vertical_rules<'a, Msg: 'a>(n: usize) -> Vec<Element<'a, Msg>> {
 
 修改之后运行,得到结果：
 
-![preview4](/img/tutorial-05-04.png)
+![preview4](/img/tutorial/5-04.png)
 
 ### 集成到lib.rs
 
@@ -807,23 +808,23 @@ pub fn vertical_rules<'a, Msg: 'a>(n: usize) -> Vec<Element<'a, Msg>> {
 
 ```diff
 // 在 lib.rs 内
-++ use middle_date::MiddleDate;
---  #[derive(Default)]
++  use middle_date::MiddleDate;
+-   #[derive(Default)]
     pub struct Data {
-++      search_page: SearchPage,
-++      conn: Arc<Mutex<Connection>>,
-++      theme: Theme,
-++      limit: u32,
++       search_page: SearchPage,
++       conn: Arc<Mutex<Connection>>,
++       theme: Theme,
++       limit: u32,
     }
 // 简单给Message新增几个Message
 #[derive(Debug)]
 pub enum Message {
---  NoteMessage(note::Message),
---  TagsMessage(tags::Message),
-++  Loading(()),
-++  SearchPageMessage(search_page::Message),
-++  NoteView(Vec<NoteView>),
-++  TagView(Vec<TagView>),
+-   NoteMessage(note::Message),
+-   TagsMessage(tags::Message),
++   Loading(()),
++   SearchPageMessage(search_page::Message),
++   NoteView(Vec<NoteView>),
++   TagView(Vec<TagView>),
 }
 ```
 我们给`Data`新增了几个字段，其中theme、limit字段后续我们将会移到`Config`内去，现在我们还没有定义`Config`暂时先放到这里。
@@ -973,7 +974,7 @@ impl iced::Application for LocalNative {
 cargo run --bin ln
 ```
 你可以看到如下结果：
-![preview5](/img/tutorial-05-05.png)
+![preview5](/img/tutorial/5-05.png)
 
 什么？你的程序里没有数据？是空白的？那就对了，你本身就没有向数据库写入过数据，所以是空白的，这很合理。如何解决这个问题呢？
 

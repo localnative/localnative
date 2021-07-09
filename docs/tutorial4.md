@@ -18,8 +18,8 @@ title: 4. 实现TagView
     open = "1"
     once_cell = "1.7"
 
-++  serde = {version = "1",features = ["derive"]}
-++  serde_json = "1"
++   serde = {version = "1",features = ["derive"]}
++   serde_json = "1"
 ```
 
 我们新增了`serde`和`serde_json`两个依赖，前者我们还开启了其`deriver`feature，可以帮助我们更简单的实现序列化。后者是因为`localnative_core`的返回值是`json`，我们之后会需要将从`localnative_core`获取的值转化为绘制GUI所需要的数据，也就需要用到这个依赖了。
@@ -30,10 +30,10 @@ title: 4. 实现TagView
 // 在 lib.rs 内
     mod note;
     mod style;
-++  mod tags;
++   mod tags;
     use iced::Command;
     pub use note::NoteView;
-++  pub use tags::TagView;
++   pub use tags::TagView;
 ```
 
 我们需要先在`lib.rs`内添加上新的模块名，同时创建对应的`tags.rs`文件：
@@ -179,10 +179,10 @@ fn main() -> iced::Result {
 并且将bin属性添加到`Cargo.toml`内：
 ```diff
 # 在 Cargo.toml 内
-++ [[bin]]
-++ name = "tagview"
-++ path = "./previews/tagview.rs"
-++ required-features = ["preview"]
++  [[bin]]
++  name = "tagview"
++  path = "./previews/tagview.rs"
++  required-features = ["preview"]
 ```
 完成这些常规操作之后我们运行`tagview`,看一下我们的最终结果了：
 ```shell
@@ -190,6 +190,6 @@ cargo run --bin tagview
 ```
 得到以下结果：
 
-![tagview](/img/tutorial-04-00.png)
+![tagview](/img/tutorial/4-00.png)
 
 到这里，我们已经实现了`TagView`，你可以根据你自己的喜好反复修改主题风格，直到满足你的要求。在下一节我们将会实现一个完整的搜索页面和一个完整的tags页面。

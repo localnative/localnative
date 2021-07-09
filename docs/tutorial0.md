@@ -5,7 +5,7 @@ title: 0. 序章
 
 从今天起，我们将要使用[`iced`](https://github.com/hecrj/iced)来构建一个跨平台的网站书签管理工具。
 
-![localnative演示](/img/tutorial-00-00.gif)
+![localnative演示](/img/tutorial/0-00.gif)
 
 当然在开始正式开发之前，我们需要做一些准备：
 
@@ -97,8 +97,8 @@ git commit -m "init project"
 # ln-iced/Cargo.toml
 
 [dependencies]
-++ iced = "0.3"
-++ localnative_core = { path = "../localnative/localnative-rs/localnative_core" }
++ iced = "0.3"
++ localnative_core = { path = "../localnative/localnative-rs/localnative_core", features =["no_print"] }
 ```
 
 添加依赖之后你可以在命令行里编译一下，看看我们的依赖是否添加正确：

@@ -104,7 +104,7 @@ time = { version = "0.3.0-alpha-2",features = ["serde-human-readable","macros"] 
 
 作为用来熟悉`Canvas`的实现，是一个很常见的功能，当鼠标左键按下会出现一个选取框，鼠标放开之后选取框会消失。就像这样一样：
 
-![01](img/tutorial-06-01.gif)
+![01](img/tutorial/6-01.gif)
 
 在这个过程中，我们需要储存的数据很简单，就是鼠标左键按下的那个点，除此之外，鼠标的当前位置，由trait提供给我们。
 
@@ -514,10 +514,10 @@ impl <'a> DateChart<'a> {
                         )
                     } else {
                         // 没有选取范围时镜头平移到最后一天有数据的即可
-                        last_day.map(|last| {
+                        if let Some(last) = last_day {
                             *translation =
-                                Vector::new(((last - 1).max(0) * uw).max(0).min(10000) as f32, 0.0)
-                        });
+                                Vector::new(((last - 1).max(0) * uw).max(0).min(10000) as f32, 0.0);
+                        }
                     }
                     uw as f32
                 } else {
@@ -533,10 +533,10 @@ impl <'a> DateChart<'a> {
                             0.0,
                         )
                     } else {
-                        last_month.map(|last| {
+                        if let Some(last) = last_month {
                             *translation =
-                                Vector::new(((last - 1) * uw).max(0).min(10000) as f32, 0.0)
-                        });
+                                Vector::new(((last - 1) * uw).max(0).min(10000) as f32, 0.0);
+                        }
                     }
                     uw as f32
                 } else {
@@ -570,7 +570,7 @@ impl Selected {
     // into到Date
     pub fn get_months_range(&self, base_month: &MonthView) -> (Date, Date) {
         (
-            get_offset_date(self.start, 1, base_month),
+            get_offset_date(self.start, 31, base_month),
             get_offset_date(self.end, 31, base_month),
         )
     }
@@ -579,6 +579,23 @@ impl Selected {
             base_day - Duration::days(self.start as i64 + 1),
             base_day - Duration::days(self.end as i64 + 1),
         )
+    }
+    pub fn date_into_days_selected(&mut self, start: Date, end: Date, base_day: Date) {
+        self.start = (base_day - start).whole_days().max(1) as usize - 1;
+        self.end = (base_day - end).whole_days().max(1) as usize - 1;
+    }
+    pub fn date_into_months_selected(
+        &mut self,
+        start: Date,
+        end: Date,
+        base_month: &MonthView,
+        base_day: Date,
+    ) {
+        let ds = Selected {
+            start: (base_day - start).whole_days().max(1) as usize - 1,
+            end: (base_day - end).whole_days().max(1) as usize - 1,
+        };
+        *self = ds.days_to_months(base_day, base_month);
     }
     // 从天为单位转换到月为单位
     pub fn days_to_months(self, base_day: Date, base_month: &MonthView) -> Self {
@@ -631,7 +648,7 @@ fn get_offset_date(mut offset: usize, mut day: u8, base_month: &MonthView) -> Da
     } = base_month;
 
     year -= offset as i32 / 12;
-    offset = offset % 12;
+    offset %= 12;
 
     if offset != 0 {
         let mut m_num = month_to_num(month) - offset as i32;
@@ -1979,5 +1996,5 @@ pub struct SearchPage {
 
 到了这一步，基本可以运行最终结果了：`cargo run --bin ln`
 
-![2](img/tutorial-06-02.gif)
+![2](img/tutorial/6-02.gif)
 
