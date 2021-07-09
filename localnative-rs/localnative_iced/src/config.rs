@@ -13,6 +13,7 @@ pub struct Config {
     pub disable_delete_tip: bool,
     pub is_first_open: bool,
     pub date_filter_is_show: bool,
+    pub date_mode_is_full: bool,
     pub day_uw: f32,
     pub month_uw: f32,
 }
@@ -26,6 +27,7 @@ impl Default for Config {
             disable_delete_tip: false,
             is_first_open: true,
             date_filter_is_show: true,
+            date_mode_is_full: true,
             day_uw: 17.0,
             month_uw: 17.0,
         }
@@ -67,39 +69,37 @@ impl Config {
             .ok()?
             .block_on(Self::load())
     }
-    pub async fn save(self) -> Option<()> {
-        use tokio::io::AsyncWriteExt;
+}
 
-        let json = serde_json::to_string_pretty(&self)
-            .map_err(error_handle)
-            .ok()?;
-        println!("json:{}", json);
-        let raw_data = json.as_bytes();
-        let path = Self::config_path();
+pub async fn save(json: String) -> Option<()> {
+    use tokio::io::AsyncWriteExt;
 
-        if let Some(dir) = path.parent() {
-            if !dir.exists() {
-                tokio::fs::create_dir_all(dir)
-                    .await
-                    .map_err(error_handle)
-                    .ok()?;
-            }
-        }
+    println!("json:{}", json);
+    let raw_data = json.as_bytes();
+    let path = Config::config_path();
 
-        {
-            if path.is_dir() {
-                tokio::fs::remove_dir(&path)
-                    .await
-                    .map_err(error_handle)
-                    .ok()?;
-            }
-            let mut file = tokio::fs::File::create(&path)
+    if let Some(dir) = path.parent() {
+        if !dir.exists() {
+            tokio::fs::create_dir_all(dir)
                 .await
                 .map_err(error_handle)
                 .ok()?;
-
-            file.write_all(raw_data).await.map_err(error_handle).ok()?;
         }
-        Some(())
     }
+
+    {
+        if path.is_dir() {
+            tokio::fs::remove_dir(&path)
+                .await
+                .map_err(error_handle)
+                .ok()?;
+        }
+        let mut file = tokio::fs::File::create(&path)
+            .await
+            .map_err(error_handle)
+            .ok()?;
+
+        file.write_all(raw_data).await.map_err(error_handle).ok()?;
+    }
+    Some(())
 }

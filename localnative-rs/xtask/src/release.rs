@@ -34,14 +34,12 @@ impl Release {
         } else {
             env!("CARGO_PKG_VERSION")
         };
-        cmd!("cargo build --target {target}  --no-default-features --release")
-            .run()?;
+        cmd!("cargo build --target {target}  --no-default-features --release").run()?;
         let suffix = exe_suffix(&target);
         let src = Path::new("target").join(&target).join("release");
         let iced_src = src.join(format!("localnative_iced{}", suffix));
         let host_src = src.join(format!("localnative-web-ext-host{}", suffix));
-        let dst =
-            Path::new("dist").join(format!("localnative-{}-{}", target, version));
+        let dst = Path::new("dist").join(format!("localnative-{}-{}", target, version));
         rm_rf(&dst)?;
         mkdir_p(&dst)?;
         let iced_dst = dst.join(format!("localnative{}", suffix));

@@ -4,6 +4,7 @@ use iced::{
 };
 
 use crate::{
+    config::Config,
     icons::IconItem,
     middle_date::MiddleDate,
     style::{self, Theme},
@@ -41,6 +42,12 @@ pub enum Message {
     PrePage,
 }
 impl SearchPage {
+    pub fn from_config(config: &Config) -> Self {
+        Self {
+            days: DateView::new(config),
+            ..Default::default()
+        }
+    }
     pub fn new(count: u32, notes: Vec<NoteView>, tags: Vec<TagView>, days: DateView) -> Self {
         Self {
             count,

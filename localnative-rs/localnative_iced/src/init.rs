@@ -7,7 +7,7 @@ use crate::error_handle;
 pub struct AppHost {
     name: String,
     description: String,
-    
+
     path: PathBuf,
     #[serde(rename = "type")]
     tp: String,

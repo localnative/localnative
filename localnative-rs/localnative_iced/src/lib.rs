@@ -91,6 +91,7 @@ impl iced::Application for LocalNative {
     fn new(flags: Self::Flags) -> (Self, Command<Self::Message>) {
         let config = flags.unwrap_or_default();
         let language = config.language;
+        let is_first_open = config.is_first_open;
         (
             LocalNative {
                 config,
@@ -100,12 +101,17 @@ impl iced::Application for LocalNative {
             Command::batch([
                 Command::perform(async {}, Message::Loading),
                 Command::perform(translate::init_bundle(language), Message::ApplyLanguage),
+                if is_first_open {
+                    Command::perform(init::WebKind::init_all(), Message::InitHost)
+                } else {
+                    Command::none()
+                },
             ]),
         )
     }
 
     fn title(&self) -> String {
-        "ln-iced".to_owned()
+        "Local Native".to_owned()
     }
 
     fn update(
@@ -118,9 +124,9 @@ impl iced::Application for LocalNative {
             State::Loading => match message {
                 Message::Loading(..) => {
                     let conn = Arc::new(Mutex::new(get_sqlite_connection()));
-                    println!("🎩 {}", config.disable_delete_tip);
+
                     let data = Data {
-                        search_page: Default::default(),
+                        search_page: SearchPage::from_config(&*config),
                         sidebar: Sidebar::default(),
                         delete_tip: DeleteTip {
                             rowid: -1,
@@ -154,6 +160,10 @@ impl iced::Application for LocalNative {
                         unreachable!()
                     }
                 }
+                Message::InitHost(_) => {
+                    self.config.is_first_open = false;
+                    Command::none()
+                }
                 _ => Command::none(),
             },
             State::Loaded(data) => match message {
@@ -166,7 +176,9 @@ impl iced::Application for LocalNative {
                             days,
                         } = md;
                         data.search_page.count = count;
-
+                        if data.search_page.offset > count {
+                            data.search_page.offset = count.max(config.limit) - config.limit;
+                        }
                         Command::batch([
                             Command::perform(
                                 async move {
@@ -223,7 +235,12 @@ impl iced::Application for LocalNative {
                 }
                 Message::ApplyLanguage(..) => Command::none(),
                 Message::RequestClosed => {
-                    Command::perform(config.clone().save(), Message::CloseWindow)
+                    config.date_filter_is_show = data.search_page.days.is_show;
+                    config.date_mode_is_full = data.search_page.days.is_full;
+                    config.day_uw = data.search_page.days.chart.day_uw;
+                    config.month_uw = data.search_page.days.chart.month_uw;
+                    let json = serde_json::to_string_pretty(&*config).unwrap();
+                    Command::perform(config::save(json), Message::CloseWindow)
                 }
                 Message::LoadConfig(cfg) => {
                     if let Some(cfg) = cfg {
@@ -366,7 +383,12 @@ impl iced::Application for LocalNative {
                     } = data;
                     settings.update(msg, config, sidebar)
                 }
-                Message::InitHost(..) => Command::none(),
+                Message::InitHost(..) => {
+                    if self.config.is_first_open {
+                        self.config.is_first_open = false;
+                    }
+                    Command::none()
+                }
             },
         }
     }

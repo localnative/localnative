@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 use time::{Date, Duration, Month};
 
 use crate::{
+    config::Config,
     icons::IconItem,
     style::{self, Theme},
     tr,
@@ -817,6 +818,36 @@ impl Default for DateView {
 }
 
 impl DateView {
+    pub fn new(config: &Config) -> Self {
+        Self {
+            is_show: config.date_filter_is_show,
+            is_full: config.date_mode_is_full,
+            chart: Chart {
+                day_uw: config.day_uw,
+                month_uw: config.month_uw,
+                ..Chart::new()
+            },
+            preview_chart: Chart {
+                fill_color: Color::from_rgba(0.8, 0.2, 0.3, 0.6),
+                ..Chart::new()
+            },
+            full_or_adjustable: button::State::new(),
+            max_or_min: button::State::new(),
+            day_or_month: button::State::new(),
+            clear_button: button::State::new(),
+            uw_input: number_input::State::new(),
+            start_date_picker: date_picker::State::now(),
+            end_date_picker: date_picker::State::now(),
+            pick_start: button::State::new(),
+            pick_end: button::State::new(),
+            days: Vec::new(),
+            months: Vec::new(),
+            full_days: None,
+            full_months: None,
+            last_day: None,
+            last_month: None,
+        }
+    }
     pub fn update_from_handle_days(&mut self, handle_days: HandleDays) {
         let HandleDays {
             days,
