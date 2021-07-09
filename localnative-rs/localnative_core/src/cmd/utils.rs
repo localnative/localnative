@@ -20,6 +20,7 @@ use rustc_serialize::hex::FromHex;
 
 pub fn make_data_url(row: &rusqlite::Row) -> String {
     let url = row.get::<_, String>(3).unwrap();
+    #[cfg(not(feature = "no_print"))]
     eprintln!("url: {}", url);
     if url == "mime://image/png" {
         let hex = row.get::<_, String>(7).unwrap();

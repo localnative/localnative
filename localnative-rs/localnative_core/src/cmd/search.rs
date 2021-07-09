@@ -36,7 +36,7 @@ pub fn search_by_tag(conn: &Connection, query: &str) -> String {
         {}",
         r.join(" and ")
     );
-
+    #[cfg(not(feature = "no_print"))]
     eprintln!("sql {}", sql);
 
     let mut stmt = conn.prepare(&sql).unwrap();
@@ -94,7 +94,7 @@ pub fn search_by_day(conn: &Connection, query: &str) -> String {
         order by dt",
         r.join(" and ")
     );
-
+    #[cfg(not(feature = "no_print"))]
     eprintln!("sql {}", sql);
 
     let mut stmt = conn.prepare(&sql).unwrap();
@@ -131,6 +131,7 @@ pub fn search_count(conn: &Connection, query: &str) -> u32 {
         return select_count(conn);
     }
     let num_words = words.len();
+    #[cfg(not(feature = "no_print"))]
     eprintln!("{} words {:?}", num_words, words);
 
     let r: Vec<String> = where_vec(num_words);
@@ -140,17 +141,25 @@ pub fn search_count(conn: &Connection, query: &str) -> u32 {
         {}",
         r.join(" and ")
     );
-
+    #[cfg(not(feature = "no_print"))]
     eprintln!("sql {}", sql);
 
-    let mut stmt = conn.prepare(&sql).unwrap();
+    let mut stmt = match conn.prepare(&sql) {
+        Ok(s) => s,
+        Err(e) => {
+            if let rusqlite::Error::SqliteFailure(_, _) = e {
+                crate::cmd::create(conn);
+            }
+            conn.prepare(&sql).unwrap()
+        }
+    };
     let keys: Vec<String> = make_keys(num_words);
 
     let mut params: Vec<(&str, &dyn ToSql)> = vec![];
     for i in 0..num_words {
         params.push((&keys.get(i).unwrap(), words.get(i).unwrap() as &dyn ToSql));
     }
-
+    #[cfg(not(feature = "no_print"))]
     eprintln!("params {:?}", params.len());
 
     let rs = stmt.query_map(&params[..], |row| row.get(0)).unwrap();
@@ -167,6 +176,7 @@ pub fn search(conn: &Connection, query: &str, limit: &u32, offset: &u32) -> Stri
         return select(conn, limit, offset);
     }
     let num_words = words.len();
+    #[cfg(not(feature = "no_print"))]
     eprintln!("{} words {:?}", num_words, words);
 
     let r: Vec<String> = where_vec(num_words);
@@ -179,7 +189,7 @@ pub fn search(conn: &Connection, query: &str, limit: &u32, offset: &u32) -> Stri
         order by created_at desc limit :limit offset :offset",
         r.join(" and ")
     );
-
+    #[cfg(not(feature = "no_print"))]
     eprintln!("sql {}", sql);
 
     let mut stmt = conn.prepare(&sql).unwrap();
@@ -193,7 +203,7 @@ pub fn search(conn: &Connection, query: &str, limit: &u32, offset: &u32) -> Stri
     for i in 0..num_words {
         params.push((&keys.get(i).unwrap(), words.get(i).unwrap() as &dyn ToSql));
     }
-
+    #[cfg(not(feature = "no_print"))]
     eprintln!("params {:?}", params.len());
 
     let note_iter = stmt
@@ -217,6 +227,7 @@ pub fn search(conn: &Connection, query: &str, limit: &u32, offset: &u32) -> Stri
     for note in note_iter {
         let mut note = note.unwrap();
         note.tags = make_tags(&note.tags);
+        //#[cfg(not(feature = "no_print"))]
         //eprintln!("Found note {:?}", note);
         j.push_str(&serde_json::to_string(&note).unwrap());
         j.push(',');

@@ -253,7 +253,7 @@ fn do_select(conn: &Connection, limit: &u32, offset: &u32) -> String {
     msg
 }
 
-fn do_filter(
+pub fn do_filter(
     conn: &Connection,
     query: &str,
     limit: &u32,
@@ -263,8 +263,12 @@ fn do_filter(
 ) -> String {
     let c = filter_count(&conn, query, from, to);
     let j = filter(&conn, query, from, to, limit, offset);
+    let d = search_by_day(&conn, query);
     let t = filter_by_tag(&conn, query, from, to);
-    let msg = format!(r#"{{"count": {}, "notes":{}, "tags": {} }}"#, c, j, t);
+    let msg = format!(
+        r#"{{"count": {}, "notes":{},"days": {}, "tags": {} }}"#,
+        c, j, d, t
+    );
     // eprintln!("msg {}", msg);
     msg
 }
