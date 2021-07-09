@@ -1,8 +1,6 @@
 use serde::Serialize;
 use std::path::{Path, PathBuf};
 
-use crate::error_handle;
-
 #[derive(Debug, Default, Serialize)]
 pub struct AppHost {
     name: String,

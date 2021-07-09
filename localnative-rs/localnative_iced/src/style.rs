@@ -99,13 +99,13 @@ pub fn horizontal_rules<'a, Msg: 'a>(n: usize) -> Vec<Element<'a, Msg>> {
 pub fn vertical_rule() -> iced::Rule {
     iced::Rule::vertical(0).style(TransparentRule)
 }
-pub fn vertical_rules<'a, Msg: 'a>(n: usize) -> Vec<Element<'a, Msg>> {
-    let mut res = Vec::with_capacity(n);
-    for _ in 0..n {
-        res.push(vertical_rule().into());
-    }
-    res
-}
+// pub fn vertical_rules<'a, Msg: 'a>(n: usize) -> Vec<Element<'a, Msg>> {
+//     let mut res = Vec::with_capacity(n);
+//     for _ in 0..n {
+//         res.push(vertical_rule().into());
+//     }
+//     res
+// }
 pub struct Note {
     theme: Theme,
 }

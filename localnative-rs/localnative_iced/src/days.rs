@@ -1526,7 +1526,7 @@ impl iced::Sandbox for Chart {
         "chart".to_owned()
     }
 
-    fn update(&mut self, message: Self::Message) {
+    fn update(&mut self, _message: Self::Message) {
         // todo!()
     }
 

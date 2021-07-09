@@ -1,10 +1,9 @@
-use iced::{button, Button, Command, Element, Row, Text};
+use iced::{button, Button, Element, Row, Text};
 use iced_aw::{modal, Card, Modal};
 
 use crate::{
-    icons::IconItem,
     style::{self, Theme},
-    tr, Conn,
+    tr,
 };
 
 pub struct DeleteTip {

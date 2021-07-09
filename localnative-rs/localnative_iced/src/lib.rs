@@ -517,13 +517,12 @@ fn font() -> Option<&'static [u8]> {
     .map(|f| f.as_slice())
 }
 
-pub fn handle_notes(notes: Vec<Note>) -> (Vec<NoteView>) {
-    for note in notes {
-        let time = note.created_at;
-    }
-    todo!()
-}
-// TODO： 需要在过滤之后将页面数据更新
+// pub fn handle_notes(notes: Vec<Note>) -> (Vec<NoteView>) {
+//     for note in notes {
+//         let time = note.created_at;
+//     }
+//     todo!()
+// }
 #[inline(always)]
 pub fn error_handle(error: impl std::error::Error) {
     eprintln!("{:?}", error);

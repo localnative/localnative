@@ -121,9 +121,8 @@ impl NoteView {
     pub fn update(&mut self, msg: Message) {
         match msg {
             Message::OpenUrl => open(self.note.url.as_str()),
-            Message::Delete(ruid) => {
+            Message::Delete(..) => {
                 // 上层处理
-                // TODO:
                 println!("delete");
             }
             Message::QRCode => match self.qrcode {

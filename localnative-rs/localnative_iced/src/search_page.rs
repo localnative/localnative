@@ -430,10 +430,8 @@ impl iced::Sandbox for SearchPage {
         "search page preview".to_owned()
     }
 
-    fn update(&mut self, message: Self::Message) {
+    fn update(&mut self, _message: Self::Message) {
         // TODO:
-        //let conn = localnative_core::exe::get_sqlite_connection();
-        //self.update(message, 10, Arc::new(Mutex::new(conn)),true);
     }
 
     fn view(&mut self) -> Element<'_, Self::Message> {

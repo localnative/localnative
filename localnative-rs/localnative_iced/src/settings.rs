@@ -1,6 +1,4 @@
-use iced::{
-    button, pick_list, Button, Checkbox, Column, Command, Element, PickList, Radio, Row, Text,
-};
+use iced::{button, pick_list, Button, Checkbox, Column, Command, Element, Radio, Row, Text};
 use iced_aw::{modal, number_input, Card, Modal, NumberInput};
 
 use crate::{
