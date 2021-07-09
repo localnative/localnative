@@ -246,9 +246,7 @@ impl SyncView {
                         r"^(25[0-5]|2[0-4]\d|[0-1]?\d?\d)\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)\.(25[0-5]|[0-4]\d|[0-1]?\d?\d)$",
                     ]).unwrap()
                 });
-                if ip_regex.is_match(&input) {
-                    self.ip = input;
-                } else if Ipv6Addr::from_str(&input).is_ok() {
+                if ip_regex.is_match(&input) || Ipv6Addr::from_str(&input).is_ok() {
                     self.ip = input;
                 }
             }
@@ -340,7 +338,7 @@ pub async fn client_sync_to_server(addr: SocketAddr) -> std::io::Result<()> {
 
 pub fn get_sync_file_path() -> Option<PathBuf> {
     localnative_core::dirs::desktop_dir()
-        .unwrap_or(std::env::temp_dir())
+        .unwrap_or_else(std::env::temp_dir)
         .to_str()
         .and_then(|path| {
             open_file_dialog(

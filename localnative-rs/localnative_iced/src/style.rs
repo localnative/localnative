@@ -183,7 +183,7 @@ impl button::StyleSheet for Count {
             border_radius: 0.0,
             border_width: 0.0,
             border_color: Color::TRANSPARENT,
-            text_color: text_color,
+            text_color,
             ..Default::default()
         }
     }

@@ -26,7 +26,7 @@ use iced_native::event::Status;
 use iced_native::window;
 use iced_native::Event;
 use localnative_core::rpc::server::Stop;
-use localnative_core::{exe::get_sqlite_connection, rusqlite::Connection, Note};
+use localnative_core::{exe::get_sqlite_connection, rusqlite::Connection};
 use middle_date::MiddleDate;
 pub use note::NoteView;
 use once_cell::sync::OnceCell;

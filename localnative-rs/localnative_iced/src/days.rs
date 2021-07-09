@@ -79,10 +79,10 @@ impl<'a> DateChart<'a> {
                         *translation =
                             Vector::new(((s.end as i64 - 1) * uw).max(0).min(10000) as f32, 0.0)
                     } else {
-                        last_day.map(|last| {
+                        if let Some(last) = last_day {
                             *translation =
-                                Vector::new(((last - 1).max(0) * uw).max(0).min(10000) as f32, 0.0)
-                        });
+                                Vector::new(((last - 1).max(0) * uw).max(0).min(10000) as f32, 0.0);
+                        }
                     }
                     uw as f32
                 } else {
@@ -98,10 +98,10 @@ impl<'a> DateChart<'a> {
                             0.0,
                         )
                     } else {
-                        last_month.map(|last| {
+                        if let Some(last) = last_month {
                             *translation =
-                                Vector::new(((last - 1) * uw).max(0).min(10000) as f32, 0.0)
-                        });
+                                Vector::new(((last - 1) * uw).max(0).min(10000) as f32, 0.0);
+                        }
                     }
                     uw as f32
                 } else {
@@ -395,7 +395,7 @@ impl MonthView {
         let mut offset = (translation / uw) as i64;
 
         year -= offset as i32 / 12;
-        offset = offset % 12;
+        offset %= 12;
 
         if offset != 0 {
             let mut m_num = month_to_num(month) - offset as i32;
@@ -589,7 +589,7 @@ impl<'a> Program<ChartMsg> for DateChart<'a> {
         let mut res = vec![];
         match &self.level {
             ChartLevel::Day => {
-                let days = &self.days[..];
+                let days = self.days;
                 let rects = self.cache.draw(size, |frame| {
                     frame.translate(translation);
                     Day::draw_all_day(
@@ -608,7 +608,7 @@ impl<'a> Program<ChartMsg> for DateChart<'a> {
                 res.push(rects);
             }
             ChartLevel::Month => {
-                let months = &self.months[..];
+                let months = self.months;
                 let rects = self
                     .cache
                     .draw(Size::new(size.width, size.height), |frame| {
@@ -1291,7 +1291,7 @@ fn get_offset_date(mut offset: usize, mut day: u8, base_month: &MonthView) -> Da
     } = base_month;
 
     year -= offset as i32 / 12;
-    offset = offset % 12;
+    offset %= 12;
 
     if offset != 0 {
         let mut m_num = month_to_num(month) - offset as i32;
@@ -1451,12 +1451,14 @@ impl Chart {
         }
     }
     pub fn day_align(&mut self) {
-        self.last_day
-            .map(|last| self.translation = Vector::new((last as f32 - 1.0) * self.day_uw, 0.0));
+        if let Some(last) = self.last_day {
+            self.translation = Vector::new((last as f32 - 1.0) * self.day_uw, 0.0);
+        }
     }
     pub fn month_align(&mut self) {
-        self.last_month
-            .map(|last| self.translation = Vector::new((last - 1) as f32 * self.month_uw, 0.0));
+        if let Some(last) = self.last_month {
+            self.translation = Vector::new((last - 1) as f32 * self.month_uw, 0.0);
+        }
     }
 
     pub fn new() -> Self {
