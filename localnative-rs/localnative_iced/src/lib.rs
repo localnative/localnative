@@ -475,12 +475,29 @@ fn events_handler(event: Event, states: Status) -> Option<Message> {
     }
     None
 }
+pub fn logo() -> Option<iced::window::Icon> {
+    image::load_from_memory_with_format(
+        include_bytes!("../../icons/icon.ico"),
+        image::ImageFormat::Ico,
+    )
+    .ok()
+    .and_then(|dyn_img| {
+        let img = dyn_img.to_rgb8();
+        let (width, height) = img.dimensions();
+        iced::window::Icon::from_rgba(img.into_raw(), width, height).ok()
+    })
+}
 
 pub fn settings() -> iced::Settings<Option<Config>> {
     iced::Settings {
         default_font: font(),
         exit_on_close_request: false,
         flags: Config::sync_load(),
+        window: iced::window::Settings {
+            size: (1080, 720),
+            icon: logo(),
+            ..Default::default()
+        },
         ..Default::default()
     }
 }
