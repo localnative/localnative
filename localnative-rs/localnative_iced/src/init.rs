@@ -132,7 +132,7 @@ pub fn chrome_path() -> Option<PathBuf> {
         }
         #[cfg(target_os = "linux")]
         {
-            Ok(home_dir.join(".config").join("google-chrome"))
+            home_dir.join(".config").join("google-chrome")
         }
         #[cfg(target_os = "windows")]
         {

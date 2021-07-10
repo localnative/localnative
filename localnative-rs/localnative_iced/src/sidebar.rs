@@ -11,7 +11,7 @@ use crate::{
 pub struct Sidebar {
     search_page: button::State,
     settings: button::State,
-    sync_client: button::State,
+    sync_view: button::State,
     theme: button::State,
     pub settings_is_open: bool,
     pub state: State,
@@ -41,7 +41,7 @@ impl Sidebar {
         let Self {
             search_page,
             settings,
-            sync_client,
+            sync_view,
             theme: theme_state,
             ..
         } = self;
@@ -63,8 +63,8 @@ impl Sidebar {
         .style(style::transparent(theme))
         .on_press(Message::TurnSettings);
 
-        let sync_client = Button::new(
-            sync_client,
+        let sync_view = Button::new(
+            sync_view,
             Column::new()
                 .push(IconItem::Sync.into_text().size(Self::SIDEBAR_ICON_SIZE))
                 .push(Text::new(tr!("sync")))
@@ -88,7 +88,7 @@ impl Sidebar {
 
         Column::new()
             .push(search_page)
-            .push(sync_client)
+            .push(sync_view)
             .push(style::vertical_rule())
             .push(theme_button)
             .push(settings)
