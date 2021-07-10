@@ -30,7 +30,6 @@ pub struct SearchPage {
 }
 #[derive(Debug, Clone)]
 pub enum Message {
-    Receiver(Option<MiddleDate>),
     NoteMessage(crate::note::Message, usize),
     TagMessage(crate::tags::Message),
     DayMessage(crate::days::Message),
@@ -177,7 +176,7 @@ impl SearchPage {
         conn: Conn,
         disabel_delete_tip: bool,
         delete_tip: &mut crate::DeleteTip,
-    ) -> Command<Message> {
+    ) -> Command<crate::Message> {
         match message {
             Message::Search => search(
                 conn,
@@ -262,7 +261,7 @@ impl SearchPage {
                                 self.offset,
                                 rowid,
                             ),
-                            Message::Receiver,
+                            crate::Message::Receiver,
                         )
                     } else {
                         delete_tip.tip_state.show(true);
@@ -287,8 +286,6 @@ impl SearchPage {
                     Command::none()
                 }
             },
-            // 上层处理
-            Message::Receiver(_) => Command::none(),
             Message::TagMessage(tag_msg) => {
                 match tag_msg {
                     crate::tags::Message::Search(text) => self.search_value = text,
@@ -375,22 +372,22 @@ impl SearchPage {
     }
 }
 
-fn search(
+pub fn search(
     conn: Conn,
     query: String,
     limit: u32,
     offset: u32,
     range: Option<(time::Date, time::Date)>,
-) -> Command<Message> {
+) -> Command<crate::Message> {
     if let Some((from, to)) = range {
         Command::perform(
             MiddleDate::from_filter(conn, query, limit, offset, from, to),
-            Message::Receiver,
+            crate::Message::Receiver,
         )
     } else {
         Command::perform(
             MiddleDate::from_select(conn, query, limit, offset),
-            Message::Receiver,
+            crate::Message::Receiver,
         )
     }
 }

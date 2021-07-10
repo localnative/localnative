@@ -37,7 +37,7 @@ impl Release {
         cmd!("cargo build --target {target}  --no-default-features --release").run()?;
         let suffix = exe_suffix(&target);
         let src = Path::new("target").join(&target).join("release");
-        let iced_src = src.join(format!("localnative_iced{}", suffix));
+        let iced_src = src.join(format!("local-native{}", suffix));
         let host_src = src.join(format!("localnative-web-ext-host{}", suffix));
         let dst = Path::new("dist").join(format!("localnative-{}-{}", target, version));
         rm_rf(&dst)?;

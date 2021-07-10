@@ -79,6 +79,7 @@ pub enum Message {
     StartServerResult(std::io::Result<Stop>),
     ServerOption(Option<()>),
     InitHost(()),
+    Receiver(Option<MiddleDate>),
 }
 
 impl iced::Application for LocalNative {
@@ -145,17 +146,19 @@ impl iced::Application for LocalNative {
                     self.state = State::Loaded(data);
                     if let State::Loaded(ref mut data) = self.state {
                         let Data {
-                            delete_tip, conn, ..
+                            conn, search_page, ..
                         } = data;
-                        data.search_page
-                            .update(
-                                search_page::Message::Refresh,
-                                config.limit,
+
+                        Command::perform(
+                            MiddleDate::upgrade(
                                 conn.clone(),
-                                config.disable_delete_tip,
-                                delete_tip,
-                            )
-                            .map(Message::SearchPageMessage)
+                                search_page.search_value.clone(),
+                                config.limit,
+                                search_page.offset,
+                                config.is_first_open,
+                            ),
+                            Message::Receiver,
+                        )
                     } else {
                         unreachable!()
                     }
@@ -167,55 +170,64 @@ impl iced::Application for LocalNative {
                 _ => Command::none(),
             },
             State::Loaded(data) => match message {
-                Message::SearchPageMessage(search_page_msg) => match search_page_msg {
-                    search_page::Message::Receiver(Some(md)) => {
-                        let MiddleDate {
-                            tags,
-                            notes,
-                            count,
-                            days,
-                        } = md;
-                        data.search_page.count = count;
-                        if data.search_page.offset > count {
-                            data.search_page.offset = count.max(config.limit) - config.limit;
-                        }
-                        Command::batch([
-                            Command::perform(
-                                async move {
-                                    let mut tags = tags;
-                                    tags.sort_by(|a, b| b.count.cmp(&a.count));
-                                    tags.into_iter().map(TagView::from).collect()
-                                },
-                                Message::TagView,
-                            ),
-                            Command::perform(
-                                async move { notes.into_iter().map(NoteView::from).collect() },
-                                Message::NoteView,
-                            ),
-                            {
-                                if let Some(days) = days {
-                                    Command::perform(
-                                        async move { days::Day::handle_days(days) },
-                                        Message::DayView,
-                                    )
-                                } else {
-                                    Command::none()
-                                }
+                Message::Receiver(Some(md)) => {
+                    let MiddleDate {
+                        tags,
+                        notes,
+                        count,
+                        days,
+                    } = md;
+                    data.search_page.count = count;
+                    // TODO:
+                    if data.search_page.offset > count && notes.is_empty() {
+                        data.search_page.offset = count.max(config.limit) - config.limit;
+                        return search_page::search(
+                            data.conn.clone(),
+                            data.search_page.search_value.clone(),
+                            config.limit,
+                            data.search_page.offset,
+                            data.search_page.range,
+                        );
+                    }
+                    Command::batch([
+                        Command::perform(
+                            async move {
+                                let mut tags = tags;
+                                tags.sort_by(|a, b| b.count.cmp(&a.count));
+                                tags.into_iter().map(TagView::from).collect()
                             },
-                        ])
-                    }
-
-                    msg => {
-                        let Data {
-                            search_page,
-                            delete_tip,
-                            ..
-                        } = data;
-                        search_page
-                            .update(msg, self.config.limit, data.conn.clone(), true, delete_tip)
-                            .map(Message::SearchPageMessage)
-                    }
-                },
+                            Message::TagView,
+                        ),
+                        Command::perform(
+                            async move { notes.into_iter().map(NoteView::from).collect() },
+                            Message::NoteView,
+                        ),
+                        {
+                            if let Some(days) = days {
+                                Command::perform(
+                                    async move { days::Day::handle_days(days) },
+                                    Message::DayView,
+                                )
+                            } else {
+                                Command::none()
+                            }
+                        },
+                    ])
+                }
+                Message::SearchPageMessage(spmsg) => {
+                    let Data {
+                        search_page,
+                        delete_tip,
+                        ..
+                    } = data;
+                    search_page.update(
+                        spmsg,
+                        self.config.limit,
+                        data.conn.clone(),
+                        true,
+                        delete_tip,
+                    )
+                }
                 Message::NoteView(notes) => {
                     data.search_page.notes = notes;
                     Command::none()
@@ -285,19 +297,16 @@ impl iced::Application for LocalNative {
                                     search_page.offset,
                                     delete_tip.rowid,
                                 ),
-                                crate::search_page::Message::Receiver,
+                                Message::Receiver,
                             )
-                            .map(Message::SearchPageMessage)
                         }
-                        delete_tip::Message::SearchPageMessage(spmsg) => search_page
-                            .update(
-                                spmsg,
-                                self.config.limit,
-                                conn.clone(),
-                                self.config.disable_delete_tip,
-                                delete_tip,
-                            )
-                            .map(Message::SearchPageMessage),
+                        delete_tip::Message::SearchPageMessage(spmsg) => search_page.update(
+                            spmsg,
+                            self.config.limit,
+                            conn.clone(),
+                            self.config.disable_delete_tip,
+                            delete_tip,
+                        ),
                         delete_tip::Message::Cancel => {
                             delete_tip.tip_state.show(false);
                             Command::none()
@@ -310,18 +319,32 @@ impl iced::Application for LocalNative {
                 Message::SyncResult(res) => {
                     if let Err(err) = res {
                         data.sync_view.sync_state = sync::SyncState::SyncError(err.kind());
+                        Command::none()
                     } else {
                         data.sync_view.sync_state = sync::SyncState::Complete;
+                        search_page::search(
+                            data.conn.clone(),
+                            data.search_page.search_value.clone(),
+                            config.limit,
+                            data.search_page.offset,
+                            data.search_page.range,
+                        )
                     }
-                    Command::none()
                 }
                 Message::SyncOption(opt) => {
                     if opt.is_none() {
                         data.sync_view.sync_state = sync::SyncState::SyncFromFileUnknownError;
+                        Command::none()
                     } else {
                         data.sync_view.sync_state = sync::SyncState::Complete;
+                        search_page::search(
+                            data.conn.clone(),
+                            data.search_page.search_value.clone(),
+                            config.limit,
+                            data.search_page.offset,
+                            data.search_page.range,
+                        )
                     }
-                    Command::none()
                 }
                 Message::StartServerResult(res) => {
                     match res {
@@ -389,8 +412,13 @@ impl iced::Application for LocalNative {
                     }
                     Command::none()
                 }
+                Message::Receiver(None) => Command::none(),
             },
         }
+    }
+
+    fn subscription(&self) -> iced::Subscription<Self::Message> {
+        iced_native::subscription::events_with(events_handler)
     }
 
     fn view(&mut self) -> iced::Element<'_, Self::Message> {
@@ -450,10 +478,6 @@ impl iced::Application for LocalNative {
                     .into()
             }
         }
-    }
-
-    fn subscription(&self) -> iced::Subscription<Self::Message> {
-        iced_native::subscription::events_with(events_handler)
     }
 
     fn background_color(&self) -> iced::Color {
