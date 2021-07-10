@@ -75,6 +75,8 @@ impl AppHost {
 #[cfg(target_os = "windows")]
 fn registr(kind: WebKind) {
     use winreg::enums::*;
+
+    use crate::error_handle;
     let path = kind.registr_path();
     let write_path = path.join("app.localnative");
     let json_path = kind.json_path().unwrap();
