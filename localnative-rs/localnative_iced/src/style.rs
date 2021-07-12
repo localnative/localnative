@@ -109,13 +109,21 @@ pub fn vertical_rule() -> iced::Rule {
 pub struct Note {
     theme: Theme,
 }
-const LIGHT_BG: Color = Color::from_rgb(0.941, 0.972, 1.0);
-const DARK_BG: Color = Color::from_rgb(0.0784, 0.0863, 0.141);
+const LIGHT_BG: Color = Color::from_rgba(0.941, 0.972, 1.0, 0.5);
+const DARK_BG: Color = Color::from_rgba(0.384, 0.463, 0.141, 0.5);
 impl container::StyleSheet for Note {
     fn style(&self) -> container::Style {
         let (tcolor, bg_color, bd_color) = match self.theme {
-            Theme::Light => (Color::BLACK, LIGHT_BG, Color::from_rgb8(240, 255, 255)),
-            Theme::Dark => (Color::WHITE, DARK_BG, Color::from_rgb8(20, 36, 36)),
+            Theme::Light => (
+                Color::BLACK,
+                LIGHT_BG,
+                Color::from_rgba8(240, 255, 255, 0.355),
+            ),
+            Theme::Dark => (
+                Color::WHITE,
+                DARK_BG,
+                Color::from_rgba(0.4, 0.32, 0.15, 0.355),
+            ),
         };
         container::Style {
             text_color: Some(tcolor),
