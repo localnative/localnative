@@ -10,6 +10,7 @@ tags = tags:
 
 # sync page 
 sync-waiting = Waiting for your operating...
+sync-syncing = Attempting to sync...
 sync-error = Synchronization process error:
 sync-complete = Synchronization process was complete！
 sync-ip-parse-error = Your ip address input format error,please check it.

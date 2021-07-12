@@ -43,6 +43,7 @@ pub struct SyncView {
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum SyncState {
     Waiting,
+    Syncing,
     SyncError(std::io::ErrorKind),
     Complete,
     IpAddrParseError,
@@ -166,6 +167,7 @@ impl SyncView {
 
         let text = match self.sync_state {
             SyncState::Waiting => tr!("sync-waiting"),
+            SyncState::Syncing => tr!("sync-syncing"),
             SyncState::SyncError(err) => {
                 let prefix = tr!("sync-error").to_string();
                 Cow::from(format!("{}{:?}", prefix, err))
@@ -256,6 +258,7 @@ impl SyncView {
             Message::SyncFromServer => {
                 if let Ok(ip) = IpAddr::from_str(&self.ip) {
                     let addr = SocketAddr::new(ip, self.port);
+                    self.sync_state = SyncState::Syncing;
                     return Command::perform(
                         client_sync_from_server(addr),
                         crate::Message::SyncResult,
@@ -272,6 +275,7 @@ impl SyncView {
             Message::SyncToServer => {
                 if let Ok(ip) = IpAddr::from_str(&self.ip) {
                     let addr = SocketAddr::new(ip, self.port);
+                    self.sync_state = SyncState::Syncing;
                     return Command::perform(
                         client_sync_to_server(addr),
                         crate::Message::SyncResult,
@@ -289,6 +293,7 @@ impl SyncView {
             }
             Message::SyncFromFile => {
                 if let Some(path) = get_sync_file_path() {
+                    self.sync_state = SyncState::Syncing;
                     return Command::perform(sync_via_file(path, conn), crate::Message::SyncOption);
                 } else {
                     self.sync_state = SyncState::FilePathGetError;

@@ -10,6 +10,7 @@ tags = 标签
 
 # sync page 
 sync-waiting = 目前尚没有任何同步操作，你可以将你的设备作为同步时的客户端或者服务器。
+sync-syncing = 正在尝试同步中...
 sync-error = 同步过程出错：
 sync-complete = 同步过程完毕！
 sync-ip-parse-error = ip地址输入不正确，请仔细检查。
