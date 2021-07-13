@@ -78,12 +78,11 @@ impl<'a> DateChart<'a> {
                     if let Some(s) = selected {
                         *translation =
                             Vector::new(((s.end as i64 - 1) * uw).max(0).min(10000) as f32, 0.0)
-                    } else {
-                        if let Some(last) = last_day {
-                            *translation =
-                                Vector::new(((last - 1).max(0) * uw).max(0).min(10000) as f32, 0.0);
-                        }
+                    } else if let Some(last) = last_day {
+                        *translation =
+                            Vector::new(((last - 1).max(0) * uw).max(0).min(10000) as f32, 0.0);
                     }
+
                     uw as f32
                 } else {
                     self.day_uw
@@ -97,12 +96,10 @@ impl<'a> DateChart<'a> {
                             ((s.end.max(1) - 1) * uw as usize).max(0).min(10000) as f32,
                             0.0,
                         )
-                    } else {
-                        if let Some(last) = last_month {
-                            *translation =
-                                Vector::new(((last - 1) * uw).max(0).min(10000) as f32, 0.0);
-                        }
+                    } else if let Some(last) = last_month {
+                        *translation = Vector::new(((last - 1) * uw).max(0).min(10000) as f32, 0.0);
                     }
+
                     uw as f32
                 } else {
                     self.month_uw
@@ -189,6 +186,7 @@ pub fn base_day() -> Date {
     time::OffsetDateTime::now_utc().date().next_day().unwrap()
 }
 impl Day {
+    #[allow(clippy::too_many_arguments)]
     pub fn draw_all_day(
         days: &[Day],
         frame: &mut Frame,
@@ -199,7 +197,6 @@ impl Day {
         uw: f32,
         translation: f32,
         base_day: Date,
-        skip_text: bool,
     ) {
         // 绘制文本
         let Size { width, height } = frame.size();
@@ -215,38 +212,37 @@ impl Day {
         for idx in 1..=num {
             let day = date_pointer.day();
             let x = width - idx as f32 * uw - translation;
-            if !skip_text {
-                if idx == num || (date_pointer.month() == Month::January && date_pointer.day() == 1)
-                {
-                    let year = canvas::Text {
-                        content: date_pointer.year().to_string(),
-                        position: Point::new(x, 0.0),
-                        size: big_font_size,
-                        ..Default::default()
-                    };
-                    frame.fill_text(year);
-                }
-                if day == 1 && uw > 1.0 {
-                    let month = canvas::Text {
-                        content: date_pointer.month().to_string(),
-                        position: Point::new(x, big_font_size),
-                        size: big_font_size,
-                        ..Default::default()
-                    };
-                    frame.fill_text(month);
-                }
-                if uw >= font_size * 1.5 {
-                    let day_text_offset = if day > 9 { gt9_offset } else { lt9_offset };
-                    let position = Point::new(x + day_text_offset, day_text_y);
-                    let day = canvas::Text {
-                        content: day.to_string(),
-                        position,
-                        size: font_size,
-                        ..Default::default()
-                    };
-                    frame.fill_text(day);
-                }
+
+            if idx == num || (date_pointer.month() == Month::January && date_pointer.day() == 1) {
+                let year = canvas::Text {
+                    content: date_pointer.year().to_string(),
+                    position: Point::new(x, 0.0),
+                    size: big_font_size,
+                    ..Default::default()
+                };
+                frame.fill_text(year);
             }
+            if day == 1 && uw > 1.0 {
+                let month = canvas::Text {
+                    content: date_pointer.month().to_string(),
+                    position: Point::new(x, big_font_size),
+                    size: big_font_size,
+                    ..Default::default()
+                };
+                frame.fill_text(month);
+            }
+            if uw >= font_size * 1.5 {
+                let day_text_offset = if day > 9 { gt9_offset } else { lt9_offset };
+                let position = Point::new(x + day_text_offset, day_text_y);
+                let day = canvas::Text {
+                    content: day.to_string(),
+                    position,
+                    size: font_size,
+                    ..Default::default()
+                };
+                frame.fill_text(day);
+            }
+
             if let Some(pd) = date_pointer.previous_day() {
                 date_pointer = pd;
             }
@@ -373,6 +369,7 @@ impl MonthView {
             count,
         }
     }
+    #[allow(clippy::too_many_arguments)]
     pub fn draw_all_month(
         months: &[MonthView],
         frame: &mut Frame,
@@ -602,7 +599,6 @@ impl<'a> Program<ChartMsg> for DateChart<'a> {
                         uw,
                         translation.x,
                         self.base_day,
-                        false,
                     );
                 });
                 res.push(rects);

@@ -24,7 +24,7 @@ impl AppHost {
                 "localnative-web-ext-host"
             }
         };
-
+        #[allow(clippy::or_fun_call)]
         let mut path = std::env::current_dir().unwrap_or(
             localnative_core::dirs::home_dir()
                 .map(|home| home.join("LocalNative"))
