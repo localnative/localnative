@@ -71,9 +71,7 @@ pub enum Message {
     TagView(Vec<TagView>),
     DayView(HandleDays),
     RequestClosed,
-    LoadConfig(Option<Config>),
     ApplyLanguage(Option<()>),
-    SaveConfig(Option<()>),
     CloseWindow(Option<()>),
     SyncResult(std::io::Result<()>),
     SyncOption(Option<()>),
@@ -250,18 +248,6 @@ impl iced::Application for LocalNative {
                     config.month_uw = data.search_page.days.chart.month_uw;
                     let json = serde_json::to_string_pretty(&*config).unwrap();
                     Command::perform(config::save(json), Message::CloseWindow)
-                }
-                Message::LoadConfig(cfg) => {
-                    if let Some(cfg) = cfg {
-                        self.config = cfg;
-                    }
-                    Command::none()
-                }
-                Message::SaveConfig(res) => {
-                    if res.is_some() {
-                        println!("ok!");
-                    }
-                    Command::none()
                 }
                 Message::CloseWindow(res) => {
                     if res.is_some() {
