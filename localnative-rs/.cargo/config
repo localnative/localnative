@@ -1,10 +1,8 @@
 [alias]
 xtask = "run --package xtask --bin xtask --release"
 fmt-check = "fmt --all -- --check"
-wlint = "clippy --workspace --all-targets  -- -D warnings -A clippy::type_complexity"
-olint = "clippy --workspace --all-targets  -- -D warnings -A clippy::type_complexity"
-wiced = "run --bin local-native"
-oiced = "run --bin local-native"
+lint = "clippy --workspace --all-targets  -- -D warnings -A clippy::type_complexity"
+iced = "run --bin local-native"
 
 [target.x86_64-pc-windows-msvc]
 linker = "rust-lld"

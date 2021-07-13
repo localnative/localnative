@@ -42,6 +42,7 @@ pub struct LocalNative {
     should_exit: bool,
     state: State,
 }
+#[allow(clippy::large_enum_variant)]
 pub enum State {
     Loading,
     Loaded(Data),
@@ -349,6 +350,7 @@ impl iced::Application for LocalNative {
                 Message::StartServerResult(res) => {
                     match res {
                         Ok(stop) => {
+                            #[allow(clippy::blocks_in_if_conditions)]
                             if sync::get_ip()
                                 .and_then(|ip| {
                                     let addr = ip + ":" + data.sync_view.port.to_string().as_str();

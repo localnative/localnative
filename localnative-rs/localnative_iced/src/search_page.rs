@@ -49,10 +49,10 @@ impl SearchPage {
     }
     pub fn new(count: u32, notes: Vec<NoteView>, tags: Vec<TagView>, days: DateView) -> Self {
         Self {
-            count,
             notes,
             tags,
             days,
+            count,
             ..Default::default()
         }
     }

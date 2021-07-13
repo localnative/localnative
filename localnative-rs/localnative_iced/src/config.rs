@@ -2,7 +2,6 @@ use std::path::PathBuf;
 
 use crate::{error_handle, style::Theme, translate::Language};
 use serde::{Deserialize, Serialize};
-use tokio::io::AsyncReadExt;
 
 // config 需要保存主题、语言、limit、disable_delete_tip、is_first_open
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -78,19 +77,18 @@ pub async fn save(json: String) -> Option<()> {
         }
     }
 
-    {
-        if path.is_dir() {
-            tokio::fs::remove_dir(&path)
-                .await
-                .map_err(error_handle)
-                .ok()?;
-        }
-        let mut file = tokio::fs::File::create(&path)
+    if path.is_dir() {
+        tokio::fs::remove_dir(&path)
             .await
             .map_err(error_handle)
             .ok()?;
-
-        file.write_all(raw_data).await.map_err(error_handle).ok()?;
     }
+    let mut file = tokio::fs::File::create(&path)
+        .await
+        .map_err(error_handle)
+        .ok()?;
+
+    file.write_all(raw_data).await.map_err(error_handle).ok()?;
+
     Some(())
 }
