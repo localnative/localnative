@@ -47,27 +47,18 @@ impl Config {
     pub fn config_path() -> PathBuf {
         Self::app_dir().join(Self::CONFIG_NAME)
     }
-    pub async fn load() -> Option<Self> {
+    pub fn load() -> Option<Self> {
+        use std::io::Read;
         let mut contents = String::new();
         let path = Self::config_path();
 
-        let mut file = tokio::fs::File::open(path)
-            .await
-            .map_err(error_handle)
-            .ok()?;
+        let mut file = std::fs::File::open(path).map_err(error_handle).ok()?;
 
         file.read_to_string(&mut contents)
-            .await
             .map_err(error_handle)
             .ok()?;
 
         serde_json::from_str(&contents).map_err(error_handle).ok()
-    }
-    pub fn sync_load() -> Option<Self> {
-        tokio::runtime::Runtime::new()
-            .map_err(error_handle)
-            .ok()?
-            .block_on(Self::load())
     }
 }
 

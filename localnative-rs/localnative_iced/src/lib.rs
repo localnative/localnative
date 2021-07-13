@@ -516,7 +516,7 @@ pub fn settings() -> iced::Settings<Option<Config>> {
     iced::Settings {
         default_font: font(),
         exit_on_close_request: false,
-        flags: Config::sync_load(),
+        flags: Config::load(),
         window: iced::window::Settings {
             size: (1080, 720),
             icon: logo(),
