@@ -91,9 +91,9 @@ impl iced::Application for LocalNative {
     type Flags = Option<Config>;
 
     fn new(flags: Self::Flags) -> (Self, Command<Self::Message>) {
+        let is_first_open = flags.is_none();
         let config = flags.unwrap_or_default();
         let language = config.language;
-        let is_first_open = config.is_first_open;
         (
             LocalNative {
                 config,
@@ -156,7 +156,6 @@ impl iced::Application for LocalNative {
                                 search_page.search_value.clone(),
                                 config.limit,
                                 search_page.offset,
-                                config.is_first_open,
                             ),
                             Message::Receiver,
                         )
@@ -164,10 +163,7 @@ impl iced::Application for LocalNative {
                         unreachable!()
                     }
                 }
-                Message::InitHost(_) => {
-                    self.config.is_first_open = false;
-                    Command::none()
-                }
+                Message::InitHost(_) => Command::none(),
                 _ => Command::none(),
             },
             State::Loaded(data) => match message {
@@ -408,12 +404,7 @@ impl iced::Application for LocalNative {
                     } = data;
                     settings.update(msg, config, sidebar)
                 }
-                Message::InitHost(..) => {
-                    if self.config.is_first_open {
-                        self.config.is_first_open = false;
-                    }
-                    Command::none()
-                }
+                Message::InitHost(..) => Command::none(),
                 Message::Receiver(None) => Command::none(),
             },
         }
