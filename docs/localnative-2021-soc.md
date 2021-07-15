@@ -2,12 +2,24 @@
 id: localnative-2021-soc
 title: Local Native 2021 SoC
 ---
+### 2021-07-10
+<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/YTGz1x3Zyts" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+- Cupnfish
+  - demo time series visualization
+  - implementing theme style
+  - intend to improve tutorials
+  
+- yi
+  - go over Android and iOS development environment setup
+  - Android crash due to file system path issue
+  - release build script
 
 ### 2021-07-03
 <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/tyRNuoOXFDM" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 - Cupnfish
-  - more progress on visualization 
+  - more progress on time series visualization 
   - some refactor   
   - no performance issues on macOS
 - yi 

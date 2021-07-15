@@ -12,7 +12,7 @@ tags: ["all", "localnative", "talk", "2021", "dweb"]
 
 <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/Znk-r5OFcx8" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
-- ugly diagram of uuid sync process used by Local Native
+- hand drawing diagram of uuid sync process used by Local Native
     - no update
     - no deletion
 
