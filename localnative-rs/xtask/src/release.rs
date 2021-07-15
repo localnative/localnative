@@ -23,11 +23,14 @@ impl Release {
         } else {
             env!("CARGO_PKG_VERSION")
         };
+        let src = Path::new("target").join("release");
+        if src.exists() {
+            rm_rf(&src)?;
+        }
         cmd!("cargo build --no-default-features --features wgpu --release --bin local-native")
             .run()?;
         cmd!("cargo build --release --bin localnative-web-ext-host").run()?;
         let suffix = suffix();
-        let src = Path::new("target").join("release");
         let iced_src = src.join(format!("local-native{}", suffix));
         let host_src = src.join(format!("localnative-web-ext-host{}", suffix));
 
