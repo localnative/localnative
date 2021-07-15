@@ -18,15 +18,7 @@ static BUNDLE_CACHE: OnceCell<
 pub static BUNDLE: OnceCell<RwLock<&FluentBundle<FluentResource, IntlLangMemoizer>>> =
     OnceCell::const_new();
 
-async fn read_file(path: &str) -> Option<String> {
-    tokio::fs::read_to_string(path)
-        .await
-        .map_err(error_handle)
-        .ok()
-}
-
-async fn create_resource(path: &str) -> Option<FluentResource> {
-    let content = read_file(path).await?;
+async fn create_resource(content: String) -> Option<FluentResource> {
     match FluentResource::try_new(content) {
         Ok(res) => Some(res),
         Err((res, err)) => {
@@ -36,8 +28,7 @@ async fn create_resource(path: &str) -> Option<FluentResource> {
     }
 }
 async fn create_bundle(locale: Language) -> Option<FluentBundle<FluentResource, IntlLangMemoizer>> {
-    let path = locale.path();
-    let res = create_resource(&path).await?;
+    let res = create_resource(locale.ftl().to_owned()).await?;
     let mut bundle = FluentBundle::new_concurrent(vec![locale.locale()]);
     bundle.set_use_isolating(false);
     if let Err(e) = bundle.add_resource(res) {
@@ -112,9 +103,11 @@ impl Language {
             Language::Chinese => ZH_CN,
         }
     }
-    pub fn path(&self) -> String {
-        let locale = self.locale().to_string();
-        format!("./locales/{}/tr.ftl", locale)
+    pub fn ftl(&self) -> &str {
+        match self {
+            Language::English => include_str!("../../locales/en-US/tr.ftl"),
+            Language::Chinese => include_str!("../../locales/zh-CN/tr.ftl"),
+        }
     }
 }
 impl Default for Language {
