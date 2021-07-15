@@ -24,13 +24,15 @@ impl AppHost {
                 "localnative-web-ext-host"
             }
         };
-        #[allow(clippy::or_fun_call)]
-        let mut path = std::env::current_dir().unwrap_or(
-            localnative_core::dirs::home_dir()
-                .map(|home| home.join("LocalNative"))
-                .unwrap_or(std::env::temp_dir().join("LocalNative")),
-        );
+        #[cfg(not(target_os = "macos"))]
+        let mut path = std::env::current_dir().unwrap();
 
+        #[cfg(target_os = "macos")]
+        let mut path = std::env::current_exe()
+            .unwrap()
+            .parent()
+            .unwrap()
+            .to_path_buf();
         path = path.join(name);
         println!("path : {:?}", path);
         path

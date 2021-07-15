@@ -7,6 +7,6 @@ edition = "2018"
 
 [dependencies]
 anyhow = "1.0"
-zip = "0.5"
 xshell = "0.1"
 xflags = "0.2"
+tauri-bundler = "1.0.0-beta.2"

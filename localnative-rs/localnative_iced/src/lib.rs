@@ -71,9 +71,7 @@ pub enum Message {
     TagView(Vec<TagView>),
     DayView(HandleDays),
     RequestClosed,
-    LoadConfig(Option<Config>),
     ApplyLanguage(Option<()>),
-    SaveConfig(Option<()>),
     CloseWindow(Option<()>),
     SyncResult(std::io::Result<()>),
     SyncOption(Option<()>),
@@ -91,9 +89,9 @@ impl iced::Application for LocalNative {
     type Flags = Option<Config>;
 
     fn new(flags: Self::Flags) -> (Self, Command<Self::Message>) {
+        let is_first_open = flags.is_none();
         let config = flags.unwrap_or_default();
         let language = config.language;
-        let is_first_open = config.is_first_open;
         (
             LocalNative {
                 config,
@@ -156,7 +154,6 @@ impl iced::Application for LocalNative {
                                 search_page.search_value.clone(),
                                 config.limit,
                                 search_page.offset,
-                                config.is_first_open,
                             ),
                             Message::Receiver,
                         )
@@ -164,10 +161,7 @@ impl iced::Application for LocalNative {
                         unreachable!()
                     }
                 }
-                Message::InitHost(_) => {
-                    self.config.is_first_open = false;
-                    Command::none()
-                }
+                Message::InitHost(_) => Command::none(),
                 _ => Command::none(),
             },
             State::Loaded(data) => match message {
@@ -254,18 +248,6 @@ impl iced::Application for LocalNative {
                     config.month_uw = data.search_page.days.chart.month_uw;
                     let json = serde_json::to_string_pretty(&*config).unwrap();
                     Command::perform(config::save(json), Message::CloseWindow)
-                }
-                Message::LoadConfig(cfg) => {
-                    if let Some(cfg) = cfg {
-                        self.config = cfg;
-                    }
-                    Command::none()
-                }
-                Message::SaveConfig(res) => {
-                    if res.is_some() {
-                        println!("ok!");
-                    }
-                    Command::none()
                 }
                 Message::CloseWindow(res) => {
                     if res.is_some() {
@@ -408,12 +390,7 @@ impl iced::Application for LocalNative {
                     } = data;
                     settings.update(msg, config, sidebar)
                 }
-                Message::InitHost(..) => {
-                    if self.config.is_first_open {
-                        self.config.is_first_open = false;
-                    }
-                    Command::none()
-                }
+                Message::InitHost(..) => Command::none(),
                 Message::Receiver(None) => Command::none(),
             },
         }

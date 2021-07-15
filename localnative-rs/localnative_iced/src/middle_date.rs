@@ -1,5 +1,5 @@
 use localnative_core::{
-    cmd::{create, delete, insert},
+    cmd::{delete, insert},
     rusqlite::Connection,
     Note,
 };
@@ -27,17 +27,9 @@ impl MiddleDate {
         delete(conn, rowid);
         Self::from_select_inner(conn, query, limit, offset)
     }
-    pub async fn upgrade(
-        conn: Conn,
-        query: String,
-        limit: u32,
-        offset: u32,
-        is_created_db: bool,
-    ) -> Option<Self> {
+    pub async fn upgrade(conn: Conn, query: String, limit: u32, offset: u32) -> Option<Self> {
         let conn = &*conn.lock().await;
-        if !is_created_db {
-            create(conn);
-        }
+
         if let Ok(version) = localnative_core::upgrade::upgrade(conn) {
             println!("upgrade done:{}", version);
         } else {
