@@ -22,10 +22,6 @@ xflags::xflags! {
         /// Release iced and web-ext-host
         cmd release
         {
-            /// You can specify a target
-            optional -t, --target target: String
-            /// You can specify a platform, such as macos, windows, linux
-            optional -p, --platform platform: String
             /// You can specify a version
             optional -v, --version version: String
         }
@@ -52,18 +48,18 @@ pub struct Help {
 
 #[derive(Debug)]
 pub struct Release {
-    pub target: Option<String>,
-    pub platform: Option<String>,
     pub version: Option<String>,
 }
 
 impl Xtask {
     pub const HELP: &'static str = Self::HELP_;
 
+    #[allow(dead_code)]
     pub fn from_env() -> xflags::Result<Self> {
         Self::from_env_()
     }
 
+    #[allow(dead_code)]
     pub fn from_vec(args: Vec<std::ffi::OsString>) -> xflags::Result<Self> {
         Self::from_vec_(args)
     }
