@@ -24,15 +24,13 @@ impl AppHost {
                 "localnative-web-ext-host"
             }
         };
-        #[cfg(not(target_os = "macos"))]
-        let mut path = std::env::current_dir().unwrap();
 
-        #[cfg(target_os = "macos")]
         let mut path = std::env::current_exe()
             .unwrap()
             .parent()
             .unwrap()
             .to_path_buf();
+
         path = path.join(name);
         println!("path : {:?}", path);
         path

@@ -1,7 +1,4 @@
-use std::{
-    fs,
-    path::Path,
-};
+use std::{env, fs, path::Path};
 
 use tauri_bundler::{
     AppCategory, BundleBinary, BundleSettings, DebianSettings, MacOsSettings, PackageSettings,
@@ -26,12 +23,12 @@ impl Release {
         } else {
             env!("CARGO_PKG_VERSION")
         };
-        cmd!("cargo build --no-default-features --features wgpu --release").run()?;
+        cmd!("cargo build --no-default-features --features wgpu --release --bin local-native")
+            .run()?;
+        cmd!("cargo build --release --bin localnative-web-ext-host").run()?;
         let suffix = suffix();
         let src = Path::new("target").join("release");
         let iced_src = src.join(format!("local-native{}", suffix));
-        let core_rlib = src.join("liblocalnative_core.rlib");
-        let iced_rlib = src.join("liblocalnative_iced.rlib");
         let host_src = src.join(format!("localnative-web-ext-host{}", suffix));
 
         // let tag = format!(
@@ -40,33 +37,34 @@ impl Release {
         //     std::env::consts::OS,
         //     version
         // );
-        let dst = Path::new("dist");
+        let dst = std::env::current_dir()?.join("dist");
         if dst.exists() {
             rm_rf(&dst)?;
         }
         mkdir_p(&dst)?;
         let iced_dst = dst.join(format!("local-native{}", suffix));
         let host_dst = dst.join(format!("localnative-web-ext-host{}", suffix));
-        let iced_rlib_dst = dst.join("liblocalnative_iced.rlib");
-        let core_rlib_dst = dst.join("liblocalnative_core.rlib");
+
         let readme = Path::new("README.md");
         cp(&readme, &dst)?;
         cp(&iced_src, &iced_dst)?;
         cp(&host_src, &host_dst)?;
-        cp(&core_rlib, &core_rlib_dst)?;
-        cp(&iced_rlib, &iced_rlib_dst)?;
+
         copy_dir_all(
             &Path::new("../localnative-electron/build"),
             &dst.join("build"),
         )?;
-        let mut package_types = vec![];
-        #[cfg(target_os = "macos")]
-        package_types.push(PackageType::MacOsBundle);
-        #[cfg(target_os = "linux")]
-        package_types.push(PackageType::MacOsBundle);
-        #[cfg(target_os = "windows")]
-        package_types.push(PackageType::MacOsBundle);
-        //gzip(&dst, &dst.with_extension("gz"))?;
+        let package_types = vec![
+            #[cfg(target_os = "macos")]
+            PackageType::MacOsBundle,
+            // #[cfg(target_os = "macos")]
+            // PackageType::Dmg,
+            #[cfg(target_os = "linux")]
+            PackageType::AppImage,
+            #[cfg(target_os = "windows")]
+            PackageType::WindowsMsi,
+        ];
+
         let settings = SettingsBuilder::new()
             .verbose()
             .package_settings(PackageSettings {
@@ -85,10 +83,10 @@ impl Release {
             .bundle_settings(BundleSettings {
                 identifier: Some("app.localnative".into()),
                 icon: Some(vec![
-                    "icons/icon.ico".into(),
-                    "icons/app.icns".into(),
-                    "icons/512x512.png".into(),
-                    "icons/1024x1024.png".into(),
+                    "./icons/icon.ico".into(),
+                    "./icons/app.icns".into(),
+                    "./icons/512x512.png".into(),
+                    "./icons/1024x1024.png".into(),
                 ]),
                 resources: None,
                 copyright: Some("GNU Affero General Public License v3.0".into()),
@@ -114,8 +112,6 @@ impl Release {
             .binaries(vec![
                 BundleBinary::new("local-native".into(), true),
                 BundleBinary::new("localnative-web-ext-host".into(), false),
-                BundleBinary::new("liblocalnative_core.rlib".into(), false),
-                BundleBinary::new("liblocalnative_iced.rlib".into(), false),
             ])
             .package_types(package_types)
             .build()?;
