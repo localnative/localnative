@@ -1,5 +1,5 @@
 [alias]
-xtask = "run --package xtask --bin xtask --release"
+xtask = "run --package xtask --bin xtask"
 fmt-check = "fmt --all -- --check"
 lint = "clippy --workspace --all-targets  -- -D warnings -A clippy::type_complexity"
 iced = "run --bin local-native"
