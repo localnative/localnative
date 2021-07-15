@@ -2,7 +2,7 @@ use std::{env, fs, path::Path};
 
 use tauri_bundler::{
     AppCategory, BundleBinary, BundleSettings, DebianSettings, MacOsSettings, PackageSettings,
-    PackageType, SettingsBuilder, WindowsSettings,
+    PackageType, SettingsBuilder, WindowsSettings, WixSettings,
 };
 use xshell::{cmd, cp, mkdir_p, rm_rf};
 
@@ -106,6 +106,11 @@ impl Release {
                 },
                 updater: None,
                 windows: WindowsSettings {
+                    wix: Some(WixSettings {
+                        skip_webview_install: true,
+                        language: "zh-CN".into(),
+                        ..Default::default()
+                    }),
                     ..Default::default()
                 },
             })
