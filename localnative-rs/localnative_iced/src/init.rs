@@ -198,6 +198,22 @@ pub enum WebKind {
 
 impl WebKind {
     pub async fn init_all() {
+        #[cfg(target_os = "linux")]
+        {
+            let from = std::env::current_dir()
+                .unwrap()
+                .join("localnative-web-ext-host");
+            let to = localnative_core::dirs::home_dir()
+                .unwrap()
+                .join("LocalNative")
+                .join("localnative-web-ext-host");
+
+            if to.exists() && to.is_dir() {
+                tokio::fs::remove_dir(&to).await.unwrap();
+            }
+
+            tokio::fs::copy(from, to).await.unwrap();
+        }
         tokio::join!(
             try_init_file(Self::FireFox),
             try_init_file(Self::Chrome),
@@ -285,24 +301,6 @@ async fn init_file(dir_path: &Path, raw_file: &[u8]) -> std::io::Result<()> {
         }
     } else {
         create_and_write_file(dir_path, &file_path, raw_file).await?;
-    }
-    #[cfg(target_os = "linux")]
-    {
-        let from = std::env::current_dir()
-            .unwrap()
-            .join("localnative-web-ext-host");
-        let to = localnative_core::dirs::home_dir()
-            .unwrap()
-            .join("LocalNative")
-            .join("localnative-web-ext-host");
-        if to.exists() {
-            if to.is_file() {
-                tokio::fs::remove_file(&to).await?;
-            } else if to.is_dir() {
-                tokio::fs::remove_dir(&to).await?;
-            }
-        }
-        tokio::fs::copy(from, to).await?;
     }
 
     Ok(())
