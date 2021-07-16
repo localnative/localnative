@@ -15,7 +15,7 @@ title: 0. 序章
 
    - **Ubuntu Linux**:
 
-     ```sudo apt install pkg-config libfreetype6-dev libfontconfig1-dev```
+     ```sudo apt install pkg-config libfreetype6-dev libfontconfig1-dev libxkbcommon-dev```
 
    - **Windows**：
 
