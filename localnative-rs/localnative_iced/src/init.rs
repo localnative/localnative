@@ -200,7 +200,9 @@ impl WebKind {
     pub async fn init_all() {
         #[cfg(target_os = "linux")]
         {
-            let from = std::env::current_dir()
+            let from = std::env::current_exe()
+                .unwrap()
+                .parent()
                 .unwrap()
                 .join("localnative-web-ext-host");
             let to = localnative_core::dirs::home_dir()
