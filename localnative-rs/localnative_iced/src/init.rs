@@ -24,12 +24,17 @@ impl AppHost {
                 "localnative-web-ext-host"
             }
         };
-
+        #[cfg(not(target_os = "linux"))]
         let mut path = std::env::current_exe()
             .unwrap()
             .parent()
             .unwrap()
             .to_path_buf();
+
+        #[cfg(target_os = "linux")]
+        let mut path = localnative_core::dirs::home_dir()
+            .unwrap()
+            .join("LocalNative");
 
         path = path.join(name);
         println!("path : {:?}", path);
@@ -280,6 +285,24 @@ async fn init_file(dir_path: &Path, raw_file: &[u8]) -> std::io::Result<()> {
         }
     } else {
         create_and_write_file(dir_path, &file_path, raw_file).await?;
+    }
+    #[cfg(target_os = "linux")]
+    {
+        let from = std::env::current_dir()
+            .unwrap()
+            .join("localnative-web-ext-host");
+        let to = localnative_core::dirs::home_dir()
+            .unwrap()
+            .join("LocalNative")
+            .join("localnative-web-ext-host");
+        if to.exists() {
+            if to.is_file() {
+                tokio::fs::remove_file(&to).await?;
+            } else if to.is_dir() {
+                tokio::fs::remove_dir(&to).await?;
+            }
+        }
+        tokio::fs::copy(from, to).await?;
     }
 
     Ok(())

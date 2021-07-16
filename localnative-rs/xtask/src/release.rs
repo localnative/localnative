@@ -24,11 +24,10 @@ impl Release {
             env!("CARGO_PKG_VERSION")
         };
         let src = Path::new("target").join("release");
-        if src.exists() {
-            rm_rf(&src)?;
-        }
+
         cmd!("cargo build --no-default-features --features wgpu --release --bin local-native")
             .run()?;
+
         cmd!("cargo build --release --bin localnative-web-ext-host").run()?;
         let suffix = suffix();
         let iced_src = src.join(format!("local-native{}", suffix));
