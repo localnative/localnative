@@ -2,6 +2,18 @@
 id: localnative-2021-soc
 title: Local Native 2021 SoC
 ---
+### 2021-07-17
+<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/mu221N0mLYY" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+- Cupnfish
+  - package release artifacts for different platforms using cargo
+  - more progress on tutorial
+  - to prepare release candidates, blog, WeChat posts
+  
+- yi 
+  - database file location in sandbox for platform store release
+  - to create larger test dataset for time series visualization and sync
+
 ### 2021-07-10
 <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/YTGz1x3Zyts" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
