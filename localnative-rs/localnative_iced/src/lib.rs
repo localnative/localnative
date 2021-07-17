@@ -112,7 +112,8 @@ impl iced::Application for LocalNative {
     }
 
     fn title(&self) -> String {
-        "Local Native".to_owned()
+        let version = env!("CARGO_PKG_VERSION");
+        format!("Local Native {}",version)
     }
 
     fn update(
