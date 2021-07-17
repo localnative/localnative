@@ -1,4 +1,5 @@
 pub mod flags;
+mod ndkbd;
 mod release;
 
 use anyhow::Result;
@@ -10,6 +11,7 @@ fn main() -> Result<()> {
             println!("{}", flags::Xtask::HELP);
         }
         flags::XtaskCmd::Release(cmd) => cmd.run()?,
+        flags::XtaskCmd::Ndkbd(cmd) => cmd.run()?,
     }
     Ok(())
 }

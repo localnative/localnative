@@ -25,6 +25,12 @@ xflags::xflags! {
             /// You can specify a version
             optional -v, --version version: String
         }
+        /// Use cargo ndk to build localnative_core to android .so lib
+        cmd ndkbd
+        {
+            /// You can specify a build mode
+            optional --debug
+        }
     }
 }
 // generated start
@@ -39,6 +45,7 @@ pub struct Xtask {
 pub enum XtaskCmd {
     Help(Help),
     Release(Release),
+    Ndkbd(Ndkbd),
 }
 
 #[derive(Debug)]
@@ -49,6 +56,11 @@ pub struct Help {
 #[derive(Debug)]
 pub struct Release {
     pub version: Option<String>,
+}
+
+#[derive(Debug)]
+pub struct Ndkbd {
+    pub debug: bool,
 }
 
 impl Xtask {
