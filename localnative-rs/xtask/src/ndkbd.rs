@@ -16,17 +16,8 @@ impl Ndkbd {
         .run()?;
 
         let _p = pushd("..")?;
-        // let cwd = cwd()?;
-        // let to = cwd
-        //     .parent()
-        //     .unwrap()
-        //     .join("localnative-android")
-        //     .join("app")
-        //     .join("src")
-        //     .join("main")
-        //     .join("jniLibs");
+
         let to = PathBuf::from_str("../localnative-android/app/src/main/jniLibs")?;
-        //let from = cwd.join("target");
         let from = PathBuf::from("./target");
 
         let mode = if self.debug { "debug" } else { "release" };
