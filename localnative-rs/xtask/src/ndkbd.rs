@@ -27,16 +27,16 @@ impl Ndkbd {
             to.join("armeabi-v7a"),
             to.join("arm64-v8a"),
             to.join("x86"),
-            to.join("x86_64")
+            to.join("x86_64"),
         ];
         let from_paths = vec![
             from.join("armv7-linux-androideabi"),
             from.join("aarch64-linux-android"),
             from.join("i686-linux-android"),
-            from.join("x86_64-linux-android")
+            from.join("x86_64-linux-android"),
         ];
 
-        for (to,from) in to_paths.iter().zip(from_paths.iter()) {
+        for (to, from) in to_paths.iter().zip(from_paths.iter()) {
             let from = from.join(mode).join(name);
             let to = to.join(name);
             if to.exists() {

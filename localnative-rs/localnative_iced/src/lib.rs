@@ -13,6 +13,7 @@ mod sync;
 mod tags;
 mod translate;
 
+use std::cmp::Ordering;
 use std::sync::Arc;
 
 use config::Config;
@@ -188,7 +189,15 @@ impl iced::Application for LocalNative {
                         Command::perform(
                             async move {
                                 let mut tags = tags;
-                                tags.sort_by(|a, b| b.count.cmp(&a.count));
+                                tags.sort_by(|a, b| {
+                                    let ord = b.count.cmp(&a.count);
+                                    if ord == Ordering::Equal {
+                                        b.name.cmp(&a.name)
+                                    } else {
+                                        ord
+                                    }
+                                });
+
                                 tags.into_iter().map(TagView::from).collect()
                             },
                             Message::TagView,
