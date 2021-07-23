@@ -525,23 +525,7 @@ impl <'a> DateChart<'a> {
                 }
             }
             ChartLevel::Month => {
-                if let Some(num) = self.full_months {
-                    let uw = (size.width as i32 / (num + 3)).max(1).min(50);
-                    if let Some(s) = selected {
-                        *translation = Vector::new(
-                            ((s.end.max(1) - 1) * uw as usize).max(0).min(10000) as f32,
-                            0.0,
-                        )
-                    } else {
-                        if let Some(last) = last_month {
-                            *translation =
-                                Vector::new(((last - 1) * uw).max(0).min(10000) as f32, 0.0);
-                        }
-                    }
-                    uw as f32
-                } else {
-                    self.month_uw
-                }
+                // 和天的差不多，在此省略了
             }
         }
     }
@@ -565,58 +549,8 @@ pub struct Selected {
     start: usize,
     end: usize,
 }
-// 同时给selected实现一些方便后续调用的方法
+// 有些常用的方法也给Selected实现了，但是在这里省略了
 impl Selected {
-    // into到Date
-    pub fn get_months_range(&self, base_month: &MonthView) -> (Date, Date) {
-        (
-            get_offset_date(self.start, 31, base_month),
-            get_offset_date(self.end, 31, base_month),
-        )
-    }
-    pub fn get_days_range(&self, base_day: Date) -> (Date, Date) {
-        (
-            base_day - Duration::days(self.start as i64 + 1),
-            base_day - Duration::days(self.end as i64 + 1),
-        )
-    }
-    pub fn date_into_days_selected(&mut self, start: Date, end: Date, base_day: Date) {
-        self.start = (base_day - start).whole_days().max(1) as usize - 1;
-        self.end = (base_day - end).whole_days().max(1) as usize - 1;
-    }
-    pub fn date_into_months_selected(
-        &mut self,
-        start: Date,
-        end: Date,
-        base_month: &MonthView,
-        base_day: Date,
-    ) {
-        let ds = Selected {
-            start: (base_day - start).whole_days().max(1) as usize - 1,
-            end: (base_day - end).whole_days().max(1) as usize - 1,
-        };
-        *self = ds.days_to_months(base_day, base_month);
-    }
-    // 从天为单位转换到月为单位
-    pub fn days_to_months(self, base_day: Date, base_month: &MonthView) -> Self {
-        let (start, end) = self.get_days_range(base_day);
-        let start = months_num(&MonthView::from_date(start, 0), base_month);
-        let end = months_num(&MonthView::from_date(end, 0), base_month);
-        Self {
-            start: start.max(1) as usize - 1,
-            end: end.max(1) as usize - 1,
-        }
-    }
-    // 从月为单位转换到天为单位
-    pub fn months_to_days(self, base_day: Date, base_month: &MonthView) -> Self {
-        let (start, end) = self.get_months_range(base_month);
-        let start = (base_day - start).whole_days() as usize;
-        let end = (base_day - end).whole_days() as usize;
-        Self {
-            start: start.max(1) - 1,
-            end: end.max(1) - 1,
-        }
-    }
     // 最重要的绘制函数
     // 其中frame在传入前需要应用translation
     pub fn draw(&self, frame: &mut Frame, uw: f32) {
@@ -638,50 +572,7 @@ impl Selected {
         }
     }
 }
-// 用来获取给定月偏移量（即与基准月的距离）的实际Date
-[inline]
-fn get_offset_date(mut offset: usize, mut day: u8, base_month: &MonthView) -> Date {
-    let MonthView {
-        mut month,
-        mut year,
-        ..
-    } = base_month;
 
-    year -= offset as i32 / 12;
-    offset %= 12;
-
-    if offset != 0 {
-        let mut m_num = month_to_num(month) - offset as i32;
-        if m_num <= 0 {
-            m_num += 12;
-            year -= 1;
-        }
-        month = match m_num {
-            1 => Month::January,
-            2 => Month::February,
-            3 => Month::March,
-            4 => Month::April,
-            5 => Month::May,
-            6 => Month::June,
-            7 => Month::July,
-            8 => Month::August,
-            9 => Month::September,
-            10 => Month::October,
-            11 => Month::November,
-            12 => Month::December,
-            _ => unreachable!(),
-        };
-    }
-
-    let mut res = Date::from_calendar_date(year, month, day);
-
-    while res.is_err() && day > 0 {
-        day -= 1;
-        res = Date::from_calendar_date(year, month, day);
-    }
-
-    res.unwrap()
-}
 ```
 定义了selected之后，我们需要在`Program`trait里调用其draw方法：
 ```diff
@@ -707,28 +598,7 @@ fn get_offset_date(mut offset: usize, mut day: u8, base_month: &MonthView) -> Da
 +           res.push(selected);
 +       }
 
-        if let Some(pending) = self.pending.map(|pending| {
-            let mut frame = Frame::new(size);
-            if let Some(cursor_position) = cursor.position_in(&bounds) {
-                let top_left = Point::new(
-                    cursor_position.x.min(pending.x),
-                    cursor_position.y.min(pending.y),
-                );
-                let size = Size::new(
-                    (cursor_position.x - pending.x).abs(),
-                    (cursor_position.y - pending.y).abs(),
-                );
-                frame.fill_rectangle(
-                    top_left,
-                    size,
-                    Fill::from(Color::from_rgba(0.1, 0.5, 0.8, 0.2)),
-                );
-            }
-            frame.into_geometry()
-        }) {
-            res.push(pending);
-        }
-        res
+    // ... 后续省略
     }
 ```
 绘制好了选框之后，我们不着急预览，在预览之前先绘制days：
@@ -842,148 +712,8 @@ impl Day {
     }
 }
 ```
-同样，绘制月份：
-```rust
-impl MonthView {
-    // 和day类似，不同的是month没有提供previous的方法，需要我们自己写
-    pub fn draw_all_month(
-        months: &[MonthView],
-        frame: &mut Frame,
-        max_count: i64,
-        fill_color: Color,
-        font_size: f32,
-        big_font_size: f32,
-        uw: f32,
-        translation: f32,
-        base_month: &MonthView,
-    ) {
-        // 绘制文本
-        let Size { width, height } = frame.size();
-        let num = (width / uw).min(10000.0).max(0.0) as i64;
-        let MonthView {
-            mut month,
-            mut year,
-            ..
-        } = base_month;
-        let mut offset = (translation / uw) as i64;
+绘制月份和day差不多，因此这里不展示了。
 
-        year -= offset as i32 / 12;
-        offset = offset % 12;
-    
-        if offset != 0 {
-            let mut m_num = month_to_num(month) - offset as i32;
-            if m_num <= 0 {
-                m_num += 12;
-                year -= 1;
-            }
-            month = match m_num {
-                1 => Month::January,
-                2 => Month::February,
-                3 => Month::March,
-                4 => Month::April,
-                5 => Month::May,
-                6 => Month::June,
-                7 => Month::July,
-                8 => Month::August,
-                9 => Month::September,
-                10 => Month::October,
-                11 => Month::November,
-                12 => Month::December,
-                _ => unreachable!(),
-            };
-        }
-
-        let rightmost_month = (year, month);
-
-        let mut date_pointer = rightmost_month;
-
-        let month_text_y = height - font_size;
-        let gt9_offset = 0.5 * (uw - font_size);
-        let lt9_offset = 0.5 * (uw - 0.5 * font_size);
-
-        for idx in 1..=num {
-            let month = date_pointer;
-            let x = width - idx as f32 * uw - translation;
-            if idx == num || date_pointer.1 == Month::January {
-                let year = canvas::Text {
-                    content: date_pointer.0.to_string(),
-                    position: Point::new(x, 0.0),
-                    size: big_font_size,
-                    ..Default::default()
-                };
-                frame.fill_text(year);
-            }
-
-            let content = month_to_num(month.1);
-            if uw >= font_size * 1.8 {
-                let month_text_offset = if content > 9 { gt9_offset } else { lt9_offset };
-                let position = Point::new(x + month_text_offset, month_text_y);
-    
-                let month = canvas::Text {
-                    content: content.to_string(),
-                    position,
-                    size: font_size,
-                    ..Default::default()
-                };
-    
-                frame.fill_text(month);
-            }
-
-            if let Month::January = date_pointer.1 {
-                date_pointer = (date_pointer.0 - 1, Month::December);
-            } else {
-                date_pointer.1 = date_pointer.1.previous();
-            }
-        }
-        // 绘制方块
-        let uh = height / max_count as f32;
-        let rm_num = month_to_num(rightmost_month.1);
-        let dm_num = month_to_num(date_pointer.1);
-        let MonthView {
-            month: tm,
-            year: ty,
-            ..
-        } = base_month;
-        let tm_num = month_to_num(*tm);
-        for month in months {
-            let cy = month.year;
-            let cm = month.month;
-            let cm_num = month_to_num(cm);
-            if cy > rightmost_month.0 || (cy == rightmost_month.0 && cm_num > rm_num) {
-                break;
-            }
-
-            if (cy == date_pointer.0 && cm_num < dm_num) || (cy < date_pointer.0) {
-                continue;
-            }
-            let num = (*ty - cy - 1) * 12 + 13 + tm_num - cm_num;
-            let x = width - num as f32 * uw;
-
-            let dh = uh * month.count as f32;
-            let content = month.count.to_string();
-            if font_size * content.len() as f32 <= uw && height - dh < month_text_y - font_size {
-                let count_offset = if month.count > 9 {
-                    gt9_offset
-                } else {
-                    lt9_offset
-                };
-                let count = canvas::Text {
-                    content,
-                    position: Point::new(x + count_offset, height - dh),
-                    size: font_size,
-                    ..Default::default()
-                };
-                frame.fill_text(count);
-            }
-            frame.fill_rectangle(
-                Point::new(x, height - dh),
-                Size::new(uw, dh),
-                Fill::from(fill_color),
-            );
-        }
-    }
-}
-```
 > 注意：在绘制文本时，有部分过滤使用了字体大小和单位宽度作比较，这是为了防止文本绘制时全部挤压到一块，可以按照自己喜好来设置相关参数。另外，此前我们提到的文本绘制永远在上层，会导致一些意想不到的问题，比如超出了绘图框，仍有文字被绘制到上面，解决的方法就是在绘制的时候，指定特定的位置范围内绘制，超出了不进行绘制即可。
 
 有了两个绘制方法，我们在`Program`trait里调用即可：
@@ -1001,25 +731,6 @@ impl MonthView {
         let mut res = vec![];
         // 实际上增加的仅仅是这部分
         match &self.level {
-            ChartLevel::Day => {
-                let days = &self.days[..];
-                let rects = self.cache.draw(size, |frame| {
-                    frame.translate(translation);
-                    Day::draw_all_day(
-                        days,
-                        frame,
-                        self.maximal_day_count,
-                        self.style.fill_color,
-                        self.style.font_size,
-                        self.style.big_font_size,
-                        uw,
-                        translation.x,
-                        self.base_day,
-                        false,
-                    );
-                });
-                res.push(rects);
-            }
             ChartLevel::Month => {
                 let months = &self.months[..];
 
@@ -1037,7 +748,7 @@ impl MonthView {
                         self.base_month,
                     );
                 });
-
+                // 绘制天数预览
                 let mut sub_frame = Frame::new(Size {
                     width: size.width / 2.0,
                     height: size.height / 2.0,
@@ -1067,6 +778,9 @@ impl MonthView {
                 }
                 res.push(rects);
                 res.push(sub_frame.into_geometry());
+            }
+            ChartLevel::Day => {
+                // ... 和month差不多，只不过不需要绘制预览
             }
         };
         // 以下都是和之前一致的了，需要注意的是，在绘制月份的时候，除了月份本身外，
@@ -1201,39 +915,8 @@ pub struct Chart {
     pub base_day: Date,
     pub base_month: MonthView,
 }
-
-impl Default for Chart {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl Chart {
-    pub fn uw(&self) -> f32 {
-        match self.level {
-            ChartLevel::Day => self.day_uw,
-            ChartLevel::Month => self.month_uw,
-        }
-    }
-    pub fn new() -> Self {
-        Self {
-            cache: Cache::new(),
-            selected_cache: Cache::new(),
-            selected: None,
-            max_day_count: 10,
-            max_month_count: 10,
-            level: ChartLevel::Day,
-            translation: Vector::new(0.0, 0.0),
-            day_uw: 17.0,
-            month_uw: 17.0,
-            full_days: None,
-            full_months: None,
-            last_day: None,
-            last_month: None,
-            base_day: base_day(),
-            base_month: base_month(),
-        }
-    }
+    // 实际每一帧都会调用这个，因此尽可能传递指针
     pub fn chart_view<'a>(
         &'a self,
         days: &'a [Day],
@@ -1288,107 +971,15 @@ pub struct DateView {
     pub is_full: bool,
 }
 
-impl Default for DateView {
-    fn default() -> Self {
-        Self {
-            is_show: true,
-            is_full: true,
-            chart: Chart::new(),
-            close: button::State::new(),
-            full_or_adjustable: button::State::new(),
-            max_or_min: button::State::new(),
-            day_or_month: button::State::new(),
-            uw_input: number_input::State::new(),
-            days: Vec::new(),
-            months: Vec::new(),
-            full_days: None,
-            full_months: None,
-            last_day: None,
-            last_month: None,
-        }
-    }
-}
 // 后续方法实现都很常规，基本都是view，update的套路
 impl DateView {
     pub fn view(&mut self, theme: Theme) -> Element<Message> {
-        let DateView {
-            close,
-            full_or_adjustable,
-            max_or_min,
-            day_or_month,
-            chart,
-            days,
-            months,
-            uw_input,
-            ..
-        } = self;
-        let close_button = Button::new(close, Text::new("X")).on_press(Message::Close);
-        let minimize_or_maximize_button = Button::new(
-            max_or_min,
-            Text::new(if self.is_show { "min" } else { "max" }),
-        )
-        .on_press(Message::MaxOrMin);
-
-        let mut ctrl_row = Row::new();
-
-        if !self.is_full {
-            // 记得，要在Cargo.toml内开启numer_input的feature
-            let uw_input = iced_aw::NumberInput::new(uw_input, chart.uw(), 30.0, Message::UwChange)
-                .min(1.0)
-                .step(0.1);
-            ctrl_row = ctrl_row.push(uw_input);
-        }
-        ctrl_row = ctrl_row.push(style::horizontal_rule());
-        if self.is_show {
-            let full_or_adjustable_button = Button::new(
-                full_or_adjustable,
-                Text::new(if self.is_full { "adjustable" } else { "full" }),
-            )
-            .on_press(Message::FullOrAdjustable);
-            let day_or_month_button =
-                Button::new(day_or_month, Text::new("changing view")).on_press(Message::DayOrMonth);
-            ctrl_row = ctrl_row
-                .push(day_or_month_button)
-                .push(full_or_adjustable_button);
-        }
-        ctrl_row = ctrl_row
-            .push(minimize_or_maximize_button)
-            .push(close_button);
-
-        let mut content = Column::new();
-        content = content.push(ctrl_row);
-        if self.is_show {
-            let chart = chart.chart_view(&*days, &*months).map(Message::ChartMsg);
-            content = content.push(chart);
-        }
-        Container::new(content).into()
-    }
-    pub fn clear_cache_and_convert_selected_range(&mut self) {
-        if let Some(s) = self.chart.selected {
-            match self.chart.level {
-                crate::days::ChartLevel::Day => self
-                    .chart
-                    .selected
-                    .replace(s.months_to_days(self.chart.base_day, &self.chart.base_month)),
-                crate::days::ChartLevel::Month => self
-                    .chart
-                    .selected
-                    .replace(s.days_to_months(self.chart.base_day, &self.chart.base_month)),
-            };
-        }
-        self.clear_cahce();
+        // ...很简单，之前已经实现过很多类似的了
     }
     // 手动调用clear可以触发刷新绘制的效果
     pub fn clear_cahce(&mut self) {
         self.chart.cache.clear();
         self.chart.selected_cache.clear();
-    }
-    pub fn get_range(&mut self, selected: Selected) -> (Date, Date) {
-        self.chart.selected.replace(selected);
-        match self.chart.level {
-            ChartLevel::Day => selected.get_days_range(self.chart.base_day),
-            ChartLevel::Month => selected.get_months_range(&self.chart.base_month),
-        }
     }
     pub fn update(&mut self, message: Message) {
         match message {
@@ -1467,28 +1058,7 @@ impl DateView {
                                         self.chart.last_day = ld;
                                     }
                                     ChartLevel::Month => {
-                                        let fm = self.full_months.and_then(|original| {
-                                            self.chart.full_months.map(|now| {
-                                                let new = now - x.floor() as i32;
-                                                if new > original {
-                                                    original
-                                                } else {
-                                                    new
-                                                }
-                                            })
-                                        });
-                                        let lm = self.last_month.and_then(|original| {
-                                            self.chart.last_month.map(|now| {
-                                                let new = now + x.floor() as i32;
-                                                if new < original {
-                                                    original
-                                                } else {
-                                                    new
-                                                }
-                                            })
-                                        });
-                                        self.chart.full_months = fm;
-                                        self.chart.last_month = lm;
+                                        // ...和day的处理差不多
                                     }
                                 }
                             }
@@ -1518,17 +1088,6 @@ impl DateView {
             }
         }
     }
-    pub fn day_or_month(&mut self) {
-        match self.chart.level {
-            ChartLevel::Day => {
-                self.chart.level = ChartLevel::Month;
-            }
-            ChartLevel::Month => {
-                self.chart.level = ChartLevel::Day;
-            }
-        }
-        self.align();
-    }
     pub fn align(&mut self) {
         match self.chart.level {
             ChartLevel::Day => {
@@ -1545,16 +1104,7 @@ impl DateView {
             }
         }
     }
-    pub fn set_uw(&mut self, uw: f32) {
-        match self.chart.level {
-            ChartLevel::Day => {
-                self.chart.day_uw = uw;
-            }
-            ChartLevel::Month => {
-                self.chart.month_uw = uw;
-            }
-        }
-    }
+    //...还有一些并不是很重要的小方法省略了
 }
 ```
 至此，大部分都实现了，我们还需要做的就是和后端的接洽，以及将当前的控件嵌入到search_page中。
@@ -1713,41 +1263,7 @@ pub struct SearchPage {
 }
 // 在 impl SearchPage 内
     pub fn view(&mut self, theme: Theme, limit: u32) -> Element<Message> {
-        let Self {
-            notes,
-            tags,
-            days,
-            search_value,
-            input_state,
-            clear_button,
-            refresh_button,
-            notes_scrollable,
-            tags_scrollable,
-            next_button,
-            pre_button,
-            ..
-        } = self;
-        let mut search_bar = Row::new().push(
-            TextInput::new(
-                input_state,
-                "Type your search...",
-                &search_value,
-                Message::SearchInput,
-            )
-            .on_submit(Message::Search),
-        );
-        if !self.search_value.is_empty() || self.range.is_some() {
-            search_bar =
-                search_bar.push(Button::new(clear_button, Text::new("X")).on_press(Message::Clear));
-        }
-        let refresh_button = Button::new(refresh_button, Text::new("O")).on_press(Message::Refresh);
-        search_bar = search_bar.push(refresh_button);
-        let tags = Scrollable::new(tags_scrollable)
-            .push(Container::new(tags.iter_mut().fold(
-                iced_aw::Wrap::new().spacing(5).push(Text::new("tags:")),
-                |tags, tag| tags.push(tag.view(theme).map(Message::TagMessage)),
-            )))
-            .width(iced::Length::FillPortion(2));
+        // ... 省略了部分此前的实现
         let is_show = days.is_show;
         // 主要是添加了days
         let days = Container::new(days.view(theme).map(Message::DayMessage)).height({
@@ -1821,122 +1337,7 @@ pub struct SearchPage {
         conn: Arc<Mutex<Connection>>,
     ) -> Command<Message> {
         match message {
-            Message::Search => search(
-                conn,
-                self.search_value.to_owned(),
-                limit,
-                self.offset,
-                self.range,
-            ),
-            Message::SearchInput(search_value) => {
-                self.search_value = search_value;
-                search(
-                    conn,
-                    self.search_value.to_owned(),
-                    limit,
-                    self.offset,
-                    self.range,
-                )
-            }
-            Message::Clear => {
-                self.search_value.clear();
-                self.range.take();
-                self.days.clear_cache_and_convert_selected_range();
-                search(
-                    conn,
-                    self.search_value.to_owned(),
-                    limit,
-                    self.offset,
-                    self.range,
-                )
-            }
-            Message::Refresh => search(
-                conn,
-                self.search_value.to_owned(),
-                limit,
-                self.offset,
-                self.range,
-            ),
-            Message::NextPage => {
-                let current_count = self.offset + limit;
-                if current_count < self.count {
-                    self.offset = current_count;
-                    search(
-                        conn,
-                        self.search_value.to_owned(),
-                        limit,
-                        self.offset,
-                        self.range,
-                    )
-                } else {
-                    Command::none()
-                }
-            }
-            Message::PrePage => {
-                if self.offset >= limit {
-                    self.offset -= limit;
-                    search(
-                        conn,
-                        self.search_value.to_owned(),
-                        limit,
-                        self.offset,
-                        self.range,
-                    )
-                } else if self.offset != 0 {
-                    self.offset = 0;
-                    search(
-                        conn,
-                        self.search_value.to_owned(),
-                        limit,
-                        self.offset,
-                        self.range,
-                    )
-                } else {
-                    Command::none()
-                }
-            }
-            Message::NoteMessage(msg, idx) => match msg {
-                crate::note::Message::Delete(rowid) => Command::perform(
-                    MiddleDate::delete(
-                        conn,
-                        self.search_value.to_string(),
-                        limit,
-                        self.offset,
-                        rowid,
-                    ),
-                    Message::Receiver,
-                ),
-                crate::note::Message::Search(s) => {
-                    self.search_value = s;
-                    search(
-                        conn,
-                        self.search_value.to_owned(),
-                        limit,
-                        self.offset,
-                        self.range,
-                    )
-                }
-                msg => {
-                    if let Some(note) = self.notes.get_mut(idx) {
-                        note.update(msg)
-                    };
-                    Command::none()
-                }
-            },
-            Message::Receiver(_) => Command::none(),
-            Message::TagMessage(tag_msg) => {
-                match tag_msg {
-                    crate::tags::Message::Search(text) => self.search_value = text,
-                }
-                search(
-                    conn,
-                    self.search_value.to_owned(),
-                    limit,
-                    self.offset,
-                    self.range,
-                )
-            }
-            // 增加的事件处理基本在这
+            // 对Day的信息进行处理
             Message::DayMessage(dm) => match dm {
                 crate::days::Message::DayOrMonth => {
                     self.days.day_or_month();
@@ -1989,6 +1390,7 @@ pub struct SearchPage {
                     Command::none()
                 }
             },
+            // ...其他此前的实现
         }
     }
 ```

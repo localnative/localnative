@@ -18,6 +18,9 @@ module.exports = {
       "tutorial4",
       "tutorial5",
       "tutorial6",
+      "tutorial7",
+      "tutorial8",
+      "tutorial9",                  
     ],
     "Summer of Code": [
         "localnative-2021-soc"
