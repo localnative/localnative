@@ -85,7 +85,7 @@ linker = "rust-lld"
 
 > 简单说一下使用xtask的理由，xtask如果此前你没有接触过，你可以理解成它就是一个简单的命令行工具库，可以让你方便的编写命令行工具，同时因为所需的依赖很小，可以很快就编译，因此用来作为脚本文件是比较合适的。但是最重要的理由是，我们的应用程序需要在多个平台进行打包，使用简单的shell脚本并不能满足多个平台下的方便调用，使用xtask已经帮我们提供了对应多个平台的一致性操作，加上我们打包是必然是需要Rust工具链的，因此使用xtask并不会造成额外的困扰。社区里诸如**[`rust-analyzer`](https://github.com/rust-analyzer/rust-analyzer)**都使用了xtask来管理项目，**[`bevy`](https://github.com/bevyengine/bevy)**的CI也使用了xtask来进行项目测试。
 
-xtask的用法很简单，查阅文档讲解的很详细，这里就不再深入探究，Local Native的xtask出了`release`子命令之外，还提供了`ndkbd`（即ndk build）的子命令，用于方便的构建安卓移动端所需的Rust依赖，需要安装**[`cargo-ndk`](https://github.com/bbqsrc/cargo-ndk)**工具，该工具要求配置两个环境变量，同时需要完整的安卓开发环境支持，这是打包安卓开发时需要执行的第一步。
+xtask的用法很简单，查阅文档讲解的很详细，这里就不再深入探究，Local Native的xtask除了`release`子命令之外，还提供了`ndkbd`（即ndk build）的子命令，用于方便的构建安卓移动端所需的Rust依赖，需要安装**[`cargo-ndk`](https://github.com/bbqsrc/cargo-ndk)**工具，该工具要求配置两个环境变量，同时需要完整的安卓开发环境支持，这是打包安卓开发时需要执行的第一步。
 
 目前来说因为引入了[`tauri-bundler`](https://github.com/tauri-apps/tauri/tree/dev/tooling/bundler)，所以实际上编译的时候xtask所需的依赖很大，解决方案是采用条件编译的方式，在引入依赖的时候，限定为某个条件，同时再更改对应别名即可。目前因为编译不是十分慢，在我可以接受的范围，因此没有动力去做出更改，但提出解决方案，是为了给以后使用xtask时可能会遇到的坑做个总结。
 
