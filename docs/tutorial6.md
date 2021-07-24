@@ -1398,5 +1398,5 @@ pub struct SearchPage {
 
 到了这一步，基本可以运行最终结果了：`cargo run --bin ln`
 
-![2](img/tutorial/6-02.gif)
+![2](/img/tutorial/6-02.gif)
 

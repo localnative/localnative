@@ -320,7 +320,7 @@ fn events_handler(event: Event, states: Status) -> Option<Message> {
 
 在我们开始写侧边栏之前，我们需要啊写一个删除警告，当note被用户删除的时候，会给用户一个警告提示。
 
-![0](img/tutorial/8-00.png)
+![0](/img/tutorial/8-00.png)
 
 使用到一个控件叫做`Modal`是`iced_aw`里的一个控件，我们需要在`features`里手动开启：
 
@@ -522,7 +522,7 @@ impl Settings {
       }
 ```
 
-同步这部分的view方法，用到的控件基本是此前用到的，但是又个列外，就是这个：![1](img/tutorial/8-01.png)
+同步这部分的view方法，用到的控件基本是此前用到的，但是又个列外，就是这个：![1](/img/tutorial/8-01.png)
 
 
 当点击从文件同步的按钮时，会弹出这样一个选择文件的界面，我们使用了另一个包来完成这个事情：
