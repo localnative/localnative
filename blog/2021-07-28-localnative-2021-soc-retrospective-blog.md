@@ -1,22 +1,12 @@
 ---
-title: "Local Native v0.5.0 Rust GUI Release with Iced"
-author: Yi Wang
-authorURL: https://www.yi-wang.me
-authorImageURL: https://secure.gravatar.com/avatar/1484b2bde1c0027dab9b135a1e051b3b?s=180&d=identicon
+title: "Local Native 2021 SoC 总结 Blog"
+author: Cupnfish
+authorURL: https://gitlab.com/Cupnfish 
+authorImageURL: https://gitlab.com/uploads/-/system/user/avatar/3555827/avatar.png
 
-categories: ["公告 Announcement"]
-tags: ["all", "localnative", "release"]
-draft: true
+categories: ["2021 Summer of Code"]
+tags: ["all", "localnative", "2021", "SoC", "iced"]
 ---
-
-
-![release](/img/unsplash/sigmund-AQWGdilIHLs-unsplash.jpg)
-
-
-This is the first version of [Local Native](https://localnative.app) Rust GUI app (Iced implementation).
-And it finally supports Windows.
-
-# Local Native项目总结
 
 说起来这是我的公开的第二个Rust项目，第一个还是去年大四上学期和朋友一起做的Bevy游戏项目（我们还有一个项目正在做，但是因为我最近实在是太忙了，所以没有参与进去，感兴趣的可以参与一下：https://github.com/rgripper/village-sim ）。我很感谢这两次机会，让我有足够的时间和精力去深入对Rust的学习和了解。这次总结，将会从三个方面来概述。
 
@@ -54,6 +44,6 @@ Local Native的跨平台桌面端使用的是iced来写的，iced很好用，概
 
 在之前项目快结尾时，我们Local Native团队参加了Dweb社区举办的项目分享活动，也是那个时候认识了现在的leader，经过交流之后加入了团队。团队对我最大的诱惑是leader对开源项目的态度吧，leader很鼓励我平时多参加开源社区，如果不出意外的话，在substarte开发能稳定进行之后，bevy之类项目会再搞起来。
 
-说点牢骚话，此前在群里看到群友发的一句话，说有些人代码出道即屎山。一不小心就把自己带入进去了。抛开我Bevy的项目不谈，那个是和朋友一起写的，那个时候确实很菜，同时当时Bevy真的资料很少，所以这个就不深究了。这次的项目，现在的版本其实重构了一次的，在之前还有个从demo写过来的版本，重构过程很美好，此前的很多写法确实可以用屎山形容，最终呈现出来的代码还算满意，但有些地方还是没有处理好，比如绘制日期过滤器，交互上还可以加强，视觉上也是；比如主题风格，对颜色把握确实不够，还需要再好好调整。最终的教程，就是在这样的情况下写出来的，所以听到这样的话的时候，心里还是蛮愧疚的，不过，这些在未来都会被尽可能的解决，所有的教程及代码，都会维护到iced出1.0版本，至少会有个三到四年时间吧，对教程有各种需要改进的都可以提issue，或者给我发邮件：cupnfish@icloud.com
+说点牢骚话，此前在群里看到群友发的一句话，说有些人代码出道即屎山。一不小心就把自己带入进去了。抛开我Bevy的项目不谈，那个是和朋友一起写的，那个时候确实很菜，同时当时Bevy真的资料很少，所以这个就不深究了。这次的项目，现在的版本其实重构了一次的，在之前还有个从demo写过来的版本，重构过程很美好，此前的很多写法确实可以用屎山形容，最终呈现出来的代码还算满意，但有些地方还是没有处理好，比如绘制日期过滤器，交互上还可以加强，视觉上也是；比如主题风格，对颜色把握确实不够，还需要再好好调整。最终的教程，就是在这样的情况下写出来的，所以听到这样的话的时候，心里还是蛮愧疚的，不过，这些在未来都会被尽可能的解决，所有的教程及代码，都会维护到iced出1.0版本，至少会有个三到四年时间吧，对教程有各种需要改进的都可以提issue，或者给我发邮件：cupnfish AT icloud.com
 
 关于cupnfish，这是一个很中国的名字，杯多鱼，类似的还可以cup1egg,cup2dog如果以后我真用bevy做自己的游戏项目了，这些就当作隐藏彩蛋吧。
