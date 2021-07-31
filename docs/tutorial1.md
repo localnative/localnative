@@ -68,7 +68,7 @@ localnative_core = { path = "../localnative/localnative-rs/localnative_core", fe
     ├── Cargo.lock
     ├── Cargo.toml
 ++  ├── previews
-++  │   └── exam.rs
+++  │   └── examample.rs
     ├── src
 ++  │   ├── bin.rs
     │   └── lib.rs
@@ -76,7 +76,7 @@ localnative_core = { path = "../localnative/localnative-rs/localnative_core", fe
         ... // generated files
 ```
 
-我们不仅创建了新的文件夹，同时还新建了两个`.rs`文件，一个是当前用来作为设置示例的`exam.rs`文件，另一个是我们整个项目的最终可执行文件`bin.rs`。
+我们不仅创建了新的文件夹，同时还新建了两个`.rs`文件，一个是当前用来作为设置示例的`example.rs`文件，另一个是我们整个项目的最终可执行文件`bin.rs`。
 
 这也是为啥我们在创建项目之初使用的是`cargo new ln-iced --lib`的原因，也正因此我们可以通过开启`preview`这个`feature`，在不增加最终可执行文件的大小情况下，运行我们想要测试的程序中的其中一部分。
 
@@ -90,7 +90,7 @@ localnative_core = { path = "../localnative/localnative-rs/localnative_core", fe
 
 + [[bin]]
 + name = "preview-example"
-+ path = "./previews/exam.rs"
++ path = "./previews/example.rs"
 + required-features = ["preview"]
 ```
 
@@ -101,7 +101,7 @@ localnative_core = { path = "../localnative/localnative-rs/localnative_core", fe
 以及两个文件内的内容：
 
 ```rust
-// ./previews/exam.rs
+// ./previews/example.rs
 fn main() {
     println!("Hello!");
 }
