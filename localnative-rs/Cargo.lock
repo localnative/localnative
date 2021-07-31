@@ -3788,9 +3788,9 @@ dependencies = [
 
 [[package]]
 name = "tauri-bundler"
-version = "1.0.0-beta.2"
+version = "1.0.0-beta.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "004ef4c6378dfa5814adb3aa7ba37ae2324fb20bb1f1804df7cb8fbe80307149"
+checksum = "62c4d6b0a4f2fac35de6f5fe4ac3b9c536d2b9a37e31472e169443bebbbe5261"
 dependencies = [
  "anyhow",
  "ar",
