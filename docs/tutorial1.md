@@ -54,26 +54,26 @@ localnative_core = { path = "../localnative/localnative-rs/localnative_core", fe
 在接下来的开发过程中，我们会构建各种GUI组件，最后会将这些组件组合成一个完整的应用程序，为了方便教学中进行调试，我们需要构建一个可预览的程序集，因此我们在`ln-iced/`目录下创建一个叫做`previews`文件夹：
 
 ```diff
-// befor:
+// before:
     .
     ├── Cargo.lock
     ├── Cargo.toml
     ├── src
     │   └── lib.rs
     └── target
-        ... // taget generated files
+        ... // generated files
     
 // after:
     .
     ├── Cargo.lock
     ├── Cargo.toml
-+  ├── previews
-+  │   └── exam.rs
+++  ├── previews
+++  │   └── exam.rs
     ├── src
-+  │   ├── bin.rs
+++  │   ├── bin.rs
     │   └── lib.rs
     └── target
-        ... // taget generated files
+        ... // generated files
 ```
 
 我们不仅创建了新的文件夹，同时还新建了两个`.rs`文件，一个是当前用来作为设置示例的`exam.rs`文件，另一个是我们整个项目的最终可执行文件`bin.rs`。
