@@ -49,7 +49,7 @@ pub struct NoteView {
     note: Note,
     // 标签的数量不是固定的，因此我们需要Vec来保存标签
     // Note中的标签使用String来保存，通过逗号隔离每个标签
-    // 我们需要自己处理，将标签装换成tags
+    // 我们需要自己处理，将标签转换成tags
     tags: Vec<Tag>,// Tag我们将会下面定义
     // iced 中的button在构建的时候，需要我们提供一个&mut State
     // 我们将State放到NoteView里面保存
@@ -141,7 +141,7 @@ impl From<Note> for NoteView {
 }
 ```
 
-实现了这个trait之后，我们可以给我们的`NoteView`实现方法了，主要需要我们实现的就两个方法，一个是用来代表视图的`view`方法，这个方法我们需要用到`NoteView`中保存的诸如`button::State`之类的可变引用，因此我们传递`&mut self`作为我们的方法参数。
+实现了这个trait之后，我们可以给我们的`NoteView`实现方法了，主要需要我们实现的就两个方法，一个是用来代表视图的`view`方法，这个方法我们需要用到`NoteView`中保存的诸如`button::State`之类的可变引用，因此我们传递`&mut self`作为我们的方法参数。另一个是`update`, 用来对消息做出反应。
 
 ```rust
 // ... 紧接上面代码
@@ -154,7 +154,7 @@ impl NoteView {
     // iced中的组件都实现了Into<Element>，所以我们只需要正常写组件，最后返回的时候into()即可
     pub fn view(&mut self) -> Element<Message> {
         // 我们在以下操作中需要同一个结构体的不同部分的多个可变应用
-        // 当前Rust所有权系统并没有那么只能，也就是即使我们在理论上并没有多次可变借用统一个字段
+        // 当前Rust所有权系统并没有那么智能，也就是即使我们在理论上并没有多次可变借用统一个字段
         // 但是Rust所有权因为不那么智能，会给我们报错（这个问题在未来将会被解决）
         // 因此我们通过模式匹配，将一个完整的结构体解构成多个部分
         let Self {

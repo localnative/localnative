@@ -62,7 +62,6 @@ pub struct MiddleDate {
         serde_json::from_str::<Self>(&filter_result).ok()
     }
 ```
-需要注意的是，因为之前设计后端的时候，始终没有将days作为需要渲染的数据，因此  `localnative_core::exe::do_filter(conn, query, limit, offset, from, to)`返回的结果并没有days字段，如果只是为了接收结果，可以将现有的`MiddleDate`结构体的days字段变为：`Option<Vec<Day>>`。但是我更推介直接在后端的返回值内加上days字段（拉取最新的代码库，立面的do_filter函数返回的是四个字段）。
 
 ### 另一个小准备
 此前我们定义Day结构体是这样的：
@@ -98,13 +97,13 @@ time = { version = "0.3.0-alpha-2",features = ["serde-human-readable","macros"] 
 ```
 `serde-human-readable`本身包含了`formatting`、`parsing`、`serde`三个feature，因此开启这个feature之后可以将另外几个feature关闭。仅在原来的基础上加上`serde`并不能满足我们的需求，查看`time`的文档可以了解到更多信息。
 
-### 一个完整的简单小实现
+### 一个完整的简单实现
 
 有了以上的准备，我们可以放开手脚使用`Canvas`控件了，这是一个相对特殊的控件，提供了更多的自由性，同时可以让你做出很多你能想象的功能，用来做数据可视化是最合适的了。当然当前的`Canvas`还有很多问题需要解决，我们将在实现的过程中对其一一介绍。
 
 作为用来熟悉`Canvas`的实现，是一个很常见的功能，当鼠标左键按下会出现一个选取框，鼠标放开之后选取框会消失。就像这样一样：
 
-![01](img/tutorial/6-01.gif)
+![01](/img/tutorial/6-01.gif)
 
 在这个过程中，我们需要储存的数据很简单，就是鼠标左键按下的那个点，除此之外，鼠标的当前位置，由trait提供给我们。
 

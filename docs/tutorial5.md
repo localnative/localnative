@@ -861,7 +861,7 @@ impl iced::Application for LocalNative {
         message: Self::Message,
         clipboard: &mut iced::Clipboard,
     ) -> Command<Self::Message> {
-        // 处理 message 和之前稍有不同，需要先判断self自身的状态，再进行处理nessage
+        // 处理 message 和之前稍有不同，需要先判断self自身的状态，再进行处理message
         match self {
             LocalNative::Loading => match message {
                 Message::Loading(..) => {
