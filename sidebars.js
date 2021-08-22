@@ -10,7 +10,10 @@ module.exports = {
       , "license"
     ],
     "Lecture & Talk": ["lecture", "talk"],
-    "Tutorials": [
+    "Summer of Code": [
+        "localnative-2021-soc"
+    ],
+    "Rust GUI 中文教程": [
       "tutorial0",
       "tutorial1",
       "tutorial2",
@@ -21,9 +24,6 @@ module.exports = {
       "tutorial7",
       "tutorial8",
       "tutorial9",                  
-    ],
-    "Summer of Code": [
-        "localnative-2021-soc"
     ]
   },
 };

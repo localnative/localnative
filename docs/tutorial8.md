@@ -1,6 +1,6 @@
 ---
 id: tutorial8
-title: 8. 侧边栏
+title: 8. 配置和侧边栏
 ---
 
 在此前我们已经实现了app的绝大多数功能，在本章中，我们将会实现侧边栏的功能，也同时是app剩下的所有功能。
@@ -133,7 +133,15 @@ pub enum State {// 之前的LocalNative编程了State
 }
 ```
 
-> clippy是rust的一个lint工具，可以让你的代码更rust，安装clippy：`rustup component add clippy`。执行clippy检查：`cargo clippy --workspace --all-targets  -- -D warnings -A clippy::type_complexity`。你可以和我一样在工作区间的`.cargo`目录下创建`config`文件，使用`Cargo`的别名系统来简化这个命令：
+> clippy是rust的一个lint工具，可以让你的代码更rust，安装clippy：
+>
+> `rustup component add clippy`。
+>
+> 执行clippy检查：
+>
+>`cargo clippy --workspace --all-targets  -- -D warnings -A clippy::type_complexity`。
+>
+> 你可以和我一样在工作区间的`.cargo`目录下创建`config`文件，使用`Cargo`的别名系统来简化这个命令：
 >
 > ```
 > [alias]
