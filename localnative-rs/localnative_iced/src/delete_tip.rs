@@ -20,7 +20,7 @@ pub struct TipState {
 pub enum Message {
     Enter,
     Cancel,
-    SearchPageMessage(crate::search_page::Message),
+    SearchPage(crate::search_page::Message),
 }
 impl DeleteTip {
     pub fn view<'tip, 'page: 'tip>(
@@ -29,9 +29,7 @@ impl DeleteTip {
         limit: u32,
         search_page: &'page mut crate::SearchPage,
     ) -> Element<'tip, Message> {
-        let underlay = search_page
-            .view(theme, limit)
-            .map(Message::SearchPageMessage);
+        let underlay = search_page.view(theme, limit).map(Message::SearchPage);
         let Self { tip_state, .. } = self;
 
         Modal::new(tip_state, underlay, |state| {

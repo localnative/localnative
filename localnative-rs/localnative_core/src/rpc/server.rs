@@ -45,7 +45,7 @@ impl LocalNative for LocalNativeServer {
     #[allow(clippy::wrong_self_convention)]
     fn is_version_match(self, _: context::Context, version: String) -> Self::IsVersionMatchFut {
         let conn = get_sqlite_connection();
-        let meta_version = get_meta_version(&conn).unwrap_or("0.3.10".into());
+        let meta_version = get_meta_version(&conn).unwrap_or_else(|_| "0.3.10".into());
         if version == meta_version {
             future::ready(true)
         } else {

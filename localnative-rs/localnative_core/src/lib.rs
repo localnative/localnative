@@ -67,7 +67,7 @@ pub extern "C" fn localnative_run(json_input: *const c_char) -> *mut c_char {
     let c_str = unsafe { CStr::from_ptr(json_input) };
     let json = match c_str.to_str() {
         Err(_) => r#"{"error": "ios json input error"}"#.to_string(),
-        Ok(text) => exe::run(&text),
+        Ok(text) => exe::run(text),
     };
 
     CString::new(json).unwrap().into_raw()

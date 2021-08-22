@@ -30,9 +30,9 @@ pub struct SearchPage {
 }
 #[derive(Debug, Clone)]
 pub enum Message {
-    NoteMessage(crate::note::Message, usize),
-    TagMessage(crate::tags::Message),
-    DayMessage(crate::days::Message),
+    Note(crate::note::Message, usize),
+    Tag(crate::tags::Message),
+    Day(crate::days::Message),
     Search,
     SearchInput(String),
     Clear,
@@ -75,7 +75,7 @@ impl SearchPage {
             TextInput::new(
                 input_state,
                 &tr!("search"),
-                &search_value,
+                search_value,
                 Message::SearchInput,
             )
             .on_submit(Message::Search),
@@ -96,10 +96,10 @@ impl SearchPage {
         let tags = Scrollable::new(tags_scrollable)
             .push(Container::new(tags.iter_mut().fold(
                 iced_aw::Wrap::new().spacing(5).push(Text::new(tr!("tags"))),
-                |tags, tag| tags.push(tag.view(theme).map(Message::TagMessage)),
+                |tags, tag| tags.push(tag.view(theme).map(Message::Tag)),
             )))
             .width(iced::Length::FillPortion(2));
-        let days = Container::new(days.view(theme).map(Message::DayMessage))
+        let days = Container::new(days.view(theme).map(Message::Day))
             .height(iced::Length::Shrink)
             .padding(2)
             .max_height(240);
@@ -134,7 +134,7 @@ impl SearchPage {
                         notes.push(
                             note_view
                                 .view(theme)
-                                .map(move |note_msg| Message::NoteMessage(note_msg, idx)),
+                                .map(move |note_msg| Message::Note(note_msg, idx)),
                         )
                     },
                 ),
@@ -250,7 +250,7 @@ impl SearchPage {
                     Command::none()
                 }
             }
-            Message::NoteMessage(msg, idx) => match msg {
+            Message::Note(msg, idx) => match msg {
                 crate::note::Message::Delete(rowid) => {
                     if disabel_delete_tip {
                         Command::perform(
@@ -286,7 +286,7 @@ impl SearchPage {
                     Command::none()
                 }
             },
-            Message::TagMessage(tag_msg) => {
+            Message::Tag(tag_msg) => {
                 match tag_msg {
                     crate::tags::Message::Search(text) => self.search_value = text,
                 }
@@ -298,7 +298,7 @@ impl SearchPage {
                     self.range,
                 )
             }
-            Message::DayMessage(dm) => match dm {
+            Message::Day(dm) => match dm {
                 crate::days::Message::DayOrMonth => {
                     self.days.day_or_month();
                     self.days.clear_cache_and_convert_selected_range();

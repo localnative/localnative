@@ -202,10 +202,10 @@ pub fn do_search(
     limit: &u32,
     offset: &u32,
 ) -> anyhow::Result<String> {
-    let c = search_count(&conn, query)?;
-    let j = search(&conn, query, limit, offset)?;
-    let d = search_by_day(&conn, query)?;
-    let t = search_by_tag(&conn, query)?;
+    let c = search_count(conn, query)?;
+    let j = search(conn, query, limit, offset)?;
+    let d = search_by_day(conn, query)?;
+    let t = search_by_tag(conn, query)?;
     let msg = format!(
         r#"{{"count": {}, "notes":{}, "days": {}, "tags": {} }}"#,
         c, j, d, t
@@ -215,10 +215,10 @@ pub fn do_search(
 }
 
 fn do_select(conn: &Connection, limit: &u32, offset: &u32) -> anyhow::Result<String> {
-    let c = select_count(&conn)?;
-    let j = select(&conn, limit, offset)?;
-    let d = select_by_day(&conn)?;
-    let t = select_by_tag(&conn)?;
+    let c = select_count(conn)?;
+    let j = select(conn, limit, offset)?;
+    let d = select_by_day(conn)?;
+    let t = select_by_tag(conn)?;
     let msg = format!(
         r#"{{"count": {}, "notes":{}, "days": {}, "tags": {} }}"#,
         c, j, d, t
@@ -235,10 +235,10 @@ pub fn do_filter(
     from: &str,
     to: &str,
 ) -> anyhow::Result<String> {
-    let c = filter_count(&conn, query, from, to)?;
-    let j = filter(&conn, query, from, to, limit, offset)?;
-    let d = search_by_day(&conn, query)?;
-    let t = filter_by_tag(&conn, query, from, to)?;
+    let c = filter_count(conn, query, from, to)?;
+    let j = filter(conn, query, from, to, limit, offset)?;
+    let d = search_by_day(conn, query)?;
+    let t = filter_by_tag(conn, query, from, to)?;
     let msg = format!(
         r#"{{"count": {}, "notes":{},"days": {}, "tags": {} }}"#,
         c, j, d, t

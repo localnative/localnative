@@ -45,8 +45,11 @@ pub fn search_by_tag(conn: &Connection, query: &str) -> anyhow::Result<String> {
     let mut params: Vec<(&str, &dyn ToSql)> = vec![];
     for i in 0..num_words {
         params.push((
-            &keys.get(i).ok_or(anyhow::anyhow!("keys is empty"))?,
-            words.get(i).ok_or(anyhow::anyhow!("words is empty"))? as &dyn ToSql,
+            keys.get(i)
+                .ok_or_else(|| anyhow::anyhow!("keys is empty"))?,
+            words
+                .get(i)
+                .ok_or_else(|| anyhow::anyhow!("words is empty"))? as &dyn ToSql,
         ));
     }
 
@@ -104,8 +107,11 @@ pub fn search_by_day(conn: &Connection, query: &str) -> anyhow::Result<String> {
     let mut params: Vec<(&str, &dyn ToSql)> = vec![];
     for i in 0..num_words {
         params.push((
-            &keys.get(i).ok_or(anyhow::anyhow!("keys is empty"))?,
-            words.get(i).ok_or(anyhow::anyhow!("words is empty"))? as &dyn ToSql,
+            keys.get(i)
+                .ok_or_else(|| anyhow::anyhow!("keys is empty"))?,
+            words
+                .get(i)
+                .ok_or_else(|| anyhow::anyhow!("words is empty"))? as &dyn ToSql,
         ));
     }
 
@@ -160,8 +166,11 @@ pub fn search_count(conn: &Connection, query: &str) -> anyhow::Result<u32> {
     let mut params: Vec<(&str, &dyn ToSql)> = vec![];
     for i in 0..num_words {
         params.push((
-            &keys.get(i).ok_or(anyhow::anyhow!("keys is empty"))?,
-            words.get(i).ok_or(anyhow::anyhow!("words is empty"))? as &dyn ToSql,
+            keys.get(i)
+                .ok_or_else(|| anyhow::anyhow!("keys is empty"))?,
+            words
+                .get(i)
+                .ok_or_else(|| anyhow::anyhow!("words is empty"))? as &dyn ToSql,
         ));
     }
     #[cfg(not(feature = "no_print"))]
@@ -180,7 +189,7 @@ pub fn search(conn: &Connection, query: &str, limit: &u32, offset: &u32) -> anyh
     if words.len() == 1
         && words
             .get(0)
-            .ok_or(anyhow::anyhow!("words is empty"))?
+            .ok_or_else(|| anyhow::anyhow!("words is empty"))?
             .is_empty()
     {
         return select(conn, limit, offset);
@@ -212,8 +221,11 @@ pub fn search(conn: &Connection, query: &str, limit: &u32, offset: &u32) -> anyh
 
     for i in 0..num_words {
         params.push((
-            &keys.get(i).ok_or(anyhow::anyhow!("keys is empty"))?,
-            words.get(i).ok_or(anyhow::anyhow!("words is empty"))? as &dyn ToSql,
+            keys.get(i)
+                .ok_or_else(|| anyhow::anyhow!("keys is empty"))?,
+            words
+                .get(i)
+                .ok_or_else(|| anyhow::anyhow!("words is empty"))? as &dyn ToSql,
         ));
     }
     #[cfg(not(feature = "no_print"))]
@@ -228,7 +240,7 @@ pub fn search(conn: &Connection, query: &str, limit: &u32, offset: &u32) -> anyh
             tags: row.get(4)?,
             description: row.get(5)?,
             comments: row.get(6)?,
-            annotations: super::utils::make_data_url(row).unwrap_or("".into()),
+            annotations: super::utils::make_data_url(row).unwrap_or_else(|_| "".into()),
             created_at: row.get(8)?,
             is_public: row.get(9)?,
         })

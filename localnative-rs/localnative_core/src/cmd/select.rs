@@ -122,7 +122,7 @@ pub fn select(conn: &Connection, limit: &u32, offset: &u32) -> anyhow::Result<St
                 tags: row.get(4)?,
                 description: row.get(5)?,
                 comments: row.get(6)?,
-                annotations: super::utils::make_data_url(row).unwrap_or("".into()),
+                annotations: super::utils::make_data_url(row).unwrap_or_else(|_| "".into()),
                 created_at: row.get(8)?,
                 is_public: row.get(9)?,
             })

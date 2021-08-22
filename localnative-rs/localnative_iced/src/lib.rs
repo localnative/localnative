@@ -293,7 +293,7 @@ impl iced::Application for LocalNative {
                                 Message::Receiver,
                             )
                         }
-                        delete_tip::Message::SearchPageMessage(spmsg) => search_page.update(
+                        delete_tip::Message::SearchPage(spmsg) => search_page.update(
                             spmsg,
                             self.config.limit,
                             conn.clone(),

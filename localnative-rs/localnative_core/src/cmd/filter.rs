@@ -33,7 +33,7 @@ pub fn filter_by_tag(
     if words.len() == 1
         && words
             .get(0)
-            .ok_or(anyhow::anyhow!("words is empty"))?
+            .ok_or_else(|| anyhow::anyhow!("words is empty"))?
             .is_empty()
     {
         return select_by_tag(conn);
@@ -58,8 +58,11 @@ pub fn filter_by_tag(
         vec![(":from", &from as &dyn ToSql), (":to", &to as &dyn ToSql)];
     for i in 0..num_words {
         params.push((
-            &keys.get(i).ok_or(anyhow::anyhow!("keys is empty"))?,
-            words.get(i).ok_or(anyhow::anyhow!("words is empty"))? as &dyn ToSql,
+            keys.get(i)
+                .ok_or_else(|| anyhow::anyhow!("keys is empty"))?,
+            words
+                .get(i)
+                .ok_or_else(|| anyhow::anyhow!("words is empty"))? as &dyn ToSql,
         ));
     }
     #[cfg(not(feature = "no_print"))]
@@ -123,8 +126,11 @@ pub fn filter_count(conn: &Connection, query: &str, from: &str, to: &str) -> any
         vec![(":from", &from as &dyn ToSql), (":to", &to as &dyn ToSql)];
     for i in 0..num_words {
         params.push((
-            &keys.get(i).ok_or(anyhow::anyhow!("keys is empty"))?,
-            words.get(i).ok_or(anyhow::anyhow!("words is empty"))? as &dyn ToSql,
+            keys.get(i)
+                .ok_or_else(|| anyhow::anyhow!("keys is empty"))?,
+            words
+                .get(i)
+                .ok_or_else(|| anyhow::anyhow!("words is empty"))? as &dyn ToSql,
         ));
     }
     #[cfg(not(feature = "no_print"))]
@@ -150,7 +156,7 @@ pub fn filter(
     if words.len() == 1
         && words
             .get(0)
-            .ok_or(anyhow::anyhow!("words is empty"))?
+            .ok_or_else(|| anyhow::anyhow!("words is empty"))?
             .is_empty()
     {
         return select(conn, limit, offset);
@@ -186,8 +192,11 @@ pub fn filter(
 
     for i in 0..num_words {
         params.push((
-            &keys.get(i).ok_or(anyhow::anyhow!("keys is empty"))?,
-            words.get(i).ok_or(anyhow::anyhow!("words is empty"))? as &dyn ToSql,
+            keys.get(i)
+                .ok_or_else(|| anyhow::anyhow!("keys is empty"))?,
+            words
+                .get(i)
+                .ok_or_else(|| anyhow::anyhow!("words is empty"))? as &dyn ToSql,
         ));
     }
     #[cfg(not(feature = "no_print"))]
@@ -202,7 +211,7 @@ pub fn filter(
             tags: row.get(4)?,
             description: row.get(5)?,
             comments: row.get(6)?,
-            annotations: super::utils::make_data_url(row).unwrap_or("".into()),
+            annotations: super::utils::make_data_url(row).unwrap_or_else(|_| "".into()),
             created_at: row.get(8)?,
             is_public: row.get(9)?,
         })
