@@ -18,21 +18,17 @@
 use rustc_serialize::base64::{self, ToBase64};
 use rustc_serialize::hex::FromHex;
 
-pub fn make_data_url(row: &rusqlite::Row) -> String {
-    let url = row.get::<_, String>(3).unwrap();
+pub fn make_data_url(row: &rusqlite::Row) -> anyhow::Result<String> {
+    let url = row.get::<_, String>(3)?;
     #[cfg(not(feature = "no_print"))]
     eprintln!("url: {}", url);
     if url == "mime://image/png" {
-        let hex = row.get::<_, String>(7).unwrap();
-        let result = hex
-            .from_hex()
-            .unwrap()
-            .as_slice()
-            .to_base64(base64::STANDARD);
+        let hex = row.get::<_, String>(7)?;
+        let result = hex.from_hex()?.as_slice().to_base64(base64::STANDARD);
         let mut r = "data:image/png;base64,".to_owned();
         r.push_str(&result);
-        r
+        Ok(r)
     } else {
-        "".to_string()
+        Ok("".to_string())
     }
 }

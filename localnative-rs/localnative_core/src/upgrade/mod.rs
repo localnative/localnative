@@ -29,70 +29,66 @@ mod to_0_5_0;
 mod utils;
 use crate::OneString;
 
-fn set_meta_version(conn: &Connection, version: &str) {
+fn set_meta_version(conn: &Connection, version: &str) -> anyhow::Result<()> {
     conn.execute(
         "
         UPDATE meta SET meta_value = ?1
         WHERE meta_key = 'version';",
         &[version],
-    )
-    .unwrap();
+    )?;
+    Ok(())
 }
 
-pub fn upgrade(conn: &Connection) -> Result<&str, &str> {
-    if get_meta_is_upgrading(conn) {
+pub fn upgrade(conn: &Connection) -> anyhow::Result<&str> {
+    if get_meta_is_upgrading(conn)? {
         eprintln!("is_upgrading");
-        Err("is_upgrading")
+        Err(anyhow::anyhow!("is_upgrading"))
     } else {
-        if Version::parse(&get_meta_version(conn)) < Version::parse("0.4.0") {
+        if Version::parse(&get_meta_version(conn)?)? < Version::parse("0.4.0")? {
             to_0_4_0::migrate_schema(conn).unwrap();
         }
-        if Version::parse(&get_meta_version(conn)) == Version::parse("0.4.0") {
+        if Version::parse(&get_meta_version(conn)?)? == Version::parse("0.4.0")? {
             to_0_4_0::migrate_note(conn).unwrap();
-            set_meta_version(conn, "0.4.1");
+            set_meta_version(conn, "0.4.1")?;
         }
-        if Version::parse(&get_meta_version(conn)) == Version::parse("0.4.1") {
-            set_meta_version(conn, "0.4.2");
+        if Version::parse(&get_meta_version(conn)?)? == Version::parse("0.4.1")? {
+            set_meta_version(conn, "0.4.2")?;
         }
-        if Version::parse(&get_meta_version(conn)) == Version::parse("0.4.2") {
+        if Version::parse(&get_meta_version(conn)?)? == Version::parse("0.4.2")? {
             to_0_5_0::drop_ssb_table(conn).unwrap();
-            set_meta_version(conn, VERSION);
+            set_meta_version(conn, VERSION)?;
         }
         eprintln!("upgraded to {}", VERSION);
         Ok(VERSION)
     }
 }
 
-fn get_meta_is_upgrading(conn: &Connection) -> bool {
-    let mut stmt = conn
-        .prepare("SELECT meta_value FROM meta where meta_key = 'is_upgrading' ")
-        .unwrap();
+fn get_meta_is_upgrading(conn: &Connection) -> anyhow::Result<bool> {
+    let mut stmt = conn.prepare("SELECT meta_value FROM meta where meta_key = 'is_upgrading' ")?;
     match stmt.query_row([], |row| Ok(OneString { s: row.get(0)? })) {
         Ok(is_upgrading) => {
             if is_upgrading.s == "1" {
                 eprintln!("get_meta_is_upgrading: true");
-                true
+                Ok(true)
             } else {
                 eprintln!("get_meta_is_upgrading: false");
-                false
+                Ok(false)
             }
         }
-        Err(_) => false,
+        Err(_) => Ok(false),
     }
 }
 
-pub fn get_meta_version(conn: &Connection) -> String {
-    let mut stmt = conn
-        .prepare("SELECT meta_value FROM meta where meta_key = 'version' ")
-        .unwrap();
+pub fn get_meta_version(conn: &Connection) -> anyhow::Result<String> {
+    let mut stmt = conn.prepare("SELECT meta_value FROM meta where meta_key = 'version' ")?;
     match stmt.query_row([], |row| Ok(OneString { s: row.get(0)? })) {
         Ok(version) => {
             eprintln!("get_meta_version {}", version.s);
-            version.s
+            Ok(version.s)
         }
         Err(_) => {
             eprintln!("get_meta_version: no meta table, default to earliest version 0.3.10");
-            "0.3.10".to_string()
+            Ok("0.3.10".to_string())
         }
     }
 }

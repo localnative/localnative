@@ -74,7 +74,7 @@ pub enum Message {
     RequestClosed,
     ApplyLanguage(Option<()>),
     CloseWindow(Option<()>),
-    SyncResult(std::io::Result<()>),
+    SyncResult(anyhow::Result<()>),
     SyncOption(Option<()>),
     StartServerResult(std::io::Result<Stop>),
     ServerOption(Option<()>),
@@ -113,7 +113,7 @@ impl iced::Application for LocalNative {
 
     fn title(&self) -> String {
         let version = env!("CARGO_PKG_VERSION");
-        format!("Local Native {}",version)
+        format!("Local Native {}", version)
     }
 
     fn update(
@@ -311,7 +311,9 @@ impl iced::Application for LocalNative {
                 }
                 Message::SyncResult(res) => {
                     if let Err(err) = res {
-                        data.sync_view.sync_state = sync::SyncState::SyncError(err.kind());
+                        if let Some(io_error) = err.downcast_ref::<std::io::Error>() {
+                            data.sync_view.sync_state = sync::SyncState::SyncError(io_error.kind());
+                        }
                         Command::none()
                     } else {
                         data.sync_view.sync_state = sync::SyncState::Complete;

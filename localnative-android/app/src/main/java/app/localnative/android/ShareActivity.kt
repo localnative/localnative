@@ -30,7 +30,7 @@ import kotlinx.android.synthetic.main.activity_share.*
 import org.json.JSONObject
 import android.text.method.ScrollingMovementMethod
 
-class ShareActivity : AppCompatActivity(), Permission.OnPermissonGrantedListenr {
+class ShareActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_share)
@@ -55,7 +55,7 @@ class ShareActivity : AppCompatActivity(), Permission.OnPermissonGrantedListenr 
 
             val cmd = j.toString()
             Log.d("CmdInsert", cmd)
-            Permission.invoke_WRITE_EXTERNAL_STORAGE(this, cmd, 0)
+            insert(cmd, 0)
         }
         when {
             intent?.action == Intent.ACTION_SEND -> {
@@ -71,7 +71,7 @@ class ShareActivity : AppCompatActivity(), Permission.OnPermissonGrantedListenr 
         }
     }
 
-    override fun onPermissonGranted(cmd: String, offset: Long?) {
+    fun insert(cmd: String, offset: Long?) {
         val s = RustBridge.run(cmd)
         Log.d("CmdInsertResult", s)
         finish()

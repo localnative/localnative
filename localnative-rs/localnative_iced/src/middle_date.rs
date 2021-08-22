@@ -24,7 +24,7 @@ impl MiddleDate {
         rowid: i64,
     ) -> Option<Self> {
         let conn = &*conn.lock().await;
-        delete(conn, rowid);
+        delete(conn, rowid).ok()?;
         Self::from_select_inner(conn, query, limit, offset)
     }
     pub async fn upgrade(conn: Conn, query: String, limit: u32, offset: u32) -> Option<Self> {
@@ -46,8 +46,8 @@ impl MiddleDate {
         note: Note,
     ) -> Option<Self> {
         let conn = &*conn.lock().await;
-        delete(conn, rowid);
-        insert(note);
+        delete(conn, rowid).ok()?;
+        insert(note).ok()?;
         Self::from_select_inner(conn, query, limit, offset)
     }
     pub async fn from_select(conn: Conn, query: String, limit: u32, offset: u32) -> Option<Self> {
@@ -84,7 +84,7 @@ impl MiddleDate {
         limit: u32,
         offset: u32,
     ) -> Option<Self> {
-        let search_result = localnative_core::exe::do_search(conn, &query, &limit, &offset);
+        let search_result = localnative_core::exe::do_search(conn, &query, &limit, &offset).ok()?;
 
         serde_json::from_str::<Self>(&search_result).ok()
     }
@@ -96,7 +96,8 @@ impl MiddleDate {
         from: &str,
         to: &str,
     ) -> Option<Self> {
-        let filter_result = localnative_core::exe::do_filter(conn, query, limit, offset, from, to);
+        let filter_result =
+            localnative_core::exe::do_filter(conn, query, limit, offset, from, to).ok()?;
 
         serde_json::from_str::<Self>(&filter_result).ok()
     }

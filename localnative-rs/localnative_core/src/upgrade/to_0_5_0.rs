@@ -16,15 +16,14 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use rusqlite::{Connection, Result};
+use rusqlite::Connection;
 
-pub fn drop_ssb_table(conn: &Connection) -> Result<()> {
+pub fn drop_ssb_table(conn: &Connection) -> anyhow::Result<()> {
     eprintln!("to_0_5_0 drop_ssb_table");
     conn.execute_batch(
         "BEGIN;
         drop table if exists ssb;
         COMMIT;",
-    )
-    .unwrap();
+    )?;
     Ok(())
 }

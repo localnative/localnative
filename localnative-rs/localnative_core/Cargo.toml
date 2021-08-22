@@ -3,7 +3,7 @@ name = "localnative_core"
 description = "localnative core lib"
 homepage = "https://localnative.app"
 authors = ["Yi Wang"]
-version = "0.5.0"
+version = "0.5.1"
 license = "AGPL-3.0"
 edition = "2018"
 [dependencies.rusqlite]
@@ -16,28 +16,25 @@ jni = { version = "0.19", default-features = false }
 [dependencies]
 linked_hash_set = "0.1.4"
 regex = "1"
-time = {version = "0.3.0-alpha-2",features = ["formatting","macros"]}
+time = {version = "0.3",features = ["formatting","macros"]}
 serde = {version = "1",features = ["derive"]}
 serde_json = "1"
 dirs = "3"
 base64 = "0.13"
 rustc-serialize = "0.3.24"
 uuid = { version = "0.8", features = ["v4"] }
-semver = "0.11.0"
+semver = "1"
 tokio = { version = "1", features = ["full"] }
 tokio-serde = { version = "0.8", features = ["bincode"] }
 futures = "0.3"
 tarpc = { version = "0.26", features = ["full"]}
 get_if_addrs = "0.5.3"
+anyhow = "1"
 stream-cancel = "0.8"
+thiserror = "1.0"
 
 [lib]
 name = "localnative_core"
-# android only need this
-# crate-type = ["cdylib"]
-# ios works as below
-# crate-type = ["staticlib"]
-# desktop release will need this
 crate-type = ["rlib","cdylib","staticlib"]
 
 

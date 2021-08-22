@@ -132,7 +132,7 @@ pub struct Ssb {
     pub prev: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, Default)]
 pub struct Note {
     pub rowid: i64,
     pub uuid4: String,
@@ -147,8 +147,20 @@ pub struct Note {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Cmd {
-    pub action: String,
+#[serde(tag = "action")]
+#[serde(rename_all = "kebab-case")]
+pub enum Cmd {
+    Server(CmdRpcServer),
+    ClientSync(CmdRpcClient),
+    ClientStopServer(CmdRpcClient),
+    Upgrade,
+    SyncViaAttach(CmdSyncViaAttach),
+    InsertImage(CmdInsert),
+    Insert(CmdInsert),
+    Delete(CmdDelete),
+    Select(CmdSelect),
+    Search(CmdSearch),
+    Filter(CmdFilter),
 }
 
 #[derive(Serialize, Deserialize, Debug)]

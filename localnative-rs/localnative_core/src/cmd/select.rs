@@ -21,33 +21,29 @@ use rusqlite::types::ToSql;
 use rusqlite::Connection;
 use std::collections::HashMap;
 
-pub fn select_by_day(conn: &Connection) -> String {
-    let mut stmt = conn
-        .prepare(
-            "SELECT substr(created_at, 0, 11) as dt, count(1) as n
+pub fn select_by_day(conn: &Connection) -> anyhow::Result<String> {
+    let mut stmt = conn.prepare(
+        "SELECT substr(created_at, 0, 11) as dt, count(1) as n
         FROM note
         group by dt
         order by dt",
-        )
-        .unwrap();
-    let result_iter = stmt
-        .query_map([], |row| {
-            Ok(KVStringI64 {
-                k: row.get(0)?,
-                v: row.get(1)?,
-            })
+    )?;
+    let result_iter = stmt.query_map([], |row| {
+        Ok(KVStringI64 {
+            k: row.get(0)?,
+            v: row.get(1)?,
         })
-        .unwrap();
+    })?;
 
     let mut d = "[ ".to_owned();
-    for r in result_iter {
+    for r in result_iter.filter(|r| r.is_ok()) {
         let r = r.unwrap();
-        d.push_str(&serde_json::to_string(&r).unwrap());
+        d.push_str(&serde_json::to_string(&r)?);
         d.push(',');
     }
     d.pop();
     d.push(']');
-    d
+    Ok(d)
 }
 
 // fn make_json_array_string<T>(result_iter : MappedRows<T> ) -> String {
@@ -62,21 +58,17 @@ pub fn select_by_day(conn: &Connection) -> String {
 //     d
 // }
 
-pub fn select_by_tag(conn: &Connection) -> String {
-    let mut stmt = conn
-        .prepare(
-            "SELECT tags
+pub fn select_by_tag(conn: &Connection) -> anyhow::Result<String> {
+    let mut stmt = conn.prepare(
+        "SELECT tags
         FROM note",
-        )
-        .unwrap();
+    )?;
 
     let mut tag_count_map: HashMap<String, i64> = HashMap::new();
 
-    let result_iter = stmt
-        .query_map([], |row| Ok(Tags { tags: row.get(0)? }))
-        .unwrap();
+    let result_iter = stmt.query_map([], |row| Ok(Tags { tags: row.get(0)? }))?;
 
-    for r in result_iter {
+    for r in result_iter.filter(|r| r.is_ok()) {
         let r = r.unwrap();
         let tag_set = r.tags.split(',');
         for t in tag_set {
@@ -94,62 +86,59 @@ pub fn select_by_tag(conn: &Connection) -> String {
             k: tag.to_string(),
             v: count,
         };
-        d.push_str(&serde_json::to_string(&item).unwrap());
+        d.push_str(&serde_json::to_string(&item)?);
         d.push(',');
     }
     d.pop();
     d.push(']');
-    d
+    Ok(d)
 }
 
-pub fn select_count(conn: &Connection) -> u32 {
-    let mut stmt = conn.prepare("SELECT count(1) FROM note").unwrap();
-    stmt.query_row([], |row| row.get(0)).unwrap()
+pub fn select_count(conn: &Connection) -> anyhow::Result<u32> {
+    let mut stmt = conn.prepare("SELECT count(1) FROM note")?;
+    let count = stmt.query_row([], |row| row.get(0))?;
+    Ok(count)
 }
 
-pub fn select(conn: &Connection, limit: &u32, offset: &u32) -> String {
-    let mut stmt = conn
-        .prepare(
-            "SELECT rowid, uuid4, title, url, tags, description, comments
+pub fn select(conn: &Connection, limit: &u32, offset: &u32) -> anyhow::Result<String> {
+    let mut stmt = conn.prepare(
+        "SELECT rowid, uuid4, title, url, tags, description, comments
         , hex(annotations)
         , created_at, is_public
         FROM note
         order by created_at desc limit :limit offset :offset",
-        )
-        .unwrap();
-    let note_iter = stmt
-        .query_map(
-            &[
-                (":limit", limit as &dyn ToSql),
-                (":offset", offset as &dyn ToSql),
-            ],
-            |row| {
-                Ok(Note {
-                    rowid: row.get(0)?,
-                    uuid4: row.get(1)?,
-                    title: row.get(2)?,
-                    url: row.get(3)?,
-                    tags: row.get(4)?,
-                    description: row.get(5)?,
-                    comments: row.get(6)?,
-                    annotations: super::utils::make_data_url(row),
-                    created_at: row.get(8)?,
-                    is_public: row.get(9)?,
-                })
-            },
-        )
-        .unwrap();
+    )?;
+    let note_iter = stmt.query_map(
+        &[
+            (":limit", limit as &dyn ToSql),
+            (":offset", offset as &dyn ToSql),
+        ],
+        |row| {
+            Ok(Note {
+                rowid: row.get(0)?,
+                uuid4: row.get(1)?,
+                title: row.get(2)?,
+                url: row.get(3)?,
+                tags: row.get(4)?,
+                description: row.get(5)?,
+                comments: row.get(6)?,
+                annotations: super::utils::make_data_url(row).unwrap_or("".into()),
+                created_at: row.get(8)?,
+                is_public: row.get(9)?,
+            })
+        },
+    )?;
 
     let mut j = "[ ".to_owned();
-    for note in note_iter {
+    for note in note_iter.filter(|note| note.is_ok()) {
         let mut note = note.unwrap();
         note.tags = make_tags(&note.tags);
         //#[cfg(not(feature = "no_print"))]
         //eprintln!("Found note {:?}", note);
-        j.push_str(&serde_json::to_string(&note).unwrap());
+        j.push_str(&serde_json::to_string(&note)?);
         j.push(',');
     }
     j.pop();
     j.push(']');
-    j
+    Ok(j)
 }

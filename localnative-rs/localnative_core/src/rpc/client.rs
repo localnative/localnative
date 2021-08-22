@@ -21,26 +21,25 @@ use crate::cmd::sync::get_note_by_uuid4;
 use crate::cmd::sync::next_uuid4_candidates;
 use crate::exe::get_sqlite_connection;
 use crate::upgrade::get_meta_version;
-use std::io::{Error, ErrorKind};
-use std::{io, net::SocketAddr};
+use std::net::SocketAddr;
 use tarpc::{client, context};
 use tokio::runtime::Runtime;
 use tokio_serde::formats::Bincode;
 
-pub async fn run_sync_to_server(addr: &SocketAddr) -> io::Result<()> {
+pub async fn run_sync_to_server(addr: &SocketAddr) -> anyhow::Result<()> {
     let transport = tarpc::serde_transport::tcp::connect(addr, Bincode::default).await?;
     let client = LnClient::new(client::Config::default(), transport).spawn();
     let conn = get_sqlite_connection();
 
     // check version
-    let version = get_meta_version(&conn);
+    let version = get_meta_version(&conn)?;
     let is_version_match = client.is_version_match(context::current(), version).await?;
     eprintln!("is_version_match: {}", is_version_match);
     if !is_version_match {
-        return Err(Error::new(ErrorKind::Other, "VERSION_NOT_MATCH"));
+        return Err(anyhow::anyhow!("version not match"));
     }
 
-    let candidates = next_uuid4_candidates(&conn);
+    let candidates = next_uuid4_candidates(&conn)?;
     // diff uuid4
     let diff_uuid4 = client
         .diff_uuid4_to_server(context::current(), candidates)
@@ -49,7 +48,7 @@ pub async fn run_sync_to_server(addr: &SocketAddr) -> io::Result<()> {
 
     // send one by one
     for u in diff_uuid4 {
-        let uuid4 = get_note_by_uuid4(&conn, &u);
+        let uuid4 = get_note_by_uuid4(&conn, &u)?;
         client.send_note(context::current(), uuid4).await?;
     }
     eprintln!("send_note done");
@@ -57,20 +56,20 @@ pub async fn run_sync_to_server(addr: &SocketAddr) -> io::Result<()> {
     Ok(())
 }
 
-pub async fn run_sync_from_server(addr: &SocketAddr) -> io::Result<()> {
+pub async fn run_sync_from_server(addr: &SocketAddr) -> anyhow::Result<()> {
     let transport = tarpc::serde_transport::tcp::connect(addr, Bincode::default).await?;
     let client = LnClient::new(client::Config::default(), transport).spawn();
     let conn = get_sqlite_connection();
 
     // check version
-    let version = get_meta_version(&conn);
+    let version = get_meta_version(&conn)?;
     let is_version_match = client.is_version_match(context::current(), version).await?;
     eprintln!("is_version_match: {}", is_version_match);
     if !is_version_match {
-        return Err(Error::new(ErrorKind::Other, "VERSION_NOT_MATCH"));
+        return Err(anyhow::anyhow!("version not match"));
     }
 
-    let candidates = next_uuid4_candidates(&conn);
+    let candidates = next_uuid4_candidates(&conn)?;
     // diff uuid4
     let diff_uuid4 = client
         .diff_uuid4_from_server(context::current(), candidates)
@@ -80,18 +79,18 @@ pub async fn run_sync_from_server(addr: &SocketAddr) -> io::Result<()> {
     // send one by one
     for u in diff_uuid4 {
         let note = client.receive_note(context::current(), u).await?;
-        insert(note);
+        insert(note)?;
     }
     eprintln!("receive_note done");
 
     Ok(())
 }
 
-pub fn sync(addr: &str) -> Result<String, String> {
+pub fn sync(addr: &str) -> anyhow::Result<String> {
     let server_addr = addr
         .parse()
         .unwrap_or_else(|e| panic!(r#"server_addr {} invalid: {}"#, addr, e));
-    let rt = Runtime::new().map_err(|e| format!("sync init rt error:{:?}", e))?;
+    let rt = Runtime::new()?;
 
     rt.block_on(async {
         if let Err(e) = run_sync_to_server(&server_addr).await {
@@ -100,7 +99,7 @@ pub fn sync(addr: &str) -> Result<String, String> {
             eprintln!("sync to server done");
         }
     });
-    let rt2 = Runtime::new().map_err(|e| format!("sync init rt error:{:?}", e))?;
+    let rt2 = Runtime::new()?;
     rt2.block_on(async {
         if let Err(e) = run_sync_from_server(&server_addr).await {
             eprintln!("sync from server error:{:?}", e);
@@ -111,17 +110,17 @@ pub fn sync(addr: &str) -> Result<String, String> {
     Ok("sync ok".to_string())
 }
 
-pub async fn run_stop_server(addr: &SocketAddr) -> io::Result<()> {
+pub async fn run_stop_server(addr: &SocketAddr) -> anyhow::Result<()> {
     let transport = tarpc::serde_transport::tcp::connect(addr, Bincode::default).await?;
     let client = LnClient::new(client::Config::default(), transport).spawn();
     let conn = get_sqlite_connection();
 
     // check version
-    let version = get_meta_version(&conn);
+    let version = get_meta_version(&conn)?;
     let is_version_match = client.is_version_match(context::current(), version).await?;
     eprintln!("is_version_match: {}", is_version_match);
     if !is_version_match {
-        return Err(Error::new(ErrorKind::Other, "VERSION_NOT_MATCH"));
+        return Err(anyhow::anyhow!("version not match"));
     }
 
     // diff uuid4
@@ -129,11 +128,9 @@ pub async fn run_stop_server(addr: &SocketAddr) -> io::Result<()> {
     Ok(())
 }
 
-pub fn stop_server(addr: &str) -> Result<String, String> {
-    let server_addr: SocketAddr = addr
-        .parse()
-        .unwrap_or_else(|e| panic!(r#"server_addr {} invalid: {}"#, addr, e));
-    let rt = Runtime::new().map_err(|e| format!("runtime init error:{:?}", e))?;
+pub fn stop_server(addr: &str) -> anyhow::Result<String> {
+    let server_addr: SocketAddr = addr.parse()?;
+    let rt = Runtime::new()?;
     rt.block_on(async {
         if let Err(e) = run_stop_server(&server_addr).await {
             eprintln!("stop server error:{:?}", e);

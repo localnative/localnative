@@ -21,11 +21,11 @@ use rusqlite::Connection;
 use std::collections::HashSet;
 
 //client
-pub fn get_note_by_uuid4(conn: &Connection, uuid4: &str) -> Note {
+pub fn get_note_by_uuid4(conn: &Connection, uuid4: &str) -> anyhow::Result<Note> {
     let mut stmt = conn.prepare(
 "select uuid4, title, url, tags, description, comments, annotations, created_at FROM note where uuid4 = ? "
-    ).unwrap();
-    stmt.query_row(&[uuid4], |row| {
+    )?;
+    let note = stmt.query_row(&[uuid4], |row| {
         Ok(Note {
             rowid: 0,
             uuid4: row.get(0)?,
@@ -38,49 +38,49 @@ pub fn get_note_by_uuid4(conn: &Connection, uuid4: &str) -> Note {
             created_at: row.get(7)?,
             is_public: false,
         })
-    })
-    .unwrap()
+    })?;
+    Ok(note)
 }
 
-pub fn next_uuid4_candidates(conn: &Connection) -> Vec<String> {
+pub fn next_uuid4_candidates(conn: &Connection) -> anyhow::Result<Vec<String>> {
     let mut r = Vec::new();
-    let mut stmt = conn
-        .prepare("select uuid4 FROM note order by rowid")
-        .unwrap();
-    let iter = stmt
-        .query_map([], |row| Ok(OneString { s: row.get(0)? }))
-        .unwrap();
+    let mut stmt = conn.prepare("select uuid4 FROM note order by rowid")?;
+    let iter = stmt.query_map([], |row| Ok(OneString { s: row.get(0)? }))?;
     for uuid4 in iter.flatten() {
         r.push(uuid4.s);
     }
-    r
+    Ok(r)
 }
 
 // to server
-pub fn diff_uuid4_to_server(conn: &Connection, candidates: Vec<String>) -> Vec<String> {
+pub fn diff_uuid4_to_server(
+    conn: &Connection,
+    candidates: Vec<String>,
+) -> anyhow::Result<Vec<String>> {
     let mut r = Vec::new();
-    let mut stmt = conn.prepare("select 1 FROM note where uuid4 = ? ").unwrap();
+    let mut stmt = conn.prepare("select 1 FROM note where uuid4 = ? ")?;
     for uuid4 in candidates {
-        if !(stmt.exists(&[&uuid4]).unwrap()) {
+        if !(stmt.exists(&[&uuid4])?) {
             r.push(uuid4);
         }
     }
-    r
+    Ok(r)
 }
 
 // from server
-pub fn diff_uuid4_from_server(conn: &Connection, candidates: Vec<String>) -> Vec<String> {
+pub fn diff_uuid4_from_server(
+    conn: &Connection,
+    candidates: Vec<String>,
+) -> anyhow::Result<Vec<String>> {
     let candidates: HashSet<_> = candidates.iter().collect();
     let mut r = Vec::new();
-    let mut stmt = conn.prepare("select uuid4 FROM note").unwrap();
-    let iter = stmt
-        .query_map([], |row| Ok(OneString { s: row.get(0)? }))
-        .unwrap();
+    let mut stmt = conn.prepare("select uuid4 FROM note")?;
+    let iter = stmt.query_map([], |row| Ok(OneString { s: row.get(0)? }))?;
 
     for uuid4 in iter.flatten() {
         if !(candidates.contains(&uuid4.s)) {
             r.push(uuid4.s);
         }
     }
-    r
+    Ok(r)
 }

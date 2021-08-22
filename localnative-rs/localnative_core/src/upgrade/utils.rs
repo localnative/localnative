@@ -18,23 +18,22 @@
 use crate::OneString;
 use rusqlite::Connection;
 
-pub fn check_table_exist(conn: &Connection, table_name: &str) -> bool {
-    let mut stmt = conn
-        .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name= :table_name")
-        .unwrap();
+pub fn check_table_exist(conn: &Connection, table_name: &str) -> anyhow::Result<bool> {
+    let mut stmt =
+        conn.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name= :table_name")?;
     match stmt.query_row(&[(":table_name", &table_name)], |row| {
         Ok(OneString { s: row.get(0)? })
     }) {
         Ok(rs) => {
             if rs.s == table_name {
-                true
+                Ok(true)
             } else {
-                panic!(
+                Err(anyhow::anyhow!(
                     "check_table_exist returned table name not match: {}",
                     table_name
-                )
+                ))
             }
         }
-        Err(_) => false,
+        Err(_) => Ok(false),
     }
 }

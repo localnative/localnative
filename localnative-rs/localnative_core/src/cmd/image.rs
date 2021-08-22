@@ -20,11 +20,11 @@ use crate::Note;
 use base64::decode;
 use rusqlite::types::ToSql;
 
-pub fn insert_image(note: Note) {
+pub fn insert_image(note: Note) -> anyhow::Result<()> {
     let data64 = note.annotations.replace("data:image/png;base64,", "");
-    let decoded = decode(&data64).unwrap();
+    let decoded = decode(&data64)?;
     let conn = &mut super::super::exe::get_sqlite_connection();
-    let tx = conn.transaction().unwrap();
+    let tx = conn.transaction()?;
     {
         tx.execute(
             "
@@ -44,7 +44,7 @@ pub fn insert_image(note: Note) {
                 &note.created_at,
                 &note.is_public as &dyn ToSql,
             ],
-        ).unwrap();
+        )?;
     }
     {
         // mark is_last_note = 0 to indicate out of sync, i.e. db > ssb
@@ -54,8 +54,8 @@ pub fn insert_image(note: Note) {
         WHERE is_active_author = 1
         ",
             [],
-        )
-        .unwrap();
+        )?;
     }
-    tx.commit().unwrap();
+    tx.commit()?;
+    Ok(())
 }

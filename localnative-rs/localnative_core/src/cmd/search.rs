@@ -23,7 +23,7 @@ use rusqlite::types::ToSql;
 use rusqlite::Connection;
 use std::collections::HashMap;
 
-pub fn search_by_tag(conn: &Connection, query: &str) -> String {
+pub fn search_by_tag(conn: &Connection, query: &str) -> anyhow::Result<String> {
     let words = make_words(query);
     if words.len() == 1 && words.get(0).unwrap().is_empty() {
         return select_by_tag(conn);
@@ -39,21 +39,22 @@ pub fn search_by_tag(conn: &Connection, query: &str) -> String {
     #[cfg(not(feature = "no_print"))]
     eprintln!("sql {}", sql);
 
-    let mut stmt = conn.prepare(&sql).unwrap();
+    let mut stmt = conn.prepare(&sql)?;
     let keys: Vec<String> = make_keys(num_words);
 
     let mut params: Vec<(&str, &dyn ToSql)> = vec![];
     for i in 0..num_words {
-        params.push((&keys.get(i).unwrap(), words.get(i).unwrap() as &dyn ToSql));
+        params.push((
+            &keys.get(i).ok_or(anyhow::anyhow!("keys is empty"))?,
+            words.get(i).ok_or(anyhow::anyhow!("words is empty"))? as &dyn ToSql,
+        ));
     }
 
     let mut tag_count_map: HashMap<String, i64> = HashMap::new();
 
-    let result_iter = stmt
-        .query_map(&params[..], |row| Ok(Tags { tags: row.get(0)? }))
-        .unwrap();
+    let result_iter = stmt.query_map(&params[..], |row| Ok(Tags { tags: row.get(0)? }))?;
 
-    for r in result_iter {
+    for r in result_iter.filter(|r| r.is_ok()) {
         let r = r.unwrap();
         let tag_set = r.tags.split(',');
         for t in tag_set {
@@ -71,15 +72,15 @@ pub fn search_by_tag(conn: &Connection, query: &str) -> String {
             k: tag.to_string(),
             v: count,
         };
-        d.push_str(&serde_json::to_string(&item).unwrap());
+        d.push_str(&serde_json::to_string(&item)?);
         d.push(',');
     }
     d.pop();
     d.push(']');
-    d
+    Ok(d)
 }
 
-pub fn search_by_day(conn: &Connection, query: &str) -> String {
+pub fn search_by_day(conn: &Connection, query: &str) -> anyhow::Result<String> {
     let words = make_words(query);
     if words.len() == 1 && words.get(0).unwrap().is_empty() {
         return select_by_day(conn);
@@ -97,35 +98,36 @@ pub fn search_by_day(conn: &Connection, query: &str) -> String {
     #[cfg(not(feature = "no_print"))]
     eprintln!("sql {}", sql);
 
-    let mut stmt = conn.prepare(&sql).unwrap();
+    let mut stmt = conn.prepare(&sql)?;
     let keys: Vec<String> = make_keys(num_words);
 
     let mut params: Vec<(&str, &dyn ToSql)> = vec![];
     for i in 0..num_words {
-        params.push((&keys.get(i).unwrap(), words.get(i).unwrap() as &dyn ToSql));
+        params.push((
+            &keys.get(i).ok_or(anyhow::anyhow!("keys is empty"))?,
+            words.get(i).ok_or(anyhow::anyhow!("words is empty"))? as &dyn ToSql,
+        ));
     }
 
-    let result_iter = stmt
-        .query_map(&params[..], |row| {
-            Ok(KVStringI64 {
-                k: row.get(0)?,
-                v: row.get(1)?,
-            })
+    let result_iter = stmt.query_map(&params[..], |row| {
+        Ok(KVStringI64 {
+            k: row.get(0)?,
+            v: row.get(1)?,
         })
-        .unwrap();
+    })?;
 
     let mut d = "[ ".to_owned();
-    for r in result_iter {
+    for r in result_iter.filter(|r| r.is_ok()) {
         let r = r.unwrap();
-        d.push_str(&serde_json::to_string(&r).unwrap());
+        d.push_str(&serde_json::to_string(&r)?);
         d.push(',');
     }
     d.pop();
     d.push(']');
-    d
+    Ok(d)
 }
 
-pub fn search_count(conn: &Connection, query: &str) -> u32 {
+pub fn search_count(conn: &Connection, query: &str) -> anyhow::Result<u32> {
     let words = make_words(query);
     if words.len() == 1 && words.get(0).unwrap().is_empty() {
         return select_count(conn);
@@ -148,31 +150,39 @@ pub fn search_count(conn: &Connection, query: &str) -> u32 {
         Ok(s) => s,
         Err(e) => {
             if let rusqlite::Error::SqliteFailure(_, _) = e {
-                crate::cmd::create(conn);
+                crate::cmd::create(conn)?;
             }
-            conn.prepare(&sql).unwrap()
+            conn.prepare(&sql)?
         }
     };
     let keys: Vec<String> = make_keys(num_words);
 
     let mut params: Vec<(&str, &dyn ToSql)> = vec![];
     for i in 0..num_words {
-        params.push((&keys.get(i).unwrap(), words.get(i).unwrap() as &dyn ToSql));
+        params.push((
+            &keys.get(i).ok_or(anyhow::anyhow!("keys is empty"))?,
+            words.get(i).ok_or(anyhow::anyhow!("words is empty"))? as &dyn ToSql,
+        ));
     }
     #[cfg(not(feature = "no_print"))]
     eprintln!("params {:?}", params.len());
 
-    let rs = stmt.query_map(&params[..], |row| row.get(0)).unwrap();
+    let rs = stmt.query_map(&params[..], |row| row.get(0))?;
     let mut c: u32 = 0;
     for r in rs {
-        c = r.unwrap();
+        c = r?;
     }
-    c
+    Ok(c)
 }
 
-pub fn search(conn: &Connection, query: &str, limit: &u32, offset: &u32) -> String {
+pub fn search(conn: &Connection, query: &str, limit: &u32, offset: &u32) -> anyhow::Result<String> {
     let words = make_words(query);
-    if words.len() == 1 && words.get(0).unwrap().is_empty() {
+    if words.len() == 1
+        && words
+            .get(0)
+            .ok_or(anyhow::anyhow!("words is empty"))?
+            .is_empty()
+    {
         return select(conn, limit, offset);
     }
     let num_words = words.len();
@@ -192,7 +202,7 @@ pub fn search(conn: &Connection, query: &str, limit: &u32, offset: &u32) -> Stri
     #[cfg(not(feature = "no_print"))]
     eprintln!("sql {}", sql);
 
-    let mut stmt = conn.prepare(&sql).unwrap();
+    let mut stmt = conn.prepare(&sql)?;
     let keys: Vec<String> = make_keys(num_words);
 
     let mut params: Vec<(&str, &dyn ToSql)> = vec![
@@ -201,40 +211,41 @@ pub fn search(conn: &Connection, query: &str, limit: &u32, offset: &u32) -> Stri
     ];
 
     for i in 0..num_words {
-        params.push((&keys.get(i).unwrap(), words.get(i).unwrap() as &dyn ToSql));
+        params.push((
+            &keys.get(i).ok_or(anyhow::anyhow!("keys is empty"))?,
+            words.get(i).ok_or(anyhow::anyhow!("words is empty"))? as &dyn ToSql,
+        ));
     }
     #[cfg(not(feature = "no_print"))]
     eprintln!("params {:?}", params.len());
 
-    let note_iter = stmt
-        .query_map(&params[..], |row| {
-            Ok(Note {
-                rowid: row.get(0)?,
-                uuid4: row.get(1)?,
-                title: row.get(2)?,
-                url: row.get(3)?,
-                tags: row.get(4)?,
-                description: row.get(5)?,
-                comments: row.get(6)?,
-                annotations: super::utils::make_data_url(row),
-                created_at: row.get(8)?,
-                is_public: row.get(9)?,
-            })
+    let note_iter = stmt.query_map(&params[..], |row| {
+        Ok(Note {
+            rowid: row.get(0)?,
+            uuid4: row.get(1)?,
+            title: row.get(2)?,
+            url: row.get(3)?,
+            tags: row.get(4)?,
+            description: row.get(5)?,
+            comments: row.get(6)?,
+            annotations: super::utils::make_data_url(row).unwrap_or("".into()),
+            created_at: row.get(8)?,
+            is_public: row.get(9)?,
         })
-        .unwrap();
+    })?;
 
     let mut j = "[ ".to_owned();
     for note in note_iter {
-        let mut note = note.unwrap();
+        let mut note = note?;
         note.tags = make_tags(&note.tags);
         //#[cfg(not(feature = "no_print"))]
         //eprintln!("Found note {:?}", note);
-        j.push_str(&serde_json::to_string(&note).unwrap());
+        j.push_str(&serde_json::to_string(&note)?);
         j.push(',');
     }
     j.pop();
     j.push(']');
-    j
+    Ok(j)
 }
 
 fn make_words(query: &str) -> Vec<String> {

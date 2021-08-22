@@ -333,11 +333,11 @@ impl Default for SyncView {
 
 pub static IP_REGEX_SET: OnceCell<RegexSet> = OnceCell::new();
 
-pub async fn client_sync_from_server(addr: SocketAddr) -> std::io::Result<()> {
+pub async fn client_sync_from_server(addr: SocketAddr) -> anyhow::Result<()> {
     localnative_core::rpc::client::run_sync_from_server(&addr).await
 }
 
-pub async fn client_sync_to_server(addr: SocketAddr) -> std::io::Result<()> {
+pub async fn client_sync_to_server(addr: SocketAddr) -> anyhow::Result<()> {
     localnative_core::rpc::client::run_sync_to_server(&addr).await
 }
 

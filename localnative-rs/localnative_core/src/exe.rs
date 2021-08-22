@@ -23,20 +23,32 @@ use crate::cmd::{
 };
 use crate::upgrade;
 use crate::Cmd;
-use crate::CmdDelete;
-use crate::CmdFilter;
-use crate::CmdInsert;
-use crate::CmdRpcClient;
-use crate::CmdRpcServer;
-use crate::CmdSearch;
-use crate::CmdSelect;
-use crate::CmdSyncViaAttach;
 use crate::Note;
 use rusqlite::Connection;
 use std::fs;
 use std::path::Path;
 use time::macros::format_description;
 use uuid::Uuid;
+
+use serde::Serialize;
+use thiserror::Error;
+
+#[derive(Error, Debug, Serialize)]
+#[serde(rename(serialize = "error", deserialize = "error"))]
+pub enum ProcessError {
+    #[error("cmd upgrade error: {0}")]
+    UpgradeFailure(String),
+    #[error("cmd json error: {0}")]
+    JsonParseFailure(String),
+    #[error("start server failure:{0}")]
+    StartServerFailure(String),
+    #[error("client-sync error:{0}")]
+    ClientSyncFailure(String),
+    #[error("client-stop-server error: {0}")]
+    ClientStopServerFailure(String),
+    #[error("unknown error: {0} from {1}")]
+    Unknown(String, String),
+}
 
 pub fn get_sqlite_connection() -> Connection {
     let p = sqlite3_db_location();
@@ -46,8 +58,11 @@ pub fn get_sqlite_connection() -> Connection {
 
 fn sqlite3_db_location() -> String {
     if cfg!(target_os = "android") {
-        fs::create_dir_all("/sdcard/LocalNative").unwrap();
-        return "/sdcard/LocalNative/localnative.sqlite3".to_string();
+        let path = "sdcard/LocalNative";
+        if let Err(e) = fs::create_dir_all(path) {
+            panic!("{}", e);
+        };
+        return format!("{}/localnative.sqlite3", path);
     }
     let mut dir_name = "LocalNative";
     if cfg!(target_os = "ios") {
@@ -65,154 +80,108 @@ fn sqlite3_db_location() -> String {
 
 pub fn run(text: &str) -> String {
     if let Ok(cmd) = serde_json::from_str::<Cmd>(text) {
-        process(cmd, text)
+        match process(cmd).map_err(|err| serde_json::to_string(&err).unwrap()) {
+            Ok(rs) => rs,
+            Err(err) => err,
+        }
     } else {
-        r#"{"error": "cmd json error"}"#.to_string()
+        let err = ProcessError::JsonParseFailure(text.into());
+        serde_json::to_string(&err).unwrap()
     }
 }
 
-fn process(cmd: Cmd, text: &str) -> String {
+fn process(cmd: Cmd) -> anyhow::Result<String, ProcessError> {
     eprintln!("process cmd {:?}", cmd);
     let conn = get_sqlite_connection();
-    create(&conn);
+    create(&conn).map_err(|err| ProcessError::Unknown(err.to_string(), "create conn".into()))?;
 
     // always run upgrade first
     if let Ok(version) = upgrade::upgrade(&conn) {
         eprintln!(r#"{{"upgrade-done": "{}"}}"#, version)
     } else {
-        return r#"{"error":"upgrade error"}"#.to_string();
+        return Err(ProcessError::UpgradeFailure("init".into()));
     }
 
-    match cmd.action.as_ref() {
-        "server" => {
-            eprintln!(r#"{{"server": "starting"}}"#);
-            if let Ok(s) = serde_json::from_str::<CmdRpcServer>(text) {
-                if crate::rpc::server::start(&s.addr).is_ok() {
-                    r#"{"server": "started"}"#.to_string()
-                } else {
-                    r#"{"error":"server error"}"#.to_string()
-                }
-            } else {
-                r#"{"error":"cmd server error"}"#.to_string()
-            }
-        }
-        "client-sync" => {
+    match cmd {
+        Cmd::Server(s) => match crate::rpc::server::start(&s.addr) {
+            Ok(_) => Ok(r#"{"server": "started"}"#.to_string()),
+            Err(e) => Err(ProcessError::StartServerFailure(e.into())),
+        },
+        Cmd::ClientSync(s) => {
             eprintln!(r#"{{"client": "starting"}}"#);
-            if let Ok(s) = serde_json::from_str::<CmdRpcClient>(text) {
-                if let Ok(resp) = crate::rpc::client::sync(&s.addr) {
-                    format!(r#"{{"client-sync": "{}"}}"#, resp)
-                } else {
-                    r#"{"error":"client-sync error"}"#.to_string()
-                }
-            } else {
-                r#"{"error":"cmd client-sync error"}"#.to_string()
+            match crate::rpc::client::sync(&s.addr) {
+                Ok(resp) => Ok(format!(r#"{{"client-sync": "{}"}}"#, resp)),
+                Err(err) => Err(ProcessError::ClientSyncFailure(err.to_string())),
             }
         }
-        "client-stop-server" => {
+        Cmd::ClientStopServer(s) => {
             eprintln!(r#"{{"client": "starting"}}"#);
-            if let Ok(s) = serde_json::from_str::<CmdRpcClient>(text) {
-                if let Ok(resp) = crate::rpc::client::stop_server(&s.addr) {
-                    format!(r#"{{"client-stop-server": "{}"}}"#, resp)
-                } else {
-                    r#"{"error":"client-stop-server error"}"#.to_string()
-                }
-            } else {
-                r#"{"error":"cmd client-stop-server error"}"#.to_string()
+            match crate::rpc::client::stop_server(&s.addr) {
+                Ok(resp) => Ok(format!(r#"{{"client-stop-server": "{}"}}"#, resp)),
+                Err(err) => Err(ProcessError::ClientStopServerFailure(err.to_string())),
             }
         }
-        "upgrade" => {
-            if let Ok(version) = upgrade::upgrade(&conn) {
-                format!(r#"{{"upgrade-done": "{}"}}"#, version)
-            } else {
-                r#"{"error":"cmd upgrade error"}"#.to_string()
+        Cmd::Upgrade => upgrade::upgrade(&conn)
+            .map(|version| format!(r#"{{"upgrade-done": "{}"}}"#, version))
+            .map_err(|err| ProcessError::UpgradeFailure(err.to_string())),
+        Cmd::SyncViaAttach(s) => Ok(sync_via_attach(&conn, &s.uri)),
+        Cmd::InsertImage(i) => {
+            let created_at = created_time();
+            let note = Note {
+                rowid: 0i64,
+                uuid4: Uuid::new_v4().to_string(),
+                title: i.title,
+                url: i.url,
+                tags: i.tags,
+                description: i.description,
+                comments: i.comments,
+                annotations: i.annotations,
+                created_at,
+                is_public: i.is_public,
+            };
+            cmd::image::insert_image(note)
+                .map_err(|err| ProcessError::Unknown(err.to_string(), "insert image op".into()))?;
+            if i.is_public {
+                eprintln!("is_public")
             }
+            do_select(&conn, &i.limit, &i.offset)
+                .map_err(|err| ProcessError::Unknown(err.to_string(), "insert image".into()))
         }
-        "sync-via-attach" => {
-            if let Ok(s) = serde_json::from_str::<CmdSyncViaAttach>(text) {
-                sync_via_attach(&conn, &s.uri)
-            } else {
-                r#"{"error":"cmd sync-via-attach error"}"#.to_string()
+        Cmd::Insert(i) => {
+            let created_at = created_time();
+            eprintln!("created_at {}", &created_at);
+            let note = Note {
+                rowid: 0i64,
+                uuid4: Uuid::new_v4().to_string(),
+                title: i.title,
+                url: i.url,
+                tags: i.tags,
+                description: i.description,
+                comments: i.comments,
+                annotations: i.annotations,
+                created_at,
+                is_public: i.is_public,
+            };
+            insert(note)
+                .map_err(|err| ProcessError::Unknown(err.to_string(), "insert op".into()))?;
+            if i.is_public {
+                eprintln!("is_public")
             }
+            do_select(&conn, &i.limit, &i.offset)
+                .map_err(|err| ProcessError::Unknown(err.to_string(), "insert".into()))
         }
-        "insert-image" => {
-            if let Ok(i) = serde_json::from_str::<CmdInsert>(text) {
-                let created_at = created_time();
-                let note = Note {
-                    rowid: 0i64,
-                    uuid4: Uuid::new_v4().to_string(),
-                    title: i.title,
-                    url: i.url,
-                    tags: i.tags,
-                    description: i.description,
-                    comments: i.comments,
-                    annotations: i.annotations,
-                    created_at,
-                    is_public: i.is_public,
-                };
-                cmd::image::insert_image(note);
-                if i.is_public {
-                    eprintln!("is_public")
-                }
-                do_select(&conn, &i.limit, &i.offset)
-            } else {
-                r#"{"error":"cmd insert json error"}"#.to_string()
-            }
+        Cmd::Delete(s) => {
+            delete(&conn, s.rowid)
+                .map_err(|err| ProcessError::Unknown(err.to_string(), "delete op".into()))?;
+            do_search(&conn, &s.query, &s.limit, &s.offset)
+                .map_err(|err| ProcessError::Unknown(err.to_string(), "delete".into()))
         }
-        "insert" => {
-            if let Ok(i) = serde_json::from_str::<CmdInsert>(text) {
-                let created_at = created_time();
-                eprintln!("created_at {}", &created_at);
-                let note = Note {
-                    rowid: 0i64,
-                    uuid4: Uuid::new_v4().to_string(),
-                    title: i.title,
-                    url: i.url,
-                    tags: i.tags,
-                    description: i.description,
-                    comments: i.comments,
-                    annotations: i.annotations,
-                    created_at,
-                    is_public: i.is_public,
-                };
-                insert(note);
-                if i.is_public {
-                    eprintln!("is_public")
-                }
-                do_select(&conn, &i.limit, &i.offset)
-            } else {
-                r#"{"error":"cmd insert json error"}"#.to_string()
-            }
-        }
-        "delete" => {
-            if let Ok(s) = serde_json::from_str::<CmdDelete>(text) {
-                delete(&conn, s.rowid);
-                do_search(&conn, &s.query, &s.limit, &s.offset)
-            } else {
-                r#"{"error":"cmd delete json error"}"#.to_string()
-            }
-        }
-        "select" => {
-            if let Ok(s) = serde_json::from_str::<CmdSelect>(text) {
-                do_select(&conn, &s.limit, &s.offset)
-            } else {
-                r#"{"error":"cmd select json error"}"#.to_string()
-            }
-        }
-        "search" => {
-            if let Ok(s) = serde_json::from_str::<CmdSearch>(text) {
-                do_search(&conn, &s.query, &s.limit, &s.offset)
-            } else {
-                r#"{"error":"cmd search json error"}"#.to_string()
-            }
-        }
-        "filter" => {
-            if let Ok(s) = serde_json::from_str::<CmdFilter>(text) {
-                do_filter(&conn, &s.query, &s.limit, &s.offset, &s.from, &s.to)
-            } else {
-                r#"{"error":"cmd filter json error"}"#.to_string()
-            }
-        }
-        _ => r#"{"error": "cmd no match"}"#.to_string(),
+        Cmd::Select(s) => do_select(&conn, &s.limit, &s.offset)
+            .map_err(|err| ProcessError::Unknown(err.to_string(), "select".into())),
+        Cmd::Search(s) => do_search(&conn, &s.query, &s.limit, &s.offset)
+            .map_err(|err| ProcessError::Unknown(err.to_string(), "search".into())),
+        Cmd::Filter(s) => do_filter(&conn, &s.query, &s.limit, &s.offset, &s.from, &s.to)
+            .map_err(|err| ProcessError::Unknown(err.to_string(), "filter".into())),
     }
 }
 
@@ -227,30 +196,35 @@ fn created_time() -> String {
         + " UTC"
 }
 
-pub fn do_search(conn: &Connection, query: &str, limit: &u32, offset: &u32) -> String {
-    let c = search_count(&conn, query);
-    let j = search(&conn, query, limit, offset);
-    let d = search_by_day(&conn, query);
-    let t = search_by_tag(&conn, query);
+pub fn do_search(
+    conn: &Connection,
+    query: &str,
+    limit: &u32,
+    offset: &u32,
+) -> anyhow::Result<String> {
+    let c = search_count(&conn, query)?;
+    let j = search(&conn, query, limit, offset)?;
+    let d = search_by_day(&conn, query)?;
+    let t = search_by_tag(&conn, query)?;
     let msg = format!(
         r#"{{"count": {}, "notes":{}, "days": {}, "tags": {} }}"#,
         c, j, d, t
     );
     // eprintln!("msg {}", msg);
-    msg
+    Ok(msg)
 }
 
-fn do_select(conn: &Connection, limit: &u32, offset: &u32) -> String {
-    let c = select_count(&conn);
-    let j = select(&conn, limit, offset);
-    let d = select_by_day(&conn);
-    let t = select_by_tag(&conn);
+fn do_select(conn: &Connection, limit: &u32, offset: &u32) -> anyhow::Result<String> {
+    let c = select_count(&conn)?;
+    let j = select(&conn, limit, offset)?;
+    let d = select_by_day(&conn)?;
+    let t = select_by_tag(&conn)?;
     let msg = format!(
         r#"{{"count": {}, "notes":{}, "days": {}, "tags": {} }}"#,
         c, j, d, t
     );
     // eprintln!("msg {}", msg);
-    msg
+    Ok(msg)
 }
 
 pub fn do_filter(
@@ -260,15 +234,15 @@ pub fn do_filter(
     offset: &u32,
     from: &str,
     to: &str,
-) -> String {
-    let c = filter_count(&conn, query, from, to);
-    let j = filter(&conn, query, from, to, limit, offset);
-    let d = search_by_day(&conn, query);
-    let t = filter_by_tag(&conn, query, from, to);
+) -> anyhow::Result<String> {
+    let c = filter_count(&conn, query, from, to)?;
+    let j = filter(&conn, query, from, to, limit, offset)?;
+    let d = search_by_day(&conn, query)?;
+    let t = filter_by_tag(&conn, query, from, to)?;
     let msg = format!(
         r#"{{"count": {}, "notes":{},"days": {}, "tags": {} }}"#,
         c, j, d, t
     );
     // eprintln!("msg {}", msg);
-    msg
+    Ok(msg)
 }

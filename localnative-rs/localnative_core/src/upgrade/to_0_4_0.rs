@@ -18,41 +18,37 @@
 
 use super::utils;
 use super::uuid::Uuid;
-use rusqlite::{Connection, Result, ToSql};
+use rusqlite::{Connection, ToSql};
 
 // insert each record to note from _note_0_3 with newly generated uuid4 value
-pub fn migrate_note(conn: &Connection) -> Result<()> {
+pub fn migrate_note(conn: &Connection) -> anyhow::Result<()> {
     eprintln!("to_0_4_0 migrate_note");
-    if utils::check_table_exist(conn, "_note_0_3") {
+    if utils::check_table_exist(conn, "_note_0_3")? {
         eprintln!("to_0_4_0 _note_0_3 exists, looping each record");
-        let mut stmt = conn
-            .prepare(
-                "SELECT rowid, title, url, tags, description, comments
+        let mut stmt = conn.prepare(
+            "SELECT rowid, title, url, tags, description, comments
         , annotations
         , created_at, is_public
         FROM _note_0_3
         order by rowid",
-            )
-            .unwrap();
-        let note_iter = stmt
-            .query_map([], |row| {
-                Ok(Note {
-                    rowid: row.get(0)?,
-                    uuid4: Uuid::new_v4().to_string(),
-                    title: row.get(1)?,
-                    url: row.get(2)?,
-                    tags: row.get(3)?,
-                    description: row.get(4)?,
-                    comments: row.get(5)?,
-                    annotations: row.get(6)?,
-                    created_at: row.get(7)?,
-                    is_public: row.get(8)?,
-                })
+        )?;
+        let note_iter = stmt.query_map([], |row| {
+            Ok(Note {
+                rowid: row.get(0)?,
+                uuid4: Uuid::new_v4().to_string(),
+                title: row.get(1)?,
+                url: row.get(2)?,
+                tags: row.get(3)?,
+                description: row.get(4)?,
+                comments: row.get(5)?,
+                annotations: row.get(6)?,
+                created_at: row.get(7)?,
+                is_public: row.get(8)?,
             })
-            .unwrap();
+        })?;
 
         for note in note_iter {
-            let note = note.unwrap();
+            let note = note?;
             conn.execute(
                 "INSERT INTO note (uuid4, title, url, tags, description, comments
         , annotations
@@ -69,8 +65,7 @@ pub fn migrate_note(conn: &Connection) -> Result<()> {
                     &note.created_at,
                     &note.is_public as &dyn ToSql,
                 ],
-            )
-            .unwrap();
+            )?;
         }
         eprintln!("to_0_4_0 drop _note_0_3");
         conn.execute_batch(
@@ -79,8 +74,7 @@ pub fn migrate_note(conn: &Connection) -> Result<()> {
         UPDATE meta SET meta_value = '0'
         WHERE meta_key = 'is_upgrading';
         COMMIT;",
-        )
-        .unwrap();
+        )?;
     }
     Ok(())
 }
@@ -89,7 +83,7 @@ pub fn migrate_note(conn: &Connection) -> Result<()> {
 // create new note table with new uuid4 column
 // create meta table
 // set version 0.4.0
-pub fn migrate_schema(conn: &Connection) -> Result<()> {
+pub fn migrate_schema(conn: &Connection) -> anyhow::Result<()> {
     eprintln!("to_0_4_0 migrate_schema");
     conn.execute_batch(
         "BEGIN;
@@ -114,7 +108,8 @@ VALUES
 ('version','0.4.0'),
 ('is_upgrading', '1');
 COMMIt;",
-    )
+    )?;
+    Ok(())
 }
 
 pub struct Note {

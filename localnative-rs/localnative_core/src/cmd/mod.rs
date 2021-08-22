@@ -65,16 +65,15 @@ from main.note
     }
 }
 
-pub fn count(conn: &Connection, tbl: &str) -> i64 {
-    let mut stmt = conn
-        .prepare(&format!("select count(1) as cnt from {}", tbl))
-        .unwrap();
-    stmt.query_row([], |row| row.get(0)).unwrap()
+pub fn count(conn: &Connection, tbl: &str) -> anyhow::Result<i64> {
+    let mut stmt = conn.prepare(&format!("select count(1) as cnt from {}", tbl))?;
+    let count = stmt.query_row([], |row| row.get(0))?;
+    Ok(count)
 }
 
-pub fn delete(conn: &Connection, rowid: i64) {
-    conn.execute("delete from note where rowid = ?1", &[&rowid])
-        .unwrap();
+pub fn delete(conn: &Connection, rowid: i64) -> anyhow::Result<()> {
+    conn.execute("delete from note where rowid = ?1", &[&rowid])?;
+    Ok(())
 }
 
 // format and dedup tags
@@ -88,9 +87,9 @@ pub fn make_tags(input: &str) -> String {
     res.join(",")
 }
 
-pub fn insert(note: Note) {
+pub fn insert(note: Note) -> anyhow::Result<()> {
     let conn = &mut super::exe::get_sqlite_connection();
-    let tx = conn.transaction().unwrap();
+    let tx = conn.transaction()?;
     {
         tx.execute(
             "
@@ -109,12 +108,13 @@ pub fn insert(note: Note) {
                 &note.created_at,
                 &note.is_public as &dyn ToSql,
             ],
-        ).unwrap();
+        )?;
     }
-    tx.commit().unwrap();
+    tx.commit()?;
+    Ok(())
 }
 
-pub fn create(conn: &Connection) {
+pub fn create(conn: &Connection) -> anyhow::Result<()> {
     conn.execute_batch(
         "BEGIN;
         CREATE TABLE IF NOT EXISTS note (
@@ -136,6 +136,6 @@ pub fn create(conn: &Connection) {
          );
 
          COMMIT;",
-    )
-    .unwrap();
+    )?;
+    Ok(())
 }

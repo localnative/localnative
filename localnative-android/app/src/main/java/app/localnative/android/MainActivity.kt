@@ -18,29 +18,28 @@
 package app.localnative.android
 
 import android.app.AlertDialog
-import android.content.pm.PackageManager
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
-
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.MenuItemCompat
 import androidx.recyclerview.widget.RecyclerView
 import app.localnative.R
-
-import app.localnative.android.Permission.OnPermissonGrantedListenr
-import app.localnative.android.Permission.invoke_WRITE_EXTERNAL_STORAGE
 import com.google.zxing.integration.android.IntentIntegrator
-import android.widget.Toast
-import android.content.Intent
+import com.hjq.permissions.OnPermissionCallback
+import com.hjq.permissions.Permission
+import com.hjq.permissions.XXPermissions
+import com.hjq.permissions.XXPermissions.isGranted
+import com.hjq.toast.ToastUtils
 
-
-class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener, NoteListFragment.OnListFragmentInteractionListener, OnPermissonGrantedListenr, View.OnClickListener {
+class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener, NoteListFragment.OnListFragmentInteractionListener, View.OnClickListener {
 
     private var searchView: SearchView? = null
 
@@ -79,21 +78,65 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener, NoteLi
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-        val toolbar = findViewById<View>(R.id.toolbar) as Toolbar
-        setSupportActionBar(toolbar)
-        toolbar.setOnClickListener { Log.d("sync", "toolbar")
-            val integrator = IntentIntegrator(this)
-            integrator.setBeepEnabled(false);
-            integrator.setCaptureActivity(QRScanActivity::class.java).initiateScan()
+        if (!isGranted(this@MainActivity,Permission.MANAGE_EXTERNAL_STORAGE)) {
+            Log.d("onCreate","get permission")
+            XXPermissions.with(this)
+                // 不适配 Android 11 可以这样写
+                //.permission(Permission.Group.STORAGE)
+                // 适配 Android 11 需要这样写，这里无需再写 Permission.Group.STORAGE
+                .permission(Permission.MANAGE_EXTERNAL_STORAGE)
+                .request(object : OnPermissionCallback {
+                    override fun onGranted(permissions: List<String>, all: Boolean) {
+                        if (all) {
+                            toast("获取存储权限成功")
+                            setContentView(R.layout.activity_main)
+                            val toolbar = findViewById<View>(R.id.toolbar) as Toolbar
+                            setSupportActionBar(toolbar)
+
+                            toolbar.setOnClickListener { Log.d("sync", "toolbar")
+                                val integrator = IntentIntegrator(this@MainActivity)
+                                integrator.setBeepEnabled(false);
+                                integrator.setCaptureActivity(QRScanActivity::class.java).initiateScan()
+                            }
+
+                            doSearch("", 0L)
+
+                            val prevButton = findViewById<View>(R.id.prev_button) as Button
+                            prevButton.setOnClickListener(this@MainActivity)
+                            val nextButton = findViewById<View>(R.id.next_button) as Button
+                            nextButton.setOnClickListener(this@MainActivity)
+                        }
+                    }
+
+                    override fun onDenied(permissions: List<String>, never: Boolean) {
+                        if (never) {
+                            toast("被永久拒绝授权，请手动授予存储权限")
+                            // 如果是被永久拒绝就跳转到应用权限系统设置页面
+                            XXPermissions.startPermissionActivity(this@MainActivity, permissions)
+                        } else {
+                            toast("获取存储权限失败")
+                        }
+                    }
+                })
+        }else {
+            setContentView(R.layout.activity_main)
+            val toolbar = findViewById<View>(R.id.toolbar) as Toolbar
+            setSupportActionBar(toolbar)
+
+            toolbar.setOnClickListener { Log.d("sync", "toolbar")
+                val integrator = IntentIntegrator(this)
+                integrator.setBeepEnabled(false);
+                integrator.setCaptureActivity(QRScanActivity::class.java).initiateScan()
+            }
+
+            doSearch("", 0L)
+
+            val prevButton = findViewById<View>(R.id.prev_button) as Button
+            prevButton.setOnClickListener(this)
+            val nextButton = findViewById<View>(R.id.next_button) as Button
+            nextButton.setOnClickListener(this)
         }
 
-        doSearch("", 0L)
-
-        val prevButton = findViewById<View>(R.id.prev_button) as Button
-        prevButton.setOnClickListener(this)
-        val nextButton = findViewById<View>(R.id.next_button) as Button
-        nextButton.setOnClickListener(this)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -155,11 +198,7 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener, NoteLi
     fun doSearch(query: String, offset: Long?) {
         AppState.setQuery(query)
         Log.d("doSearch", query + offset!!)
-        // request allow write to storage permission
-        invoke_WRITE_EXTERNAL_STORAGE(this, query, offset)
-    }
 
-    override fun onPermissonGranted(query: String, offset: Long?) {
         val cmd = ("{\"action\": \"search\", \"query\": \""
                 + query
                 + "\", \"limit\":10, \"offset\":" +
@@ -176,26 +215,15 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener, NoteLi
         (findViewById<View>(R.id.pagination_text) as TextView).text = paginationText
     }
 
+    fun getFilePermission() {
+
+
+    }
+    fun toast(text: CharSequence?) {
+        ToastUtils.show(text)
+    }
+
     override fun onListFragmentInteraction(item: NoteContent.NoteItem) {
 
     }
-
-    override fun onRequestPermissionsResult(requestCode: Int,
-                                            permissions: Array<String>, grantResults: IntArray) {
-        when (requestCode) {
-            1 -> {
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.size > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    // permission was granted, yay! Do the
-                    // contacts-related task you need to do.
-                } else {
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
-                }
-                return
-            }
-        }// other 'case' lines to check for other
-        // permissions this app might request.
-    }
-
 }

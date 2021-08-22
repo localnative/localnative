@@ -45,7 +45,8 @@ impl LocalNative for LocalNativeServer {
     #[allow(clippy::wrong_self_convention)]
     fn is_version_match(self, _: context::Context, version: String) -> Self::IsVersionMatchFut {
         let conn = get_sqlite_connection();
-        if version == get_meta_version(&conn) {
+        let meta_version = get_meta_version(&conn).unwrap_or("0.3.10".into());
+        if version == meta_version {
             future::ready(true)
         } else {
             future::ready(false)
@@ -58,8 +59,13 @@ impl LocalNative for LocalNativeServer {
         candidates: Vec<String>,
     ) -> Self::DiffUuid4ToServerFut {
         let conn = get_sqlite_connection();
-        let diff = diff_uuid4_to_server(&conn, candidates);
-        future::ready(diff)
+        match diff_uuid4_to_server(&conn, candidates) {
+            Ok(diff) => future::ready(diff),
+            Err(err) => {
+                println!("diff_uuid4_to_server error: {}", err);
+                future::ready(Vec::new())
+            }
+        }
     }
     type DiffUuid4FromServerFut = Ready<Vec<String>>;
     fn diff_uuid4_from_server(
@@ -68,21 +74,37 @@ impl LocalNative for LocalNativeServer {
         candidates: Vec<String>,
     ) -> Self::DiffUuid4FromServerFut {
         let conn = get_sqlite_connection();
-        let diff = diff_uuid4_from_server(&conn, candidates);
-        future::ready(diff)
+        match diff_uuid4_from_server(&conn, candidates) {
+            Ok(diff) => future::ready(diff),
+            Err(err) => {
+                println!("diff_uuid4_from_server error: {}", err);
+                future::ready(Vec::new())
+            }
+        }
     }
     type SendNoteFut = Ready<bool>;
     fn send_note(self, _: context::Context, note: Note) -> Self::SendNoteFut {
         eprintln!("upsert note {:?}", note);
-        insert(note);
-        future::ready(true)
+        let res = match insert(note) {
+            Ok(_) => true,
+            Err(err) => {
+                eprintln!("insert note error: {:?}", err);
+                false
+            }
+        };
+        future::ready(res)
     }
     type ReceiveNoteFut = Ready<Note>;
     fn receive_note(self, _: context::Context, uuid4: String) -> Self::ReceiveNoteFut {
         eprintln!("receive note {:?}", uuid4);
         let conn = get_sqlite_connection();
-        let note = get_note_by_uuid4(&conn, &uuid4);
-        future::ready(note)
+        match get_note_by_uuid4(&conn, &uuid4) {
+            Ok(note) => future::ready(note),
+            Err(err) => {
+                println!("receive note error: {}", err);
+                future::ready(Note::default())
+            }
+        }
     }
     type StopFut = Ready<()>;
     #[allow(unreachable_code)]
