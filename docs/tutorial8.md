@@ -48,7 +48,7 @@ impl Config {
   // 根据我们的构思，读取只发生在app打开之前
   // 因此使用同步方法会更符合我们的预期
     pub fn load() -> Option<Self> {
-      // 引入Read之后才能使用诸如rad_to_string等方法
+      // 引入Read之后才能使用诸如read_to_string等方法
         use std::io::Read;
         let mut contents = String::new();
       // 获取config的路径
@@ -78,7 +78,7 @@ impl Config {
 pub async fn save(json: String) -> Option<()> {
   	// 虽然是实际上使用同步应该没多大区别
   	// 甚至有可能性能上会更好一些
-  	// 但是为了满足写一部函数的好奇，最终这里选择了使用tokio来写
+  	// 但是为了满足写异步函数的好奇，最终这里选择了使用tokio来写
   	// 引入这个trait之后才能使用tokio的一些写入函数
     use tokio::io::AsyncWriteExt;
 		// 我们可以试着输出一下即将保存的json文件
@@ -112,7 +112,7 @@ pub async fn save(json: String) -> Option<()> {
         .map_err(error_handle)
         .ok()?;
 		// 写入数据即可
-   file.write_all(raw_data).await.map_err(error_handle).ok()?;
+    file.write_all(raw_data).await.map_err(error_handle).ok()?;
     Some(())
 }
 
@@ -559,7 +559,7 @@ pub async fn sync_via_file(path: PathBuf, conn: Conn) -> Option<()> {
 }
 ```
 
-除此之外，还有一个地方也比较棘手，我们可以将自己的设备作为服务器给其他设备进行同步，服务器开启的方式在后端实际上是用一个异步任务来做，那么服务器关闭就需要我们将这个异步任务给终结掉，在早起的electron版本中，因为使用的是命令行来开启服务器，只需要将开启的命令行程序终结掉就可以。而iced直接调用了后端的包，本质上和后端就是同一个程序，不可能简单的调用程序退出。
+除此之外，还有一个地方也比较棘手，我们可以将自己的设备作为服务器给其他设备进行同步，服务器开启的方式在后端实际上是用一个异步任务来做，那么服务器关闭就需要我们将这个异步任务给终结掉，在早起的Electron版本中，因为使用的是FFI Rust进程来开启服务器，只需要将开启的Rust进程终结掉就可以。而iced直接调用了后端的包，本质上和后端就是同一个程序，不可能简单的调用程序退出。
 
 但其实解决的方案也很简单，而且有很多中解决方案，最终的解决方案是采用类似通道的解决方案在开启服务器时，会保存一个handle但服务器需要关闭的时候，drop掉这个handle即可，其他的方案五花八门，感兴趣的话，可以去搜搜看怎么结束一个正在执行的异步任务。
 
