@@ -89,7 +89,7 @@ path = "./src/bin.rs"
 
 [[bin]]
 name = "preview-example"
-path = "./previews/exam.rs"
+path = "./previews/example.rs"
 required-features = ["preview"]
 
 [[bin]]
