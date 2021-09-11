@@ -30,9 +30,9 @@ use iced::Command;
 use localnative_core::Note;
 ```
 
-### 简单实现
+### 简易实现
 
-我们将要实现的内容是更为简单的版本：
+我们将要实现的内容是更为简易的版本：
 
 1. 点击标签，会搜索该标签相关内容
 2. 点击地址，将会通过浏览器打开相关地址
@@ -75,7 +75,7 @@ pub enum Message {
 }
 ```
 
-虽然我们已经用到了Note，但是实际上仍然不知道这个结构体是怎样构建的，通过IDE的代码跳转功能，我们很容易能看到Note的定义：
+虽然我们已经用到了Note，但是实际上仍然不知道这个结构体是怎样构建的，通过IDE的代码跳转功能，我们可以看到Note的定义：
 
 ```rust
 // localnative_core内部
@@ -168,7 +168,7 @@ impl NoteView {
         // qrcode构建需要一个&State，因此我们通过as_ref()将&mut Option<State>转变为Option<&State>
         // 最后使用map将state映射到我们需要构建的QRCode组件即可
         let qrcode = qrcode.as_ref().map(|state| QRCode::new(state));
-        // 接着是三个简单的Button组件，值得注意的是on_press方法传递的是一个Message
+        // 接着是三个Button控件，值得注意的是on_press方法传递的是一个Message
         // 这部分相当有趣，我们将在后续内容中介绍这相当有趣的部分
         let url = Button::new(open_url, Text::new(note.url.as_str())).on_press(Message::OpenUrl);
         let delete = Button::new(delete, Text::new("delete")).on_press(Message::Delete);
@@ -271,7 +271,7 @@ pub enum Message {
 }
 ```
 
-大部分视图都实现了，是时候验证我们的视图是否需要进行调整了，通过之前定义的`preview`feature，我们可以很容易的给我们的`NoteView`实现`SandBox`：
+大部分视图都实现了，是时候验证我们的视图是否需要进行调整了，通过之前定义的`preview`feature，我们可以给我们的`NoteView`实现`SandBox`：
 
 ```rust
 // ... 紧接上面的代码
@@ -338,7 +338,7 @@ impl iced::Sandbox for NoteView {
 use iced::Sandbox;
 // NoteView需要在lib.rs内pub出来
 use ln_iced::NoteView;
-// 很简单的run就行
+// 直接run就行
 fn main() -> iced::Result {
     NoteView::run(ln_iced::settings())
 }
@@ -386,7 +386,7 @@ default-features = false
 ```diff
 // 在 note.rs 内
 fn open(url: &str) {
-// 更好的处理方式是通过log打印，甚至保存下信息，当前只是简单实现，后续我们会替换为log
+// 更好的处理方式是通过log打印，甚至保存下信息，当前只是简易实现，后续我们会替换为log
 +    if let Err(err) = open::that(url) {
 +    	println!("open url fail:{:?}", err);
 +    }
@@ -608,13 +608,13 @@ impl iced::Sandbox for NoteView {
 }
 ```
 
-经过简单的重构，我们之前提出的1、2、4三个问题都解决了，运行一下预览，看看我们的成果：
+经过重构，我们之前提出的1、2、4三个问题都解决了，运行一下预览，看看我们的成果：
 
 ```shell
 cargo run --bin noteview
 ```
 
-![简单重构](/img/tutorial/3-03.png)
+![重构](/img/tutorial/3-03.png)
 
 接下来我们将引入`Wrap`控件，将我们的tag给放入这里面，这样我们的问题3也就同样被解决了。首先我们引入`iced_aw`这个crate，这是一个`iced`官方的额外控件crate，目前还没有发布到crate.io，因此我们只能通过git的方式引入到我们的项目中，还是老方法，如果网速不佳，请用国内镜像：
 
@@ -686,7 +686,7 @@ pub fn rule() -> iced::Rule {
     iced::Rule::horizontal(0).style(TransparentRule)
 }
 // 到了大家都讨厌的标注生存期环节了，我们将在后续给出是如何一步步标注出生存期的
-// 这个函数本身很简单，只需要知道是为了将Rule转换到Element并且收集到同一个Vec即可
+// 这个函数逻辑不用多说，只需要知道是为了将Rule转换到Element并且收集到同一个Vec即可
 +  pub fn rules<'a, Msg: 'a>(n: usize) -> Vec<Element<'a, Msg>> {
 +      let mut res = Vec::with_capacity(n);
 +      for _ in 0..n {
@@ -864,6 +864,6 @@ pub fn rule() -> iced::Rule {
 
 比之前稍微好看了一丢丢，配色上可能确实不太行，后续有更好的设计，可以再切过来更改，现在还剩下二维码按钮和删除按钮没有进行添加样式，我们将在后续添加图标来替代，将会在添加字体的章节详细介绍。
 
-至此，note的简单实现到此结束，下一章将会介绍第二个部分tags，同时也会介绍如何将多个实现的部分组合到一块：
+至此，note的简易实现到此结束，下一章将会介绍第二个部分tags，同时也会介绍如何将多个实现的部分组合到一块：
 
 ![标签集](/img/tutorial/3-05.png)

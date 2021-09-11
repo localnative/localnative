@@ -21,7 +21,7 @@ pub struct MiddleDate {
 1. 首先添加一个后端的过滤方法：
 ```rust
 // 在 middle_date.rs -> impl MiddleDate 内
-// 有了之前的经验，这里的接口对接都很简单，因此不需要过度关注
+// 有了之前的经验，这里的接口对接都很容易，因此不需要过度关注
     // 这是指定某个时间段的查询
     pub async fn from_filter(
         conn: Arc<Mutex<Connection>>,
@@ -97,7 +97,7 @@ time = { version = "0.3.0-alpha-2",features = ["serde-human-readable","macros"] 
 ```
 `serde-human-readable`本身包含了`formatting`、`parsing`、`serde`三个feature，因此开启这个feature之后可以将另外几个feature关闭。仅在原来的基础上加上`serde`并不能满足我们的需求，查看`time`的文档可以了解到更多信息。
 
-### 一个完整的简单实现
+### 一个完整的实现
 
 有了以上的准备，我们可以放开手脚使用`Canvas`控件了，这是一个相对特殊的控件，提供了更多的自由性，同时可以让你做出很多你能想象的功能，用来做数据可视化是最合适的了。当然当前的`Canvas`还有很多问题需要解决，我们将在实现的过程中对其一一介绍。
 
@@ -105,7 +105,7 @@ time = { version = "0.3.0-alpha-2",features = ["serde-human-readable","macros"] 
 
 ![01](/img/tutorial/6-01.gif)
 
-在这个过程中，我们需要储存的数据很简单，就是鼠标左键按下的那个点，除此之外，鼠标的当前位置，由trait提供给我们。
+在这个过程中，我们需要储存的数据很少，就是鼠标左键按下的那个点，除此之外，鼠标的当前位置，由trait提供给我们。
 
 思路已经有了，我们可以来看看具体的实现过程：
 
@@ -125,7 +125,7 @@ pub enum ChartMsg {
 // 其中draw是必须要实现的，而另两个可以选择性实现
 // 当前的实例将会三个都接触到
 // 和给iced的主程序类似，处理事件需要提供一个枚举体用来保存事件
-// 我们使用的是ChartMsg,简单实现Clone和Debug这两个trait
+// 我们使用的是ChartMsg,实现Clone和Debug这两个trait
 impl Program<ChartMsg> for DateChart {
     fn update(
         &mut self,
@@ -210,7 +210,7 @@ impl Program<ChartMsg> for DateChart {
     }
 }
 ```
-通过以上简单的实现一个trait，我们`Canvas`控件就已经实现了一大半了，我们还需要再和应用程序接洽之前给它再包裹抽象一层，使用一个Chart结构体来包裹它：
+通过以上代码的实现一个trait，我们`Canvas`控件就已经实现了一大半了，我们还需要再和应用程序接洽之前给它再包裹抽象一层，使用一个Chart结构体来包裹它：
 ```rust
 // 暂时不需要任何字段，后续复杂时会添加其它字段
 #[derive(Debug)]
@@ -277,7 +277,7 @@ fn main() -> iced::Result {
 最后我们运行：`cargo run --bin chart`，即可得到一个绘制方框的Canvas。
 
 ### 一个较为复杂的实现
-经过一个简单的实例，我们已经掌握了实现一个Canvas控件的过程，简单实现`Program`trait即可获得一个Canvas控件，在draw方法内，我们可以绘制上我们想要绘制的内容，`iced`内部提供了多种绘制方法，目前我们的需求仅仅需要方框和文本，方框我们已经见过了，接下来的一节将介绍文本绘制。
+经过一个完整的实例，我们已经掌握了实现一个Canvas控件的过程，通过实现`Program`trait即可获得一个Canvas控件，在draw方法内，我们可以绘制上我们想要绘制的内容，`iced`内部提供了多种绘制方法，目前我们的需求仅仅需要方框和文本，方框我们已经见过了，接下来的一节将介绍文本绘制。
 
 在这之前，我们需要介绍一下`fill_text`这个[方法](https://docs.rs/iced/0.3.0/iced/widget/canvas/struct.Frame.html#method.fill_text)：
 ```rust
@@ -286,9 +286,9 @@ pub fn fill_text(&mut self, text: impl Into<Text>)
  > 注意：text需要Into的Text不是iced::Text，而是canvas内的Text（iced::widget::canvas::Text）
 在文档内特意给了警告：
  > Warning: Text currently does not work well with rotations and scale transforms! The position will be correctly transformed, but the resulting glyphs will not be rotated or scaled properly.
- 简单来说就是当前的文本在绘制上属于最高层，同时并不兼容于旋转和放大这两种平移，这只会对我们后续绘图有唯一一个影响，绘制的文本会在给定绘图框外显示，当然我们在绘制的时候会有相应的解决方案。
+ 通俗来说就是当前的文本在绘制上属于最高层，同时并不兼容于旋转和放大这两种平移，这只会对我们后续绘图有唯一一个影响，绘制的文本会在给定绘图框外显示，当然我们在绘制的时候会有相应的解决方案。
 
-在开始前，我们需要了解一下需求，我们其实只需要在给定画框内选取之后，就能够获得一个日期，通过这个日期从后端获取过滤后的数据用于绘制即可。实现的思路上也很简单，以当天为基准，即使用`now_utc`方法获取今天的日期，得到之后作为最右边绘制的数据，从最右边向左边逐渐绘制。通过使用translation来改变镜头的平移，每次绘制都用以确定需要绘制的范围。思路大致上就是这样，文本是每一个都需要绘制，日期只需要绘制后端返回的值即可，难点在于确定哪些日期需要绘制，日期绘制的位置。后端返回的days是排序过的，从旧到新的时间顺序排列。
+在开始前，我们需要了解一下需求，我们其实只需要在给定画框内选取之后，就能够获得一个日期，通过这个日期从后端获取过滤后的数据用于绘制即可。实现的思路上选择简单的方式，以当天为基准，即使用`now_utc`方法获取今天的日期，得到之后作为最右边绘制的数据，从最右边向左边逐渐绘制。通过使用translation来改变镜头的平移，每次绘制都用以确定需要绘制的范围。思路大致上就是这样，文本是每一个都需要绘制，日期只需要绘制后端返回的值即可，难点在于确定哪些日期需要绘制，日期绘制的位置。后端返回的days是排序过的，从旧到新的时间顺序排列。
 
 ```rust
     // 在绘制之前，我们从后端接收到的数据需要做一些预处理：
@@ -397,7 +397,7 @@ pub struct HandleDays {
     pub last_day: Option<i64>,
     pub last_month: Option<i32>,
 }
-// 以下方法都是用以方便计算的一些简单抽线
+// 以下方法都是用以方便计算的一些抽象
 pub fn months_num(start: &MonthView, end: &MonthView) -> i32 {
     (end.year - start.year - 1) * 12 + 13 + month_to_num(end.month) - month_to_num(start.month)
 }
@@ -503,7 +503,7 @@ impl <'a> DateChart<'a> {
                     // 最大的坑就是as，使用as需要仔细考虑溢出的情况
                     // 最好的方式是给定一个行限定范围
                     let uw = (size.width as i64 / (num + 3)).max(1).min(50);
-                    // 镜头平移的计算方法很简单，因为选取范围代表的是距离最右边的天数/月数差
+                    // 镜头平移的计算方法根据选取范围代表的是距离最右边的天数/月数差
                     // 只需要使用月数差乘上单位宽度即可
                     if let Some(s) = selected {
                         // 当有选取范围时，镜头平移到选取范围内
@@ -818,7 +818,7 @@ impl Day {
         res
     }
 ```
-到目前为止，绘制的部分基本结束了，紧接着就可以写事件更新了，之前的事件更新很简单，只是考虑了选择的框绘制，接下来我们除了选择框绘制之外，还需要进行一些处理，有了以上的一些方法的帮助，做处理会容易很多：
+到目前为止，绘制的部分基本结束了，紧接着就可以写事件更新了，之前的事件更新很简陋，只是考虑了选择的框绘制，接下来我们除了选择框绘制之外，还需要进行一些处理，有了以上的一些方法的帮助，做处理会容易很多：
 ```rust
     fn update(
         &mut self,
@@ -973,7 +973,7 @@ pub struct DateView {
 // 后续方法实现都很常规，基本都是view，update的套路
 impl DateView {
     pub fn view(&mut self, theme: Theme) -> Element<Message> {
-        // ...很简单，之前已经实现过很多类似的了
+        // ...直接调用已经实现的天和周为单位的view即可
     }
     // 手动调用clear可以触发刷新绘制的效果
     pub fn clear_cahce(&mut self) {
@@ -1220,7 +1220,7 @@ impl DateView {
         }
     }
 ```
-后端接洽比较容易，嵌入到search_page也很简单：
+后端之后，嵌入到search_page即可：
 ```rust
 // 此前的search没有考虑过滤情况，现在我们加上
 fn search(

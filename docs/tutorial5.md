@@ -7,7 +7,7 @@ title: 5. 实现SearchPage
 
 ### 粗略实现
 
-有了前几章的经验，我们很容易知道`iced`的实现流程就是通过给指定结构体实现两个主要方法：`view`和`update`。
+有了前几章的经验，我们知道`iced`的实现流程就是通过给指定结构体实现两个主要方法：`view`和`update`。
 ```rust
 use iced::{
     button, scrollable, text_input, Button, Column, Container, Element, Row, Scrollable, Text,
@@ -156,7 +156,7 @@ impl iced::Sandbox for SearchPage {
     type Message = Message;
 
     fn new() -> Self {
-        // 简单创建5个note进行预览
+        // 直接创建5个note进行预览
         let count = 5;
         let mut notes = Vec::with_capacity(count as usize);
         for _ in 0..count {
@@ -222,7 +222,7 @@ cargo run --bin search_page
 出现这个问题的原因是因为我们的notes使用了`Scrollable`控件，同时在其外又包裹了一层`Container`控件，`Container`控件的默认`height`属性是`iced::Length::Shrink`,该字段的官方文档指填充最小空间，就我们当前的用例来说，最小空间已经超过了我们的窗口大小，如果此时你将我们的用例中note的数量5减少为2或3，那你就能看到之前被布局挤压下看不到的页面控制行了：
 ![preview1](/img/tutorial/5-01.png)
 
-知道了问题的所在原因，我们现在就来修复这个Bug，修复的方法也很简单，将默认的`height`给改成`Fill`:
+知道了问题的所在原因，我们现在就来修复这个Bug，修复的方法相对容易，将默认的`height`给改成`Fill`:
 ```diff
 // 在 search_page.rs -> impl SearchPage -> view 内
         let notes = Container::new(notes.iter_mut().enumerate().fold(
@@ -241,7 +241,7 @@ cargo run --bin search_page
 改好之后，我们再运行5个note的示例，当前就符合我们的预期了：
 ![preview2](/img/tutorial/5-02.png)
 
-除了这个问题之外，还有一个问题也挺明显的，我们的note遮挡住了`Scrollable`的拖动栏，解决的方法也很简单，在创建`Scrollable`的时候，给其指定`padding`，指定的值根据自己的喜好来设置：
+除了这个问题之外，还有一个问题也挺明显的，我们的note遮挡住了`Scrollable`的拖动栏，解决的方法是在创建`Scrollable`的时候，给其指定`padding`，指定的值根据自己的喜好来设置：
 
 ```diff
 // 在 search_page.rs -> impl SearchPage -> view 内
@@ -284,13 +284,13 @@ cargo run --bin search_page
 
 说到`Send`就不能不提一下`Sync`，这两个是Rust里常用的两个标记trait，大部分时候不会需要我们手动实现这两个trait，我们只需要知道这两个trait是用来标记在线程间安全传递的即可，其中实现`Send`的结构体能够在线程间安全传递所有权，实现了`Sync`的结构体则可以在线程间安全传递不可变引用，对立的trait分别是`!Send`和`!Sync`，分别是不能在线程间传递所有权，和不能在线程间传递不可变引用。Rust的内建结构体都默认实现了这四个trait中的其中两个，你通过这些结构体组合得到的新的结构体编译器也会默认给你实现其中两个。通常来说如果组成你结构体的所有字段都是`Send`的，你的结构体默认实现的就是`Send`，`Sync`也同理。
 
-说了这么多，实际写的时候不需要考虑的很复杂，我们只需要简单查一下文档，看看需要传递的结构体是否满足需求即可，不满足需求，我们就给它套娃，让它足以满足我们的需求即可。（通常实际连文档都不需要看，编译时不满足需求的情况下编译器会给你贴心的指出来的）
+说了这么多，实际写的时候不需要考虑的很复杂，我们只需要查阅文档，看看需要传递的结构体是否满足需求即可，不满足需求，我们就给它套娃，让它足以满足我们的需求即可。（通常实际连文档都不需要看，编译时不满足需求的情况下编译器会给你贴心的指出来的）
 
 那么问题就来到了，如何将一个不满足需求的结构体转换成满足的结构体呢？社区已经有大量此类转换的文档、图表集合了，当然，再看图表之前，最好先找文档看看，实践一下，熟练了，能一眼看懂图表的时候，再考虑看图表。文档好找，甚至直接看`std.rs`的都可以，图不太好找，在这里贴一下[地址](https://github.com/usagi/rust-memory-container-cs)：https://github.com/usagi/rust-memory-container-cs
 
-`Command::batch()`也很简单，需要的参数就是一个支持迭代器的`Command`集合，我相信通常大家都会这样调用：
+`Command::batch()`也很好理解，需要的参数是一个支持迭代器的`Command`集合，我相信通常大家都会这样调用：
 ```rust
-    // 当前Rust版本的错误示范
+    // 当前Rust版本的错误示范（本文书写于Rust稳定版本1.53之前，最新的稳定版本已经可以这样写了）
     fn update(
         &mut self,
         message: Self::Message,
@@ -348,7 +348,7 @@ cargo run --bin search_page
 
 也就是，我们在构建`iced`的应用程序时，最好将重的，容易影响绘制速度的任务，作为异步函数放到运行时里通过`iced`的异步调度器帮我们调度运行，在将来它完成了重量运算之后，会作为一个新的`Message`返回到`update`方法里，因此使用`Command`时，我们还需要写如何处理返回值。
 
-基本的概念都理清了，我们现在可以实现一些异步方法，一些比较重的方法，我们是需要拿到`Command`里去跑的，我们从简单的搜索、删除开始写：
+基本的概念都理清了，我们现在可以实现一些异步方法，一些比较重的方法，我们是需要拿到`Command`里去跑的，我们从相对容易实现的搜索和删除开始：
 ```rust
 // 在 middle_data.rs 内
 use std::sync::Arc;
@@ -472,7 +472,7 @@ impl MiddleDate {
         insert(note);
         Self::from_select_inner(conn, query, limit, offset)
     }
-    // 简单的检索
+    // 直接进行检索
     pub async fn from_select(
         conn: Arc<Mutex<Connection>>,
         query: String,
@@ -486,7 +486,7 @@ impl MiddleDate {
 }
 ```
 
-距离我们实现`update`又近了一步，我们完成了一个简单的前后端交互，现在可以将这些异步函数放到我们的`update`里去了。
+距离我们实现`update`又近了一步，我们完成了一个简易的前后端交互，现在可以将这些异步函数放到我们的`update`里去了。
 
 ```rust
 // 在 search_page.rs > impl SearchPage 内
@@ -533,7 +533,7 @@ impl SearchPage {
         //这个值也可以写死，比如使用10来代替，
         //但是考虑到后续设置部分能够更改这个参数，
         //因此作为一个值转递进来。
-        // 大部分实现都很简单，我们直接看最后几条即可
+        // 大部分实现都不用仔细查阅，重点关注最后几条即可
         match message {
             Message::Search => search(conn, self.search_value.to_owned(), limit, self.offset),
             Message::SearchInput(search_value) => {
@@ -816,7 +816,7 @@ pub fn vertical_rules<'a, Msg: 'a>(n: usize) -> Vec<Element<'a, Msg>> {
 +       theme: Theme,
 +       limit: u32,
     }
-// 简单给Message新增几个Message
+// 添加新增的Message
 #[derive(Debug)]
 pub enum Message {
 -   NoteMessage(note::Message),
@@ -872,7 +872,7 @@ impl iced::Application for LocalNative {
                         theme: Theme::Light,
                         limit: 10,
                     };
-                    // 简单构建一个Data，其中theme和limit将在之后调整到Config内，
+                    // 构建一个Data，其中theme和limit将在之后调整到Config内，
                     //届时我们将通过Loading读取到Config，然后由Config获取Data
                     // 获取Data之后切换self的状态，
                     *self = LocalNative::Loaded(data);
@@ -915,7 +915,7 @@ impl iced::Application for LocalNative {
                                 },
                                 Message::TagView,
                             ),
-                            // 简单将Note转换为NoteView
+                            // 将Note转换为NoteView
                             Command::perform(
                                 async move { notes.into_iter().map(NoteView::from).collect() },
                                 Message::NoteView,
@@ -947,7 +947,7 @@ impl iced::Application for LocalNative {
     fn view(&mut self) -> iced::Element<'_, Self::Message> {
         match self {
             // 加载页面当前很快就略过了，不排除在性能不是很好的机器上会长时间加载，
-            //因此加载部分我们也简单设计了一个页面
+            //因此加载部分我们也设计了一个页面
             LocalNative::Loading => Column::new()
                 .push(style::vertical_rule())
                 .push(
@@ -959,7 +959,7 @@ impl iced::Application for LocalNative {
                 .push(style::vertical_rule())
                 .into(),
             LocalNative::Loaded(data) => {
-                // 目前简单调用search_page的view方法即可，后续会加入设置等其它界面
+                // 目前调用search_page的view方法即可，后续会加入设置等其它界面
                 let Data { search_page, .. } = data;
                 search_page
                     .view(data.theme, data.limit)
@@ -978,9 +978,9 @@ cargo run --bin ln
 
 什么？你的程序里没有数据？是空白的？那就对了，你本身就没有向数据库写入过数据，所以是空白的，这很合理。如何解决这个问题呢？
 
-简单的解决方式：安装LocalNative 桌面软件 -> 安装LocalNative 浏览器插件 -> 打开桌面软件 -> 打开浏览器插件随意新增Note
+简易的解决方式：安装LocalNative 桌面软件 -> 安装LocalNative 浏览器插件 -> 打开桌面软件 -> 打开浏览器插件随意新增Note
 
-复杂的解决方式： 我们在此前写localnative_core交互的接口时，有写道insert方法，你可以简单做一个preview程序，通过外部调用insert，给数据库插入用于测试的一些数据。
+复杂的解决方式： 我们在此前写localnative_core交互的接口时，有写到insert方法，你可以做一个preview程序，通过外部调用insert，给数据库插入用于测试的一些数据。
 
 还有一个方法，拷贝一个已经存有相关数据的sqlite文件放入到合适的位置（目前读取文件是在：/home/LocalNative/localnative.sqlite3）,将它也替换即可。在LocalNative的项目里已经准备好了一个用于测试的sqlite3文件，下载更改名字替换即可。链接在这：（TODO）
 

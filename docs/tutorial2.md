@@ -1,6 +1,6 @@
 ---
 id: tutorial2
-title: 2. 运行简单示例
+title: 2. 运行通用示例
 ---
 
 在上一章里，我们已经初始化项目结构，本章主要是介绍这样一个项目结构是如何运行的。
@@ -123,7 +123,7 @@ impl iced::Application for LocalNative {
     // 当前我们没有特殊需求，所以这个关联类型定义为()即可
     type Flags = ();
 	// 正如刚刚所说，我们可以通过读取flags来构建不同的Self,
-    // 目前我们仅仅需要一个简单的示例，因此并没有用到flags
+    // 目前我们仅仅需要一个普通的示例，因此并没有用到flags
     fn new(flags: Self::Flags) -> (Self, Command<Self::Message>) {
         (LocalNative::Loading,Command::none())
     }
@@ -151,7 +151,7 @@ impl iced::Application for LocalNative {
 }
 ```
 
-以上，是一个简单的`iced`应用程序示例，我们将在接下来的开发中充实它，不过在此之前，既然这是一个简单的完整示例，那就代表我们能够运行它，现在我们来介绍一下`bin.rs`：
+以上，是一个普通的`iced`应用程序示例，我们将在接下来的开发中充实它，不过在此之前，既然这是一个普通的示例，那就代表我们能够运行它，现在我们来介绍一下`bin.rs`：
 
 ```rust
 // 在 bin.rs 中
@@ -205,7 +205,7 @@ cargo run --bin ln
 
 编译没有问题的话，会得到以下结果（编译过程中出现的warning请暂时忽略）：
 
-![简单示例](/img/tutorial/2-00.png)
+![普通示例](/img/tutorial/2-00.png)
 
 > 关于WSL的一个warning：
 >

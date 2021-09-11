@@ -22,7 +22,7 @@ title: 4. 实现TagView
 +   serde_json = "1"
 ```
 
-我们新增了`serde`和`serde_json`两个依赖，前者我们还开启了其`deriver`feature，可以帮助我们更简单的实现序列化。后者是因为`localnative_core`的返回值是`json`，我们之后会需要将从`localnative_core`获取的值转化为绘制GUI所需要的数据，也就需要用到这个依赖了。
+我们新增了`serde`和`serde_json`两个依赖，前者我们还开启了其`deriver`feature，可以帮助我们更容易的实现序列化。后者是因为`localnative_core`的返回值是`json`，我们之后会需要将从`localnative_core`获取的值转化为绘制GUI所需要的数据，也就需要用到这个依赖了。
 
 ### 开始构建
 
@@ -125,7 +125,7 @@ impl iced::Sandbox for TagView {
     }
 
     fn update(&mut self, message: Self::Message) {
-        // 简单打印即可，后续需要交给更高的层次处理
+        // 直接打印即可，后续需要交给更高的层次处理
         match message {
             Message::Search(s) => println!("{}", s),
         }
@@ -145,7 +145,7 @@ pub struct Count {
 
 impl button::StyleSheet for Count {
     fn active(&self) -> button::Style {
-        // 只需要简单定义颜色即可，同时将边框置为透明
+        // 只需要直接定义颜色即可，同时将边框置为透明
         let text_color = match self.theme {
             Theme::Light => Color::from_rgb(1.0, 0.0, 0.0),
             Theme::Dark =>  Color::from_rgb(0.2, 0.1, 1.0)

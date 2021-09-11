@@ -52,7 +52,7 @@ fn font() -> Option<&'static [u8]> {
 
  目前 `iced`并没有原生多语言支持的功能，因此我们只能通过其他的相关crate来完成这个需求。可以选择的方案很多，最后选择的方案是使用fluent_bundle，在这里谈一下其他的解决方案。
 
- 在选择方案前，首先对当前的需求做了大致的预估，可以明确的知道当前的app在多语言支持需求上很简单，仅仅是一些简易的文本替换。也就是在这个预估下，选择方案上偏向于简易实现的方案。
+ 在选择方案前，首先对当前的需求做了大致的预估，可以明确的知道当前的app在多语言支持需求上比较简陋，仅仅是一些简易的文本替换。也就是在这个预估下，选择方案上偏向于简易实现的方案。
 
  最先考虑到的是fluent-rs系列的选择方案，[fluent-rs](https://github.com/projectfluent/fluent-rs)提供了一系列的对多语言支持的crate，从资源管理到高级抽象，你都能够在fluent-rs里找到。但是，在`iced`里，我们仍然不能直接爽快的使用fluent-rs提供的高级抽象（特指[fluent-fallback](https://crates.io/crates/fluent_fallback))我们在每次调用文本切换时，都需要提供一个资源管理的变量用于查询，可以说是十分不爽，可以看看下面的官方实例：
 
@@ -102,7 +102,7 @@ let value = bundle.format_pattern(&pattern, Some(&args), &mut errors);
 // the text from the variable is not affected by the translation.
 assert_eq!(value, "Welcome, \u{2068}John\u{2069}.");
   ```
-以上仅仅是一个fluent-fallback的一个简短实例，我们可以很容易的发现整个调用过程十分繁杂，说是一个高级抽象，但用起来一点都不高级。其实在脑海中我们希望的调用方式更像是这样：
+以上仅仅是一个fluent-fallback的一个简短实例，我们可以发现整个调用过程十分繁杂，说是一个高级抽象，但用起来一点都不高级。其实在脑海中我们希望的调用方式更像是这样：
 ```rust
 // App本身提供一个枚举用来表示当前的语言，切换语言只需要切换该枚举的值即可
 let hello = tr("hello");
@@ -176,7 +176,7 @@ static BUNDLE_CACHE: OnceCell<FrozenMap<Language, Arc<FluentBundle<FluentResourc
 // bundle是用来查询多语言的ftl文件的
 pub static BUNDLE: OnceCell<RwLock<&FluentBundle<FluentResource, IntlLangMemoizer>>> =
     OnceCell::const_new();
-// 简单的读取ftl文件
+// 读取ftl文件
 async fn read_file(path: &str) -> Option<String> {
     tokio::fs::read_to_string(path)
         .await
@@ -299,7 +299,7 @@ impl Display for Language {
     }
 }
 // 这就是我们的宏了，和tr包比起来十分简陋
-// 但是满足了我们的简单需求
+// 但是已经满足我们的需求了
 #[macro_export]
 macro_rules! tr {
     ($msg:expr) => {
@@ -364,7 +364,7 @@ impl iced::Application for LocalNative {
 
 目前基本已经搞定了，接下来就是一些文本的切换了，首先需要创建对应语言的ftl文件，我定义的路径就是工作区间的同等目录下的locales文件夹，在里面创建了两个文件夹：`en-US`和`zh-CN`，名字命名也是有规则的，规则可以在`fluent-rs`的文档里面找。在这两个文件夹内都创建了名为`tr.ftl`的文件，这在定义路径的时候确定了的。
 
-文件的内容现在很简单：
+文件的内容：
 ```ftl
 # 在 en-US 下的tr.ftl文件
 tags = tags:
