@@ -23,7 +23,7 @@ extern crate uuid;
 use self::semver::Version;
 use rusqlite::Connection;
 // version to upgrade to
-const VERSION: &str = "0.5.0";
+const VERSION: &str = "0.5.1";
 mod to_0_4_0;
 mod to_0_5_0;
 mod utils;
@@ -56,6 +56,9 @@ pub fn upgrade(conn: &Connection) -> anyhow::Result<&str> {
         }
         if Version::parse(&get_meta_version(conn)?)? == Version::parse("0.4.2")? {
             to_0_5_0::drop_ssb_table(conn).unwrap();
+            set_meta_version(conn, "0.5.0")?;
+        }
+        if Version::parse(&get_meta_version(conn)?)? == Version::parse("0.5.0")? {
             set_meta_version(conn, VERSION)?;
         }
         eprintln!("upgraded to {}", VERSION);

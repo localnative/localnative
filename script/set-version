@@ -11,16 +11,16 @@ echo "set version to" $1
 gsed -i "6s/.*/version = \"$1\"/" localnative-rs/localnative_core/Cargo.toml
 gsed -i "5s/.*/version = \"$1\"/" localnative-rs/localnative_cli/Cargo.toml
 
-# electron
-gsed -i "3s/.*/  \"version\": \"$1\",/" localnative-electron/package.json
-gsed -i "18s/.*/const version = \"$1\"/" localnative-electron/src/main.js
-
-# neon
-gsed -i "3s/.*/  \"version\": \"$1\",/" localnative-neon/package.json
-gsed -i "18s/.*/let version = '$1'/" localnative-neon/lib/index.js
-gsed -i "3s/.*/version = \"$1\"/" localnative-neon/native/Cargo.toml
-gsed -i "20s/.*/version = \"$1\"/" localnative-neon/native/Cargo.toml
-gsed -i "24s/.*/version = \"$1\"/" localnative-neon/native/Cargo.toml
+# # electron
+# gsed -i "3s/.*/  \"version\": \"$1\",/" localnative-electron/package.json
+# gsed -i "18s/.*/const version = \"$1\"/" localnative-electron/src/main.js
+#
+# # neon
+# gsed -i "3s/.*/  \"version\": \"$1\",/" localnative-neon/package.json
+# gsed -i "18s/.*/let version = '$1'/" localnative-neon/lib/index.js
+# gsed -i "3s/.*/version = \"$1\"/" localnative-neon/native/Cargo.toml
+# gsed -i "20s/.*/version = \"$1\"/" localnative-neon/native/Cargo.toml
+# gsed -i "24s/.*/version = \"$1\"/" localnative-neon/native/Cargo.toml
 
 # web-ext
 gsed -i "60s/.*/v$1/" localnative-browser-extension/app/popup.html
