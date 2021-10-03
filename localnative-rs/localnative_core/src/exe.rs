@@ -58,7 +58,7 @@ pub fn get_sqlite_connection() -> Connection {
 
 fn sqlite3_db_location() -> String {
     if cfg!(target_os = "android") {
-        let path = "sdcard/LocalNative";
+        let path = "/storage/emulated/0/Android/data/app.localnative/files";
         if let Err(e) = fs::create_dir_all(path) {
             panic!("{}", e);
         };

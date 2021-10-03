@@ -26,27 +26,32 @@ import com.android.volley.Request
 import com.android.volley.Response
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
-import kotlinx.android.synthetic.main.activity_share.*
 import org.json.JSONObject
 import android.text.method.ScrollingMovementMethod
+import app.localnative.databinding.ActivityShareBinding
 
 class ShareActivity : AppCompatActivity() {
+    private lateinit var binding: ActivityShareBinding
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_share)
-        tagsText.requestFocus()
-        textView.movementMethod = ScrollingMovementMethod()
-        btnCancel.setOnClickListener {
+        binding = ActivityShareBinding.inflate(layoutInflater)
+        val view = binding.root
+        setContentView(view)
+
+        binding.tagsText.requestFocus()
+        binding.textView.movementMethod = ScrollingMovementMethod()
+        binding.btnCancel.setOnClickListener {
             finish()
         }
-        btnSave.setOnClickListener {
+        binding.btnSave.setOnClickListener {
 
             val j = JSONObject()
             j.put("action", "insert")
-            j.put("title", titleText.text)
-            j.put("url", urlText.text)
-            j.put("tags", tagsText.text)
-            j.put("description", descText.text)
+            j.put("title", binding.titleText.text)
+            j.put("url", binding.urlText.text)
+            j.put("tags", binding.tagsText.text)
+            j.put("description", binding.descText.text)
             j.put("comments", "")
             j.put("annotations", "")
             j.put("limit", 15)
@@ -81,7 +86,7 @@ class ShareActivity : AppCompatActivity() {
 
     private fun handleSendText(intent: Intent) {
         intent.getStringExtra(Intent.EXTRA_TEXT)?.let {
-            urlText.setText(it)
+            binding.urlText.setText(it)
 
             val queue = Volley.newRequestQueue(this)
             val url = it
@@ -94,11 +99,11 @@ class ShareActivity : AppCompatActivity() {
                         re.find(r)?.let{
                             val (_, t, _)=it.destructured
                             val title =  t.trim()
-                            titleText.setText(title.substring(0, minOf(500,title.length)))
-                            textView.text = "title fetched."
+                            binding.titleText.setText(title.substring(0, minOf(500,title.length)))
+                            binding.textView.text = "title fetched."
                         }
                     },
-                    Response.ErrorListener { textView.text = "can not fetch title :-( but you can still type your own title" })
+                    Response.ErrorListener { binding.textView.text = "can not fetch title :-( but you can still type your own title" })
 
             queue.add(stringRequest)
         }
