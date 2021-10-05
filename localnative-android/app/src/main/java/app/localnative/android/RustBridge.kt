@@ -17,6 +17,8 @@
 */
 package app.localnative.android
 
+import java.io.File
+
 object RustBridge {
     init {
         System.loadLibrary("localnative_core")

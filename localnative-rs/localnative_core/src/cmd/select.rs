@@ -100,7 +100,7 @@ pub fn select_count(conn: &Connection) -> anyhow::Result<u32> {
     Ok(count)
 }
 
-pub fn select(conn: &Connection, limit: &u32, offset: &u32) -> anyhow::Result<String> {
+pub fn select(conn: &Connection, limit: u32, offset: u32) -> anyhow::Result<String> {
     let mut stmt = conn.prepare(
         "SELECT rowid, uuid4, title, url, tags, description, comments
         , hex(annotations)
@@ -110,8 +110,8 @@ pub fn select(conn: &Connection, limit: &u32, offset: &u32) -> anyhow::Result<St
     )?;
     let note_iter = stmt.query_map(
         &[
-            (":limit", limit as &dyn ToSql),
-            (":offset", offset as &dyn ToSql),
+            (":limit", &limit as &dyn ToSql),
+            (":offset", &offset as &dyn ToSql),
         ],
         |row| {
             Ok(Note {
@@ -130,8 +130,8 @@ pub fn select(conn: &Connection, limit: &u32, offset: &u32) -> anyhow::Result<St
     )?;
 
     let mut j = "[ ".to_owned();
-    for note in note_iter.filter(|note| note.is_ok()) {
-        let mut note = note.unwrap();
+    for note in note_iter {
+        let mut note = note?;
         note.tags = make_tags(&note.tags);
         //#[cfg(not(feature = "no_print"))]
         //eprintln!("Found note {:?}", note);

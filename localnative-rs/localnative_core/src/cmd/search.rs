@@ -24,10 +24,10 @@ use rusqlite::Connection;
 use std::collections::HashMap;
 
 pub fn search_by_tag(conn: &Connection, query: &str) -> anyhow::Result<String> {
-    let words = make_words(query);
-    if words.len() == 1 && words.get(0).unwrap().is_empty() {
+    if query.is_empty() {
         return select_by_tag(conn);
     }
+    let words = make_words(query);
     let num_words = words.len();
     let r: Vec<String> = where_vec(num_words);
     let sql = format!(
@@ -84,10 +84,11 @@ pub fn search_by_tag(conn: &Connection, query: &str) -> anyhow::Result<String> {
 }
 
 pub fn search_by_day(conn: &Connection, query: &str) -> anyhow::Result<String> {
-    let words = make_words(query);
-    if words.len() == 1 && words.get(0).unwrap().is_empty() {
+    if query.is_empty() {
         return select_by_day(conn);
     }
+    let words = make_words(query);
+
     let num_words = words.len();
     let r: Vec<String> = where_vec(num_words);
     let sql = format!(
@@ -134,10 +135,11 @@ pub fn search_by_day(conn: &Connection, query: &str) -> anyhow::Result<String> {
 }
 
 pub fn search_count(conn: &Connection, query: &str) -> anyhow::Result<u32> {
-    let words = make_words(query);
-    if words.len() == 1 && words.get(0).unwrap().is_empty() {
+    if query.is_empty() {
         return select_count(conn);
     }
+
+    let words = make_words(query);
     let num_words = words.len();
     #[cfg(not(feature = "no_print"))]
     eprintln!("{} words {:?}", num_words, words);
@@ -184,16 +186,12 @@ pub fn search_count(conn: &Connection, query: &str) -> anyhow::Result<u32> {
     Ok(c)
 }
 
-pub fn search(conn: &Connection, query: &str, limit: &u32, offset: &u32) -> anyhow::Result<String> {
-    let words = make_words(query);
-    if words.len() == 1
-        && words
-            .get(0)
-            .ok_or_else(|| anyhow::anyhow!("words is empty"))?
-            .is_empty()
-    {
+pub fn search(conn: &Connection, query: &str, limit: u32, offset: u32) -> anyhow::Result<String> {
+    if query.is_empty() {
         return select(conn, limit, offset);
     }
+
+    let words = make_words(query);
     let num_words = words.len();
     #[cfg(not(feature = "no_print"))]
     eprintln!("{} words {:?}", num_words, words);
@@ -215,8 +213,8 @@ pub fn search(conn: &Connection, query: &str, limit: &u32, offset: &u32) -> anyh
     let keys: Vec<String> = make_keys(num_words);
 
     let mut params: Vec<(&str, &dyn ToSql)> = vec![
-        (":limit", limit as &dyn ToSql),
-        (":offset", offset as &dyn ToSql),
+        (":limit", &limit as &dyn ToSql),
+        (":offset", &offset as &dyn ToSql),
     ];
 
     for i in 0..num_words {

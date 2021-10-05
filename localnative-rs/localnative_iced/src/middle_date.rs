@@ -91,8 +91,8 @@ impl MiddleDate {
     fn from_filter_inner(
         conn: &Connection,
         query: &str,
-        limit: &u32,
-        offset: &u32,
+        limit: u32,
+        offset: u32,
         from: &str,
         to: &str,
     ) -> Option<Self> {

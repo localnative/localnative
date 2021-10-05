@@ -17,6 +17,7 @@
 */
 package app.localnative.android
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -84,6 +85,7 @@ class ShareActivity : AppCompatActivity() {
         startActivity(intent)
     }
 
+    @SuppressLint("SetTextI18n")
     private fun handleSendText(intent: Intent) {
         intent.getStringExtra(Intent.EXTRA_TEXT)?.let {
             binding.urlText.setText(it)
@@ -92,18 +94,18 @@ class ShareActivity : AppCompatActivity() {
             val url = it
 
             val stringRequest = StringRequest(Request.Method.GET, url,
-                    Response.Listener<String> { response ->
-                        val r =  response.trim()
-                        //textView.text = r.substring(0, minOf(50000, r.length))
-                        val re = Regex("""<(?i)(Title)>(.*?)<\\?/(?i)(title)>""")
-                        re.find(r)?.let{
-                            val (_, t, _)=it.destructured
-                            val title =  t.trim()
-                            binding.titleText.setText(title.substring(0, minOf(500,title.length)))
-                            binding.textView.text = "title fetched."
-                        }
-                    },
-                    Response.ErrorListener { binding.textView.text = "can not fetch title :-( but you can still type your own title" })
+                { response ->
+                    val r =  response.trim()
+                    //textView.text = r.substring(0, minOf(50000, r.length))
+                    val re = Regex("""<(?i)(Title)>(.*?)<\\?/(?i)(title)>""")
+                    re.find(r)?.let{
+                        val (_, t, _)=it.destructured
+                        val title =  t.trim()
+                        binding.titleText.setText(title.substring(0, minOf(500,title.length)))
+                        binding.textView.text = "title fetched."
+                    }
+                },
+                { binding.textView.text = "can not fetch title :-( but you can still type your own title" })
 
             queue.add(stringRequest)
         }

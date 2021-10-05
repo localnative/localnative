@@ -17,10 +17,14 @@
 */
 package app.localnative.android
 
+import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.os.Message
 import android.util.Log
 import android.view.Menu
 import android.view.View
@@ -30,18 +34,48 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.liveData
 import androidx.recyclerview.widget.RecyclerView
 import app.localnative.R
 import com.google.zxing.integration.android.IntentIntegrator
 import java.io.File
 
-class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener, NoteListFragment.OnListFragmentInteractionListener, View.OnClickListener {
+public class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener, NoteListFragment.OnListFragmentInteractionListener, View.OnClickListener {
 
     private var searchView: SearchView? = null
 
     private val mRecyclerView: RecyclerView? = null
     private val mAdapter: RecyclerView.Adapter<*>? = null
     private val mLayoutManager: RecyclerView.LayoutManager? = null
+
+    public val mHandler: Handler =
+    object : Handler(Looper.myLooper()!!) {
+        override fun handleMessage(msg: Message) {
+            super.handleMessage(msg)
+            when (msg.what) {
+                0 -> {
+                    val content = msg.obj.toString()
+                    Log.d("doSearchResult", content)
+                    val noteListFragment = supportFragmentManager.findFragmentById(R.id.notes_recycler_view) as NoteListFragment?
+                    val count = NoteContent.refresh(content)
+                    AppState.setCount(count!!)
+                    val paginationText = AppState.makePaginationText()
+                    noteListFragment!!.mViewAdpater.notifyDataSetChanged()
+                    (findViewById<View>(R.id.pagination_text) as TextView).text = paginationText
+                }
+                1 -> {
+                    val context = msg.obj.toString()
+                    Log.d("doSyncResult", context)
+                }
+                10 -> {
+                    val context = msg.obj.toString()
+                    Log.d("doDeleteResult", context)
+                }
+            }
+        }
+    }
+
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         // Get the SearchView and set the searchable configuration
@@ -77,9 +111,8 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener, NoteLi
 
         setContentView(R.layout.activity_main)
 
-        val filepath = this.applicationContext.getExternalFilesDir(null)
+        val sqliteFilePath = this.applicationContext.getExternalFilesDir("sqlite")
 
-        Log.d("start",filepath.toString())
 
         val toolbar = findViewById<View>(R.id.toolbar) as Toolbar
         setSupportActionBar(toolbar)
@@ -111,13 +144,19 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener, NoteLi
                 val builder = AlertDialog.Builder(this)
                 builder.setMessage(R.string.dialog_sync)
                         .setPositiveButton(R.string.sync) { dialog, id ->
-                            val cmd = ("{\"action\": \"client-sync\", \"addr\": \""
-                                    + result.contents
-                                    + "\""
-                                    + "}")
-                            Log.d("doClientSyncCmd", cmd)
-                            val s = RustBridge.run(cmd)
-                            Log.d("doClientSyncCmdResp", s)
+                            val thread = Thread(kotlinx.coroutines.Runnable {
+                                val cmd = ("{\"action\": \"client-sync\", \"addr\": \""
+                                        + result.contents
+                                        + "\""
+                                        + "}")
+                                Log.d("doClientSyncCmd", cmd)
+                                val s = RustBridge.run(cmd)
+                                Log.d("doClientSyncCmdResp", s)
+                                val message = Message()
+                                message.what = 1
+                                message.obj = s
+                                mHandler.sendMessage(message)
+                            }).start()
                         }
                         .setNegativeButton(R.string.cancel) { dialog, id ->
                             // User cancelled the dialog
@@ -158,23 +197,22 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener, NoteLi
 
 
     fun doSearch(query: String, offset: Long?) {
-        AppState.setQuery(query)
-        Log.d("doSearch", query + offset!!)
+        val thread = Thread(kotlinx.coroutines.Runnable {
+            AppState.setQuery(query)
+            Log.d("doSearch", query + offset!!)
 
-        val cmd = ("{\"action\": \"search\", \"query\": \""
-                + query
-                + "\", \"limit\":10, \"offset\":" +
-                offset!!.toString() +
-                "}")
-        Log.d("doSearchCmd", cmd)
-        val s = RustBridge.run(cmd)
-        Log.d("doSearchResult", s)
-        val noteListFragment = supportFragmentManager.findFragmentById(R.id.notes_recycler_view) as NoteListFragment?
-        val count = NoteContent.refresh(s)
-        AppState.setCount(count!!)
-        val paginationText = AppState.makePaginationText()
-        noteListFragment!!.mViewAdpater.notifyDataSetChanged()
-        (findViewById<View>(R.id.pagination_text) as TextView).text = paginationText
+            val cmd = ("{\"action\": \"search\", \"query\": \""
+                    + query
+                    + "\", \"limit\":10, \"offset\":" +
+                    offset!!.toString() +
+                    "}")
+            Log.d("doSearchCmd", cmd)
+            val result = RustBridge.run(cmd)
+            val msg = Message()
+            msg.what = 0
+            msg.obj = result
+            mHandler.sendMessage(msg)
+        }).start()
     }
 
     override fun onListFragmentInteraction(item: NoteContent.NoteItem) {

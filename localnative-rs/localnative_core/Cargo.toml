@@ -32,6 +32,7 @@ get_if_addrs = "0.5.3"
 anyhow = "1"
 stream-cancel = "0.8"
 thiserror = "1.0"
+sqlx = { version = "0.5.9", features = [ "sqlite" ] }
 
 [lib]
 name = "localnative_core"

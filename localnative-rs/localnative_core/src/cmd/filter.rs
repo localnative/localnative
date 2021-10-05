@@ -149,8 +149,8 @@ pub fn filter(
     query: &str,
     from: &str,
     to: &str,
-    limit: &u32,
-    offset: &u32,
+    limit: u32,
+    offset: u32,
 ) -> anyhow::Result<String> {
     let words = make_words(query);
     if words.len() == 1
@@ -186,8 +186,8 @@ pub fn filter(
     let mut params: Vec<(&str, &dyn ToSql)> = vec![
         (":from", &from as &dyn ToSql),
         (":to", &to as &dyn ToSql),
-        (":limit", limit as &dyn ToSql),
-        (":offset", offset as &dyn ToSql),
+        (":limit", &limit as &dyn ToSql),
+        (":offset", &offset as &dyn ToSql),
     ];
 
     for i in 0..num_words {

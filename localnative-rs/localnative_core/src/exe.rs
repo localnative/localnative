@@ -58,11 +58,7 @@ pub fn get_sqlite_connection() -> Connection {
 
 fn sqlite3_db_location() -> String {
     if cfg!(target_os = "android") {
-        let path = "/storage/emulated/0/Android/data/app.localnative/files";
-        if let Err(e) = fs::create_dir_all(path) {
-            panic!("{}", e);
-        };
-        return format!("{}/localnative.sqlite3", path);
+        return "file:/storage/emulated/0/Android/data/app.localnative/files/sqlite/localnative.sqlite3".into();
     }
     let mut dir_name = "LocalNative";
     if cfg!(target_os = "ios") {
@@ -144,7 +140,7 @@ fn process(cmd: Cmd) -> anyhow::Result<String, ProcessError> {
             if i.is_public {
                 eprintln!("is_public")
             }
-            do_select(&conn, &i.limit, &i.offset)
+            do_select(&conn, i.limit, i.offset)
                 .map_err(|err| ProcessError::Unknown(err.to_string(), "insert image".into()))
         }
         Cmd::Insert(i) => {
@@ -167,20 +163,20 @@ fn process(cmd: Cmd) -> anyhow::Result<String, ProcessError> {
             if i.is_public {
                 eprintln!("is_public")
             }
-            do_select(&conn, &i.limit, &i.offset)
+            do_select(&conn, i.limit, i.offset)
                 .map_err(|err| ProcessError::Unknown(err.to_string(), "insert".into()))
         }
         Cmd::Delete(s) => {
             delete(&conn, s.rowid)
                 .map_err(|err| ProcessError::Unknown(err.to_string(), "delete op".into()))?;
-            do_search(&conn, &s.query, &s.limit, &s.offset)
+            do_search(&conn, &s.query, s.limit, s.offset)
                 .map_err(|err| ProcessError::Unknown(err.to_string(), "delete".into()))
         }
-        Cmd::Select(s) => do_select(&conn, &s.limit, &s.offset)
+        Cmd::Select(s) => do_select(&conn, s.limit, s.offset)
             .map_err(|err| ProcessError::Unknown(err.to_string(), "select".into())),
-        Cmd::Search(s) => do_search(&conn, &s.query, &s.limit, &s.offset)
+        Cmd::Search(s) => do_search(&conn, &s.query, s.limit, s.offset)
             .map_err(|err| ProcessError::Unknown(err.to_string(), "search".into())),
-        Cmd::Filter(s) => do_filter(&conn, &s.query, &s.limit, &s.offset, &s.from, &s.to)
+        Cmd::Filter(s) => do_filter(&conn, &s.query, s.limit, s.offset, &s.from, &s.to)
             .map_err(|err| ProcessError::Unknown(err.to_string(), "filter".into())),
     }
 }
@@ -199,8 +195,8 @@ fn created_time() -> String {
 pub fn do_search(
     conn: &Connection,
     query: &str,
-    limit: &u32,
-    offset: &u32,
+    limit: u32,
+    offset: u32,
 ) -> anyhow::Result<String> {
     let c = search_count(conn, query)?;
     let j = search(conn, query, limit, offset)?;
@@ -214,7 +210,7 @@ pub fn do_search(
     Ok(msg)
 }
 
-fn do_select(conn: &Connection, limit: &u32, offset: &u32) -> anyhow::Result<String> {
+fn do_select(conn: &Connection, limit: u32, offset: u32) -> anyhow::Result<String> {
     let c = select_count(conn)?;
     let j = select(conn, limit, offset)?;
     let d = select_by_day(conn)?;
@@ -230,8 +226,8 @@ fn do_select(conn: &Connection, limit: &u32, offset: &u32) -> anyhow::Result<Str
 pub fn do_filter(
     conn: &Connection,
     query: &str,
-    limit: &u32,
-    offset: &u32,
+    limit: u32,
+    offset: u32,
     from: &str,
     to: &str,
 ) -> anyhow::Result<String> {
