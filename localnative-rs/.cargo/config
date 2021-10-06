@@ -2,7 +2,7 @@
 xtask = "run --package xtask --bin xtask"
 fmt-check = "fmt --all -- --check"
 lint = "clippy --workspace --all-targets  -- -D warnings -A clippy::type_complexity"
-iced = "run --bin local-native"
+iced = "run --bin llocalnative_iced"
 
 [target.x86_64-pc-windows-msvc]
 linker = "rust-lld"
