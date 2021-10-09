@@ -1,0 +1,20 @@
+#!/bin/bash
+
+set -e
+
+cd `dirname $0`/..
+
+echo "set electron version to" $1
+
+script/set-version $1
+
+# electron
+gsed -i "3s/.*/  \"version\": \"$1\",/" localnative-electron/package.json
+gsed -i "18s/.*/const version = \"$1\"/" localnative-electron/src/main.js
+
+# neon
+gsed -i "3s/.*/  \"version\": \"$1\",/" localnative-neon/package.json
+gsed -i "18s/.*/let version = '$1'/" localnative-neon/lib/index.js
+gsed -i "3s/.*/version = \"$1\"/" localnative-neon/native/Cargo.toml
+gsed -i "20s/.*/version = \"$1\"/" localnative-neon/native/Cargo.toml
+gsed -i "24s/.*/version = \"$1\"/" localnative-neon/native/Cargo.toml
