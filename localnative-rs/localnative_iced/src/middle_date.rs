@@ -65,7 +65,7 @@ impl MiddleDate {
         let conn = &*conn.lock().await;
         let from = from.to_string();
         let to = to.to_string();
-        Self::from_filter_inner(conn, &query, &limit, &offset, &from, &to)
+        Self::from_filter_inner(conn, &query, limit, offset, &from, &to)
     }
     pub async fn from_someday(
         conn: Conn,
@@ -76,7 +76,7 @@ impl MiddleDate {
     ) -> Option<Self> {
         let conn = &*conn.lock().await;
         let day = day.to_string();
-        Self::from_filter_inner(conn, &query, &limit, &offset, &day, &day)
+        Self::from_filter_inner(conn, &query, limit, offset, &day, &day)
     }
     fn from_select_inner(
         conn: &Connection,
@@ -84,7 +84,7 @@ impl MiddleDate {
         limit: u32,
         offset: u32,
     ) -> Option<Self> {
-        let search_result = localnative_core::exe::do_search(conn, &query, &limit, &offset).ok()?;
+        let search_result = localnative_core::exe::do_search(conn, &query, limit, offset).ok()?;
 
         serde_json::from_str::<Self>(&search_result).ok()
     }
