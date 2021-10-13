@@ -84,7 +84,7 @@ preview = [
 ]
 
 [[bin]]
-name = "llocalnative_iced"
+name = "localnative_iced"
 path = "./src/bin.rs"
 
 [[bin]]

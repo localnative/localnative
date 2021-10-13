@@ -25,7 +25,7 @@ impl Release {
         };
         let src = Path::new("target").join("release");
 
-        cmd!("cargo build --no-default-features --features wgpu --release --bin local-native")
+        cmd!("cargo build --no-default-features --features wgpu --release --bin localnative_iced")
             .run()?;
 
         cmd!("cargo build --release --bin localnative-web-ext-host").run()?;
@@ -44,7 +44,7 @@ impl Release {
             rm_rf(&dst)?;
         }
         mkdir_p(&dst)?;
-        let iced_dst = dst.join(format!("local-native{}", suffix));
+        let iced_dst = dst.join(format!("localnative_iced{}", suffix));
         let host_dst = dst.join(format!("localnative-web-ext-host{}", suffix));
 
         let readme = Path::new("README.md");
@@ -79,7 +79,7 @@ impl Release {
                     "Cupnfish".into(),
                     "Hill Chen".into(),
                 ]),
-                default_run: Some("local-native".into()),
+                default_run: Some("localnative_iced".into()),
             })
             .project_out_directory(dst)
             .bundle_settings(BundleSettings {
@@ -117,7 +117,7 @@ impl Release {
                 },
             })
             .binaries(vec![
-                BundleBinary::new("local-native".into(), true),
+                BundleBinary::new("localnative_iced".into(), true),
                 BundleBinary::new("localnative-web-ext-host".into(), false),
             ])
             .package_types(package_types)
