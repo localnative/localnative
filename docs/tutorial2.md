@@ -222,3 +222,28 @@ cargo fmt
 ```
 
 当然这个需要你安装`rustfmt`组件，如果在运行的时候报错了，按照报错的提示进行安装即可。
+
+
+## 课后练习（Quiz）
+
+在本章内我们定义了一个这样的结构体：
+```rust
+pub enum LocalNative {
+    Loading,
+    Loaded(Data),
+}
+```
+请问，`LocalNative::Loading`和`LocalNative::Loaded(data)`两者在内存布局上有什么区别么？
+
+A) 
+两者在内存布局上是有区别的，其中`LocalNative::Loading`要明显小于`LocalNative::Loaded(data)`的占用空间。
+
+B) 
+没什么区别，两者本质上都是`LocalNative`这一个枚举，在底层分配内存时以最大的空间预先分配。
+
+C)
+有时有区别，有时没有区别，具体看Rust编译器最后有没有帮我们在底层做出优化。
+
+答案（Explanation）
+
+正确的选项当然是B，在Rust里定义一个枚举的时候，通常要考虑枚举的各个字段大小是否相近，否则会造成内存空间的浪费。比如我们在这里的`Loading`和`Loaded`两者相差就比较大，当值为`Loading`时，它的大小是和`Loaded`时是一样大的。但也要具体问题具体分析，比如在我们的程序里，`LocalNative`这个枚举在大部分时候都是`Loaded`状态，因此这个问题可以忽略。

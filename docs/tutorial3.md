@@ -867,3 +867,31 @@ pub fn rule() -> iced::Rule {
 至此，note的简易实现到此结束，下一章将会介绍第二个部分tags，同时也会介绍如何将多个实现的部分组合到一块：
 
 ![标签集](/img/tutorial/3-05.png)
+
+
+## 课后练习（Quiz）
+
+在本章内我们有使用到`Message`枚举体，比如下面这个：
+```rust
+#[derive(Debug, Clone)]
+pub enum Message {
+    OpenUrl,
+    Delete,
+    QRCode,
+    Search(String),
+}
+```
+其中`Message::Search(String)`就比较特殊，它是否可以当作方法来用呢？
+
+A) 
+对于Rust中的元组结构体，都可以像方法一样去使用。
+
+B) 
+并不能当作方法来使用，在Rust内只有使用`fn`关键字定义的方式才能当作方法使用。
+
+C)
+除了B选项之外，还能通过闭包的方式去定义，定义出来的也能当作方法去使用。但是元组结构体并不能和普通方法那样去使用。
+
+答案（Explanation）
+
+正确的选项是A选项，在Rust内，诸如闭包，实际上去掉语法糖之后，编译器在底层也是通过构建一个元组结构体的方式作为方法去接受参数的。

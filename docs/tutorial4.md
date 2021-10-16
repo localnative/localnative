@@ -193,3 +193,28 @@ cargo run --bin tagview
 ![tagview](/img/tutorial/4-00.png)
 
 到这里，我们已经实现了`TagView`，你可以根据你自己的喜好反复修改主题风格，直到满足你的要求。在下一节我们将会实现一个完整的搜索页面和一个完整的tags页面。
+
+## 课后练习（Quiz）
+
+在本章的结尾处，我们添加了一些属性到`Cargo.toml`文件内，其中就有这个：
+```toml
+# 在 Cargo.toml 内
+[[bin]]
+name = "tagview"
+path = "./previews/tagview.rs"
+required-features = ["preview"]
+```
+请问`required-features = ["preview"]`的作用是什么。
+
+A) 
+表示这个可执行文件只有在`preview`开启时能用。
+
+B) 
+表示这个可执行文件开启了`preview`。
+
+C)
+表示需要开启`preview`时才能执行这个可执行文件。
+
+答案（Explanation）
+
+正确选项是B。我们构建了一个包含`features`的依赖，这个依赖现在被这个可执行文件所需要，在这个可执行文件内我们只需要其中一部分功能集的时候，我们就可以通过`required-features`来指定。

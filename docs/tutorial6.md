@@ -1399,3 +1399,28 @@ pub struct SearchPage {
 
 ![2](/img/tutorial/6-02.gif)
 
+
+## 课后练习（Quiz）
+
+在本章内容里，我们有提到过这样一个方法：
+```rust
+pub fn fill_text(&mut self, text: impl Into<Text>);
+```
+请问 `impl Into<Text>` 和 `Box<dyn Into<Text>>` 有什么区别？
+
+A) 
+没什么区别，只要实现了`Into<Text>`这个trait的变量都可以传入。
+
+B) 
+底层实现上有一些区别，`impl Into<Text>`版本的相当于：
+```rust
+pub fn fill_text<T:Into<Text>>(&mut self, text: T);
+```
+而dyn版本的传入的类型是一个trait对象，即编译出来的结果是运行时多态，使用范型则是编译时多态。
+
+C)
+有区别，前者只需要传递实现了该trait的类型即可，后者需要用Box包一下。
+
+答案（Explanation）
+
+B和C都没啥问题，当然B的更深入一些，当你使用`dyn`的时候代表的是更多的灵活性，更小的编译结果，缺点是会通过运行时做额外的多态，造成了性能损失。使用`impl`时，实际上就是泛型限定的语法糖，是编译时多态，虽然性能上会更好一点，但没有前者灵活，同时编译出的二进制文件也会更大。
