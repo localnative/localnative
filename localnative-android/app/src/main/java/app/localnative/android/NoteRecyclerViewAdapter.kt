@@ -54,7 +54,6 @@ class NoteRecyclerViewAdapter(private val mValues: List<NoteItem>, private val m
         return ViewHolder(view)
     }
 
-    @SuppressLint("SetTextI18n")
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         holder.mItem = mValues[position]
         val note = mValues[position]
@@ -73,7 +72,6 @@ class NoteRecyclerViewAdapter(private val mValues: List<NoteItem>, private val m
             val builder = AlertDialog.Builder(context)
             builder.setMessage(R.string.dialog_delete_note)
                     .setPositiveButton(R.string.delete) { dialog, id ->
-                        val thread = Thread(kotlinx.coroutines.Runnable {
                             val query = AppState.getQuery()
                             val offset = AppState.getOffset()
                             val cmd = ("{\"action\": \"delete\", \"query\": \""
@@ -82,13 +80,7 @@ class NoteRecyclerViewAdapter(private val mValues: List<NoteItem>, private val m
                                     + offset
                                     + "}")
                             Log.d("doSearchCmd", cmd)
-                            val result = RustBridge.run(cmd)
-                            val msg = Message()
-                            msg.what = 10
-                            msg.obj = result
-                            (context as MainActivity).mHandler.sendMessage(msg)
                             (context as MainActivity).doSearch(query, offset)
-                        }).start()
                     }
                     .setNegativeButton(R.string.cancel) { dialog, id ->
                         // User cancelled the dialog
