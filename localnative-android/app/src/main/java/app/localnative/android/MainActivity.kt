@@ -18,10 +18,8 @@
 package app.localnative.android
 
 import android.app.AlertDialog
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.os.Message
 import android.util.Log
 import android.view.Menu
 import android.view.View
@@ -31,10 +29,15 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
+import androidx.core.view.MenuItemCompat
 import androidx.recyclerview.widget.RecyclerView
 import app.localnative.R
 import com.google.zxing.integration.android.IntentIntegrator
-import java.io.File
+import com.hjq.permissions.OnPermissionCallback
+import com.hjq.permissions.Permission
+import com.hjq.permissions.XXPermissions
+import com.hjq.permissions.XXPermissions.isGranted
+import com.hjq.toast.ToastUtils
 
 class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener, NoteListFragment.OnListFragmentInteractionListener, View.OnClickListener {
 
@@ -44,13 +47,12 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener, NoteLi
     private val mAdapter: RecyclerView.Adapter<*>? = null
     private val mLayoutManager: RecyclerView.LayoutManager? = null
 
-
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         // Get the SearchView and set the searchable configuration
         // SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
         menuInflater.inflate(R.menu.toolbar, menu)
         val searchItem = menu.findItem(R.id.toolbar_search)
-        searchView = searchItem.actionView as SearchView
+        searchView = MenuItemCompat.getActionView(searchItem) as SearchView
         //searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
         searchView!!.setIconifiedByDefault(false)
         if (searchView != null) {
@@ -76,30 +78,65 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener, NoteLi
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (!isGranted(this@MainActivity,Permission.MANAGE_EXTERNAL_STORAGE)) {
+            Log.d("onCreate","get permission")
+            XXPermissions.with(this)
+                // 不适配 Android 11 可以这样写
+                //.permission(Permission.Group.STORAGE)
+                // 适配 Android 11 需要这样写，这里无需再写 Permission.Group.STORAGE
+                .permission(Permission.MANAGE_EXTERNAL_STORAGE)
+                .request(object : OnPermissionCallback {
+                    override fun onGranted(permissions: List<String>, all: Boolean) {
+                        if (all) {
+                            toast("获取存储权限成功")
+                            setContentView(R.layout.activity_main)
+                            val toolbar = findViewById<View>(R.id.toolbar) as Toolbar
+                            setSupportActionBar(toolbar)
 
-        setContentView(R.layout.activity_main)
+                            toolbar.setOnClickListener { Log.d("sync", "toolbar")
+                                val integrator = IntentIntegrator(this@MainActivity)
+                                integrator.setBeepEnabled(false);
+                                integrator.setCaptureActivity(QRScanActivity::class.java).initiateScan()
+                            }
 
-        val sqliteFilePath = this.applicationContext.getExternalFilesDir("sqlite")
+                            doSearch("", 0L)
 
+                            val prevButton = findViewById<View>(R.id.prev_button) as Button
+                            prevButton.setOnClickListener(this@MainActivity)
+                            val nextButton = findViewById<View>(R.id.next_button) as Button
+                            nextButton.setOnClickListener(this@MainActivity)
+                        }
+                    }
 
-        val toolbar = findViewById<View>(R.id.toolbar) as Toolbar
-        setSupportActionBar(toolbar)
+                    override fun onDenied(permissions: List<String>, never: Boolean) {
+                        if (never) {
+                            toast("被永久拒绝授权，请手动授予存储权限")
+                            // 如果是被永久拒绝就跳转到应用权限系统设置页面
+                            XXPermissions.startPermissionActivity(this@MainActivity, permissions)
+                        } else {
+                            toast("获取存储权限失败")
+                        }
+                    }
+                })
+        }else {
+            setContentView(R.layout.activity_main)
+            val toolbar = findViewById<View>(R.id.toolbar) as Toolbar
+            setSupportActionBar(toolbar)
 
-        toolbar.setOnClickListener { Log.d("sync", "toolbar")
-            val integrator = IntentIntegrator(this)
-            integrator.setBeepEnabled(false);
-            integrator.setCaptureActivity(QRScanActivity::class.java).initiateScan()
+            toolbar.setOnClickListener { Log.d("sync", "toolbar")
+                val integrator = IntentIntegrator(this)
+                integrator.setBeepEnabled(false);
+                integrator.setCaptureActivity(QRScanActivity::class.java).initiateScan()
+            }
+
+            doSearch("", 0L)
+
+            val prevButton = findViewById<View>(R.id.prev_button) as Button
+            prevButton.setOnClickListener(this)
+            val nextButton = findViewById<View>(R.id.next_button) as Button
+            nextButton.setOnClickListener(this)
         }
 
-        doSearch("", 0L)
-
-        val prevButton = findViewById<View>(R.id.prev_button) as Button
-        prevButton.setOnClickListener(this)
-        val nextButton = findViewById<View>(R.id.next_button) as Button
-        nextButton.setOnClickListener(this)
-    }
-    fun getAppFolder(c: Context): File? {
-        return c.getExternalFilesDir(null)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -112,13 +149,13 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener, NoteLi
                 val builder = AlertDialog.Builder(this)
                 builder.setMessage(R.string.dialog_sync)
                         .setPositiveButton(R.string.sync) { dialog, id ->
-                                val cmd = ("{\"action\": \"client-sync\", \"addr\": \""
-                                        + result.contents
-                                        + "\""
-                                        + "}")
-                                Log.d("doClientSyncCmd", cmd)
-                                val s = RustBridge.run(cmd)
-                                Log.d("doClientSyncCmdResp", s)
+                            val cmd = ("{\"action\": \"client-sync\", \"addr\": \""
+                                    + result.contents
+                                    + "\""
+                                    + "}")
+                            Log.d("doClientSyncCmd", cmd)
+                            val s = RustBridge.run(cmd)
+                            Log.d("doClientSyncCmdResp", s)
                         }
                         .setNegativeButton(R.string.cancel) { dialog, id ->
                             // User cancelled the dialog
@@ -159,23 +196,31 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener, NoteLi
 
 
     fun doSearch(query: String, offset: Long?) {
-            AppState.setQuery(query)
-            Log.d("doSearch", query + offset!!)
+        AppState.setQuery(query)
+        Log.d("doSearch", query + offset!!)
 
-            val cmd = ("{\"action\": \"search\", \"query\": \""
-                    + query
-                    + "\", \"limit\":10, \"offset\":" +
-                    offset!!.toString() +
-                    "}")
-            Log.d("doSearchCmd", cmd)
-            val s = RustBridge.run(cmd)
-            Log.d("doSearchResult", s)
-            val noteListFragment = supportFragmentManager.findFragmentById(R.id.notes_recycler_view) as NoteListFragment?
-            val count = NoteContent.refresh(s)
-            AppState.setCount(count!!)
-            val paginationText = AppState.makePaginationText()
-            noteListFragment!!.mViewAdpater.notifyDataSetChanged()
-            (findViewById<View>(R.id.pagination_text) as TextView).text = paginationText
+        val cmd = ("{\"action\": \"search\", \"query\": \""
+                + query
+                + "\", \"limit\":10, \"offset\":" +
+                offset!!.toString() +
+                "}")
+        Log.d("doSearchCmd", cmd)
+        val s = RustBridge.run(cmd)
+        Log.d("doSearchResult", s)
+        val noteListFragment = supportFragmentManager.findFragmentById(R.id.notes_recycler_view) as NoteListFragment?
+        val count = NoteContent.refresh(s)
+        AppState.setCount(count!!)
+        val paginationText = AppState.makePaginationText()
+        noteListFragment!!.mViewAdpater.notifyDataSetChanged()
+        (findViewById<View>(R.id.pagination_text) as TextView).text = paginationText
+    }
+
+    fun getFilePermission() {
+
+
+    }
+    fun toast(text: CharSequence?) {
+        ToastUtils.show(text)
     }
 
     override fun onListFragmentInteraction(item: NoteContent.NoteItem) {

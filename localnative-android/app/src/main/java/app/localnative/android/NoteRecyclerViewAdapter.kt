@@ -16,7 +16,6 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 package app.localnative.android
-import android.annotation.SuppressLint
 import android.content.Intent
 
 import androidx.recyclerview.widget.RecyclerView
@@ -24,7 +23,6 @@ import androidx.recyclerview.widget.RecyclerView
 import android.app.AlertDialog
 import android.content.Context
 import android.graphics.Color
-import android.os.Message
 import android.util.Log
 import android.util.TypedValue
 import android.view.LayoutInflater
@@ -72,15 +70,16 @@ class NoteRecyclerViewAdapter(private val mValues: List<NoteItem>, private val m
             val builder = AlertDialog.Builder(context)
             builder.setMessage(R.string.dialog_delete_note)
                     .setPositiveButton(R.string.delete) { dialog, id ->
-                            val query = AppState.getQuery()
-                            val offset = AppState.getOffset()
-                            val cmd = ("{\"action\": \"delete\", \"query\": \""
-                                    + query
-                                    + "\", \"rowid\":" + note.rowid.toString() + ", \"limit\":10, \"offset\":"
-                                    + offset
-                                    + "}")
-                            Log.d("doSearchCmd", cmd)
-                            (context as MainActivity).doSearch(query, offset)
+                        val query = AppState.getQuery()
+                        val offset = AppState.getOffset()
+                        val cmd = ("{\"action\": \"delete\", \"query\": \""
+                                + query
+                                + "\", \"rowid\":" + note.rowid.toString() + ", \"limit\":10, \"offset\":"
+                                + offset
+                                + "}")
+                        Log.d("doSearchCmd", cmd)
+                        val s = RustBridge.run(cmd)
+                        (context as MainActivity).doSearch(query, offset)
                     }
                     .setNegativeButton(R.string.cancel) { dialog, id ->
                         // User cancelled the dialog

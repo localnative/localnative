@@ -5,19 +5,12 @@ buildscript {
 
     
     repositories {
-        // 华为开源镜像：https://mirrors.huaweicloud.com/
-        maven { url 'https://repo.huaweicloud.com/repository/maven/' }
-        // JitPack 远程仓库：https://jitpack.io
-        maven { url 'https://jitpack.io' }
-        // 阿里云云效仓库：https://maven.aliyun.com/mvn/guide
-        maven { url 'https://maven.aliyun.com/repository/jcenter' }
-        maven { url 'https://maven.aliyun.com/repository/google' }
         google()
-        mavenCentral()
+        jcenter()
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:7.0.2'
-
+        
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
@@ -26,15 +19,22 @@ buildscript {
 
 allprojects {
     repositories {
-        maven { url 'https://repo.huaweicloud.com/repository/maven/' }
-        maven { url 'https://jitpack.io' }
-        maven { url 'https://maven.aliyun.com/repository/jcenter' }
-        maven { url 'https://maven.aliyun.com/repository/google' }
         google()
-        mavenCentral()
+        jcenter()
     }
 }
 
 task clean(type: Delete) {
     delete rootProject.buildDir
+}
+
+buildscript {
+    repositories {
+        maven { url 'https://jitpack.io' }
+    }
+}
+allprojects {
+    repositories {
+        maven { url 'https://jitpack.io' }
+    }
 }
