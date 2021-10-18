@@ -60,7 +60,7 @@ fn sqlite3_db_location() -> String {
     if cfg!(target_os = "android") {
         let path = "sdcard/LocalNative";
         if let Err(e) = fs::create_dir_all(path) {
-              panic!("{}", e);
+            panic!("{}", e);
         };
         return format!("{}/localnative.sqlite3", path);
     }
