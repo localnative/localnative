@@ -141,6 +141,7 @@ name = "new_mod"
 path = "./src/new_mod.rs"
 ```
 即创建了一个新的模块。
+
 B) 
 在`lib.rs`后者`main.rs`内使用`mod`关键字创建相应的模块文件，同时需要创建相应的Rust文件。
 比如：
@@ -157,6 +158,7 @@ pub fn hello_from_new_mod() {
     println!("hello from new mod!");
 }
 ```
+
 C)
 在`Cargo.tom`文件内添加如下配置：
 ```toml
