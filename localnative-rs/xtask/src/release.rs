@@ -30,7 +30,7 @@ impl Release {
 
         cmd!("cargo build --release --bin localnative-web-ext-host").run()?;
         let suffix = suffix();
-        let iced_src = src.join(format!("local-native{}", suffix));
+        let iced_src = src.join(format!("localnative_iced{}", suffix));
         let host_src = src.join(format!("localnative-web-ext-host{}", suffix));
 
         // let tag = format!(
