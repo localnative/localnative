@@ -207,14 +207,14 @@ required-features = ["preview"]
 请问`required-features = ["preview"]`的作用是什么。
 
 A) 
-表示这个可执行文件只有在`preview`开启时能用。
+表示`tagview`这个bin程序需要开启preview这个feature时才能工作。
 
 B) 
-表示这个可执行文件开启了`preview`。
+表示`tagview`这个bin程序开启了preview这个feature，编译时会将preview相关依赖编译到这个bin程序内。
 
 C)
-表示需要开启`preview`时才能执行这个可执行文件。
+表示`tagview`这个bin程序可以编译，但是编译后无法在不开启preview这个feature时运行。
 
 答案（Explanation）
 
-正确选项是B。我们构建了一个包含`features`的依赖，这个依赖现在被这个可执行文件所需要，在这个可执行文件内我们只需要其中一部分功能集的时候，我们就可以通过`required-features`来指定。
+正确选项是B。请看[`required-features`字段的文档](https://doc.rust-lang.org/cargo/reference/cargo-targets.html#the-required-features-field)。
