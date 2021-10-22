@@ -64,7 +64,7 @@ version = "0.3.0"
 default-features = false
 
 [features]
-default = ["preview"]
+default = ["wgpu"]
 wgpu = [
     "iced/default",
     "iced/tokio",
