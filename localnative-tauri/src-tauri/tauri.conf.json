@@ -1,6 +1,6 @@
 {
   "package": {
-    "productName": "localnative_tauri",
+    "productName": "localnative-tauri",
     "version": "0.1.0"
   },
   "build": {
