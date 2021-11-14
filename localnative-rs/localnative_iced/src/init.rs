@@ -9,7 +9,10 @@ pub struct AppHost {
     path: PathBuf,
     #[serde(rename = "type")]
     tp: String,
-    allowed_extensions: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    allowed_extensions: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    allowed_origins: Option<Vec<String>>,
 }
 
 impl AppHost {
@@ -47,7 +50,8 @@ impl AppHost {
             description: "Local Native Host".to_owned(),
             path: Self::path(),
             tp: "stdio".to_owned(),
-            allowed_extensions: vec!["localnative@example.org".to_owned()],
+            allowed_extensions: Some(vec!["localnative@example.org".to_owned()]),
+            allowed_origins: None,
         }
     }
     pub fn chrome() -> Self {
@@ -56,9 +60,10 @@ impl AppHost {
             description: "Local Native Host".to_owned(),
             path: Self::path(),
             tp: "stdio".to_owned(),
-            allowed_extensions: vec![
+            allowed_extensions: None,
+            allowed_origins: Some(vec![
                 "chrome-extension://oclkmkeameccmgnajgogjlhdjeaconnb/".to_owned()
-            ],
+            ]),
         }
     }
     pub fn raw_data(&self) -> Vec<u8> {
