@@ -5,7 +5,6 @@ use std::path::{Path, PathBuf};
 pub struct AppHost {
     name: String,
     description: String,
-
     path: PathBuf,
     #[serde(rename = "type")]
     tp: String,
@@ -152,53 +151,11 @@ pub fn chrome_path() -> Option<PathBuf> {
         }
     })
 }
-pub fn chromium_path() -> Option<PathBuf> {
-    localnative_core::dirs::home_dir().map(|home_dir| {
-        #[cfg(target_os = "macos")]
-        {
-            home_dir
-                .join("Library")
-                .join("Application Support")
-                .join("Chromium")
-        }
-        #[cfg(target_os = "linux")]
-        {
-            home_dir.join(".config").join("chromium")
-        }
-        #[cfg(target_os = "windows")]
-        {
-            home_dir.join("LocalNative").join("config").join("chrome")
-        }
-    })
-}
-pub fn edge_path() -> Option<PathBuf> {
-    localnative_core::dirs::home_dir().map(|home_dir| {
-        #[cfg(target_os = "macos")]
-        {
-            // TODO：需要测试
-            home_dir
-                .join("Library")
-                .join("Application Support")
-                .join("Microsoft")
-                .join("Edge")
-        }
-        #[cfg(target_os = "linux")]
-        {
-            // TODO:需要测试
-            home_dir.join(".config").join("Microsoft").join("Edge")
-        }
-        #[cfg(target_os = "windows")]
-        {
-            home_dir.join("LocalNative").join("config").join("edge")
-        }
-    })
-}
+
 #[derive(Debug, Clone, Copy)]
 pub enum WebKind {
     FireFox,
     Chrome,
-    Chromium,
-    Edge,
 }
 
 impl WebKind {
@@ -221,12 +178,7 @@ impl WebKind {
 
             tokio::fs::copy(from, to).await.unwrap();
         }
-        tokio::join!(
-            try_init_file(Self::FireFox),
-            try_init_file(Self::Chrome),
-            try_init_file(Self::Chromium),
-            try_init_file(Self::Edge)
-        );
+        tokio::join!(try_init_file(Self::FireFox), try_init_file(Self::Chrome),);
     }
     #[cfg(target_os = "windows")]
     fn registr_path(&self) -> PathBuf {
@@ -237,13 +189,6 @@ impl WebKind {
             WebKind::Chrome => Path::new("Software")
                 .join("Google")
                 .join("Chrome")
-                .join("NativeMessagingHosts"),
-            WebKind::Chromium => Path::new("Software")
-                .join("Chromium")
-                .join("NativeMessagingHosts"),
-            WebKind::Edge => Path::new("Software")
-                .join("Microsoft")
-                .join("Edge")
                 .join("NativeMessagingHosts"),
         }
     }
@@ -267,16 +212,13 @@ impl WebKind {
         match self {
             WebKind::FireFox => firefox_path(),
             WebKind::Chrome => chrome_path(),
-            WebKind::Chromium => chromium_path(),
-            WebKind::Edge => edge_path(),
         }
         .filter(|path| path.exists())
     }
     fn host(&self) -> AppHost {
-        if let WebKind::FireFox = self {
-            AppHost::firefox()
-        } else {
-            AppHost::chrome()
+        match self {
+            WebKind::FireFox => AppHost::firefox(),
+            WebKind::Chrome => AppHost::chrome(),
         }
     }
     #[cfg(target_os = "windows")]
