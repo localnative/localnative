@@ -194,7 +194,11 @@ impl WebKind {
     }
 
     fn path(&self) -> Option<PathBuf> {
-        self.browser_path().map(|browser_path| {
+        match self {
+            WebKind::FireFox => firefox_path(),
+            WebKind::Chrome => chrome_path(),
+        }
+        .map(|browser_path| {
             #[cfg(target_os = "macos")]
             {
                 browser_path.join("NativeMessagingHosts")
@@ -207,21 +211,6 @@ impl WebKind {
             #[cfg(target_os = "windows")]
             browser_path
         })
-    }
-    fn browser_path(&self) -> Option<PathBuf> {
-        let res = match self {
-            WebKind::FireFox => firefox_path(),
-            WebKind::Chrome => chrome_path(),
-        };
-        {
-            #[cfg(not(target_os = "windows"))]
-            res.filter(|path| path.exists())
-        }
-
-        {
-            #[cfg(target_os = "windows")]
-            res
-        }
     }
     fn host(&self) -> AppHost {
         match self {
