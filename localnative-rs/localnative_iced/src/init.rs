@@ -209,11 +209,19 @@ impl WebKind {
         })
     }
     fn browser_path(&self) -> Option<PathBuf> {
-        match self {
+        let res = match self {
             WebKind::FireFox => firefox_path(),
             WebKind::Chrome => chrome_path(),
+        };
+        {
+            #[cfg(not(target_os = "windows"))]
+            res.filter(|path| path.exists())
         }
-        .filter(|path| path.exists())
+
+        {
+            #[cfg(target_os = "windows")]
+            res
+        }
     }
     fn host(&self) -> AppHost {
         match self {
