@@ -8,9 +8,12 @@ use crate::{
     icons::IconItem,
     middle_date::MiddleDate,
     style::{self, Theme},
-    tags::Tag,
     tr, Conn, DateView, NoteView, TagView,
 };
+
+#[cfg(feature = "preview")]
+use crate::tags::Tag;
+
 #[derive(Default)]
 pub struct SearchPage {
     pub notes: Vec<NoteView>,
