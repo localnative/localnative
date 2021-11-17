@@ -59,8 +59,8 @@ impl Release {
         let package_types = vec![
             #[cfg(target_os = "macos")]
             PackageType::MacOsBundle,
-            // #[cfg(target_os = "macos")]
-            // PackageType::Dmg,
+            #[cfg(target_os = "macos")]
+            PackageType::Dmg,
             #[cfg(target_os = "linux")]
             PackageType::AppImage,
             #[cfg(target_os = "windows")]
