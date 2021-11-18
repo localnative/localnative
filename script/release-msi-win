@@ -9,9 +9,9 @@ cd localnative-rs
 
 DIR="../../localnative-release/v$1/win/"
 mkdir -p $DIR
-FILE="Local Native-$1.dmg"
-cp "dist/bundle/macos/rw.localnative_iced_$1_x64.dmg" "$DIR/$FILE"
+FILE="Local Native-$1.msi"
+cp "dist/bundle/msi/localnative_iced_$1_x64.msi" "$DIR/$FILE"
 cd $DIR
 shasum -a 256 "$FILE" > "$FILE.sha256"
-md5 "$FILE" > "$FILE.md5"
+md5sum "$FILE" > "$FILE.md5"
 
