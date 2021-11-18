@@ -1,0 +1,17 @@
+#!/bin/bash
+
+set -e
+cd `dirname $0`/..
+
+cd localnative-rs
+
+# cargo xtask release -v $1
+
+DIR="../../localnative-release/v$1/win/"
+mkdir -p $DIR
+FILE="Local Native-$1.msi"
+cp "dist/bundle/msi/localnative_iced_$1_x64.msi" "$DIR/$FILE"
+cd $DIR
+shasum -a 256 "$FILE" > "$FILE.sha256"
+md5sum "$FILE" > "$FILE.md5"
+
