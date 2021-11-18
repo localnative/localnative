@@ -14,6 +14,6 @@ tags: ["all", "localnative", "release", "iced", "windows"]
 
 This is the first version of [Local Native](https://localnative.app) Rust GUI desktop application ([iced](https://github.com/iced-rs/iced) implementation).
 
-- We finally supports Windows!
+- We finally support Windows!
 - macOS release is still in dmg format.
 - Appimage build has some [issue](https://gitlab.com/localnative/localnative/-/issues/53).
