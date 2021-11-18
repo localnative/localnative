@@ -1,0 +1,17 @@
+#!/bin/bash
+
+set -e
+cd `dirname $0`/..
+
+cd localnative-rs
+
+# cargo xtask release -v $1
+
+DIR="../../localnative-release/v$1/win/"
+mkdir -p $DIR
+FILE="Local Native-$1.dmg"
+cp "dist/bundle/macos/rw.localnative_iced_$1_x64.dmg" "$DIR/$FILE"
+cd $DIR
+shasum -a 256 "$FILE" > "$FILE.sha256"
+md5 "$FILE" > "$FILE.md5"
+

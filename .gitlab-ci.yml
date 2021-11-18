@@ -1,8 +1,8 @@
 stages:
-  - format-lint-check 
+  - format-lint-check
   - build-localnative-core
-  - build-localnative-iced
   - build-localnative-cli
+  - build-localnative-iced
 
 
 image: "rust:latest"
@@ -14,7 +14,7 @@ before_script:
     - echo "have a try"
 
 format-lint-check :
-  stage: format-lint-check 
+  stage: format-lint-check
   script:
     - echo "Check the rust and cargo version:"
     - rustc --version && cargo --version
