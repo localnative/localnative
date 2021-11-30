@@ -5,9 +5,9 @@ homepage = "https://localnative.app"
 authors = ["Yi Wang"]
 version = "0.5.1"
 license = "AGPL-3.0"
-edition = "2018"
+edition = "2021"
 [dependencies.rusqlite]
-version = "0.25"
+version = "0.26"
 features = ["bundled"]
 
 [target.'cfg(target_os="android")'.dependencies]
