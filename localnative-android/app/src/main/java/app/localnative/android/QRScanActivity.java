@@ -18,12 +18,17 @@
 package app.localnative.android;
 
 import android.os.Bundle;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import android.view.KeyEvent;
 
 import com.journeyapps.barcodescanner.CaptureManager;
 import com.journeyapps.barcodescanner.DecoratedBarcodeView;
+
+import java.util.Objects;
+
 import app.localnative.R;
 
 public class QRScanActivity extends AppCompatActivity {
@@ -38,7 +43,7 @@ public class QRScanActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.qr_scan_toolbar);
         toolbar.setTitle("Scan QR code to sync");
         setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
 
         barcodeScannerView = (DecoratedBarcodeView)findViewById(R.id.zxing_barcode_scanner);
 
@@ -66,7 +71,7 @@ public class QRScanActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onSaveInstanceState(Bundle outState) {
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         capture.onSaveInstanceState(outState);
     }
