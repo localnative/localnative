@@ -27,11 +27,9 @@ import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
-import android.content.Context
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
-import androidx.recyclerview.widget.RecyclerView
 import app.localnative.R
 import com.google.zxing.integration.android.IntentIntegrator
 
@@ -40,9 +38,9 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener, NoteLi
 
     private var searchView: SearchView? = null
 
-    private val mRecyclerView: RecyclerView? = null
-    private val mAdapter: RecyclerView.Adapter<*>? = null
-    private val mLayoutManager: RecyclerView.LayoutManager? = null
+//    private val mRecyclerView: RecyclerView? = null
+//    private val mAdapter: RecyclerView.Adapter<*>? = null
+//    private val mLayoutManager: RecyclerView.LayoutManager? = null
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         // Get the SearchView and set the searchable configuration
@@ -50,7 +48,7 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener, NoteLi
         menuInflater.inflate(R.menu.toolbar, menu)
         val searchItem = menu.findItem(R.id.toolbar_search)
         searchView = searchItem.actionView as SearchView
-        Log.d("okkkkkkkk","oookkkkkkkkkk")
+
         //searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
         searchView!!.setIconifiedByDefault(false)
         if (searchView != null) {
@@ -83,7 +81,7 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener, NoteLi
 
         toolbar.setOnClickListener { Log.d("sync", "toolbar")
             val integrator = IntentIntegrator(this)
-            integrator.setBeepEnabled(false);
+            integrator.setBeepEnabled(false)
             integrator.setCaptureActivity(QRScanActivity::class.java).initiateScan()
         }
 //        for get files and cache directory:
@@ -111,7 +109,7 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener, NoteLi
                 Toast.makeText(this, "Scanned server address and port: " + result.contents, Toast.LENGTH_LONG).show()
                 val builder = AlertDialog.Builder(this)
                 builder.setMessage(R.string.dialog_sync)
-                        .setPositiveButton(R.string.sync) { dialog, id ->
+                        .setPositiveButton(R.string.sync) { _, _ ->
                             val cmd = ("{\"action\": \"client-sync\", \"addr\": \""
                                     + result.contents
                                     + "\""
@@ -120,7 +118,7 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener, NoteLi
                             val s = RustBridge.run(cmd)
                             Log.d("doClientSyncCmdResp", s)
                         }
-                        .setNegativeButton(R.string.cancel) { dialog, id ->
+                        .setNegativeButton(R.string.cancel) { _, _ ->
                             // User cancelled the dialog
                         }
                 // Create the AlertDialog object and return it
@@ -166,7 +164,7 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener, NoteLi
         val cmd = ("{\"action\": \"search\", \"query\": \""
                 + query
                 + "\", \"limit\":10, \"offset\":" +
-                offset!!.toString() +
+                offset.toString() +
                 "}")
         Log.d("doSearchCmd", cmd)
         val s = RustBridge.run(cmd)
@@ -177,11 +175,6 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener, NoteLi
         val paginationText = AppState.makePaginationText()
         noteListFragment!!.mViewAdpater.notifyDataSetChanged()
         (findViewById<View>(R.id.pagination_text) as TextView).text = paginationText
-    }
-
-    fun getFilePermission() {
-
-
     }
 
 
