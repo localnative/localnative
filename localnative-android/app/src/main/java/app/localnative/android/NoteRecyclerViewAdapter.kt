@@ -16,6 +16,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 package app.localnative.android
+import android.annotation.SuppressLint
 import android.content.Intent
 
 import androidx.recyclerview.widget.RecyclerView
@@ -52,6 +53,7 @@ class NoteRecyclerViewAdapter(private val mValues: List<NoteItem>, private val m
         return ViewHolder(view)
     }
 
+    @SuppressLint("SetTextI18n")
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         holder.mItem = mValues[position]
         val note = mValues[position]

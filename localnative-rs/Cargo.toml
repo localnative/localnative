@@ -5,5 +5,3 @@ members = [
     "localnative_cli",
     "xtask",
 ]
-resolver = "2"
-

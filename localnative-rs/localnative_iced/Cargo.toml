@@ -2,7 +2,7 @@
 name = "localnative_iced"
 version = "0.5.1"
 authors = ["Cupnfish <yrainbxqc@gmail.com>"]
-edition = "2018"
+edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

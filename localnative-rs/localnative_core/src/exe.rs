@@ -53,16 +53,22 @@ pub enum ProcessError {
 pub fn get_sqlite_connection() -> Connection {
     let p = sqlite3_db_location();
     let path = Path::new(&p);
-    Connection::open(path).unwrap()
+    let conn = Connection::open(path).unwrap();
+    // .execSQL("PRAGMA temp_store_directory = '/data/data/com.cmp.pkg/databases/main'")
+    #[cfg(target_os = "android")]
+    conn.execute(
+        "PRAGMA temp_store_directory = '/data/user/0/app.localnative/cache'",
+        [],
+    )
+    .unwrap();
+
+    conn
 }
 
 fn sqlite3_db_location() -> String {
     if cfg!(target_os = "android") {
-        let path = "sdcard/LocalNative";
-        if let Err(e) = fs::create_dir_all(path) {
-            panic!("{}", e);
-        };
-        return format!("{}/localnative.sqlite3", path);
+        fs::create_dir_all("/data/user/0/app.localnative/files").unwrap();
+        return "/data/user/0/app.localnative/files/localnative.sqlite3".into();
     }
     let mut dir_name = "LocalNative";
     if cfg!(target_os = "ios") {
