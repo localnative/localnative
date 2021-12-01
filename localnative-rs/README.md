@@ -41,5 +41,17 @@ At present, the dmg format of the mac platform will be a bit problematic on my c
 
 You can use `cargo xtask ndkbd` to compile `localnative_core` as *.so files, and these files will be copied to the corresponding folder. Before you are ready to execute this command, you need to make sure that the [`cargo-ndk`](https://lib.rs/crates/cargo-ndk) tool is installed on your computer. You can use `cargo install cargo-ndk` to download and install. In addition, you need to make sure that valid Android development is installed on your computer. The environment includes SDK, NDK, and the two environment variables `ANDROID_SDK_ROOT` and `NDK_HOME`. 
 
+
+## Build Android library on macOS
+
+- [Download Android NDK r22b(22.1.7171670)](download ndk: https://developer.android.com/ndk/downloads)
+- allow clang etc in Security & Privacy while running for the first time
+```shell
+cargo xtask ndkbd
+```
+https://www.lifewire.com/fix-developer-cannot-be-verified-error-5183898
+
+
 ## License
 [AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.en.html)
+
