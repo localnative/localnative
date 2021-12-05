@@ -1,6 +1,5 @@
 # Local Native
 [localnative.app](https://localnative.app)
-[![Gitter](https://badges.gitter.im/localnative-app/community.svg)](https://gitter.im/localnative-app/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 A cross-platform tool to save and sync your notes in local SQLite database without going through any centralized service.
 
