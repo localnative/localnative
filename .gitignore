@@ -5,4 +5,5 @@ external-libs/*
 .*
 !.cargo
 !.gitignore
+!.gitkeep
 !.mrconfig-template
