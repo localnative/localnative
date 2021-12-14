@@ -1,4 +1,4 @@
-use std::{path::PathBuf, str::FromStr};
+use std::{fs, path::PathBuf, str::FromStr};
 
 use xshell::{cmd, cp, pushd, rm_rf};
 
@@ -42,7 +42,8 @@ impl Ndkbd {
             if to.exists() {
                 rm_rf(&to)?;
             }
-            cp(from, to)?;
+            fs::copy(from, to)?;
+            //cp(from, to)?;
         }
 
         Ok(())
