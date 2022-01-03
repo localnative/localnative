@@ -1,80 +1,98 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".android.ShareActivity">
+    xmlns:tools="http://schemas.android.com/tools">
 
-    <LinearLayout
+    <data>
+
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical">
+        tools:context=".android.ShareActivity">
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:layout_height="match_parent"
+            android:orientation="vertical">
 
-            <Button
-                android:id="@+id/btnCancel"
-                android:layout_width="200dp"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Cancel" />
+                android:orientation="horizontal">
 
-            <Button
-                android:id="@+id/btnSave"
+                <Button
+                    android:id="@+id/btnCancel"
+                    style="?android:attr/buttonBarButtonStyle"
+                    android:layout_width="203dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/cancel"
+                    android:textColor="#00796B" />
+
+                <Button
+                    android:id="@+id/btnSave"
+                    style="?android:attr/buttonBarButtonStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/save"
+                    android:textColor="#00796B" />
+            </LinearLayout>
+
+            <EditText
+                android:id="@+id/titleText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ems="10"
+                android:hint="@string/title"
+                android:importantForAutofill="no"
+                android:inputType="textMultiLine"
+                android:minHeight="48dp" />
+
+            <EditText
+                android:id="@+id/urlText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ems="10"
+                android:hint="@string/url"
+                android:importantForAutofill="no"
+                android:inputType="textMultiLine|textUri"
+                android:minHeight="48dp" />
+
+            <EditText
+                android:id="@+id/tagsText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ems="10"
+                android:hint="@string/type_to_add_tags_comma_or_space_as_tag_seperator"
+                android:inputType="textMultiLine"
+                android:textColorHint="#546E7A"
+                android:autofillHints="" />
+
+            <EditText
+                android:id="@+id/descText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ems="10"
+                android:hint="@string/description"
+                android:inputType="textMultiLine"
+                android:minHeight="48dp"
+                android:autofillHints="" />
+
+            <TextView
+                android:id="@+id/textView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Save" />
+                android:autoLink="web"
+                android:enabled="true"
+                android:focusable="true"
+                android:longClickable="true"
+                android:minHeight="48dp"
+                android:scrollbars="vertical"
+                android:text="@string/fetching_title"
+                android:textIsSelectable="true" />
+
         </LinearLayout>
-
-        <EditText
-            android:id="@+id/titleText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:ems="10"
-            android:hint="title"
-            android:importantForAutofill="no"
-            android:inputType="textMultiLine" />
-
-        <EditText
-            android:id="@+id/urlText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:ems="10"
-            android:hint="url"
-            android:inputType="textMultiLine|textUri"
-            android:importantForAutofill="no" />
-
-        <EditText
-            android:id="@+id/tagsText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:ems="10"
-            android:hint="type to add tags, comma or space as tag seperator"
-            android:inputType="textMultiLine" />
-
-        <EditText
-            android:id="@+id/descText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:ems="10"
-            android:hint="description"
-            android:inputType="textMultiLine" />
-
-        <TextView
-            android:id="@+id/textView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:autoLink="web"
-            android:enabled="true"
-            android:focusable="true"
-            android:longClickable="true"
-            android:scrollbars="vertical"
-            android:text="fetching title ..."
-            android:textIsSelectable="true" />
-
-    </LinearLayout>
-</androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

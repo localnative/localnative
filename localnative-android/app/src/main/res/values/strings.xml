@@ -3,13 +3,19 @@
     <string name="search_hint">type to search</string>
     <string name="prev_button_text">Prev</string>
     <string name="next_button_text">Next</string>
-    <string name="dialog_delete_note">Delete this note?</string>
+    <string name="dialog_delete_note" translatable="false">Delete this note?</string>
     <string name="dialog_sync">Start to sync with other device?</string>
-    <string name="delete">Delete</string>
-    <string name="cancel">Cancel</string>
+    <string name="delete" translatable="false">Delete</string>
     <string name="sync">Sync</string>
-    <string name="title_activity_qrcode">QRCodeActivity</string>
-    <string name="title_home">Home</string>
-    <string name="title_dashboard">Dashboard</string>
-    <string name="title_notifications">Notifications</string>
+    <string name="title_activity_qrcode" translatable="false">QRCodeActivity</string>
+    <string name="title_home" translatable="false">Home</string>
+    <string name="title_dashboard" translatable="false">Dashboard</string>
+    <string name="title_notifications" translatable="false">Notifications</string>
+    <string name="title">title</string>
+    <string name="url">url</string>
+    <string name="type_to_add_tags_comma_or_space_as_tag_seperator">type to add tags, comma or space as tag seperator</string>
+    <string name="description">description</string>
+    <string name="fetching_title">fetching title ...</string>
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
 </resources>
