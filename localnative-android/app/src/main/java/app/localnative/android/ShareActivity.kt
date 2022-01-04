@@ -19,32 +19,35 @@ package app.localnative.android
 
 import android.annotation.SuppressLint
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.text.Editable
+import android.text.method.ScrollingMovementMethod
 import android.util.Log
+import androidx.appcompat.app.AppCompatActivity
+import androidx.databinding.DataBindingUtil
 import app.localnative.R
+import app.localnative.databinding.ActivityShareBinding
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import org.json.JSONObject
-import android.text.method.ScrollingMovementMethod
-import app.localnative.databinding.ActivityShareBinding
+
 
 class ShareActivity : AppCompatActivity() {
-    private lateinit var binding: ActivityShareBinding
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_share)
-        binding = ActivityShareBinding.inflate(layoutInflater)
+        val binding = ActivityShareBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
 
         binding.tagsText.requestFocus()
         binding.textView.movementMethod = ScrollingMovementMethod()
         binding.btnCancel.setOnClickListener {
+            Log.d("shareCancel","cancel...")
             finish()
         }
+        Log.d("debugShare",binding.titleText.text.toString())
         binding.btnSave.setOnClickListener {
-
             val j = JSONObject()
             j.put("action", "insert")
             j.put("title", binding.titleText.text)
@@ -61,10 +64,10 @@ class ShareActivity : AppCompatActivity() {
             Log.d("CmdInsert", cmd)
             insert(cmd, 0)
         }
-        when {
-            intent?.action == Intent.ACTION_SEND -> {
+        when (intent?.action) {
+            Intent.ACTION_SEND -> {
                 if ("text/plain" == intent.type) {
-                    handleSendText(intent) // Handle text being sent
+                    handleSendText(intent,binding) // Handle text being sent
                 } else if (intent.type?.startsWith("image/") == true) {
                     // handleSendImage(intent) // Handle single image being sent
                 }
@@ -84,22 +87,24 @@ class ShareActivity : AppCompatActivity() {
     }
 
     @SuppressLint("SetTextI18n")
-    private fun handleSendText(intent: Intent) {
+    private fun handleSendText(intent: Intent,binding: ActivityShareBinding) {
+        binding.urlText.setText("hello")
         intent.getStringExtra(Intent.EXTRA_TEXT)?.let {
+            Log.d("handleUrlShare",it)
             binding.urlText.setText(it)
-
+            binding.textView.text = "title fetched."
             val queue = Volley.newRequestQueue(this)
             val url = it
-
             val stringRequest = StringRequest(Request.Method.GET, url,
                 { response ->
-                    val r =  response.trim()
-                    //textView.text = r.substring(0, minOf(50000, r.length))
-                    val re = Regex("""<(?i)(Title)>(.*?)<\\?/(?i)(title)>""")
+                    val r =  response
+                    Log.d("reponse",r)
+                    val re = Regex("""<(?i)(title)>(.*?)<\\?/(?i)(title)>""")
                     re.find(r)?.let{
                         val (_, t, _)=it.destructured
-                        val title =  t.trim()
-                        binding.titleText.setText(title.substring(0, minOf(500,title.length)))
+                        val title = String(t.toByteArray())
+                        Log.d("handleTitleShare",title)
+                        binding.titleText.text = Editable.Factory.getInstance().newEditable(title)
                         binding.textView.text = "title fetched."
                     }
                 },

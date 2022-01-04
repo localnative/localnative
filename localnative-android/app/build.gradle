@@ -1,6 +1,5 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
-
 android {
     compileSdkVersion 30
 
@@ -8,8 +7,8 @@ android {
         applicationId "app.localnative"
         minSdkVersion 14
         targetSdkVersion 30
-        versionCode 14
-        versionName "0.5.1"
+        versionCode 15
+        versionName "0.5.1-fix"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -28,6 +27,10 @@ android {
     }
     buildFeatures {
         viewBinding true
+    }
+
+    dataBinding {
+        enabled = true
     }
 }
 
