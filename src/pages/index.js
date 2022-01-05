@@ -73,7 +73,7 @@ function Home() {
       'button button--outline button--secondary button--lg',
       styles.getStarted,
     )}
-    to="https://gitlab.com/localnative/localnative-release/tree/master/v0.5.0">
+    to="https://gitlab.com/localnative/localnative-release/tree/master/v0.5.1/win">
     Windows
           </Link>
           </div>
@@ -92,7 +92,7 @@ function Home() {
               'button button--outline button--secondary button--lg',
               styles.getStarted,
             )}
-            to="https://gitlab.com/localnative/localnative-release/tree/master/v0.5.0/mac">
+            to="https://gitlab.com/localnative/localnative-release/tree/master/v0.5.1/mac">
             macOS
           </Link>
           </div>

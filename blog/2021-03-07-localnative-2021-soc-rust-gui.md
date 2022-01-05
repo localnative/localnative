@@ -40,7 +40,7 @@ August 16-31 | 写总结 Blog 和 educative 教程文档 | August 31 Final Evalu
 
 欢迎有Rust经验的同学申请!
 
-加微信 `yi-wang-dot-me` 备注 SoC 发送 
+备注 SoC 发送 
 - 简历
 - Rust经验/作品 
 - 期望津贴 

@@ -128,3 +128,54 @@ cargo run --bin preview-example
 如果运行没有什么问题，那么初始化项目结构就算成功了。其中`previews`这个文件夹，我们后续在开发中需要创建多个可执行文件来帮助我们了解和学习`iced`。因此创建一个这样的可执行文件的过程在后续教程中会多次出现，在这里已经详细介绍了，所以后续将不会再着重介绍。
 
 最后，在每一章内容完成之后，不要忘了提交一个commit。
+
+## 课后练习（Quiz）
+
+在本文中我们给一个项目添加了多个可执行文件，相对于可执行文件，在Rust里还有普通的模块，这些模块的添加方式和添加可执行文件的方式有些区别，通常应该如何在一个项目中增加新的模块呢？
+
+A) 
+创建模块之后，在`Cargo.toml`文件内添加如下配置：
+```toml
+[[lib]]
+name = "new_mod"
+path = "./src/new_mod.rs"
+```
+即创建了一个新的模块。
+
+B) 
+在`lib.rs`后者`main.rs`内使用`mod`关键字创建相应的模块文件，同时需要创建相应的Rust文件。
+比如：
+```rust
+// ./src/main.rs内
+mod new_mod;
+use new_mod::hello_from_new_mod;
+
+fn main() {
+    hello_from_new_mod();
+}
+// ./src/new_mod.rs内
+pub fn hello_from_new_mod() {
+    println!("hello from new mod!");
+}
+```
+
+C)
+在`Cargo.tom`文件内添加如下配置：
+```toml
+[lib]
+name = "new_mod"
+path = "./src/new_mod.rs"
+```
+同时创建`选项B`中的`./src/new_mod.rs`文件，调用时只需要这样：
+```rust
+// ./src/main.rs内
+// mod new_mod; 不需要这行
+use new_mod::hello_from_new_mod;
+
+fn main() {
+    hello_from_new_mod();
+}
+```
+答案（Explanation）
+
+B选项和C选项都是正确的做法，其中B选项是通常的做法，在Rust内创建一个新的模块，只需要在`lib.rs`或者`main.rs`内使用`mod`关键字创建模块即可。当然在一些特殊的项目内，我们需要更简洁的项目结构时，则会选择第二种方式了。
