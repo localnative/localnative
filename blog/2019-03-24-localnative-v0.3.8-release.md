@@ -25,7 +25,7 @@ Maybe the biggest drawback of not using a centralized service is losing the "con
 ## Known quirks could be improved
 There is definitely plenty of room for improvements, some known ones among many others:
 - No windows desktop build because of an upstream [issue](https://github.com/neon-bindings/neon/issues/357).
-- On iOS the layout of the tags is not optimal as it does not scroll, and each tag is the same width regardless of character length.
+- On iOS, the layout of the tags is not optimal as it does not scroll, and each tag is the same width regardless of character length.
 - Crash when adding note on Nexus 5X. (on Pixel 2 and Nexus 6 is fine)
 - Mac app store build has a sandbox issue, so it is not quite usable. ([DMG](https://gitlab.com/yiwang/localnative-release/tree/master/v0.3.8/mac) works)
 - ...
