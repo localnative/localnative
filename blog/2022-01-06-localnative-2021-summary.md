@@ -12,7 +12,7 @@ tags: ["summary", "2021", "localnative"]
 ![2022](/img/unsplash/crazy-nana-BFBAmGePnpU-unsplash.jpg)
 
 
-The year 2021 has come and gone, and Local Native project has made solid progress in the past year:
+The year 2021 has come and gone, and [Local Native](https://localnative.app) project has made solid progress in the past year:
 
 - The biggest achievement is the release of our cross-platform desktop based on the `iced` framework. 
 
