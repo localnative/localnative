@@ -28,7 +28,7 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<string>0</string>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>localnative</string>
