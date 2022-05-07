@@ -168,7 +168,7 @@ impl SearchPage {
                 .push(Column::new().padding(8).push(days).push(tip))
                 .push(page_ctrl)
         }
-        .align_items(iced::Align::Center)
+        .align_items(iced::Alignment::Center)
         .width(iced::Length::FillPortion(8));
         Container::new(Row::new().push(note_page).push(tags)).into()
     }

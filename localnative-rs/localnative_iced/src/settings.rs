@@ -105,7 +105,7 @@ impl Settings {
                         .push(limit_input),
                 )
                 .push(try_fix_host)
-                .align_items(iced::Align::Center)
+                .align_items(iced::Alignment::Center)
                 .padding(0)
                 .spacing(10);
             Element::<'_, Message>::new(
@@ -117,7 +117,7 @@ impl Settings {
                             .push(cancel_button)
                             .push(style::horizontal_rule())
                             .spacing(10)
-                            .align_items(iced::Align::Center),
+                            .align_items(iced::Alignment::Center),
                     )
                     .on_close(Message::Cancel)
                     .max_width(400),

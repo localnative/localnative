@@ -1,7 +1,4 @@
 [workspace]
-members = [
-    "localnative_iced",
-    "localnative_core",
-    "localnative_cli",
-    "xtask",
-]
+members = [ "localnative_iced", "localnative_core", "localnative_cli", "xtask" ]
+
+resolver = "2"

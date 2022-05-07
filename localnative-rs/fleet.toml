@@ -1,0 +1,5 @@
+rd_enabled = true
+fleet_id = "b09a517c-1781-405c-b0db-d0ab84ac1082"
+
+[build]
+sccache = "/Users/cupnfish/.cargo/bin/sccache"

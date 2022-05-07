@@ -50,7 +50,7 @@ impl Sidebar {
             Column::new()
                 .push(IconItem::Note.into_text().size(Self::SIDEBAR_ICON_SIZE))
                 .push(Text::new(tr!("notes")))
-                .align_items(iced::Align::Center),
+                .align_items(iced::Alignment::Center),
         )
         .style(style::transparent(theme))
         .padding(0)
@@ -68,7 +68,7 @@ impl Sidebar {
             Column::new()
                 .push(IconItem::Sync.into_text().size(Self::SIDEBAR_ICON_SIZE))
                 .push(Text::new(tr!("sync")))
-                .align_items(iced::Align::Center),
+                .align_items(iced::Alignment::Center),
         )
         .padding(0)
         .style(style::transparent(theme))
@@ -92,7 +92,7 @@ impl Sidebar {
             .push(style::vertical_rule())
             .push(theme_button)
             .push(settings)
-            .align_items(iced::Align::Center)
+            .align_items(iced::Alignment::Center)
             .into()
     }
     pub fn update(

@@ -220,9 +220,9 @@ impl SyncView {
                     .push(sync_to_server_button)
                     .push(sync_form_file_button)
                     .spacing(20)
-                    .align_items(iced::Align::Center),
+                    .align_items(iced::Alignment::Center),
             )
-            .align_items(iced::Align::Center)
+            .align_items(iced::Alignment::Center)
             .push(Text::new(tr!("sync-server-tip")))
             .push(server_button);
         if self.server_state == ServerState::Opened {

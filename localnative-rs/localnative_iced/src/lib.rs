@@ -116,11 +116,7 @@ impl iced::Application for LocalNative {
         format!("Local Native {}", version)
     }
 
-    fn update(
-        &mut self,
-        message: Self::Message,
-        _clipboard: &mut iced::Clipboard,
-    ) -> Command<Self::Message> {
+    fn update(&mut self, message: Self::Message) -> Command<Self::Message> {
         let LocalNative { config, state, .. } = self;
         match state {
             State::Loading => match message {
@@ -529,6 +525,7 @@ fn font() -> Option<&'static [u8]> {
     FONT.get_or_init(|| {
         use iced_graphics::font::Family;
         let source = iced_graphics::font::Source::new();
+
         source
             .load(&[
                 Family::Title("PingFang SC".to_owned()),

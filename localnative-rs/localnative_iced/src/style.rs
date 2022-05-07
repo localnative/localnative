@@ -86,7 +86,7 @@ impl rule::StyleSheet for TransparentRule {
         }
     }
 }
-pub fn horizontal_rule() -> iced::Rule {
+pub fn horizontal_rule<'a>() -> iced::Rule<'a> {
     iced::Rule::horizontal(0).style(TransparentRule)
 }
 pub fn horizontal_rules<'a, Msg: 'a>(n: usize) -> Vec<Element<'a, Msg>> {
@@ -96,7 +96,7 @@ pub fn horizontal_rules<'a, Msg: 'a>(n: usize) -> Vec<Element<'a, Msg>> {
     }
     res
 }
-pub fn vertical_rule() -> iced::Rule {
+pub fn vertical_rule<'a>() -> iced::Rule<'a> {
     iced::Rule::vertical(0).style(TransparentRule)
 }
 // pub fn vertical_rules<'a, Msg: 'a>(n: usize) -> Vec<Element<'a, Msg>> {

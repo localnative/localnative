@@ -110,7 +110,8 @@ impl Release {
                 windows: WindowsSettings {
                     wix: Some(WixSettings {
                         skip_webview_install: true,
-                        language: "zh-CN".into(),
+                        // TODO: zh-CN language wix file.
+                        language: Default::default(),
                         ..Default::default()
                     }),
                     ..Default::default()

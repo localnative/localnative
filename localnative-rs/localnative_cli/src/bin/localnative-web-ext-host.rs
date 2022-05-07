@@ -55,10 +55,10 @@ fn send_message(message: &str) -> io::Result<()> {
 
     let bytes: [u8; 4] = if cfg!(target_endian = "little") {
         eprintln!("LE");
-        unsafe { transmute(size.to_le()) }
+        size.to_le_bytes()
     } else {
         eprintln!("BE");
-        unsafe { transmute(size.to_be()) }
+        size.to_be_bytes()
     };
 
     let mut handle = io::stdout();
