@@ -21,8 +21,8 @@ pub use days::Chart;
 pub use days::DateView;
 use days::HandleDays;
 use delete_tip::DeleteTip;
-use iced::Container;
-use iced::{futures::lock::Mutex, Column, Command, Row, Text};
+use iced::pure::widget::{Column, Container, Row, Text};
+use iced::{futures::lock::Mutex, Command};
 use iced_native::event::Status;
 use iced_native::window;
 use iced_native::Event;
@@ -82,7 +82,7 @@ pub enum Message {
     Receiver(Option<MiddleDate>),
 }
 
-impl iced::Application for LocalNative {
+impl iced::pure::Application for LocalNative {
     type Executor = iced::executor::Default;
 
     type Message = Message;
@@ -128,14 +128,14 @@ impl iced::Application for LocalNative {
                         sidebar: Sidebar::default(),
                         delete_tip: DeleteTip {
                             rowid: -1,
-                            tip_state: Default::default(),
+                            show_modal: false,
                         },
                         sync_view: SyncView::new(),
                         settings: settings::Settings {
                             disable_delete_tip_temp: config.disable_delete_tip,
                             language_temp: config.language,
                             limit_temp: config.limit,
-                            state: Default::default(),
+                            show_modal: false,
                         },
                         conn,
                     };
@@ -277,7 +277,7 @@ impl iced::Application for LocalNative {
                     } = data;
                     match msg {
                         delete_tip::Message::Enter => {
-                            delete_tip.tip_state.show(false);
+                            delete_tip.show_modal = false;
                             Command::perform(
                                 MiddleDate::delete(
                                     conn.clone(),
@@ -297,7 +297,7 @@ impl iced::Application for LocalNative {
                             delete_tip,
                         ),
                         delete_tip::Message::Cancel => {
-                            delete_tip.tip_state.show(false);
+                            delete_tip.show_modal = false;
                             Command::none()
                         }
                     }
@@ -408,7 +408,7 @@ impl iced::Application for LocalNative {
         iced_native::subscription::events_with(events_handler)
     }
 
-    fn view(&mut self) -> iced::Element<'_, Self::Message> {
+    fn view(&self) -> iced::pure::Element<'_, Self::Message> {
         let LocalNative { config, state, .. } = self;
         match state {
             State::Loading => Column::new()

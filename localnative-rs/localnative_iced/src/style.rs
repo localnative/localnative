@@ -1,8 +1,10 @@
 use std::ops::Not;
 
 // ------impl note start-----
-use iced::{button, qr_code, rule, text_input, Element};
-use iced::{container, Background, Color};
+use iced::{pure::Element, Background, Color};
+
+use iced_graphics::pure::qr_code;
+use iced_style::{button, container, rule, text_input};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

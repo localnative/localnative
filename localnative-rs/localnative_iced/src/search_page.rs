@@ -1,6 +1,9 @@
 use iced::{
-    button, scrollable, text_input, Button, Column, Command, Container, Element, Row, Scrollable,
-    Text, TextInput,
+    pure::{
+        widget::{Button, Column, Container, Row, Scrollable, Text, TextInput},
+        Element,
+    },
+    Command,
 };
 
 use crate::{
@@ -23,13 +26,6 @@ pub struct SearchPage {
     pub search_value: String,
     pub offset: u32,
     pub count: u32,
-    input_state: text_input::State,
-    clear_button: button::State,
-    refresh_button: button::State,
-    notes_scrollable: scrollable::State,
-    tags_scrollable: scrollable::State,
-    next_button: button::State,
-    pre_button: button::State,
 }
 #[derive(Debug, Clone)]
 pub enum Message {
@@ -59,58 +55,48 @@ impl SearchPage {
             ..Default::default()
         }
     }
-    pub fn view(&mut self, theme: Theme, limit: u32) -> Element<Message> {
+    pub fn view(&self, theme: Theme, limit: u32) -> Element<Message> {
         let Self {
             notes,
             tags,
             days,
             search_value,
-            input_state,
-            clear_button,
-            refresh_button,
-            notes_scrollable,
-            tags_scrollable,
-            next_button,
-            pre_button,
             ..
         } = self;
         let mut search_bar = Row::new().push(IconItem::Search).push(
-            TextInput::new(
-                input_state,
-                &tr!("search"),
-                search_value,
-                Message::SearchInput,
-            )
-            .on_submit(Message::Search),
+            TextInput::new(&tr!("search"), search_value, Message::SearchInput)
+                .on_submit(Message::Search),
         );
         if !self.search_value.is_empty() {
             search_bar = search_bar.push(
-                Button::new(clear_button, IconItem::Clear)
+                Button::new(IconItem::Clear)
                     .style(style::transparent(theme))
                     .padding(0)
                     .on_press(Message::Clear),
             );
         }
-        let refresh_button = Button::new(refresh_button, IconItem::Refresh)
+        let refresh_button = Button::new(IconItem::Refresh)
             .padding(0)
             .style(style::transparent(theme))
             .on_press(Message::Refresh);
         search_bar = search_bar.push(refresh_button);
-        let tags = Scrollable::new(tags_scrollable)
-            .push(Container::new(tags.iter_mut().fold(
-                iced_aw::Wrap::new().spacing(5).push(Text::new(tr!("tags"))),
+        let tags = Container::new(Scrollable::new(
+            tags.iter().fold(
+                iced_aw::pure::Wrap::new()
+                    .spacing(5)
+                    .push(Text::new(tr!("tags"))),
                 |tags, tag| tags.push(tag.view(theme).map(Message::Tag)),
-            )))
-            .width(iced::Length::FillPortion(2));
+            ),
+        ))
+        .width(iced::Length::FillPortion(2));
         let days = Container::new(days.view(theme).map(Message::Day))
-            .height(iced::Length::Shrink)
             .padding(2)
-            .max_height(240);
-        let next_button = Button::new(next_button, IconItem::Next)
+            .height(iced::Length::Units(256));
+        let next_button = Button::new(IconItem::Next)
             .style(style::transparent(theme))
             .padding(0)
             .on_press(Message::NextPage);
-        let pre_button = Button::new(pre_button, IconItem::Pre)
+        let pre_button = Button::new(IconItem::Pre)
             .style(style::transparent(theme))
             .padding(0)
             .on_press(Message::PrePage);
@@ -128,11 +114,8 @@ impl SearchPage {
             .push(style::horizontal_rule());
         let note_page = if self.count > 0 {
             let notes = Container::new(
-                notes.iter_mut().enumerate().fold(
-                    Scrollable::new(notes_scrollable)
-                        .padding(8)
-                        .scroller_width(5)
-                        .push(days),
+                Scrollable::new(notes.iter().enumerate().fold(
+                    iced_aw::pure::Wrap::new_vertical().push(days),
                     |notes, (idx, note_view)| {
                         notes.push(
                             note_view
@@ -140,7 +123,8 @@ impl SearchPage {
                                 .map(move |note_msg| Message::Note(note_msg, idx)),
                         )
                     },
-                ),
+                ))
+                .scroller_width(5),
             )
             .height(iced::Length::FillPortion(8));
 
@@ -165,7 +149,7 @@ impl SearchPage {
             .height(iced::Length::FillPortion(8));
             Column::new()
                 .push(search_bar)
-                .push(Column::new().padding(8).push(days).push(tip))
+                .push(Column::new().push(days).push(tip))
                 .push(page_ctrl)
         }
         .align_items(iced::Alignment::Center)
@@ -267,7 +251,7 @@ impl SearchPage {
                             crate::Message::Receiver,
                         )
                     } else {
-                        delete_tip.tip_state.show(true);
+                        delete_tip.show_modal = true;
                         delete_tip.rowid = rowid;
                         Command::none()
                     }

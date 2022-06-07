@@ -51,15 +51,17 @@ optional = true
 
 
 [dependencies.iced_aw]
-git = "https://github.com/iced-rs/iced_aw"
-branch = "main"
+# git = "https://github.com/iced-rs/iced_aw"
+git = "https://github.com/Kaiden42/iced_aw.git"
+# branch = "main"
+branch = "beta"
 default-features = false
-features = [ "wrap", "number_input", "modal", "date_picker", "icons", "card" ]
+features = [ "wrap", "number_input", "modal", "date_picker", "icons", "card", "pure" ]
 
 
 [dependencies.iced]
 version = "0.4"
-features = [ "canvas", "qr_code", "tokio" ]
+features = [ "canvas", "qr_code", "tokio", "pure" ]
 
 [features]
 preview = [ "rand" ]

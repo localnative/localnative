@@ -1,5 +1,11 @@
-use iced::{button, pick_list, Button, Checkbox, Column, Command, Element, Radio, Row, Text};
-use iced_aw::{modal, number_input, Card, Modal, NumberInput};
+use iced::{
+    pure::{
+        widget::{Button, Checkbox, Column, Radio, Row, Text},
+        Element,
+    },
+    Command,
+};
+use iced_aw::pure::{Card, Modal, NumberInput};
 
 use crate::{
     config::Config,
@@ -12,16 +18,7 @@ pub struct Settings {
     pub language_temp: Language,
     pub disable_delete_tip_temp: bool,
     pub limit_temp: u32,
-    pub state: modal::State<State>,
-}
-
-#[derive(Default)]
-pub struct State {
-    pub save_button: button::State,
-    pub cancel_button: button::State,
-    pub try_fix_host: button::State,
-    pub limit_input: number_input::State,
-    pub language_selector: pick_list::State<Language>,
+    pub show_modal: bool,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -36,24 +33,21 @@ pub enum Message {
 }
 impl Settings {
     pub fn view<'settings, 'underlay: 'settings>(
-        &'settings mut self,
+        &'settings self,
         theme: Theme,
         underlay: Element<'underlay, Message>,
         config: &'underlay Config,
     ) -> Element<'settings, Message> {
-        let Self { state, .. } = self;
         let disable_delete_tip = config.disable_delete_tip;
         let language = config.language;
         let limit = config.limit;
-        Modal::new(state, underlay, move |state| {
-            let ok_button =
-                Button::new(&mut state.save_button, Text::new(tr!("ok"))).on_press(Message::Save);
-            let cancel_button = Button::new(&mut state.cancel_button, Text::new(tr!("cancel")))
-                .on_press(Message::Cancel);
+        Modal::new(self.show_modal, underlay, move || {
+            let ok_button = Button::new(Text::new(tr!("ok"))).on_press(Message::Save);
+            let cancel_button = Button::new(Text::new(tr!("cancel"))).on_press(Message::Cancel);
             let disable_delete_tip =
                 Checkbox::new(disable_delete_tip, "", Message::DisableTip).spacing(0);
-            let try_fix_host = Button::new(&mut state.try_fix_host, Text::new(tr!("try-fix-host")))
-                .on_press(Message::TryFixHost);
+            let try_fix_host =
+                Button::new(Text::new(tr!("try-fix-host"))).on_press(Message::TryFixHost);
             // TODO: picklist not normaly work with modal
             // let language_selector = PickList::new(
             //     &mut state.language_selector,
@@ -79,11 +73,10 @@ impl Settings {
                 ))
                 .push(style::horizontal_rule())
                 .spacing(30);
-            let limit_input =
-                NumberInput::new(&mut state.limit_input, limit, 1000, Message::LimitChanged)
-                    .min(5)
-                    .step(1)
-                    .padding(0);
+            let limit_input = NumberInput::new(limit, 1000, Message::LimitChanged)
+                .min(5)
+                .step(1)
+                .padding(0);
 
             let body = Column::new()
                 .push(
@@ -135,11 +128,11 @@ impl Settings {
     ) -> Command<crate::Message> {
         match message {
             Message::Save => {
-                self.state.show(false);
+                self.show_modal = false;
                 sidebar.settings_is_open = false;
             }
             Message::Cancel => {
-                self.state.show(false);
+                self.show_modal = false;
                 sidebar.settings_is_open = false;
                 config.disable_delete_tip = self.disable_delete_tip_temp;
                 config.language = self.language_temp;

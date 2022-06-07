@@ -1,4 +1,5 @@
-use iced::{button, Button, Element, Row, Text};
+use iced::pure::widget::{Button, Row, Text};
+use iced::pure::Element;
 use serde::{Deserialize, Serialize};
 
 use crate::style::{self, Theme};
@@ -18,36 +19,24 @@ pub struct Tag {
 #[derive(Debug, Default, Clone)]
 pub struct TagView {
     pub tag: Tag,
-    pub search_button: button::State,
-    pub count_button: button::State,
 }
 impl From<Tag> for TagView {
     fn from(tag: Tag) -> Self {
-        Self {
-            tag,
-            search_button: button::State::new(),
-            count_button: button::State::new(),
-        }
+        Self { tag }
     }
 }
 impl TagView {
-    pub fn view(&mut self, theme: Theme) -> Element<Message> {
+    pub fn view(&self, theme: Theme) -> Element<Message> {
         Row::new()
             .push(
-                Button::new(
-                    &mut self.search_button,
-                    Text::new(self.tag.name.as_str()).size(16),
-                )
-                .style(style::tag(theme))
-                .on_press(Message::Search(self.tag.name.clone())),
+                Button::new(Text::new(self.tag.name.as_str()).size(16))
+                    .style(style::tag(theme))
+                    .on_press(Message::Search(self.tag.name.clone())),
             )
             .push(
-                Button::new(
-                    &mut self.count_button,
-                    Text::new(self.tag.count.to_string()).color([1.0, 0.0, 0.0]),
-                )
-                .on_press(Message::Search(self.tag.count.to_string()))
-                .style(style::count(theme)),
+                Button::new(Text::new(self.tag.count.to_string()).color([1.0, 0.0, 0.0]))
+                    .on_press(Message::Search(self.tag.count.to_string()))
+                    .style(style::count(theme)),
             )
             .into()
     }
