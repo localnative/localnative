@@ -883,10 +883,15 @@ impl DateView {
         let mut ctrl_row = Row::new();
 
         if let Some(range_info) = range.map(move |(start_date, end_date)| {
-            // let (start_year, start_month, start_day) = start_date.to_calendar_date();
+            let (start_year, start_month, start_day) = start_date.to_calendar_date();
 
             let start_picker = DatePicker::new(
                 self.show_start_date_picker,
+                iced_aw::core::date::Date::from_ymd(
+                    start_year,
+                    start_month as u32,
+                    start_day as u32,
+                ),
                 Button::new(
                     Row::new()
                         .push(IconItem::Date)
@@ -898,10 +903,11 @@ impl DateView {
                 Message::CancelStartPick,
                 Message::PickStartRes,
             );
-            // let (end_year, end_month, end_day) = end_date.to_calendar_date();
+            let (end_year, end_month, end_day) = end_date.to_calendar_date();
 
             let end_picker = DatePicker::new(
                 self.show_end_date_picker,
+                iced_aw::core::date::Date::from_ymd(end_year, end_month as u32, end_day as u32),
                 Button::new(
                     Row::new()
                         .push(IconItem::Date)
