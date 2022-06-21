@@ -51,10 +51,7 @@ optional = true
 
 
 [dependencies.iced_aw]
-# git = "https://github.com/iced-rs/iced_aw"
-git = "https://github.com/Kaiden42/iced_aw.git"
-# branch = "main"
-branch = "beta"
+version = "0.2"
 default-features = false
 features = [ "wrap", "number_input", "modal", "date_picker", "icons", "card", "pure" ]
 
