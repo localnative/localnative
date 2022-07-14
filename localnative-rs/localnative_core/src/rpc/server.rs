@@ -30,10 +30,9 @@ use futures::{
 };
 use std::{io, net::SocketAddr};
 use stream_cancel::Trigger;
-use tarpc::{
-    context,
-    server::{self, Channel, Incoming},
-};
+use tarpc::server::incoming::Incoming;
+use tarpc::server::Channel;
+use tarpc::{context, server};
 use tokio::runtime::Runtime;
 use tokio_serde::formats::Bincode;
 
@@ -175,7 +174,7 @@ pub fn start(addr: &str) -> Result<(), &'static str> {
 pub fn get_server_addr() -> String {
     for iface in get_if_addrs::get_if_addrs().unwrap() {
         if !iface.is_loopback() {
-            return format!("{}:3456", iface.addr.ip().to_string());
+            return format!("{}:3456", iface.addr.ip());
         }
     }
     "".to_string()

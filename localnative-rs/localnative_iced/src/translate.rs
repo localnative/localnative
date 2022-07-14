@@ -127,10 +127,10 @@ impl Display for Language {
 #[macro_export]
 macro_rules! tr {
     ($msg:expr) => {
-        crate::translate::tr_with_args($msg, None)
+        $crate::translate::tr_with_args($msg, None)
     };
     ($msg:expr; $args:expr ) => {{
-        crate::translate::tr_with_args($msg, Some($args))
+        $crate::translate::tr_with_args($msg, Some($args))
     }};
 }
 

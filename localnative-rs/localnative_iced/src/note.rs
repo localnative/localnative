@@ -1,4 +1,7 @@
-use iced::{button, qr_code, Button, Column, Element, QRCode, Row, Text};
+use iced::pure::{
+    widget::{Button, Column, QRCode, Row, Text},
+    Element,
+};
 use localnative_core::Note;
 
 use crate::{icons::IconItem, style};
@@ -6,15 +9,11 @@ use crate::{icons::IconItem, style};
 pub struct NoteView {
     note: Note,
     tags: Vec<Tag>,
-    open_url: button::State,
-    open_qrcode: button::State,
-    delete: button::State,
-    qrcode: Option<qr_code::State>,
+    qrcode: Option<iced::pure::widget::qr_code::State>,
 }
 #[derive(Debug, Clone)]
 pub struct Tag {
     name: String,
-    open_tag: button::State,
 }
 
 #[derive(Debug, Clone)]
@@ -33,41 +32,30 @@ impl From<Note> for NoteView {
             .filter(|name| !name.is_empty())
             .map(|name| Tag {
                 name: name.to_owned(),
-                open_tag: button::State::new(),
             })
             .collect();
         NoteView {
             note,
             tags,
-            open_url: button::State::new(),
-            open_qrcode: button::State::new(),
-            delete: button::State::new(),
             qrcode: None,
         }
     }
 }
 
 impl NoteView {
-    pub fn view(&mut self, theme: style::Theme) -> Element<Message> {
-        let Self {
-            note,
-            tags,
-            open_url,
-            open_qrcode,
-            delete,
-            qrcode,
-        } = self;
+    pub fn view(&self, theme: style::Theme) -> Element<Message> {
+        let Self { note, tags, qrcode } = self;
         let qrcode = qrcode
             .as_ref()
             .map(|state| style::qr_code(QRCode::new(state), theme));
-        let url = Button::new(open_url, Text::new(note.url.as_str()))
+        let url = Button::new(Text::new(note.url.as_str()))
             .style(style::link(theme))
             .padding(0)
             .on_press(Message::OpenUrl);
-        let delete = Button::new(delete, IconItem::Delete)
+        let delete = Button::new(IconItem::Delete)
             .style(style::transparent(theme))
             .on_press(Message::Delete(note.rowid));
-        let qrcode_button = Button::new(open_qrcode, IconItem::QRCode)
+        let qrcode_button = Button::new(IconItem::QRCode)
             .padding(0)
             .style(style::transparent(theme))
             .on_press(Message::QRCode);
@@ -77,16 +65,17 @@ impl NoteView {
             .push(Text::new(note.uuid4.as_str()))
             .push(Text::new(format!("rowid {}", note.rowid)))
             .push(qrcode_button);
-        let wrap = tags
-            .iter_mut()
-            .fold(iced_aw::Wrap::new().spacing(5).push(row), |wrap, tag| {
-                let Tag { name, open_tag } = tag;
-                let tag_button = Button::new(open_tag, Text::new(name.as_str()))
+        let wrap = tags.iter().fold(
+            iced_aw::pure::Wrap::new().spacing(5).push(row),
+            |wrap, tag| {
+                let Tag { name } = tag;
+                let tag_button = Button::new(Text::new(name.as_str()))
                     .style(style::tag(theme))
                     .padding(0)
                     .on_press(Message::Search(name.to_owned()));
                 wrap.push(tag_button)
-            });
+            },
+        );
         let mut column = Column::new().push(wrap);
         if let Some(qrcode) = qrcode {
             column = column.push(
@@ -114,7 +103,7 @@ impl NoteView {
                 .push(delete)
                 .push(style::horizontal_rule()),
         );
-        iced::Container::new(column)
+        iced::pure::widget::Container::new(column)
             .style(style::note(theme))
             .into()
     }
@@ -130,8 +119,9 @@ impl NoteView {
                     self.qrcode.take();
                 }
                 None => {
-                    self.qrcode
-                        .replace(qr_code::State::new(self.note.url.as_bytes()).unwrap());
+                    self.qrcode.replace(
+                        iced::pure::widget::qr_code::State::new(self.note.url.as_bytes()).unwrap(),
+                    );
                 }
             },
             Message::Search(tag) => {

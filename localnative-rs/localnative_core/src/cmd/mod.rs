@@ -57,7 +57,7 @@ from main.note
             }
             Err(err) => {
                 eprintln!("Err {:?}", err);
-                format!(r#"{{"error": "{}. sync-via-attach: version may not match, upgrade both to latest version and try again."}}"#, err.to_string())
+                format!(r#"{{"error": "{}. sync-via-attach: version may not match, upgrade both to latest version and try again."}}"#, err)
             }
         }
     } else {

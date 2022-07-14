@@ -1,11 +1,9 @@
-use iced::{
-    button,
-    canvas::{self, Cache, Cursor, Fill, Frame, Geometry, Program},
-    mouse, Button, Canvas, Color, Column, Container, Element, Point, Rectangle, Row, Size, Text,
-    Vector,
-};
+use iced::pure::widget::canvas::{self, Cache, Cursor, Fill, Frame, Geometry, Program};
+use iced::pure::widget::{Button, Canvas, Column, Container, Row, Text};
+use iced::pure::Element;
+use iced::{Color, Point, Rectangle, Size, Vector};
 
-use iced_aw::{date_picker, number_input, DatePicker};
+use iced_aw::pure::{date_picker, DatePicker};
 use serde::{Deserialize, Serialize};
 use time::{Date, Duration, Month};
 
@@ -46,7 +44,6 @@ pub struct DateChart<'a> {
     pub cache: &'a Cache,
     pub selected_cache: &'a Cache,
     pub selected: Option<&'a Selected>,
-    pub pending: Option<Point>,
     pub maximal_day_count: i64,
     pub maximal_month_count: i64,
     pub day_uw: f32,
@@ -60,6 +57,11 @@ pub struct DateChart<'a> {
     pub translation: Vector,
     pub base_day: Date,
     pub base_month: &'a MonthView,
+}
+
+#[derive(Debug, Default)]
+pub struct DateChartState {
+    pub pending: Option<Point>,
 }
 
 impl<'a> DateChart<'a> {
@@ -507,73 +509,84 @@ pub enum ChartMsg {
 }
 
 impl<'a> Program<ChartMsg> for DateChart<'a> {
+    type State = DateChartState;
+
     fn update(
-        &mut self,
-        event: canvas::Event,
+        &self,
+        state: &mut Self::State,
+        event: iced::canvas::Event,
         bounds: Rectangle,
         cursor: Cursor,
-    ) -> (canvas::event::Status, Option<ChartMsg>) {
+    ) -> (iced::canvas::event::Status, Option<ChartMsg>) {
         if let Some(cursor_position) = cursor.position_in(&bounds) {
             match event {
-                canvas::Event::Mouse(me) => match me {
-                    mouse::Event::ButtonReleased(mouse::Button::Right) => {
-                        println!("🖱: {:?}", cursor_position);
-                        return (canvas::event::Status::Captured, Some(ChartMsg::ClearRange));
+                iced::canvas::Event::Mouse(iced::mouse::Event::ButtonPressed(
+                    iced::mouse::Button::Left,
+                )) => {
+                    state.pending.replace(cursor_position);
+                }
+                iced::canvas::Event::Mouse(iced::mouse::Event::ButtonPressed(
+                    iced::mouse::Button::Middle,
+                )) => {
+                    if self.selected.is_some() {
+                        return (canvas::event::Status::Captured, Some(ChartMsg::EnterRange));
                     }
-                    mouse::Event::ButtonPressed(mouse::Button::Left) => {
-                        self.pending.replace(cursor_position);
-                    }
-                    mouse::Event::ButtonPressed(mouse::Button::Middle) => {
-                        if self.selected.is_some() {
-                            return (canvas::event::Status::Captured, Some(ChartMsg::EnterRange));
-                        }
-                    }
-                    mouse::Event::ButtonReleased(mouse::Button::Left) => {
-                        let pending = self.pending.take();
-                        let size = bounds.size();
-                        let width = size.width;
-                        if let Some(pd) = pending {
-                            let mut translation = self.translation;
-                            let uw = self.init(
-                                size,
-                                &mut translation,
-                                self.last_day,
-                                self.last_month,
-                                &self.selected,
-                            );
-                            let fix = translation.x;
+                }
+                iced::canvas::Event::Mouse(iced::mouse::Event::ButtonReleased(button)) => {
+                    match button {
+                        iced::mouse::Button::Left => {
+                            let pending = state.pending.take();
+                            let size = bounds.size();
+                            let width = size.width;
+                            if let Some(pd) = pending {
+                                let mut translation = self.translation;
+                                let uw = self.init(
+                                    size,
+                                    &mut translation,
+                                    self.last_day,
+                                    self.last_month,
+                                    &self.selected,
+                                );
+                                let fix = translation.x;
 
-                            let a = (width - pd.x + fix) / uw;
-                            let b = (width - cursor_position.x + fix) / uw;
-                            let (start, end) = if a > b {
-                                (a.ceil() as usize, b.floor() as usize)
-                            } else {
-                                (b.ceil() as usize, a.floor() as usize)
-                            };
+                                let a = (width - pd.x + fix) / uw;
+                                let b = (width - cursor_position.x + fix) / uw;
+                                let (start, end) = if a > b {
+                                    (a.ceil() as usize, b.floor() as usize)
+                                } else {
+                                    (b.ceil() as usize, a.floor() as usize)
+                                };
 
-                            return (
-                                canvas::event::Status::Captured,
-                                Some(ChartMsg::FilterSearch(Selected { start, end })),
-                            );
+                                return (
+                                    canvas::event::Status::Captured,
+                                    Some(ChartMsg::FilterSearch(Selected { start, end })),
+                                );
+                            }
                         }
+                        iced::mouse::Button::Right => {
+                            println!("🖱: {:?}", cursor_position);
+                            return (canvas::event::Status::Captured, Some(ChartMsg::ClearRange));
+                        }
+                        _ => (),
                     }
-                    mouse::Event::WheelScrolled { delta } => match delta {
-                        mouse::ScrollDelta::Lines { y, .. } => {
+                }
+                iced::canvas::Event::Mouse(iced::mouse::Event::WheelScrolled { delta }) => {
+                    match delta {
+                        iced::mouse::ScrollDelta::Lines { y, .. } => {
                             return (canvas::event::Status::Captured, Some(ChartMsg::Scroll(y)));
                         }
-                        mouse::ScrollDelta::Pixels { y, .. } => {
+                        iced::mouse::ScrollDelta::Pixels { y, .. } => {
                             return (canvas::event::Status::Captured, Some(ChartMsg::Scroll(y)));
                         }
-                    },
-                    _ => {}
-                },
-                canvas::Event::Keyboard(_) => {}
-            };
+                    }
+                }
+                _ => (),
+            }
         }
         (canvas::event::Status::Ignored, None)
     }
 
-    fn draw(&self, bounds: Rectangle, cursor: Cursor) -> Vec<Geometry> {
+    fn draw(&self, state: &Self::State, bounds: Rectangle, cursor: Cursor) -> Vec<Geometry> {
         let size = bounds.size();
         let mut translation = self.translation;
         let uw = self.init(
@@ -635,7 +648,7 @@ impl<'a> Program<ChartMsg> for DateChart<'a> {
             res.push(selected);
         }
 
-        if let Some(pending) = self.pending.map(|pending| {
+        if let Some(pending) = state.pending.map(|pending| {
             let mut frame = Frame::new(size);
             if let Some(cursor_position) = cursor.position_in(&bounds) {
                 let top_left = Point::new(
@@ -662,10 +675,11 @@ impl<'a> Program<ChartMsg> for DateChart<'a> {
 
     fn mouse_interaction(
         &self,
+        state: &Self::State,
         _bounds: Rectangle,
         _cursor: Cursor,
     ) -> iced_native::mouse::Interaction {
-        if self.pending.is_some() {
+        if state.pending.is_some() {
             return iced_native::mouse::Interaction::Pointer;
         }
         iced_native::mouse::Interaction::default()
@@ -772,16 +786,9 @@ pub struct DateView {
     pub full_months: Option<i32>,
     pub last_day: Option<i64>,
     pub last_month: Option<i32>,
-    full_or_adjustable: button::State,
-    max_or_min: button::State,
-    day_or_month: button::State,
-    clear_button: button::State,
-    uw_input: number_input::State,
-    start_date_picker: date_picker::State,
-    end_date_picker: date_picker::State,
-    pick_start: button::State,
-    pick_end: button::State,
     pub is_full: bool,
+    pub show_start_date_picker: bool,
+    pub show_end_date_picker: bool,
 }
 
 impl Default for DateView {
@@ -794,21 +801,15 @@ impl Default for DateView {
                 fill_color: Color::from_rgba(0.8, 0.2, 0.3, 0.6),
                 ..Chart::new()
             },
-            full_or_adjustable: button::State::new(),
-            max_or_min: button::State::new(),
-            day_or_month: button::State::new(),
-            clear_button: button::State::new(),
-            uw_input: number_input::State::new(),
-            start_date_picker: date_picker::State::now(),
-            end_date_picker: date_picker::State::now(),
-            pick_start: button::State::new(),
-            pick_end: button::State::new(),
+
             days: Vec::new(),
             months: Vec::new(),
             full_days: None,
             full_months: None,
             last_day: None,
             last_month: None,
+            show_start_date_picker: false,
+            show_end_date_picker: false,
         }
     }
 }
@@ -827,21 +828,14 @@ impl DateView {
                 fill_color: Color::from_rgba(0.8, 0.2, 0.3, 0.6),
                 ..Chart::new()
             },
-            full_or_adjustable: button::State::new(),
-            max_or_min: button::State::new(),
-            day_or_month: button::State::new(),
-            clear_button: button::State::new(),
-            uw_input: number_input::State::new(),
-            start_date_picker: date_picker::State::now(),
-            end_date_picker: date_picker::State::now(),
-            pick_start: button::State::new(),
-            pick_end: button::State::new(),
             days: Vec::new(),
             months: Vec::new(),
             full_days: None,
             full_months: None,
             last_day: None,
             last_month: None,
+            show_start_date_picker: false,
+            show_end_date_picker: false,
         }
     }
     pub fn update_from_handle_days(&mut self, handle_days: HandleDays) {
@@ -866,34 +860,22 @@ impl DateView {
         self.chart.max_day_count = max_day_count;
         self.chart.max_month_count = max_month_count;
     }
-    pub fn view(&mut self, theme: Theme) -> Element<Message> {
+    pub fn view(&self, theme: Theme) -> Element<Message> {
         let range = self.get_current_range();
 
         let DateView {
-            full_or_adjustable,
-            max_or_min,
-            day_or_month,
             chart,
             preview_chart,
             days,
             months,
-            uw_input,
-            clear_button,
-            start_date_picker,
-            end_date_picker,
-            pick_start,
-            pick_end,
             ..
         } = self;
 
-        let minimize_or_maximize_button = Button::new(
-            max_or_min,
-            if self.is_show {
-                IconItem::FilterOff
-            } else {
-                IconItem::Filter
-            },
-        )
+        let minimize_or_maximize_button = Button::new(if self.is_show {
+            IconItem::FilterOff
+        } else {
+            IconItem::Filter
+        })
         .padding(0)
         .style(style::transparent(theme))
         .on_press(Message::MaxOrMin);
@@ -902,15 +884,15 @@ impl DateView {
 
         if let Some(range_info) = range.map(move |(start_date, end_date)| {
             let (start_year, start_month, start_day) = start_date.to_calendar_date();
-            start_date_picker.set_date(
-                start_year,
-                month_to_num(start_month) as u32,
-                start_day as u32,
-            );
+
             let start_picker = DatePicker::new(
-                start_date_picker,
+                self.show_start_date_picker,
+                iced_aw::core::date::Date::from_ymd(
+                    start_year,
+                    start_month as u32,
+                    start_day as u32,
+                ),
                 Button::new(
-                    pick_start,
                     Row::new()
                         .push(IconItem::Date)
                         .push(Text::new(start_date.to_string())),
@@ -922,11 +904,11 @@ impl DateView {
                 Message::PickStartRes,
             );
             let (end_year, end_month, end_day) = end_date.to_calendar_date();
-            end_date_picker.set_date(end_year, month_to_num(end_month) as u32, end_day as u32);
+
             let end_picker = DatePicker::new(
-                end_date_picker,
+                self.show_end_date_picker,
+                iced_aw::core::date::Date::from_ymd(end_year, end_month as u32, end_day as u32),
                 Button::new(
-                    pick_end,
                     Row::new()
                         .push(IconItem::Date)
                         .push(Text::new(end_date.to_string())),
@@ -937,7 +919,7 @@ impl DateView {
                 Message::CancelEndPick,
                 Message::PickEndRes,
             );
-            let clear_button = Button::new(clear_button, IconItem::Clear)
+            let clear_button = Button::new(IconItem::Clear)
                 .style(style::transparent(theme))
                 .padding(0)
                 .on_press(Message::ChartMsg(ChartMsg::ClearRange));
@@ -951,7 +933,7 @@ impl DateView {
             ctrl_row = ctrl_row.push(range_info);
         };
         if !self.is_full {
-            let uw_input = iced_aw::NumberInput::new(uw_input, chart.uw(), 30.0, Message::UwChange)
+            let uw_input = iced_aw::pure::NumberInput::new(chart.uw(), 30.0, Message::UwChange)
                 .min(1.0)
                 .padding(0)
                 .step(0.1);
@@ -959,19 +941,16 @@ impl DateView {
         }
         ctrl_row = ctrl_row.push(style::horizontal_rule());
         if self.is_show {
-            let full_or_adjustable_button = Button::new(
-                full_or_adjustable,
-                if self.is_full {
-                    IconItem::FullExit
-                } else {
-                    IconItem::Full
-                },
-            )
+            let full_or_adjustable_button = Button::new(if self.is_full {
+                IconItem::FullExit
+            } else {
+                IconItem::Full
+            })
             .padding(0)
             .style(style::transparent(theme))
             .on_press(Message::FullOrAdjustable);
 
-            let day_or_month_button = Button::new(day_or_month, {
+            let day_or_month_button = Button::new({
                 match chart.level {
                     ChartLevel::Day => IconItem::DayTime,
                     ChartLevel::Month => IconItem::MonthTime,
@@ -1195,19 +1174,19 @@ impl DateView {
                 self.align();
             }
             Message::CancelStartPick => {
-                self.start_date_picker.show(false);
+                self.show_start_date_picker = false;
             }
             Message::CancelEndPick => {
-                self.end_date_picker.show(false);
+                self.show_end_date_picker = false;
             }
             Message::PickStart => {
-                self.start_date_picker.show(true);
+                self.show_start_date_picker = true;
             }
             Message::PickEnd => {
-                self.end_date_picker.show(true);
+                self.show_end_date_picker = true;
             }
             Message::PickStartRes(date) => {
-                self.start_date_picker.show(false);
+                self.show_start_date_picker = false;
                 let start_date = Date::from_calendar_date(
                     date.year,
                     num_to_month(date.month as i32),
@@ -1225,7 +1204,7 @@ impl DateView {
                 self.preview_chart.selected_cache.clear();
             }
             Message::PickEndRes(date) => {
-                self.end_date_picker.show(false);
+                self.show_end_date_picker = false;
                 let end_date = Date::from_calendar_date(
                     date.year,
                     num_to_month(date.month as i32),
@@ -1488,7 +1467,6 @@ impl Chart {
             cache: &self.cache,
             selected_cache: &self.selected_cache,
             selected: self.selected.as_ref(),
-            pending: None,
             maximal_day_count: self.max_day_count,
             maximal_month_count: self.max_month_count,
             style: Style {

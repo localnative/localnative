@@ -1,6 +1,8 @@
-use iced::{button, text_input, Button, Command, Element, Row, Text};
-use iced::{qr_code, Column, QRCode};
-use iced_aw::{number_input, NumberInput};
+use iced::pure::widget::{qr_code, Column, QRCode};
+use iced::pure::widget::{Button, Row, Text, TextInput};
+use iced::pure::Element;
+use iced::Command;
+use iced_aw::pure::NumberInput;
 use once_cell::sync::OnceCell;
 use regex::RegexSet;
 use std::borrow::Cow;
@@ -26,13 +28,6 @@ use crate::{
 pub struct SyncView {
     ip: String,
     pub port: u16,
-    ip_input: text_input::State,
-    port_input: number_input::State,
-    clear_button: button::State,
-    sync_to_server_button: button::State,
-    sync_from_server_button: button::State,
-    sync_from_file_button: button::State,
-    server_button: button::State,
     pub server_addr: String,
     pub ip_qr_code: qr_code::State,
     pub sync_state: SyncState,
@@ -79,49 +74,29 @@ impl SyncView {
         Self {
             ip: String::new(),
             port: 2345,
-            ip_input: text_input::State::new(),
-            port_input: number_input::State::new(),
-            clear_button: button::State::new(),
-            sync_from_server_button: button::State::new(),
-            sync_to_server_button: button::State::new(),
-            sync_from_file_button: button::State::new(),
             server_state: ServerState::Closed,
-            server_button: button::State::new(),
             server_addr: String::new(),
             ip_qr_code: qr_code::State::new(&[0]).unwrap(),
             sync_state: SyncState::Waiting,
             stop: None,
         }
     }
-    pub fn view(&mut self, theme: Theme) -> Element<Message> {
-        let Self {
-            ip_input,
-            port_input,
-            clear_button,
-            sync_from_file_button,
-            sync_from_server_button,
-            sync_to_server_button,
-            server_button,
-            ip_qr_code,
-            ..
-        } = self;
+    pub fn view(&self, theme: Theme) -> Element<Message> {
+        let ip_input = TextInput::new("xxx.xxx.xxx.xxx", &self.ip, Message::IpInput)
+            .padding(0)
+            .on_submit(Message::IpAddrVerify);
 
-        let ip_input =
-            text_input::TextInput::new(ip_input, "xxx.xxx.xxx.xxx", &self.ip, Message::IpInput)
-                .padding(0)
-                .on_submit(Message::IpAddrVerify);
-
-        let ip_tip = iced::Tooltip::new(
+        let ip_tip = iced::pure::widget::Tooltip::new(
             ip_input,
             r"输入格式:xxx.xxx.xxx.xxx",
             iced::tooltip::Position::Bottom,
         );
 
-        let port_input = NumberInput::new(port_input, self.port, u16::MAX, Message::PortInput)
+        let port_input = NumberInput::new(self.port, u16::MAX, Message::PortInput)
             .padding(0)
             .on_submit(Message::IpAddrVerify);
 
-        let clear_button = Button::new(clear_button, IconItem::Clear)
+        let clear_button = Button::new(IconItem::Clear)
             .style(style::transparent(theme))
             .padding(0)
             .on_press(Message::ClearAddrInput);
@@ -136,7 +111,6 @@ impl SyncView {
             .push(style::horizontal_rule());
 
         let sync_from_server_button = Button::new(
-            sync_from_server_button,
             Row::new()
                 .push(IconItem::SyncFromServer)
                 .push(Text::new(tr!("sync-from-server"))),
@@ -146,7 +120,6 @@ impl SyncView {
         .on_press(Message::SyncFromServer);
 
         let sync_to_server_button = Button::new(
-            sync_to_server_button,
             Row::new()
                 .push(IconItem::SyncToServer)
                 .push(Text::new(tr!("sync-to-server"))),
@@ -156,7 +129,6 @@ impl SyncView {
         .on_press(Message::SyncToServer);
 
         let sync_form_file_button = Button::new(
-            sync_from_file_button,
             Row::new()
                 .push(IconItem::SyncFromFile)
                 .push(Text::new(tr!("sync-from-file"))),
@@ -196,7 +168,7 @@ impl SyncView {
                 .push(IconItem::Clear)
                 .push(Text::new(tr!("unknow-error"))),
         };
-        let mut server_button = Button::new(server_button, server_button_text)
+        let mut server_button = Button::new(server_button_text)
             .padding(0)
             .style(style::transparent(theme));
 
@@ -220,9 +192,9 @@ impl SyncView {
                     .push(sync_to_server_button)
                     .push(sync_form_file_button)
                     .spacing(20)
-                    .align_items(iced::Align::Center),
+                    .align_items(iced::Alignment::Center),
             )
-            .align_items(iced::Align::Center)
+            .align_items(iced::Alignment::Center)
             .push(Text::new(tr!("sync-server-tip")))
             .push(server_button);
         if self.server_state == ServerState::Opened {
@@ -230,7 +202,7 @@ impl SyncView {
             let args = args!("ip"=>self.server_addr.clone());
             res = res
                 .push(Text::new(tr!("ip-qr";&args)))
-                .push(QRCode::new(&*ip_qr_code));
+                .push(QRCode::new(&self.ip_qr_code));
         }
 
         res.into()
