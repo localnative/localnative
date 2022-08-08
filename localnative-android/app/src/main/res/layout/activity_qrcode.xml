@@ -3,6 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/container"
+    android:padding="@dimen/activity_horizontal_margin"
+    android:background="#1C1C1E"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".android.QRCodeActivity">
@@ -15,13 +17,45 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <ImageView
-        android:id="@+id/qrCodeImageView"
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/datetimeTextView"
+        android:textColor="@android:color/white"
+        android:textSize="@dimen/qrcode_text_size"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        app:layout_constraintBottom_toTopOf="@+id/titleTextView"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:text="2022-08-08 18:00:00" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/titleTextView"
+        android:textSize="@dimen/qrcode_text_size"
+        android:textColor="@android:color/white"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toTopOf="@+id/linkTextView"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:text="Title" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/linkTextView"
+        android:textColor="@android:color/white"
+        android:textSize="@dimen/qrcode_text_size"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toTopOf="@+id/qrCodeImageView"
+        app:layout_constraintStart_toStartOf="parent"
+        android:autoLink="web"
+        tools:text="https://www.google.com" />
+
+    <ImageView
+        android:id="@+id/qrCodeImageView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/activity_horizontal_margin"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/qr_back_button"
-        tools:src="@tools:sample/backgrounds/scenic" />
+        tools:src="@mipmap/ic_launcher" />
 </androidx.constraintlayout.widget.ConstraintLayout>

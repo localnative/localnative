@@ -20,11 +20,14 @@ package app.localnative.android
 import android.util.Log
 
 import org.json.JSONObject
+import java.io.Serializable
 
 import java.util.ArrayList
 import java.util.HashMap
 
 object NoteContent {
+
+    const val NOTE_ITEM = "note_item"
 
     /**
      * An array of note items.
@@ -74,7 +77,10 @@ object NoteContent {
     /**
      * Note item representing a note.
      */
-    class NoteItem(val rowid: Int?, val uuid4: String, val title: String, val url: String, val tags: String, val description: String, val comments: String, val annotations: String, val created_at: String, val is_public: Boolean?) {
+    class NoteItem(val rowid: Int?, val uuid4: String, val title: String, val url: String,
+                   val tags: String, val description: String, val comments: String,
+                   val annotations: String, val created_at: String, val is_public: Boolean?) :
+        Serializable {
 
         override fun toString(): String {
             return title
