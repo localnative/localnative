@@ -1,5 +1,6 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
+
 android {
     compileSdkVersion 30
 
@@ -31,6 +32,10 @@ android {
 
     dataBinding {
         enabled = true
+    }
+
+    buildFeatures {
+        viewBinding = true
     }
 }
 

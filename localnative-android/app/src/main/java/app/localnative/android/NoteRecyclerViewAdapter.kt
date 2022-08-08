@@ -35,6 +35,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 
 import app.localnative.R
+import app.localnative.android.NoteContent.NOTE_ITEM
 import app.localnative.android.NoteListFragment.OnListFragmentInteractionListener
 import app.localnative.android.NoteContent.NoteItem
 
@@ -101,6 +102,7 @@ class NoteRecyclerViewAdapter(private val mValues: List<NoteItem>, private val m
         qrCodeButton.setOnClickListener {
             AppState.setCurrentUrl(note.url)
             val intent = Intent(context, QRCodeActivity::class.java)
+            intent.putExtra(NOTE_ITEM, note)
             (context as AppCompatActivity).startActivity(intent)
         }
         holder.mTagsContainer.addView(qrCodeButton)
