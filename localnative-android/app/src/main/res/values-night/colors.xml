@@ -1,13 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#008577</color>
-    <color name="colorPrimaryDark">#00574B</color>
-    <color name="colorAccent">#D81B60</color>
-
-    <color name="primary">#FFFFFFFF</color>
+    <color name="primary">#FF000000</color>
     <color name="primary_variant">#FF3700B3</color>
     <color name="collapse_menu_color">#DBFFFFFF</color>
-    <color name="button_color">#D1D1D1</color>
 
     <!--white-->
     <!--87%-->
