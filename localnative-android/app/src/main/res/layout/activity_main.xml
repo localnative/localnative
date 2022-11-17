@@ -30,6 +30,7 @@
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/prev_button"
                 style="@style/LNButton"
+                android:background="@android:color/transparent"
                 android:layout_weight="1"
                 android:text="@string/prev_button_text" />
 
@@ -46,6 +47,7 @@
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/next_button"
                 style="@style/LNButton"
+                android:background="@android:color/transparent"
                 android:layout_weight="1"
                 android:text="@string/next_button_text" />
         </LinearLayout>

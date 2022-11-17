@@ -68,7 +68,7 @@ class NoteRecyclerViewAdapter(private val mValues: List<NoteItem>, private val m
         val width = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 45f, context!!.resources.displayMetrics).toInt()
         deleteButton.layoutParams = RecyclerView.LayoutParams(width, height)
         deleteButton.setTextColor(Color.RED)
-        deleteButton.setBackgroundColor(Color.WHITE)
+        deleteButton.setBackgroundColor(Color.TRANSPARENT)
         deleteButton.setOnClickListener {
             val builder = AlertDialog.Builder(context)
             builder.setMessage(R.string.dialog_delete_note)
@@ -122,7 +122,7 @@ class NoteRecyclerViewAdapter(private val mValues: List<NoteItem>, private val m
         holder.mContentView.text = (note.created_at.substring(0,19) + " uuid "
                 + note.uuid4.substring(0,5) + ".. rowid " + note.rowid + "\n"
                 + note.title + "\n"
-                + note.description + "\n"
+                + note.description
                 + note.url)
 
         holder.mView.setOnClickListener {

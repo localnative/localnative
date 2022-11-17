@@ -8,8 +8,8 @@ android {
         applicationId "app.localnative"
         minSdkVersion 14
         targetSdkVersion 30
-        versionCode 15
-        versionName "0.5.1-fix"
+        versionCode 16
+        versionName "0.5.2-fix"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -54,4 +54,5 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'com.android.volley:volley:1.2.1'
     implementation 'com.journeyapps:zxing-android-embedded:3.6.0'
+    implementation 'net.yslibrary.keyboardvisibilityevent:keyboardvisibilityevent:3.0.0-RC3'
 }
