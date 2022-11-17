@@ -1,12 +1,12 @@
 {
   "name": "Local Native",
   "version": "0.5.1",
-  "manifest_version": 2,
+  "manifest_version": 3,
   "description": "Local Native notes taking.",
   "icons": {
     "512": "icon.png"
   },
-  "browser_action": {
+  "action": {
     "default_popup": "popup.html",
     "default_icon": "icon.png"
   },
