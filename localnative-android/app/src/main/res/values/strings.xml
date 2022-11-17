@@ -18,4 +18,7 @@
     <string name="fetching_title">fetching title ...</string>
     <string name="cancel">Cancel</string>
     <string name="save">Save</string>
+    <string name="scan_qrcode_title">Scan QR Code to Sync</string>
+    <string name="qrcode">QR Code</string>
+
 </resources>
