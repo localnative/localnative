@@ -2,28 +2,31 @@ package app.localnative.android
 
 import android.os.Bundle
 import android.util.DisplayMetrics
+import android.view.MenuItem
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
+import app.localnative.R
 import app.localnative.android.NoteContent.NOTE_ITEM
 import app.localnative.databinding.ActivityQrcodeBinding
 import com.google.zxing.BarcodeFormat
 import com.journeyapps.barcodescanner.BarcodeEncoder
 
 
-class QRCodeActivity : AppCompatActivity(), View.OnClickListener {
+class QRCodeActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityQrcodeBinding
-
-    override fun onClick(v: View) {
-        finish()
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityQrcodeBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.qrBackButton.setOnClickListener(this)
+        val toolbar = findViewById<View>(R.id.qr_code_toolbar) as Toolbar
+        toolbar.title = getString(R.string.qrcode)
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.setDisplayShowHomeEnabled(true)
 
         try {
             val note = intent.getSerializableExtra(NOTE_ITEM) as NoteContent.NoteItem
@@ -45,6 +48,16 @@ class QRCodeActivity : AppCompatActivity(), View.OnClickListener {
             e.printStackTrace()
         }
 
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            android.R.id.home -> {
+                onBackPressedDispatcher.onBackPressed()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 
 }

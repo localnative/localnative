@@ -16,7 +16,9 @@
     <string name="url">url</string>
     <string name="type_to_add_tags_comma_or_space_as_tag_seperator">类型来添加标签，逗号或空格作为标签分隔符</string>
     <string name="description">描述</string>
-    <string name="fetching_title">正在获取标题 ...</string>
+    <string name="fetching_title">正在获取标题&#8230;</string>
     <string name="cancel">取消</string>
     <string name="save">保存</string>
+    <string name="scan_qrcode_title">扫描二维码同步</string>
+    <string name="qrcode">二维码</string>
 </resources>
