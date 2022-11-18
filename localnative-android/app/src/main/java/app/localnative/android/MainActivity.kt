@@ -21,6 +21,7 @@ import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
+import android.text.method.LinkMovementMethod
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
@@ -114,6 +115,7 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener, NoteLi
         prevButton.setOnClickListener(this)
         val nextButton = findViewById<View>(R.id.next_button) as Button
         nextButton.setOnClickListener(this)
+        findViewById<TextView>(R.id.bottomTextView).movementMethod = LinkMovementMethod.getInstance()
 
 //        KeyboardVisibilityEvent.setEventListener(
 //            this
