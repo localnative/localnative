@@ -15,10 +15,11 @@
     <string name="url">url</string>
     <string name="type_to_add_tags_comma_or_space_as_tag_seperator">type to add tags, comma or space as tag seperator</string>
     <string name="description">description</string>
-    <string name="fetching_title">fetching title ...</string>
+    <string name="fetching_title">fetching title&#8230;</string>
     <string name="cancel">Cancel</string>
     <string name="save">Save</string>
     <string name="scan_qrcode_title">Scan QR Code to Sync</string>
     <string name="qrcode">QR Code</string>
+    <string name="bottom_line_text">Write your own geolocation notes at <a href="https://hexagon.place/">Hexagon.Place</a>.</string>
 
 </resources>
