@@ -21,7 +21,6 @@ import android.content.Intent
 
 import androidx.recyclerview.widget.RecyclerView
 
-import android.app.AlertDialog
 import android.content.Context
 import android.graphics.Color
 import android.util.Log
@@ -32,6 +31,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 
 import app.localnative.R
@@ -70,9 +70,9 @@ class NoteRecyclerViewAdapter(private val mValues: List<NoteItem>, private val m
         deleteButton.setTextColor(Color.RED)
         deleteButton.setBackgroundColor(Color.TRANSPARENT)
         deleteButton.setOnClickListener {
-            val builder = AlertDialog.Builder(context)
+            val builder = AlertDialog.Builder(context!!, R.style.AlertDialogCustom)
             builder.setMessage(R.string.dialog_delete_note)
-                    .setPositiveButton(R.string.delete) { dialog, id ->
+                    .setPositiveButton(R.string.delete) { _, _ ->
                         val query = AppState.getQuery()
                         val offset = AppState.getOffset()
                         val cmd = ("{\"action\": \"delete\", \"query\": \""
@@ -84,11 +84,14 @@ class NoteRecyclerViewAdapter(private val mValues: List<NoteItem>, private val m
                         val s = RustBridge.run(cmd)
                         (context as MainActivity).doSearch(query, offset)
                     }
-                    .setNegativeButton(R.string.cancel) { dialog, id ->
+                    .setNegativeButton(R.string.cancel) { _, _ ->
                         // User cancelled the dialog
                     }
             // Create the AlertDialog object and return it
             val alert = builder.create()
+//            alert.setOnShowListener {
+//                alert.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.RED)
+//            }
             alert.show()
         }
         holder.mTagsContainer.addView(deleteButton)
