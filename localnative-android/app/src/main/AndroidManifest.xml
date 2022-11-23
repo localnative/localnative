@@ -19,11 +19,15 @@
             android:clearTaskOnLaunch="true"
             android:screenOrientation="portrait"
             android:stateNotNeeded="true"
-            android:windowSoftInputMode="stateAlwaysHidden"></activity>
+            android:windowSoftInputMode="stateAlwaysHidden"
+            android:exported="true"
+            tools:ignore="LockedOrientationActivity" />
         <activity
             android:name=".android.QRCodeActivity"
-            android:label="@string/title_activity_qrcode"></activity>
-        <activity android:name=".android.MainActivity">
+            android:label="@string/title_activity_qrcode"
+            android:exported="true" />
+        <activity android:name=".android.MainActivity"
+            android:exported="true" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -34,7 +38,8 @@
                 android:name="android.app.searchable"
                 android:resource="@xml/searchable" />
         </activity>
-        <activity android:name=".android.ShareActivity">
+        <activity android:name=".android.ShareActivity"
+            android:exported="true" >
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
 

@@ -134,7 +134,7 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener, NoteLi
                 Toast.makeText(this, "Cancelled Sync", Toast.LENGTH_LONG).show()
             } else {
                 Toast.makeText(this, "Scanned server address and port: " + result.contents, Toast.LENGTH_LONG).show()
-                val builder = AlertDialog.Builder(this)
+                val builder = AlertDialog.Builder(this, R.style.AlertDialogCustom)
                 builder.setMessage(R.string.dialog_sync)
                         .setPositiveButton(R.string.sync) { _, _ ->
                             val cmd = ("{\"action\": \"client-sync\", \"addr\": \""
