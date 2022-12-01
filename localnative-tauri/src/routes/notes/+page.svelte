@@ -2,6 +2,8 @@
 	import { faMagnifyingGlass, faCalendar } from '@fortawesome/free-solid-svg-icons';
 	import { DatePicker, localeFromDateFnsLocale } from 'date-picker-svelte';
 	import Fa from 'svelte-fa';
+	import { cmdSelect } from '../cmd';
+	import Chart from './chart.svelte';
 
 	let date = new Date();
 </script>
@@ -27,10 +29,15 @@
 					</div>
 				</div>
 
-				<button class="btn btn-square btn-sm">
+				<button class="btn btn-square btn-sm" on:click={cmdSelect}>
 					<Fa icon={faMagnifyingGlass} />
 				</button>
 			</div>
+		</div>
+
+		<!-- Chart-->
+		<div>
+			<Chart />
 		</div>
 	</div>
 	<div>

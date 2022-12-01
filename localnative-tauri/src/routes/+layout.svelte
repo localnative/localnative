@@ -8,6 +8,9 @@
 		faCloudArrowDown
 	} from '@fortawesome/free-solid-svg-icons';
 	import Fa from 'svelte-fa';
+	import { State } from './state';
+
+	globalThis.AppState = new State();
 </script>
 
 <div class="flex h-full w-full flex-row ">
