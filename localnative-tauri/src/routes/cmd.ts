@@ -190,7 +190,7 @@ function onNativeMessage(message: { days: any; notes: any; tags: any }) {
 	// 	document.getElementById('pagination-text').innerHTML = appState.makePaginationText();
 	// }
 
-	emit('refreshNotes', { notes: message.tags });
+	emit('refreshNotes', { notes: message.notes });
 
 	if (
 		message.days && // filter result has no days field

@@ -13,8 +13,8 @@
 	globalThis.AppState = new State();
 </script>
 
-<div class="flex h-full w-full flex-row ">
-	<div class="h-full flex flex-col z-20">
+<div class="flex w-full flex-row h-full">
+	<div id="nav" class="h-full flex flex-col z-20">
 		<div>
 			<ul class="menu bg-base-100 p-2">
 				<li class="tooltip tooltip-right" data-tip="便签">
