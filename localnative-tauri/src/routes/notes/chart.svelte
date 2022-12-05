@@ -7,7 +7,6 @@
 	import { onDestroy, onMount } from 'svelte';
 	import 'dc/src/compat/d3v6';
 
-	let chartContainer: Element;
 	let refreshChartUnlistenFn: UnlistenFn | null = null;
 	let lastUseDays: Array<{ k: string; v: number; dd: Date; month: Date }> | null = null;
 
@@ -148,7 +147,7 @@
 </script>
 
 <slot>
-	<div class="w-full" bind:this={chartContainer}>
+	<div class="w-full">
 		<div id="ln-day-chart">
 			<strong id="title-charts">Timeseries Charts</strong>
 			<!-- <span class="reset" style="display: none;">range: <span class="filter" /></span>

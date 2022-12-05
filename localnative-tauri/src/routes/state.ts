@@ -43,7 +43,7 @@ export class State {
 	public makePaginationText(): string {
 		const start = this._count > 0 ? this._offset + 1 : 0;
 		const end = this._offset + this._limit > this._count ? this._count : this._offset + this._limit;
-		return `${start}-${end} / ${this._offset}`;
+		return `${start}-${end} / ${this._count}`;
 	}
 
 	public incOffset() {

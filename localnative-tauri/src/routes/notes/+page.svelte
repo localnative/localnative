@@ -1,12 +1,59 @@
 <script lang="ts">
-	import { faMagnifyingGlass, faCalendar } from '@fortawesome/free-solid-svg-icons';
+	import { faMagnifyingGlass, faCalendar, faXmark } from '@fortawesome/free-solid-svg-icons';
+	import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 	import { DatePicker, localeFromDateFnsLocale } from 'date-picker-svelte';
+	import * as dc from 'dc';
+	import { onDestroy, onMount } from 'svelte';
 	import Fa from 'svelte-fa';
-	import { cmdSelect } from '../cmd';
+	import { cmdSearchImp, cmdSearchOrFilter, cmdSelect } from '../cmd';
 	import Chart from './chart.svelte';
 	import Notes from './notes.svelte';
+	import Tags from './tags.svelte';
 
 	let date = new Date();
+
+	let refreshTagsUnlistenFn: UnlistenFn | null = null;
+	let updateSearchTagUnlistenFn: UnlistenFn | null = null;
+	let lastPaginationText: string = '0 - 0 / 0';
+	let searchText: string = '';
+
+	onMount(async () => {
+		refreshTagsUnlistenFn = await listen<any>('refreshPaginationText', (ev) => {
+			console.log('pagination_text:' + JSON.stringify(ev.payload.tags));
+			lastPaginationText = ev.payload.pagination_text;
+		});
+
+		updateSearchTagUnlistenFn = await listen<any>('update_search_tag', (ev) => {
+			searchText = ev.payload.tag;
+			search();
+		});
+
+		cmdSelect();
+	});
+
+	onDestroy(() => {
+		if (refreshTagsUnlistenFn) {
+			refreshTagsUnlistenFn();
+		}
+
+		if (updateSearchTagUnlistenFn) {
+			updateSearchTagUnlistenFn();
+		}
+	});
+
+	const search = () => {
+		globalThis.AppState.clearOffset();
+		globalThis.AppState.range = null;
+		console.log('searching:' + searchText);
+		cmdSearchImp(searchText);
+	};
+
+	const searchClear = () => {
+		searchText = '';
+		globalThis.AppState.clearOffset();
+		globalThis.AppState.range = null;
+		cmdSearchImp(searchText);
+	};
 </script>
 
 <div class="w-full h-full flex flex-row gap-2">
@@ -20,34 +67,59 @@
 			<div class="form-control flex-1">
 				<div class="input-group">
 					<input
+						id="search_input"
 						type="text"
 						placeholder="搜索便签..."
 						class="input input-bordered input-sm w-full"
+						bind:value={searchText}
 					/>
-					<button class="btn btn-square btn-sm" on:click={cmdSelect}>
+					<button class="btn btn-square btn-sm" on:click={searchClear}>
+						<Fa icon={faXmark} />
+					</button>
+					<button class="btn btn-square btn-sm" on:click={search}>
 						<Fa icon={faMagnifyingGlass} />
 					</button>
 				</div>
 			</div>
 			<div class="btn-group">
-				<button class="btn btn-sm">«</button>
-				<button class="btn btn-sm">Page 22</button>
-				<button class="btn btn-sm">»</button>
+				<button
+					class="btn btn-sm"
+					on:click={() => {
+						globalThis.AppState.decOffset();
+						cmdSearchOrFilter();
+					}}
+				>
+					«
+				</button>
+				<button class="btn btn-sm">{lastPaginationText}</button>
+				<button
+					class="btn btn-sm"
+					on:click={() => {
+						globalThis.AppState.incOffset();
+						cmdSearchOrFilter();
+					}}
+				>
+					»
+				</button>
 			</div>
 		</div>
 		<!-- Notes -->
 		<div id="notes_panel" class="flex-1 overflow-auto">
-			<Notes />
+			<Notes current_search_text={searchText} />
 		</div>
 	</div>
-	<div id="tags">
-		<div class="form-control">
+	<div id="tags" class=" w-60 flex flex-col">
+		<!-- <div class="form-control">
 			<div class="input-group">
 				<input type="text" placeholder="搜索标签..." class="input input-bordered input-sm" />
 				<button class="btn btn-square btn-sm">
 					<Fa icon={faMagnifyingGlass} />
 				</button>
 			</div>
+		</div> -->
+		<div class="pb-2">Tags:</div>
+		<div id="tags_panel" class="flex-1 overflow-auto ml-2">
+			<Tags />
 		</div>
 	</div>
 </div>
@@ -66,5 +138,16 @@
 
 	#notes_panel::-webkit-scrollbar-track {
 		@apply my-4;
+	}
+
+	#tags_panel::-webkit-scrollbar {
+		width: 14px;
+	}
+
+	#tags_panel::-webkit-scrollbar-thumb {
+		border: 4px solid rgba(0, 0, 0, 0);
+		background-clip: padding-box;
+		border-radius: 9999px;
+		background-color: #aaaaaa;
 	}
 </style>

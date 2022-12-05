@@ -47,7 +47,7 @@ export function cmdFilter(searchText: string, from: any, to: any) {
 	cmd(message);
 }
 
-export function cmdDelete(searchText: string, rowid: string) {
+export function cmdDelete(searchText: string, rowid: number) {
 	const message = {
 		action: 'delete',
 		query: searchText,
@@ -180,15 +180,15 @@ function cmd(message: any) {
 	});
 }
 
-function onNativeMessage(message: { days: any; notes: any; tags: any }) {
+function onNativeMessage(message: { days: any; notes: any; tags: any; count: number }) {
 	emit('refreshTags', { tags: message.tags });
 
 	if (!message.notes) return;
 
-	// show page count
-	// if (Number(message.count) >= 0) {
-	// 	document.getElementById('pagination-text').innerHTML = appState.makePaginationText();
-	// }
+	// update pagination text
+	if (message.count >= 0) {
+		emit('refreshPaginationText', { pagination_text: globalThis.AppState.makePaginationText() });
+	}
 
 	emit('refreshNotes', { notes: message.notes });
 
