@@ -109,7 +109,7 @@ impl LocalNative for LocalNativeServer {
     #[allow(unreachable_code)]
     fn stop(self, _: context::Context) -> Self::StopFut {
         eprintln!("server stopping");
-        process::exit(0);
+        // process::exit(0);
         future::ready(())
     }
 }
