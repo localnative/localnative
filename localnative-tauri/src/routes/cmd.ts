@@ -168,7 +168,6 @@ export function cmdClientStopServer(addr: string) {
 function cmd(message: any) {
 	const input = JSON.stringify(message, null, 2);
 
-	// todo: call tauri
 	invoke<string>('input', { input }).then((res) => {
 		const resp: { days: any; notes: any; tags: any; count: number } = JSON.parse(res);
 

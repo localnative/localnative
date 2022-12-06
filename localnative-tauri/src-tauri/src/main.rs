@@ -7,7 +7,7 @@ mod command;
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![command::input,])
+        .invoke_handler(tauri::generate_handler![command::input, command::local_ip])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
