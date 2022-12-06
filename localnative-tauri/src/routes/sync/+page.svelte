@@ -6,6 +6,7 @@
 	import QRCode from 'qrcode';
 	import Fa from 'svelte-fa';
 	import { faRotate } from '@fortawesome/free-solid-svg-icons';
+	import LL from '../../i18n/i18n-svelte';
 
 	let localIP: string | null = null;
 	let syncAsClientAddr: string = '';
@@ -69,18 +70,19 @@
 
 <div class="w-full h-full flex flex-col justify-center items-center gap-y-2">
 	<div class="flex flex-row justify-between items-center" style="width:600px">
-		<div class="text-xl">通过文件同步</div>
-		<button class="btn btn-sm" on:click={syncWithAttachFile}>Select File</button>
+		<div class="text-xl">{$LL.Sync.SyncWithFile()}</div>
+		<button class="btn btn-sm" on:click={syncWithAttachFile}>{$LL.Sync.SyncWithFileSelect()}</button
+		>
 	</div>
 	<hr class="my-8 h-px bg-gray-200 border-0 dark:bg-gray-700 w-full" />
 	<div class="flex flex-row justify-between items-center" style="width:600px">
-		<div class="text-xl">作为客户端来同步</div>
+		<div class="text-xl">{$LL.Sync.SyncAsClient()}</div>
 		<div class="form-control">
 			<div class="input-group">
 				<input
 					type="text"
 					bind:value={syncAsClientAddr}
-					placeholder="Server Address, eg: 127.0.0.1:2345"
+					placeholder={$LL.Sync.SyncAsClientPlaceholder()}
 					class="input input-bordered w-72 text-center"
 				/>
 				<button class="btn btn-square" on:click={syncAsClient}>
@@ -92,8 +94,8 @@
 	<hr class="my-8 h-px bg-gray-200 border-0 dark:bg-gray-700 w-full" />
 	<div class="flex flex-row justify-between" style="width:600px">
 		<div class="flex flex-col text-xl">
-			<div>作为服务器来同步</div>
-			<div>Local Addr: {`${localIP}:2345`}</div>
+			<div>{$LL.Sync.SyncAsServer()}</div>
+			<div>{$LL.Sync.SyncAsServerLocalAddr({ serverAddress: `${localIP}:2345` })}</div>
 		</div>
 		<div><canvas id="sync_server_qrcode" class="rounded-xl" /></div>
 	</div>

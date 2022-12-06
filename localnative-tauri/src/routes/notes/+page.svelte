@@ -9,6 +9,7 @@
 	import Chart from './chart.svelte';
 	import Notes from './notes.svelte';
 	import Tags from './tags.svelte';
+	import LL from '../../i18n/i18n-svelte';
 
 	let date = new Date();
 
@@ -69,7 +70,7 @@
 					<input
 						id="search_input"
 						type="text"
-						placeholder="搜索便签..."
+						placeholder={$LL.Notes.SearchPlaceholder()}
 						class="input input-bordered input-sm w-full"
 						bind:value={searchText}
 					/>
@@ -117,7 +118,7 @@
 				</button>
 			</div>
 		</div> -->
-		<div class="pb-2">Tags:</div>
+		<div class="pb-2">{$LL.Notes.Tags()}</div>
 		<div id="tags_panel" class="flex-1 overflow-auto ml-2">
 			<Tags />
 		</div>

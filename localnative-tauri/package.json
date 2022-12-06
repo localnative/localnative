@@ -8,7 +8,8 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"lint": "prettier --plugin-search-dir . --check . && eslint .",
-		"format": "prettier --plugin-search-dir . --write ."
+		"format": "prettier --plugin-search-dir . --write .",
+		"typesafe-i18n": "typesafe-i18n"
 	},
 	"devDependencies": {
 		"@fontsource/fira-mono": "^4.5.10",
@@ -45,6 +46,7 @@
 		"daisyui": "^2.42.1",
 		"date-picker-svelte": "^2.2.3",
 		"dc": "^4.2.3",
-		"qrcode": "^1.5.1"
+		"qrcode": "^1.5.1",
+		"typesafe-i18n": "^5.17.1"
 	}
 }
