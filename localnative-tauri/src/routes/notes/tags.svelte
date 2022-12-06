@@ -19,7 +19,9 @@
 	onMount(async () => {
 		refreshTagsUnlistenFn = await listen<any>('refreshTags', (ev) => {
 			console.log('tags:' + JSON.stringify(ev.payload.tags));
-			lastTags = ev.payload.tags;
+			if (Array.isArray(ev.payload.tags)) {
+				lastTags = ev.payload.tags;
+			}
 		});
 	});
 

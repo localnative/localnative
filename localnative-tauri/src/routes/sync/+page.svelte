@@ -17,14 +17,15 @@
 			await QRCode.toCanvas(document.getElementById('sync_server_qrcode'), `${localIP}:2345`, {
 				width: 180
 			});
-			// setTimeout(cmdServer, 3000);
+
+			cmdServer();
 		} catch (err: any) {
 			console.log(`get local ip failed (${err})`);
 		}
 	});
 
 	onDestroy(() => {
-		// cmdClientStopServer('127.0.0.1:2345');
+		cmdClientStopServer('127.0.0.1:2345');
 	});
 
 	const syncWithAttachFile = async () => {
@@ -61,7 +62,7 @@
 		} catch (err) {
 			console.log('sync as client failed: ' + err);
 		} finally {
-			syncing = false;
+			setTimeout(() => (syncing = false), 2000);
 		}
 	};
 </script>

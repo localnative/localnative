@@ -37,7 +37,7 @@ use tokio::runtime::Runtime;
 use tokio_serde::formats::Bincode;
 
 #[derive(Clone)]
-struct LocalNativeServer(SocketAddr);
+struct LocalNativeServer(SocketAddr, Option<tokio::sync::mpsc::Sender<()>>);
 
 impl LocalNative for LocalNativeServer {
     type IsVersionMatchFut = Ready<bool>;
@@ -109,20 +109,27 @@ impl LocalNative for LocalNativeServer {
     #[allow(unreachable_code)]
     fn stop(self, _: context::Context) -> Self::StopFut {
         eprintln!("server stopping");
-        // process::exit(0);
+        if let Some(ref exit_tx) = self.1 {
+            let _ = exit_tx.try_send(());
+        } else {
+            process::exit(0);
+        }
         future::ready(())
     }
 }
 
-async fn start_server(addr: SocketAddr) -> io::Result<()> {
+async fn start_server(addr: SocketAddr, exit_tx: tokio::sync::mpsc::Sender<()>) -> io::Result<()> {
     tarpc::serde_transport::tcp::listen(addr, Bincode::default)
         .await?
         .filter_map(|r| future::ready(r.ok()))
         .map(server::BaseChannel::with_defaults)
         // Limit channels to 2 per IP.
         .max_channels_per_key(2, |t| t.as_ref().peer_addr().unwrap().ip())
-        .map(|channel| {
-            let server = LocalNativeServer(channel.as_ref().as_ref().peer_addr().unwrap());
+        .map(move |channel| {
+            let server = LocalNativeServer(
+                channel.as_ref().as_ref().peer_addr().unwrap(),
+                Some(exit_tx.clone()),
+            );
             channel.execute(server.serve())
         })
         // Max 10 channels.
@@ -148,7 +155,8 @@ pub async fn iced_start_server(addr: SocketAddr) -> io::Result<Stop> {
             // Limit channels to 2 per IP.
             .max_channels_per_key(2, |t| t.as_ref().peer_addr().unwrap().ip())
             .map(|channel| {
-                let server = LocalNativeServer(channel.as_ref().as_ref().peer_addr().unwrap());
+                let server =
+                    LocalNativeServer(channel.as_ref().as_ref().peer_addr().unwrap(), None);
                 channel.execute(server.serve())
             })
             // Max 10 channels.
@@ -166,7 +174,14 @@ pub fn start(addr: &str) -> Result<(), &'static str> {
         .unwrap_or_else(|e| panic!(r#"server_addr {} invalid: {}"#, addr, e));
     let rt = Runtime::new().unwrap();
     rt.block_on(async {
-        start_server(server_addr).await.unwrap();
+        let (exit_tx, mut exit_rx) = tokio::sync::mpsc::channel(1);
+
+        tokio::select! {
+            _ = start_server(server_addr, exit_tx) => {},
+            _ = exit_rx.recv() => {
+                eprintln!("server task exit");
+            }
+        }
     });
     Ok(())
 }
