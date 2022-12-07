@@ -21,6 +21,7 @@
 			console.log('tags:' + JSON.stringify(ev.payload.tags));
 			if (Array.isArray(ev.payload.tags)) {
 				lastTags = ev.payload.tags;
+				lastTags.sort((x, y) => y.v - x.v);
 			}
 		});
 	});
