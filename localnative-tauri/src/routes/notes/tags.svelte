@@ -33,11 +33,11 @@
 </script>
 
 <slot>
-	<table class="w-max-full table-fixed">
-		<tbody>
-			{#each lastTags as tag}
-				<TagsCell {tag} total_tags={lastTags.length} />
-			{/each}
-		</tbody>
-	</table>
+	<div class="w-max-full">
+		{#each lastTags as tag}
+			<button class="btn btn-sm m-1" on:click={() => emit('update_search_tag', { tag: tag.k })}>
+				{tag.k}&nbsp;{tag.v}
+			</button>
+		{/each}
+	</div>
 </slot>
