@@ -1,11 +1,7 @@
 <script lang="ts">
-	import * as d3 from 'd3';
-	import * as dc from 'dc';
-	import crossfilter from 'crossfilter2';
-	import { cmdDelete, cmdFilter } from '../cmd';
+	import { cmdDelete } from '../cmd';
 	import { emit, listen, type UnlistenFn } from '@tauri-apps/api/event';
 	import { onDestroy, onMount } from 'svelte';
-	import 'dc/src/compat/d3v6';
 	import { faTrash, faQrcode } from '@fortawesome/free-solid-svg-icons';
 	import Fa from 'svelte-fa';
 	import QRCode from 'qrcode';

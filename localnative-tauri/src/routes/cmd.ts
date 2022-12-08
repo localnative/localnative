@@ -1,5 +1,6 @@
 import { invoke } from '@tauri-apps/api/tauri';
 import { emit } from '@tauri-apps/api/event';
+import { debounce } from 'underscore';
 
 export function cmdInsertImage(dataURL: any) {
 	const message = {
@@ -35,7 +36,7 @@ export function cmdSearchOrFilter() {
 	}
 }
 
-export function cmdFilter(searchText: string, from: any, to: any) {
+export const cmdFilter = debounce((searchText: string, from: any, to: any) => {
 	const message = {
 		action: 'filter',
 		query: searchText,
@@ -45,7 +46,7 @@ export function cmdFilter(searchText: string, from: any, to: any) {
 		to: to
 	};
 	cmd(message);
-}
+}, 500);
 
 export function cmdDelete(searchText: string, rowid: number) {
 	const message = {

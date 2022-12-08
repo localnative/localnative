@@ -1,13 +1,6 @@
 <script lang="ts">
-	import * as d3 from 'd3';
-	import * as dc from 'dc';
-	import crossfilter from 'crossfilter2';
-	import { cmdFilter } from '../cmd';
 	import { emit, listen, type UnlistenFn } from '@tauri-apps/api/event';
 	import { onDestroy, onMount } from 'svelte';
-	import 'dc/src/compat/d3v6';
-	import { faXmark, faQrcode, faFilter } from '@fortawesome/free-solid-svg-icons';
-	import Fa from 'svelte-fa';
 
 	let refreshTagsUnlistenFn: UnlistenFn | null = null;
 	let lastTags: Array<{

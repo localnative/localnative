@@ -43,10 +43,8 @@
 	"dependencies": {
 		"@fortawesome/free-solid-svg-icons": "^6.2.1",
 		"@tauri-apps/api": "^1.2.0",
-		"crossfilter2": "^1.5.4",
 		"daisyui": "^2.42.1",
-		"date-picker-svelte": "^2.2.3",
-		"dc": "^4.2.3",
+		"echarts": "^5.4.0",
 		"qrcode": "^1.5.1",
 		"typesafe-i18n": "^5.17.1",
 		"underscore": "^1.13.6"

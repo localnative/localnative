@@ -1,8 +1,6 @@
 <script lang="ts">
 	import { faMagnifyingGlass, faCalendar, faXmark } from '@fortawesome/free-solid-svg-icons';
-	import { listen, type UnlistenFn } from '@tauri-apps/api/event';
-	import { DatePicker, localeFromDateFnsLocale } from 'date-picker-svelte';
-	import * as dc from 'dc';
+	import { emit, listen, type UnlistenFn } from '@tauri-apps/api/event';
 	import { onDestroy, onMount } from 'svelte';
 	import Fa from 'svelte-fa';
 	import { cmdSearchImp, cmdSearchOrFilter, cmdSelect } from '../cmd';
@@ -52,6 +50,7 @@
 	}, 300);
 
 	const searchClear = () => {
+		emit('resetChartZoom');
 		searchText = '';
 		globalThis.AppState.clearOffset();
 		globalThis.AppState.range = null;
