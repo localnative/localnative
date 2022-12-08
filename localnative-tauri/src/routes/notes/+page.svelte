@@ -83,9 +83,9 @@
 					<button class="btn btn-square btn-sm" on:click={searchClear}>
 						<Fa icon={faXmark} />
 					</button>
-					<button class="btn btn-square btn-sm" on:click={search}>
+					<!-- <button class="btn btn-square btn-sm" on:click={search}>
 						<Fa icon={faMagnifyingGlass} />
-					</button>
+					</button> -->
 				</div>
 			</div>
 			<div class="btn-group">
