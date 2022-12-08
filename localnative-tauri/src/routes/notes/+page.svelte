@@ -10,6 +10,7 @@
 	import Notes from './notes.svelte';
 	import Tags from './tags.svelte';
 	import LL from '../../i18n/i18n-svelte';
+	import * as underscore from 'underscore';
 
 	let date = new Date();
 
@@ -42,12 +43,13 @@
 		}
 	});
 
-	const search = () => {
+	const search = underscore.debounce(() => {
+		console.log('dddd');
 		globalThis.AppState.clearOffset();
 		globalThis.AppState.range = null;
 		console.log('searching:' + searchText);
 		cmdSearchImp(searchText);
-	};
+	}, 300);
 
 	const searchClear = () => {
 		searchText = '';
@@ -73,6 +75,11 @@
 						placeholder={$LL.Notes.SearchPlaceholder()}
 						class="input input-bordered input-sm w-full"
 						bind:value={searchText}
+						on:keyup={search}
+						on:input={(e) => {
+							searchText = e.currentTarget.value;
+							search();
+						}}
 					/>
 					<button class="btn btn-square btn-sm" on:click={searchClear}>
 						<Fa icon={faXmark} />
@@ -110,14 +117,6 @@
 		</div>
 	</div>
 	<div id="tags" class=" w-60 flex flex-col">
-		<!-- <div class="form-control">
-			<div class="input-group">
-				<input type="text" placeholder="搜索标签..." class="input input-bordered input-sm" />
-				<button class="btn btn-square btn-sm">
-					<Fa icon={faMagnifyingGlass} />
-				</button>
-			</div>
-		</div> -->
 		<div class="pb-2">{$LL.Notes.Tags()}</div>
 		<div id="tags_panel" class="flex-1 overflow-auto ml-2">
 			<Tags />

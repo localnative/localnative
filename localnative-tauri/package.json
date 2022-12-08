@@ -20,6 +20,7 @@
 		"@types/cookie": "^0.5.1",
 		"@types/dc": "^4.2.1",
 		"@types/qrcode": "^1.5.0",
+		"@types/underscore": "^1.11.4",
 		"@typescript-eslint/eslint-plugin": "^5.45.0",
 		"@typescript-eslint/parser": "^5.45.0",
 		"autoprefixer": "^10.4.13",
@@ -47,6 +48,7 @@
 		"date-picker-svelte": "^2.2.3",
 		"dc": "^4.2.3",
 		"qrcode": "^1.5.1",
-		"typesafe-i18n": "^5.17.1"
+		"typesafe-i18n": "^5.17.1",
+		"underscore": "^1.13.6"
 	}
 }

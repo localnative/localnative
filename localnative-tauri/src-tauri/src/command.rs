@@ -1,3 +1,5 @@
+use std::{net::SocketAddr, time::Duration};
+
 #[tauri::command]
 pub async fn input(input: String) -> String {
     let (tx, mut rx) = tauri::async_runtime::channel(1);
@@ -29,4 +31,13 @@ pub fn local_ip() -> Result<String, String> {
     })?;
 
     Ok(addr.ip().to_string())
+}
+
+#[tauri::command]
+pub async fn test_sync_server_addr(addr: String) -> bool {
+    let Ok(addr) = addr.parse::<SocketAddr>() else {
+        return false;
+    };
+
+    std::net::TcpStream::connect_timeout(&addr, Duration::from_secs(5)).is_ok()
 }

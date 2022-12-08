@@ -1,6 +1,12 @@
 declare global {
 	// eslint-disable-next-line no-var
 	var AppState: State;
+
+	// eslint-disable-next-line no-var
+	var SyncServerOn: boolean;
+
+	// eslint-disable-next-line no-var
+	var LastSyncServerIp: string;
 }
 
 export class State {

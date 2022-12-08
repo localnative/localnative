@@ -8,7 +8,6 @@
 	import 'dc/src/compat/d3v6';
 	import { faXmark, faQrcode, faFilter } from '@fortawesome/free-solid-svg-icons';
 	import Fa from 'svelte-fa';
-	import TagsCell from './tags_cell.svelte';
 
 	let refreshTagsUnlistenFn: UnlistenFn | null = null;
 	let lastTags: Array<{
@@ -34,11 +33,17 @@
 </script>
 
 <slot>
-	<div class="w-max-full">
+	<div class="w-max-full flex flex-row flex-wrap">
 		{#each lastTags as tag}
-			<button class="btn btn-sm m-1" on:click={() => emit('update_search_tag', { tag: tag.k })}>
-				{tag.k}&nbsp;{tag.v}
-			</button>
+			<div class="m-1">
+				<button
+					class="btn btn-sm normal-case"
+					on:click={() => emit('update_search_tag', { tag: tag.k })}
+				>
+					{tag.k}
+				</button>
+				<span>{tag.v}</span>
+			</div>
 		{/each}
 	</div>
 </slot>

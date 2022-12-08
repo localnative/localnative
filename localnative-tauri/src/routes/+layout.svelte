@@ -5,7 +5,7 @@
 		faNoteSticky,
 		faCircleExclamation,
 		faBars,
-		faCloudArrowDown
+		faCopy
 	} from '@fortawesome/free-solid-svg-icons';
 	import Fa from 'svelte-fa';
 	import { State } from './state';
@@ -44,7 +44,7 @@
 						href="/sync"
 						class="flex justify-center items-center {$page.url.pathname == '/sync' ? 'active' : ''}"
 					>
-						<Fa icon={faCloudArrowDown} size="1.4x" />
+						<Fa icon={faCopy} size="1.4x" />
 					</a>
 				</li>
 			</ul>

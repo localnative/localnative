@@ -14,6 +14,18 @@ export type Translation = RootTranslation
 export type Translations = RootTranslation
 
 type RootTranslation = {
+	/**
+	 * Y​e​s
+	 */
+	Yes: string
+	/**
+	 * N​o
+	 */
+	No: string
+	/**
+	 * O​k
+	 */
+	Ok: string
 	Nav: {
 		/**
 		 * N​o​t​e​s
@@ -41,6 +53,14 @@ type RootTranslation = {
 		 * T​a​g​s
 		 */
 		Tags: string
+		/**
+		 * D​e​l​e​t​e​ ​N​o​t​e
+		 */
+		DeleteModalTitle: string
+		/**
+		 * D​o​ ​y​o​u​ ​w​a​n​t​ ​t​o​ ​d​e​l​e​t​e​ ​t​h​i​s​ ​n​o​t​e​?
+		 */
+		DeleteModalContent: string
 	}
 	Sync: {
 		/**
@@ -64,10 +84,26 @@ type RootTranslation = {
 		 */
 		SyncAsServer: string
 		/**
+		 * S​t​a​r​t​ ​S​e​r​v​e​r
+		 */
+		StartSyncServer: string
+		/**
+		 * S​t​o​p​ ​S​e​r​v​e​r
+		 */
+		StopSyncServer: string
+		/**
 		 * L​o​c​a​l​ ​S​e​r​v​e​r​ ​A​d​d​r​e​s​s​:​ ​{​s​e​r​v​e​r​A​d​d​r​e​s​s​}
 		 * @param {unknown} serverAddress
 		 */
 		SyncAsServerLocalAddr: RequiredParams<'serverAddress'>
+		/**
+		 * E​r​r​o​r
+		 */
+		SyncAsClientConnectServerNotExistModalTitle: string
+		/**
+		 * C​o​n​n​e​c​t​ ​f​a​i​l​e​d
+		 */
+		SyncAsClientConnectServerNotExistModalContent: string
 	}
 	Settings: {
 		/**
@@ -78,6 +114,18 @@ type RootTranslation = {
 }
 
 export type TranslationFunctions = {
+	/**
+	 * Yes
+	 */
+	Yes: () => LocalizedString
+	/**
+	 * No
+	 */
+	No: () => LocalizedString
+	/**
+	 * Ok
+	 */
+	Ok: () => LocalizedString
 	Nav: {
 		/**
 		 * Notes
@@ -105,6 +153,14 @@ export type TranslationFunctions = {
 		 * Tags
 		 */
 		Tags: () => LocalizedString
+		/**
+		 * Delete Note
+		 */
+		DeleteModalTitle: () => LocalizedString
+		/**
+		 * Do you want to delete this note?
+		 */
+		DeleteModalContent: () => LocalizedString
 	}
 	Sync: {
 		/**
@@ -128,9 +184,25 @@ export type TranslationFunctions = {
 		 */
 		SyncAsServer: () => LocalizedString
 		/**
+		 * Start Server
+		 */
+		StartSyncServer: () => LocalizedString
+		/**
+		 * Stop Server
+		 */
+		StopSyncServer: () => LocalizedString
+		/**
 		 * Local Server Address: {serverAddress}
 		 */
 		SyncAsServerLocalAddr: (arg: { serverAddress: unknown }) => LocalizedString
+		/**
+		 * Error
+		 */
+		SyncAsClientConnectServerNotExistModalTitle: () => LocalizedString
+		/**
+		 * Connect failed
+		 */
+		SyncAsClientConnectServerNotExistModalContent: () => LocalizedString
 	}
 	Settings: {
 		/**
