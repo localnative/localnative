@@ -1,4 +1,5 @@
 /target
+!/target/universal/release/liblocalnative_core.a
 **/*.rs.bk
 *.log
 /WixTools
