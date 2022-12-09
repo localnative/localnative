@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# Install rustup
+curl https://sh.rustup.rs -sSf | sh
 # Build liblocalnative_core.a
 cargo install cargo-lipo
 rustup target add aarch64-apple-ios x86_64-apple-ios
