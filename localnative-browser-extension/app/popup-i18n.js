@@ -29,9 +29,6 @@ function i18nRefresh() {
 
   document.getElementById('prev-btn').innerHTML = Sanitizer.escapeHTML`${lc("prev")}`;
   document.getElementById('next-btn').innerHTML = Sanitizer.escapeHTML`${lc("next")}`;
-  document.getElementById('page').innerHTML = Sanitizer.escapeHTML`${lc("page")}`;
-  document.getElementById('page-of').innerHTML = Sanitizer.escapeHTML`${lc("of")}`;
-
   document.getElementById('ssb-sync-btn').innerHTML = Sanitizer.escapeHTML`${lc("ssb sync")}`;
 }
 

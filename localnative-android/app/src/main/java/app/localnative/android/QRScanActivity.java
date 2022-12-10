@@ -41,7 +41,7 @@ public class QRScanActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_qrscan);
         Toolbar toolbar = (Toolbar) findViewById(R.id.qr_scan_toolbar);
-        toolbar.setTitle("Scan QR code to sync");
+        toolbar.setTitle(getString(R.string.scan_qrcode_title));
         setSupportActionBar(toolbar);
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
 

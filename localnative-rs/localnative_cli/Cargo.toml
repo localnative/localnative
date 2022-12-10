@@ -2,8 +2,8 @@
 name = "localnative_cli"
 description = "localnative app command line utility"
 homepage = "https://localnative.app"
-version = "0.5.1"
-authors = ["Yi Wang"]
+version = "0.6.0"
+authors = [ "Yi Wang" ]
 license = "AGPL-3.0"
 edition = "2021"
 [dependencies.localnative_core]
@@ -11,5 +11,3 @@ path = "../localnative_core"
 
 [dependencies]
 clap = "2.33"
-
-

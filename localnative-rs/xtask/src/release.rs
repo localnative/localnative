@@ -25,8 +25,7 @@ impl Release {
         };
         let src = Path::new("target").join("release");
 
-        cmd!("cargo build --no-default-features --features wgpu --release --bin localnative_iced")
-            .run()?;
+        cmd!("cargo build --no-default-features --release --bin localnative_iced").run()?;
 
         cmd!("cargo build --release --bin localnative-web-ext-host").run()?;
         let suffix = suffix();
@@ -59,8 +58,8 @@ impl Release {
         let package_types = vec![
             #[cfg(target_os = "macos")]
             PackageType::MacOsBundle,
-            #[cfg(target_os = "macos")]
-            PackageType::Dmg,
+            // #[cfg(target_os = "macos")]
+            // PackageType::Dmg,
             #[cfg(target_os = "linux")]
             PackageType::AppImage,
             #[cfg(target_os = "windows")]
@@ -68,7 +67,6 @@ impl Release {
         ];
 
         let settings = SettingsBuilder::new()
-            .verbose()
             .package_settings(PackageSettings {
                 product_name: "Local Native".into(),
                 version: version.into(),
@@ -110,7 +108,8 @@ impl Release {
                 windows: WindowsSettings {
                     wix: Some(WixSettings {
                         skip_webview_install: true,
-                        language: "zh-CN".into(),
+                        // TODO: zh-CN language wix file.
+                        language: Default::default(),
                         ..Default::default()
                     }),
                     ..Default::default()

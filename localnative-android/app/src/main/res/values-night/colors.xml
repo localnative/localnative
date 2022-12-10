@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary">#FF000000</color>
+    <color name="primary_variant">#FF3700B3</color>
+    <color name="collapse_menu_color">#DBFFFFFF</color>
+
+    <!--white-->
+    <!--87%-->
+    <color name="text_color">#DBFFFFFF</color>
+    <!--26%-->
+    <color name="hint_disabled_text_color">#BBFFFFFF</color>
+</resources>

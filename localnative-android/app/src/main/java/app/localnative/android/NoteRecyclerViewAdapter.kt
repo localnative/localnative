@@ -21,7 +21,6 @@ import android.content.Intent
 
 import androidx.recyclerview.widget.RecyclerView
 
-import android.app.AlertDialog
 import android.content.Context
 import android.graphics.Color
 import android.util.Log
@@ -32,9 +31,11 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 
 import app.localnative.R
+import app.localnative.android.NoteContent.NOTE_ITEM
 import app.localnative.android.NoteListFragment.OnListFragmentInteractionListener
 import app.localnative.android.NoteContent.NoteItem
 
@@ -67,11 +68,11 @@ class NoteRecyclerViewAdapter(private val mValues: List<NoteItem>, private val m
         val width = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 45f, context!!.resources.displayMetrics).toInt()
         deleteButton.layoutParams = RecyclerView.LayoutParams(width, height)
         deleteButton.setTextColor(Color.RED)
-        deleteButton.setBackgroundColor(Color.WHITE)
+        deleteButton.setBackgroundColor(Color.TRANSPARENT)
         deleteButton.setOnClickListener {
-            val builder = AlertDialog.Builder(context)
+            val builder = AlertDialog.Builder(context!!, R.style.AlertDialogCustom)
             builder.setMessage(R.string.dialog_delete_note)
-                    .setPositiveButton(R.string.delete) { dialog, id ->
+                    .setPositiveButton(R.string.delete) { _, _ ->
                         val query = AppState.getQuery()
                         val offset = AppState.getOffset()
                         val cmd = ("{\"action\": \"delete\", \"query\": \""
@@ -83,11 +84,14 @@ class NoteRecyclerViewAdapter(private val mValues: List<NoteItem>, private val m
                         val s = RustBridge.run(cmd)
                         (context as MainActivity).doSearch(query, offset)
                     }
-                    .setNegativeButton(R.string.cancel) { dialog, id ->
+                    .setNegativeButton(R.string.cancel) { _, _ ->
                         // User cancelled the dialog
                     }
             // Create the AlertDialog object and return it
             val alert = builder.create()
+//            alert.setOnShowListener {
+//                alert.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.RED)
+//            }
             alert.show()
         }
         holder.mTagsContainer.addView(deleteButton)
@@ -101,6 +105,7 @@ class NoteRecyclerViewAdapter(private val mValues: List<NoteItem>, private val m
         qrCodeButton.setOnClickListener {
             AppState.setCurrentUrl(note.url)
             val intent = Intent(context, QRCodeActivity::class.java)
+            intent.putExtra(NOTE_ITEM, note)
             (context as AppCompatActivity).startActivity(intent)
         }
         holder.mTagsContainer.addView(qrCodeButton)
@@ -120,7 +125,7 @@ class NoteRecyclerViewAdapter(private val mValues: List<NoteItem>, private val m
         holder.mContentView.text = (note.created_at.substring(0,19) + " uuid "
                 + note.uuid4.substring(0,5) + ".. rowid " + note.rowid + "\n"
                 + note.title + "\n"
-                + note.description + "\n"
+                + note.description
                 + note.url)
 
         holder.mView.setOnClickListener {

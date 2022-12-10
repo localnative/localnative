@@ -12,4 +12,9 @@
         android:title="Search"
         app:actionViewClass="androidx.appcompat.widget.SearchView"
         app:showAsAction="always" />
+
+    <item
+        android:id="@+id/action_sync"
+        android:title="@string/sync"
+        app:showAsAction="always" />
 </menu>

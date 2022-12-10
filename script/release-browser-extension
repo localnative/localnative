@@ -1,0 +1,12 @@
+#!/bin/bash
+
+set -e
+
+cd `dirname $0`/..
+
+script/set-version $1
+echo "release browser extension version" $1
+
+
+cd localnative-browser-extension/app
+zip -r -FS ../localnative-browser-extension-$1.zip * --exclude '*.git*'

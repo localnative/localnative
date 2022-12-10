@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     tools:context="app.localnative.android.MainActivity">
 
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
@@ -25,12 +25,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
+            android:layout_below="@+id/toolbar"
             app:layout_constraintTop_toBottomOf="@+id/notes_recycler_view">
 
-            <Button
+            <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/prev_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                style="@style/LNButton"
+                android:background="@android:color/transparent"
                 android:layout_weight="1"
                 android:text="@string/prev_button_text" />
 
@@ -44,16 +45,18 @@
                 android:minWidth="100dp"
                 android:minHeight="30dp" />
 
-            <Button
+            <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/next_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                style="@style/LNButton"
+                android:background="@android:color/transparent"
                 android:layout_weight="1"
                 android:text="@string/next_button_text" />
         </LinearLayout>
 
         <fragment
             android:id="@+id/notes_recycler_view"
+            android:layout_below="@+id/toolbar_pagination"
+            android:layout_above="@+id/bottomTextView"
             android:name="app.localnative.android.NoteListFragment"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -61,6 +64,15 @@
             app:layout_constraintTop_toBottomOf="@+id/toolbar_pagination"
             tools:layout="@layout/fragment_note_list" />
 
-    </LinearLayout>
+        <TextView
+            android:id="@+id/bottomTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:padding="10dp"
+            android:layout_alignParentBottom="true"
+            android:background="@color/primary"
+            android:text="@string/bottom_line_text"  />
+    </RelativeLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

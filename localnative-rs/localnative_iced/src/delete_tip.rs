@@ -1,5 +1,5 @@
-use iced::{button, Button, Element, Row, Text};
-use iced_aw::{modal, Card, Modal};
+use iced::pure::{button, row, text, Element};
+use iced_aw::pure::{Card, Modal};
 
 use crate::{
     style::{self, Theme},
@@ -8,12 +8,7 @@ use crate::{
 
 pub struct DeleteTip {
     pub rowid: i64,
-    pub tip_state: modal::State<TipState>,
-}
-#[derive(Default)]
-pub struct TipState {
-    pub ok_button: button::State,
-    pub cancel_button: button::State,
+    pub show_modal: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -24,31 +19,28 @@ pub enum Message {
 }
 impl DeleteTip {
     pub fn view<'tip, 'page: 'tip>(
-        &'tip mut self,
+        &'tip self,
         theme: Theme,
         limit: u32,
-        search_page: &'page mut crate::SearchPage,
+        search_page: &'page crate::SearchPage,
     ) -> Element<'tip, Message> {
         let underlay = search_page.view(theme, limit).map(Message::SearchPage);
-        let Self { tip_state, .. } = self;
 
-        Modal::new(tip_state, underlay, |state| {
-            let ok_button =
-                Button::new(&mut state.ok_button, Text::new(tr!("ok"))).on_press(Message::Enter);
-            let cancel_button = Button::new(&mut state.cancel_button, Text::new(tr!("cancel")))
-                .on_press(Message::Cancel);
+        Modal::new(self.show_modal, underlay, || {
+            let ok_button = button(text(tr!("ok"))).on_press(Message::Enter);
+            let cancel_button = button(text(tr!("cancel"))).on_press(Message::Cancel);
             Card::new(
-                Row::new()
+                row()
                     .push(
-                        Text::new(iced_aw::Icon::ExclamationDiamond)
+                        text(iced_aw::Icon::ExclamationDiamond)
                             .font(iced_aw::ICON_FONT)
                             .color(iced::Color::from_rgba(1.0, 0.0, 0.0, 0.7)),
                     )
-                    .push(Text::new(tr!("delete-tip"))),
-                Text::new(tr!("delete-tip-content")),
+                    .push(text(tr!("delete-tip"))),
+                text(tr!("delete-tip-content")),
             )
             .foot(
-                Row::new()
+                row()
                     .push(style::horizontal_rule())
                     .push(ok_button)
                     .push(cancel_button)

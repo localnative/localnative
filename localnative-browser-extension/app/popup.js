@@ -34,8 +34,7 @@ function onNativeMessage(message) {
   // show count
   if (Number(message.count) >=0 ) {
     count = message.count;
-    let pages = Math.ceil(count / LIMIT);
-    document.getElementById('total-page').innerHTML = Sanitizer.escapeHTML`${pages}`;
+    document.getElementById('indicator').innerHTML = makePaginationText();
   }
 
   document.getElementById('notes').innerHTML = '';
@@ -86,7 +85,7 @@ function onNativeMessage(message) {
           document.getElementById('search-text').value = tag;
           offset = 0;
           cmdSearch();
-          document.getElementById('page-idx-input').value = 1;
+          document.getElementById('indicator').innerHTML = makePaginationText();
         }
       });
     }
@@ -155,14 +154,14 @@ document.addEventListener('DOMContentLoaded', function () {
     if(offset - LIMIT >= 0){
       offset -= LIMIT;
       cmdSearch();
-      document.getElementById('page-idx-input').value = Number(document.getElementById('page-idx-input').value) - 1;
+      document.getElementById('indicator').innerHTML = makePaginationText();
     }
   };
   document.getElementById('next-btn').onclick = function(){
-    if(offset + LIMIT <= count){
+    if(offset + LIMIT < count){
       offset += LIMIT;
       cmdSearch();
-      document.getElementById('page-idx-input').value = Number(document.getElementById('page-idx-input').value) + 1;
+      document.getElementById('indicator').innerHTML = makePaginationText();
     }
   };
 
@@ -174,20 +173,20 @@ document.addEventListener('DOMContentLoaded', function () {
   // register cmdSearch
   document.getElementById('search-text').addEventListener('keyup', function (e) {
       offset = 0;
-      document.getElementById('page-idx-input').value = 1;
+      document.getElementById('indicator').innerHTML = makePaginationText();
       cmdSearch();
   });
 
   document.getElementById('search-clear-btn').onclick = function(){
     document.getElementById('search-text').value = '';
     offset = 0;
-    document.getElementById('page-idx-input').value = 1;
+    document.getElementById('indicator').innerHTML = makePaginationText();
     cmdSearch();
   };
 
   // initial query
   cmdSelect();
-  document.getElementById('page-idx-input').value = 1;
+  document.getElementById('indicator').innerHTML = makePaginationText();
 
   chrome.tabs.query({'active': true, 'lastFocusedWindow': true}, function (tabs) {
     var title = tabs[0].title;
@@ -198,6 +197,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
 });
 
+function makePaginationText() {
+  let start = count > 0 ? offset + 1 : 0
+  let end  = offset + LIMIT > count ? count : offset + LIMIT
+  return `${start}-${end} / ${count}`
+}
 
 function makeTags(str) {
   let s = str.replace(/,+/g, " ").trim();

@@ -21,8 +21,10 @@ import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
+import android.text.method.LinkMovementMethod
 import android.util.Log
 import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
@@ -36,7 +38,7 @@ import com.google.zxing.integration.android.IntentIntegrator
 
 class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener, NoteListFragment.OnListFragmentInteractionListener, View.OnClickListener {
 
-    private var searchView: SearchView? = null
+    private lateinit var searchView: SearchView
 
 //    private val mRecyclerView: RecyclerView? = null
 //    private val mAdapter: RecyclerView.Adapter<*>? = null
@@ -50,25 +52,40 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener, NoteLi
         searchView = searchItem.actionView as SearchView
 
         //searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
-        searchView!!.setIconifiedByDefault(false)
-        if (searchView != null) {
-            searchView!!.setOnQueryTextListener(this)
-        }
-        searchView!!.queryHint = getString(R.string.search_hint)
-        searchView!!.requestFocusFromTouch()
+        searchView.setIconifiedByDefault(false)
+        searchView.setOnQueryTextListener(this)
+        searchView.queryHint = getString(R.string.search_hint)
+        searchView.requestFocusFromTouch()
+
+        val width = resources.displayMetrics.widthPixels
+        searchView.maxWidth = width * 2 / 3
+        searchView.clearFocus()
+
         return super.onCreateOptionsMenu(menu)
     }
 
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_sync -> {
+                val integrator = IntentIntegrator(this)
+                integrator.setBeepEnabled(false)
+                integrator.setCaptureActivity(QRScanActivity::class.java).initiateScan()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
 
     override fun onQueryTextSubmit(query: String): Boolean {
-        Log.d("onQueryTextSubmit", query)
+        Log.d("MainActivity", "onQueryTextSubmit: $query")
         return false
     }
 
     override fun onQueryTextChange(query: String): Boolean {
-        Log.d("onQueryTextChange", query)
+        Log.d("MainActivity", "onQueryTextChange: $query")
         AppState.clearOffset()
         doSearch(query, 0L)
+
         return false
     }
 
@@ -79,11 +96,11 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener, NoteLi
         val toolbar = findViewById<View>(R.id.toolbar) as Toolbar
         setSupportActionBar(toolbar)
 
-        toolbar.setOnClickListener { Log.d("sync", "toolbar")
-            val integrator = IntentIntegrator(this)
-            integrator.setBeepEnabled(false)
-            integrator.setCaptureActivity(QRScanActivity::class.java).initiateScan()
-        }
+//        toolbar.setOnClickListener { Log.d("sync", "toolbar")
+//            val integrator = IntentIntegrator(this)
+//            integrator.setBeepEnabled(false)
+//            integrator.setCaptureActivity(QRScanActivity::class.java).initiateScan()
+//        }
 //        for get files and cache directory:
 //        val context = this.baseContext;
 //
@@ -98,6 +115,16 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener, NoteLi
         prevButton.setOnClickListener(this)
         val nextButton = findViewById<View>(R.id.next_button) as Button
         nextButton.setOnClickListener(this)
+        findViewById<TextView>(R.id.bottomTextView).movementMethod = LinkMovementMethod.getInstance()
+
+//        KeyboardVisibilityEvent.setEventListener(
+//            this
+//        ) { show ->
+//            if (!show) {
+//                searchView.setQuery("", false)
+//                searchView.onActionViewCollapsed()
+//            }
+//        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -107,7 +134,7 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener, NoteLi
                 Toast.makeText(this, "Cancelled Sync", Toast.LENGTH_LONG).show()
             } else {
                 Toast.makeText(this, "Scanned server address and port: " + result.contents, Toast.LENGTH_LONG).show()
-                val builder = AlertDialog.Builder(this)
+                val builder = AlertDialog.Builder(this, R.style.AlertDialogCustom)
                 builder.setMessage(R.string.dialog_sync)
                         .setPositiveButton(R.string.sync) { _, _ ->
                             val cmd = ("{\"action\": \"client-sync\", \"addr\": \""
@@ -150,7 +177,8 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener, NoteLi
 
         // tag
         val btn = v as Button
-        searchView!!.setQuery(btn.text, true)
+//        searchView.onActionViewExpanded()
+        searchView.setQuery(btn.text, true)
         //        doSearch(btn.getText().toString(), 0L);
 
     }

@@ -1,8 +1,10 @@
 use std::ops::Not;
 
 // ------impl note start-----
-use iced::{button, qr_code, rule, text_input, Element};
-use iced::{container, Background, Color};
+use iced::{pure::Element, Background, Color};
+
+use iced_graphics::pure::qr_code;
+use iced_style::{button, container, rule, text_input};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -86,7 +88,7 @@ impl rule::StyleSheet for TransparentRule {
         }
     }
 }
-pub fn horizontal_rule() -> iced::Rule {
+pub fn horizontal_rule<'a>() -> iced::Rule<'a> {
     iced::Rule::horizontal(0).style(TransparentRule)
 }
 pub fn horizontal_rules<'a, Msg: 'a>(n: usize) -> Vec<Element<'a, Msg>> {
@@ -96,7 +98,7 @@ pub fn horizontal_rules<'a, Msg: 'a>(n: usize) -> Vec<Element<'a, Msg>> {
     }
     res
 }
-pub fn vertical_rule() -> iced::Rule {
+pub fn vertical_rule<'a>() -> iced::Rule<'a> {
     iced::Rule::vertical(0).style(TransparentRule)
 }
 // pub fn vertical_rules<'a, Msg: 'a>(n: usize) -> Vec<Element<'a, Msg>> {

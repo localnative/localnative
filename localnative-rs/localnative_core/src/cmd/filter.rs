@@ -251,15 +251,11 @@ fn where_vec(num_words: usize) -> Vec<String> {
         .map(|i| {
             format!(
                 "(
-        title like :w{}
-        or url like :w{}
-        or tags like :w{}
-        or description like :w{}
-        )",
-                i.to_string(),
-                i.to_string(),
-                i.to_string(),
-                i.to_string()
+        title like :w{i}
+        or url like :w{i}
+        or tags like :w{i}
+        or description like :w{i}
+        )"
             )
         })
         .collect()

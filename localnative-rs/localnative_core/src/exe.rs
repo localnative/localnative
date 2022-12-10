@@ -53,6 +53,7 @@ pub enum ProcessError {
 pub fn get_sqlite_connection() -> Connection {
     let p = sqlite3_db_location();
     let path = Path::new(&p);
+    #[allow(clippy::let_and_return)]
     let conn = Connection::open(path).unwrap();
     // .execSQL("PRAGMA temp_store_directory = '/data/data/com.cmp.pkg/databases/main'")
     #[cfg(target_os = "android")]
