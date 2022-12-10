@@ -267,6 +267,7 @@
 				3C6A5F2A214F40BA008C36F9 /* Resources */,
 				3CD04592214F4750005E3D05 /* Embed App Extensions */,
 				48355952A9347BD26E48009B /* [CP] Embed Pods Frameworks */,
+				0017EDFC27867F820070B62C /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -429,6 +430,23 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		0017EDFC27867F820070B62C /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "#!/bin/bash\n\n";
+		};
 		0C9CA1A54126233B270379D4 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -744,7 +762,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = "localnative-ios.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 0;
+				CURRENT_PROJECT_VERSION = 9;
 				DEVELOPMENT_TEAM = 38Y7PH227Q;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = "ln-ios/Info.plist";
@@ -776,7 +794,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = "localnative-ios.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 0;
+				CURRENT_PROJECT_VERSION = 9;
 				DEVELOPMENT_TEAM = 38Y7PH227Q;
 				ENABLE_BITCODE = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
