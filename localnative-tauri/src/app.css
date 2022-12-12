@@ -1,0 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.date-time-picker :is(span) {
+	background-color: transparent !important;
+}
