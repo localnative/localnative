@@ -46,7 +46,15 @@ struct ContentView: View {
                     note in
                     NoteRowView(note: note, query: self.$searchText)
                 }
-                Text("Own your bookmarks on your device.")
+                HStack{
+                    Text("Write your own geolocation notes with")
+                    Button(action:{
+                        guard let url = URL(string: "https://hexagon.place/") else { return }
+                        UIApplication.shared.open(url)
+                    }){
+                        Text("Hexagon Place App")
+                    }
+                }
             }
         
     }
