@@ -762,7 +762,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = "localnative-ios.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 11;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 38Y7PH227Q;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = "ln-ios/Info.plist";
@@ -776,7 +776,7 @@
 					"$(PROJECT_DIR)",
 				);
 				"LIBRARY_SEARCH_PATHS[arch=*]" = "$(PROJECT_DIR)";
-				MARKETING_VERSION = 0.5.2;
+				MARKETING_VERSION = 0.5.3;
 				PRODUCT_BUNDLE_IDENTIFIER = app.localnative.ios;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				"SWIFT_OBJC_BRIDGING_HEADER[arch=*]" = "$(PROJECT_DIR)/LocalNative-Bridging-Header.h";
@@ -794,7 +794,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = "localnative-ios.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 11;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 38Y7PH227Q;
 				ENABLE_BITCODE = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
@@ -809,7 +809,7 @@
 					"$(PROJECT_DIR)",
 				);
 				"LIBRARY_SEARCH_PATHS[arch=*]" = "$(PROJECT_DIR)";
-				MARKETING_VERSION = 0.5.2;
+				MARKETING_VERSION = 0.5.3;
 				PRODUCT_BUNDLE_IDENTIFIER = app.localnative.ios;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				"SWIFT_OBJC_BRIDGING_HEADER[arch=*]" = "$(PROJECT_DIR)/LocalNative-Bridging-Header.h";
@@ -921,7 +921,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				"LIBRARY_SEARCH_PATHS[arch=*]" = "$(PROJECT_DIR)";
-				MARKETING_VERSION = 0.5.2;
+				MARKETING_VERSION = 0.5.3;
 				PRODUCT_BUNDLE_IDENTIFIER = "app.localnative.ios.share-ext";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -948,7 +948,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				"LIBRARY_SEARCH_PATHS[arch=*]" = "$(PROJECT_DIR)";
-				MARKETING_VERSION = 0.5.2;
+				MARKETING_VERSION = 0.5.3;
 				PRODUCT_BUNDLE_IDENTIFIER = "app.localnative.ios.share-ext";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
