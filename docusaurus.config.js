@@ -13,7 +13,7 @@ module.exports = {
         alt: 'Local Native Logo',
         src: 'img/icon.png',
       },
-      links: [
+      items: [
         {
           to: 'docs/quick-start',
           activeBasePath: 'docs',
