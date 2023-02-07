@@ -25,7 +25,7 @@ To migrate v0.3.x schema to v0.4.0, an upgrade sub module is also written to cre
 This schema change might already break the ssb sync code.
 
 ## Back to sync
-I tried to tackle the syncing problem [before](@/2019-03-localnative-v0.3.8-release.md#about-sync-with-other-devices). The wired sync is not convenient. Sync via ssb the keys setup steps seems cumbersome (Yes, some UI could be put on top of it to make it feel better), but there are 3 real issues I see it is not fit to at least my desire:
+I tried to tackle the syncing problem [before](./2019-03-24-localnative-v0.3.8-release.md#about-sync-with-other-devices). The wired sync is not convenient. Sync via ssb the keys setup steps seems cumbersome (Yes, some UI could be put on top of it to make it feel better), but there are 3 real issues I see it is not fit to at least my desire:
 - private data is going out wide to other peers, (Yes, can be encrypted, but see below)
 - ssb private key loss or theft could expose private data
 - performance seems not great, it takes hours to sync my last 10+ years notes
