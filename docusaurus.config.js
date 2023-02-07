@@ -51,21 +51,12 @@ module.exports = {
       style: 'dark',
       links: [
         {
-          title: 'Docs',
-          items: [
-            {
-              label: 'Quick Start',
-              to: 'docs/quick-start',
-            },
-            {
-              label: 'Developer Setup',
-              to: 'docs/developer-setup',
-            },
-            {
-              label: 'Privacy Policy',
-              to: 'privacy-policy',
-            },
-          ],
+            title: 'WeChat',
+            items: [
+              {
+                html: `<img src="img/wechat/localnative-wechat-qrcode_344.jpg" width="100" />`
+              },
+            ],
         },
         {
           title: 'Community',
@@ -81,11 +72,31 @@ module.exports = {
           ],
         },
         {
-          title: 'Video',
           items: [
             {
               label: 'YouTube',
               href: 'https://www.youtube.com/channel/UCO3qFIyK0eSmqvMknsslWRw',
+            },
+              {
+                label: 'Twitter',
+                href: 'https://twitter.com/localnative_app',
+              },
+          ],
+        },
+        {
+          title: 'Docs',
+          items: [
+            {
+              label: 'Quick Start',
+              to: 'docs/quick-start',
+            },
+            {
+              label: 'Developer Setup',
+              to: 'docs/developer-setup',
+            },
+            {
+              label: 'Privacy Policy',
+              to: 'privacy-policy',
             },
           ],
         },
