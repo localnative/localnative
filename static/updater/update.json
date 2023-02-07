@@ -1,3 +1,19 @@
 {
-    "version": 0.1
+    "version": "v0.5.2",
+    "notes": "LocalNative New Tauri Version",
+    "pub_date": "2023-01-14T00:00:00Z",
+    "platforms": {
+        "darwin-x86_64": {
+            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTbHlZbU9JakRQTzN3bExOVGUrMWxKREpjWmM3djVHWnFSb1EzVmRVeTNib0NrL0NCMHo5N1B3c21VRmR0cWVRdVhwM21kc3kvQi9ZRmlHbjV6ZU9YdkZKUHBua0x2VndnPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNjczNjgyMjM1CWZpbGU6TG9jYWxOYXRpdmUuYXBwLnRhci5negpzenVnNFZ0cldSNFQzemVFd2dxc2duS1dQbGVrbXAydmlielZkNVRycm9lWTFoaE4vMEhCcVhXZVFtUGRlTm1YdHF6NjMwdUhDdXk1WkFNTFgrMkJDZz09Cg==",
+            "url": "https://github.com/localnative/localnative/releases/download/v0.5.2/LocalNative.app.tar.gz"
+        },
+        "linux-x86_64": {
+            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTbHlZbU9JakRQTzM5dWJXWXl5R3RvaWViSWVQRDFiaDhLaG9wK0s2M0xPUHdxcEJvSmpEdkF4WkxNb2Z3S2xkc3VMSG1pdkozRmtyN0h0MFhibWpCVlhrb1dZZTVMTndZPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNjczNjgxNzcwCWZpbGU6bG9jYWwtbmF0aXZlXzAuNS4yX2FtZDY0LkFwcEltYWdlLnRhci5negpRREpiT2tPV3dJeE4ySE4yNzlIRWNvYjZyOVpTMlp2ZjBzYW9qRXV6ZE13V09GcjFJa3NZWHcvaXpvdGkwYUkxZWMxcnFKVUMrZWtkeDgyalBiQ3VEdz09Cg==",
+            "url": "https://github.com/localnative/localnative/releases/download/v0.5.2/local-native_0.5.2_amd64.AppImage.tar.gz"
+        },
+        "windows-x86_64": {
+            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTbHlZbU9JakRQTzJPM2k2cE4vTkNKc0ZxRk5BenB4N1JpaHBhK2QxUTNYZmFkQ09nNE9zNU5tZ01pa2dHR0U0Skx1U3BvNXlYdjRaNGNpZXFZcDROTWJvbUxwY0E3UncwPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNjczNjgyMTA5CWZpbGU6TG9jYWxOYXRpdmVfMC41LjJfeDY0X2VuLVVTLm1zaS56aXAKT01hVVp1UUNaZG9xa2kwT1FmelQveTdBTmNnVDVuKzVPS1RTNkJYdlJacVAwc0xmZG5EZDRWeUpnbmtTdXQ0NDc5Yk84djNjdXNYTm5ZRTNzdkJyQUE9PQo=",
+            "url": "https://github.com/localnative/localnative/releases/download/v0.5.2/LocalNative_0.5.2_x64_en-US.msi.zip"
+        }
+    }
 }
