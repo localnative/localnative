@@ -75,11 +75,15 @@ module.exports = {
           items: [
             {
               label: 'YouTube',
-              href: 'https://www.youtube.com/channel/UCO3qFIyK0eSmqvMknsslWRw',
+              href: 'https://www.youtube.com/@localnative',
             },
               {
                 label: 'Twitter',
                 href: 'https://twitter.com/localnative_app',
+              },
+              {
+                label: 'Facebook',
+                href: 'https://www.facebook.com/localnativeapp',
               },
           ],
         },
