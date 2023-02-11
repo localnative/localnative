@@ -129,13 +129,13 @@ module.exports = {
           sidebarPath: require.resolve('./sidebars.js'),
           // Please change this to your repo.
           editUrl:
-            'https://github.com/facebook/docusaurus/edit/master/website/',
+            'https://gitlab.com/localnative/localnative-app-docusaurus-2/tree/master/',
         },
         blog: {
           showReadingTime: true,
           // Please change this to your repo.
           editUrl:
-            'https://github.com/facebook/docusaurus/edit/master/website/blog/',
+            'https://gitlab.com/localnative/localnative-app-docusaurus-2/tree/master/',
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
