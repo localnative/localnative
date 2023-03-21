@@ -62,21 +62,51 @@ pub async fn init_bundle(locale: Language) -> Option<()> {
     Some(())
 }
 
-#[inline]
-pub fn tr_with_args<'a, 'arg: 'a>(
+pub struct TranslateWithArgs<'a> {
     key: &'a str,
-    args: Option<&'a FluentArgs<'arg>>,
-) -> Cow<'a, str> {
+    args: FluentArgs<'a>,
+}
+
+impl<'a> TranslateWithArgs<'a> {
+    pub fn new(key: &'a str, args: FluentArgs<'a>) -> Self {
+        Self { key, args }
+    }
+
+    pub fn tr(&'a self) -> Cow<'a, str> {
+        let res = BUNDLE
+            .get()
+            .and_then(|bundle| bundle.try_read().ok())
+            .and_then(move |bundle| {
+                bundle
+                    .get_message(self.key)
+                    .and_then(|msg| msg.value())
+                    .map(move |p| {
+                        let mut errors = vec![];
+                        let res = bundle.format_pattern(p, Some(&self.args), &mut errors);
+                        errors.into_iter().for_each(error_handle);
+                        res
+                    })
+            });
+        if let Some(res) = res {
+            res
+        } else {
+            Cow::from(self.key)
+        }
+    }
+}
+
+#[inline]
+pub fn tr<'a>(key: &'a str) -> Cow<'a, str> {
     let res = BUNDLE
         .get()
         .and_then(|bundle| bundle.try_read().ok())
-        .and_then(|bundle| {
+        .and_then(move |bundle| {
             bundle
                 .get_message(key)
                 .and_then(|msg| msg.value())
-                .map(|p| {
+                .map(move |p| {
                     let mut errors = vec![];
-                    let res = bundle.format_pattern(p, args, &mut errors);
+                    let res = bundle.format_pattern(p, None, &mut errors);
                     errors.into_iter().for_each(error_handle);
                     res
                 })
@@ -127,11 +157,8 @@ impl Display for Language {
 #[macro_export]
 macro_rules! tr {
     ($msg:expr) => {
-        $crate::translate::tr_with_args($msg, None)
+        $crate::translate::tr($msg)
     };
-    ($msg:expr; $args:expr ) => {{
-        $crate::translate::tr_with_args($msg, Some($args))
-    }};
 }
 
 #[macro_export]
@@ -145,4 +172,10 @@ macro_rules! args {
             args
         }
     };
+}
+
+pub fn args<'s>(key: &'s str, value: &'s str) -> fluent_bundle::FluentArgs<'s> {
+    let mut args = fluent_bundle::FluentArgs::new();
+    args.set(key, value);
+    args
 }

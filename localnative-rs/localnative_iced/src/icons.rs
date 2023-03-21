@@ -1,5 +1,5 @@
-use iced::pure::{widget::Text, Element};
 use iced::Font;
+use iced::{widget::Text, Element};
 
 const ICONS: Font = Font::External {
     // 注意，如果使用诸如iiced_aw此类的crrate时，不要将自己的字体命名为Icons，因为会和内部的字体冲突
@@ -63,8 +63,8 @@ impl IconItem {
             IconItem::Note => '\u{ea7e}',
         }
     }
-    pub fn into_text(self) -> Text {
-        Text::new(&self.into_char().to_string()).font(ICONS)
+    pub fn into_text<'a>(self) -> Text<'a> {
+        Text::new(self.into_char().to_string()).font(ICONS)
     }
 }
 

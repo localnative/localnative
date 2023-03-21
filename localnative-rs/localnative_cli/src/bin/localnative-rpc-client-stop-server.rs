@@ -16,18 +16,14 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use clap::{App, Arg};
+use clap::{arg, Command};
 use localnative_core::exe::run;
 fn main() {
-    let matches = App::new("localnative-rpc-client")
-        .arg(
-            Arg::with_name("addr")
-                .short("a")
-                .long("addr")
-                .takes_value(true),
-        )
+    let matches = Command::new("localnative-rpc-client")
+        .arg(arg!(-a - -addr[ADDR]))
         .get_matches();
-    let addr = matches.value_of("addr").unwrap_or("127.0.0.1:2345");
+
+    let addr = matches.get_one::<&str>("addr").unwrap_or(&"127.0.0.1:2345");
     eprintln!("addr: {}", addr);
     run(&(r#"{"action":"client-stop-server", "addr": ""#.to_string() + addr + r#""}"#));
 }

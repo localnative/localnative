@@ -1,328 +1,122 @@
-use std::ops::Not;
+use iced::{theme, Background, Color};
 
-// ------impl note start-----
-use iced::{pure::Element, Background, Color};
+#[derive(Debug, Clone, Copy)]
+pub struct Url;
 
-use iced_graphics::pure::qr_code;
-use iced_style::{button, container, rule, text_input};
-use serde::{Deserialize, Serialize};
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub enum Theme {
-    Light,
-    Dark,
-}
-
-impl Not for Theme {
-    type Output = Self;
-
-    fn not(self) -> Self::Output {
-        match self {
-            Theme::Light => Theme::Dark,
-            Theme::Dark => Theme::Light,
-        }
+impl From<Url> for theme::Button {
+    fn from(value: Url) -> Self {
+        theme::Button::Custom(Box::new(value))
     }
 }
-pub struct Transparent {
-    theme: Theme,
-}
-impl button::StyleSheet for Transparent {
-    fn active(&self) -> button::Style {
-        let text_color = match self.theme {
-            Theme::Light => Color::BLACK,
-            Theme::Dark => Color::WHITE,
-        };
-        button::Style {
-            background: None,
-            border_radius: 0.0,
-            border_width: 0.0,
-            border_color: Color::TRANSPARENT,
-            text_color,
-            ..Default::default()
-        }
-    }
-}
-pub fn transparent(theme: Theme) -> Transparent {
-    Transparent { theme }
-}
 
-pub struct Link {
-    theme: Theme,
-}
-impl button::StyleSheet for Link {
-    fn active(&self) -> button::Style {
-        let text_color = match self.theme {
-            Theme::Light => Color::BLACK,
-            Theme::Dark => Color::WHITE,
-        };
-        button::Style {
-            background: None,
-            border_radius: 0.0,
-            border_width: 0.0,
-            border_color: Color::TRANSPARENT,
-            text_color,
-            shadow_offset: Default::default(),
-        }
+impl iced::widget::button::StyleSheet for Url {
+    type Style = theme::Theme;
+
+    fn active(&self, style: &Self::Style) -> iced_style::button::Appearance {
+        iced_style::button::StyleSheet::active(style, &theme::Button::Text)
     }
 
-    fn hovered(&self) -> button::Style {
-        button::Style {
-            text_color: Color::from_rgb8(26, 13, 171),
-            ..self.active()
+    fn hovered(&self, style: &Self::Style) -> iced_style::button::Appearance {
+        iced_style::button::Appearance {
+            text_color: match style {
+                iced::Theme::Light => Color::from_rgb8(29, 28, 229),
+                iced::Theme::Dark => Color::from_rgb8(222, 186, 206),
+                iced::Theme::Custom(_) => unreachable!(),
+            },
+            ..self.active(style)
         }
     }
-}
-pub fn link(theme: Theme) -> Link {
-    Link { theme }
 }
 
 #[derive(Debug, Clone, Copy)]
-pub struct TransparentRule;
-impl rule::StyleSheet for TransparentRule {
-    fn style(&self) -> rule::Style {
-        rule::Style {
-            color: Color::TRANSPARENT,
-            width: 1,
-            radius: 0.0,
-            fill_mode: rule::FillMode::Full,
-        }
+pub struct Tag;
+
+impl From<Tag> for theme::Button {
+    fn from(value: Tag) -> Self {
+        theme::Button::Custom(Box::new(value))
     }
 }
-pub fn horizontal_rule<'a>() -> iced::Rule<'a> {
-    iced::Rule::horizontal(0).style(TransparentRule)
+
+fn light_tag() -> Color {
+    Color::from_rgb8(246, 90, 131)
 }
-pub fn horizontal_rules<'a, Msg: 'a>(n: usize) -> Vec<Element<'a, Msg>> {
-    let mut res = Vec::with_capacity(n);
-    for _ in 0..n {
-        res.push(horizontal_rule().into());
-    }
-    res
+
+fn dark_tag() -> Color {
+    Color::from_rgb8(98, 79, 130)
 }
-pub fn vertical_rule<'a>() -> iced::Rule<'a> {
-    iced::Rule::vertical(0).style(TransparentRule)
-}
-// pub fn vertical_rules<'a, Msg: 'a>(n: usize) -> Vec<Element<'a, Msg>> {
-//     let mut res = Vec::with_capacity(n);
-//     for _ in 0..n {
-//         res.push(vertical_rule().into());
-//     }
-//     res
-// }
-pub struct Note {
-    theme: Theme,
-}
-const LIGHT_BG: Color = Color::from_rgba(0.941, 0.972, 1.0, 0.5);
-const DARK_BG: Color = Color::from_rgba(0.384, 0.463, 0.141, 0.5);
-impl container::StyleSheet for Note {
-    fn style(&self) -> container::Style {
-        let (tcolor, bg_color, bd_color) = match self.theme {
-            Theme::Light => (
-                Color::BLACK,
-                LIGHT_BG,
-                Color::from_rgba8(240, 255, 255, 0.355),
-            ),
-            Theme::Dark => (
-                Color::WHITE,
-                DARK_BG,
-                Color::from_rgba(0.4, 0.32, 0.15, 0.355),
-            ),
-        };
-        container::Style {
-            text_color: Some(tcolor),
-            background: Some(Background::Color(bg_color)),
-            border_radius: 30.0,
-            border_width: 3.0,
-            border_color: bd_color,
+
+impl iced::widget::button::StyleSheet for Tag {
+    type Style = theme::Theme;
+
+    fn active(&self, style: &Self::Style) -> iced_style::button::Appearance {
+        iced_style::button::Appearance {
+            border_radius: 6.5,
+            background: Some(Background::Color(match style {
+                iced::Theme::Light => light_tag(),
+                iced::Theme::Dark => dark_tag(),
+                iced::Theme::Custom(_) => unreachable!(),
+            })),
+            ..iced_style::button::StyleSheet::active(style, &theme::Button::Primary)
         }
     }
 }
 
-pub fn note(theme: Theme) -> Note {
-    Note { theme }
-}
+#[derive(Debug, Clone, Copy)]
+pub struct TagNum;
 
-pub struct Tag {
-    theme: Theme,
-}
-impl button::StyleSheet for Tag {
-    fn active(&self) -> button::Style {
-        let (text_color, bg) = match self.theme {
-            Theme::Light => (
-                Color::BLACK,
-                Some(Background::Color(Color::from_rgb8(255, 182, 193))),
-            ),
-            Theme::Dark => (
-                Color::WHITE,
-                Some(Background::Color(Color::from_rgb8(173, 216, 230))),
-            ),
-        };
-        button::Style {
-            background: bg,
-            border_radius: 10.0,
-            border_width: 0.0,
-            border_color: Color::TRANSPARENT,
-            text_color,
-            ..Default::default()
-        }
+impl From<TagNum> for theme::Button {
+    fn from(value: TagNum) -> Self {
+        theme::Button::Custom(Box::new(value))
     }
 }
-pub fn tag(theme: Theme) -> Tag {
-    Tag { theme }
-}
-pub fn qr_code(qr_code: qr_code::QRCode, theme: Theme) -> qr_code::QRCode {
-    let (dark, light) = match theme {
-        Theme::Light => (Color::BLACK, LIGHT_BG),
-        Theme::Dark => (Color::WHITE, DARK_BG),
-    };
-    qr_code.color(dark, light)
-}
-// --------impl note end------
-// --------impl tags start------
-pub struct Count {
-    theme: Theme,
-}
 
-impl button::StyleSheet for Count {
-    fn active(&self) -> button::Style {
-        let text_color = match self.theme {
-            Theme::Light => Color::from_rgb(1.0, 0.0, 0.0),
-            Theme::Dark => Color::from_rgb(0.2, 0.1, 1.0),
-        };
-        button::Style {
-            background: None,
-            border_radius: 0.0,
-            border_width: 0.0,
-            border_color: Color::TRANSPARENT,
-            text_color,
-            ..Default::default()
+impl iced::widget::button::StyleSheet for TagNum {
+    type Style = theme::Theme;
+
+    fn active(&self, style: &Self::Style) -> iced_style::button::Appearance {
+        iced_style::button::Appearance {
+            text_color: match style {
+                iced::Theme::Light => light_tag(),
+                iced::Theme::Dark => dark_tag(),
+                iced::Theme::Custom(_) => unreachable!(),
+            },
+            ..iced_style::button::StyleSheet::active(style, &theme::Button::Text)
         }
     }
-}
-pub fn count(theme: Theme) -> Count {
-    Count { theme }
-}
-// --------impl tags end ------
-// --------impl search page start------
-pub struct Normal {
-    theme: Theme,
-}
 
-impl container::StyleSheet for Normal {
-    fn style(&self) -> container::Style {
-        let (tcolor, bg_color) = match self.theme {
-            Theme::Light => (Color::BLACK, LIGHT_BG),
-            Theme::Dark => (Color::WHITE, DARK_BG),
-        };
-        container::Style {
-            text_color: Some(tcolor),
-            background: Some(Background::Color(bg_color)),
-            border_radius: 0.0,
-            border_width: 0.0,
-            border_color: Color::TRANSPARENT,
+    fn hovered(&self, style: &Self::Style) -> iced_style::button::Appearance {
+        iced_style::button::Appearance {
+            text_color: match style {
+                iced::Theme::Light => Color::from_rgb8(254, 208, 73),
+                iced::Theme::Dark => Color::from_rgb8(49, 198, 212),
+                iced::Theme::Custom(_) => unreachable!(),
+            },
+            ..self.active(style)
         }
     }
 }
 
-pub struct SearchInput {
-    theme: Theme,
-}
+#[derive(Debug, Clone, Copy)]
+pub struct SimpleBox;
 
-impl text_input::StyleSheet for SearchInput {
-    fn active(&self) -> text_input::Style {
-        text_input::Style {
-            background: Background::Color(Color::TRANSPARENT),
-            border_radius: 5.0,
-            border_width: 1.0,
-            border_color: Color::TRANSPARENT,
-        }
-    }
-
-    fn focused(&self) -> text_input::Style {
-        text_input::Style {
-            border_color: Color::from_rgb(0.5, 0.5, 0.5),
-            ..self.active()
-        }
-    }
-
-    fn placeholder_color(&self) -> Color {
-        match self.theme {
-            Theme::Light => Color::from_rgb(0.7, 0.7, 0.7),
-            Theme::Dark => todo!(),
-        }
-    }
-
-    fn value_color(&self) -> Color {
-        match self.theme {
-            Theme::Light => Color::from_rgb(0.3, 0.3, 0.3),
-            Theme::Dark => todo!(),
-        }
-    }
-
-    fn selection_color(&self) -> Color {
-        match self.theme {
-            Theme::Light => Color::from_rgb(0.8, 0.8, 1.0),
-            Theme::Dark => todo!(),
-        }
+impl From<SimpleBox> for theme::Container {
+    fn from(value: SimpleBox) -> Self {
+        theme::Container::Custom(Box::new(value))
     }
 }
 
-// --------impl search page end------
+impl iced::widget::container::StyleSheet for SimpleBox {
+    type Style = theme::Theme;
 
-// -- impl modal style start --
-
-impl iced_aw::style::modal::StyleSheet for Transparent {
-    fn active(&self) -> iced_aw::modal::Style {
-        iced_aw::style::modal::Style {
-            background: Background::Color(Color::TRANSPARENT),
+    fn appearance(&self, style: &Self::Style) -> iced_style::container::Appearance {
+        iced_style::container::Appearance {
+            border_radius: 6.6,
+            background: Some(Background::Color(match style {
+                iced::Theme::Light => Color::from_rgba8(144, 140, 170, 0.15),
+                iced::Theme::Dark => Color::from_rgba8(64, 61, 82, 0.15),
+                iced::Theme::Custom(_) => unreachable!(),
+            })),
+            ..style.appearance(&theme::Container::Box)
         }
     }
 }
-
-// pub struct Warning {
-//     theme: Theme,
-// }
-
-// pub struct Settings {
-//     theme: Theme,
-// }
-
-// impl iced_aw::style::card::StyleSheet for Warning {
-//     fn active(&self) -> iced_aw::card::Style {
-//         let background = match self.theme {
-//             Theme::Light => LIGHT_BG,
-//             Theme::Dark => DARK_BG,
-//         };
-//         iced_aw::card::Style {
-//             background,
-//             border_radius: 0.5,
-//             border_width: 2.5,
-//             border_color: ,
-//             head_background: (),
-//             head_text_color: (),
-//             body_background: (),
-//             body_text_color: (),
-//             foot_background: (),
-//             foot_text_color: (),
-//             close_color: (),
-//         }
-//     }
-// }
-
-// impl iced_aw::style::card::StyleSheet for Settings {
-//     fn active(&self) -> iced_aw::card::Style {
-//         iced_aw::card::Style {
-//             background: (),
-//             border_radius: (),
-//             border_width: (),
-//             border_color: (),
-//             head_background: (),
-//             head_text_color: (),
-//             body_background: (),
-//             body_text_color: (),
-//             foot_background: (),
-//             foot_text_color: (),
-//             close_color: (),
-//         }
-//     }
-// }
-// -- impl modal style end --

@@ -4,7 +4,7 @@ use tauri_bundler::{
     AppCategory, BundleBinary, BundleSettings, DebianSettings, MacOsSettings, PackageSettings,
     PackageType, SettingsBuilder, WindowsSettings, WixSettings,
 };
-use xshell::{cmd, cp, mkdir_p, rm_rf};
+use xshell::{cmd, Shell};
 
 use crate::flags::Release;
 // Release
@@ -18,6 +18,7 @@ use crate::flags::Release;
 // gzip(&src, &dst.with_extension("gz"))?;
 impl Release {
     pub fn run(&self) -> anyhow::Result<()> {
+        let sh = Shell::new()?;
         let version = if let Some(ref version) = self.version {
             version.as_str()
         } else {
@@ -25,9 +26,13 @@ impl Release {
         };
         let src = Path::new("target").join("release");
 
-        cmd!("cargo build --no-default-features --release --bin localnative_iced").run()?;
+        cmd!(
+            sh,
+            "cargo build --no-default-features --release --bin localnative_iced"
+        )
+        .run()?;
 
-        cmd!("cargo build --release --bin localnative-web-ext-host").run()?;
+        cmd!(sh, "cargo build --release --bin localnative-web-ext-host").run()?;
         let suffix = suffix();
         let iced_src = src.join(format!("localnative_iced{}", suffix));
         let host_src = src.join(format!("localnative-web-ext-host{}", suffix));
@@ -40,16 +45,16 @@ impl Release {
         // );
         let dst = std::env::current_dir()?.join("dist");
         if dst.exists() {
-            rm_rf(&dst)?;
+            sh.remove_path(&dst)?;
         }
-        mkdir_p(&dst)?;
+        sh.create_dir(&dst)?;
         let iced_dst = dst.join(format!("localnative_iced{}", suffix));
         let host_dst = dst.join(format!("localnative-web-ext-host{}", suffix));
 
         let readme = Path::new("README.md");
-        cp(&readme, &dst)?;
-        cp(&iced_src, &iced_dst)?;
-        cp(&host_src, &host_dst)?;
+        sh.copy_file(&readme, &dst)?;
+        sh.copy_file(&iced_src, &iced_dst)?;
+        sh.copy_file(&host_src, &host_dst)?;
 
         copy_dir_all(
             &Path::new("../localnative-electron/build"),
@@ -114,6 +119,7 @@ impl Release {
                     }),
                     ..Default::default()
                 },
+                publisher: Some("Cupnfish".into()),
             })
             .binaries(vec![
                 BundleBinary::new("localnative_iced".into(), true),

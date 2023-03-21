@@ -1,21 +1,29 @@
-use std::{fs, path::PathBuf, str::FromStr};
+use std::{path::PathBuf, str::FromStr};
 
-use xshell::{cmd, pushd, rm_rf};
+use xshell::{cmd, Shell};
 
 use crate::flags::Ndkbd;
 
 impl Ndkbd {
     pub fn run(&self) -> anyhow::Result<()> {
-        let _p = pushd("localnative_core")?;
+        let sh = Shell::new()?;
+
+        let _p = sh.push_dir("localnative_core");
 
         if self.debug {
-            cmd!("cargo ndk -t armeabi-v7a -t arm64-v8a -t x86 -t x86_64 build")
+            cmd!(
+                sh,
+                "cargo ndk -t armeabi-v7a -t arm64-v8a -t x86 -t x86_64 build"
+            )
         } else {
-            cmd!("cargo ndk -t armeabi-v7a -t arm64-v8a -t x86 -t x86_64 build --release")
+            cmd!(
+                sh,
+                "cargo ndk -t armeabi-v7a -t arm64-v8a -t x86 -t x86_64 build --release"
+            )
         }
         .run()?;
 
-        let _p = pushd("..")?;
+        let _p = sh.push_dir("..");
 
         let to = PathBuf::from_str("../localnative-android/app/src/main/jniLibs")?;
         let from = PathBuf::from("./target");
@@ -40,10 +48,9 @@ impl Ndkbd {
             let from = from.join(mode).join(name);
             let to = to.join(name);
             if to.exists() {
-                rm_rf(&to)?;
+                sh.remove_path(&to)?;
             }
-            fs::copy(from, to)?;
-            //cp(from, to)?;
+            sh.copy_file(from, to)?;
         }
 
         Ok(())

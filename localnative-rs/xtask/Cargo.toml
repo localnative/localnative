@@ -7,6 +7,6 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0"
-xshell = "0.1"
-xflags = "0.2"
-tauri-bundler = "1.0"
+xshell = "0.2"
+xflags = "0.3"
+tauri-bundler = "1.1"

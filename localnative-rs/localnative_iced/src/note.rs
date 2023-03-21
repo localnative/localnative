@@ -1,15 +1,18 @@
-use iced::pure::{
-    widget::{Button, Column, QRCode, Row, Text},
+use iced::{
+    theme,
+    widget::{button, column, container, horizontal_space, row, text, QRCode},
     Element,
+    Length::Fill,
+    Length::FillPortion,
 };
 use localnative_core::Note;
 
-use crate::{icons::IconItem, style};
+use crate::icons::IconItem;
 #[derive(Debug)]
 pub struct NoteView {
     note: Note,
     tags: Vec<Tag>,
-    qrcode: Option<iced::pure::widget::qr_code::State>,
+    qrcode: Option<iced::widget::qr_code::State>,
 }
 #[derive(Debug, Clone)]
 pub struct Tag {
@@ -43,68 +46,63 @@ impl From<Note> for NoteView {
 }
 
 impl NoteView {
-    pub fn view(&self, theme: style::Theme) -> Element<Message> {
+    pub fn view(&self) -> Element<Message> {
         let Self { note, tags, qrcode } = self;
-        let qrcode = qrcode
-            .as_ref()
-            .map(|state| style::qr_code(QRCode::new(state), theme));
-        let url = Button::new(Text::new(note.url.as_str()))
-            .style(style::link(theme))
+        let qrcode = qrcode.as_ref().map(|state| QRCode::new(state));
+        let url = button(text(&note.url))
+            .style(crate::style::Url.into())
             .padding(0)
             .on_press(Message::OpenUrl);
-        let delete = Button::new(IconItem::Delete)
-            .style(style::transparent(theme))
+        let delete = button(IconItem::Delete)
+            .style(theme::Button::Text)
             .on_press(Message::Delete(note.rowid));
-        let qrcode_button = Button::new(IconItem::QRCode)
+        let qrcode_button = button(IconItem::QRCode)
+            .style(theme::Button::Text)
             .padding(0)
-            .style(style::transparent(theme))
             .on_press(Message::QRCode);
-        let row = Row::new()
-            .spacing(5)
-            .push(Text::new(note.created_at.as_str()))
-            .push(Text::new(note.uuid4.as_str()))
-            .push(Text::new(format!("rowid {}", note.rowid)))
-            .push(qrcode_button);
-        let wrap = tags.iter().fold(
-            iced_aw::pure::Wrap::new().spacing(5).push(row),
-            |wrap, tag| {
+        let row = row![
+            text(&note.created_at),
+            text(&note.uuid4),
+            text(format!("rowid {}", note.rowid)),
+            qrcode_button
+        ]
+        .spacing(5);
+        let wrap = tags
+            .iter()
+            .fold(iced_aw::Wrap::new().spacing(5.).push(row), |wrap, tag| {
                 let Tag { name } = tag;
-                let tag_button = Button::new(Text::new(name.as_str()))
-                    .style(style::tag(theme))
+                let tag_button = button(text(&name))
+                    .style(crate::style::Tag.into())
                     .padding(0)
                     .on_press(Message::Search(name.to_owned()));
                 wrap.push(tag_button)
-            },
-        );
-        let mut column = Column::new().push(wrap);
+            });
+        let mut column = column![wrap];
         if let Some(qrcode) = qrcode {
-            column = column.push(
-                Row::new()
-                    .push(style::horizontal_rule())
-                    .push(qrcode)
-                    .push(style::horizontal_rule()),
-            );
+            column = column.push(row![horizontal_space(Fill), qrcode, horizontal_space(Fill)]);
         }
         if !note.title.is_empty() {
-            column = column.push(Text::new(note.title.as_str()));
+            column = column.push(text(&note.title));
         }
         if !note.url.is_empty() {
             column = column.push(url);
         }
         if !note.description.is_empty() {
-            column = column.push(Text::new(note.description.as_str()));
+            column = column.push(text(&note.description));
         }
         if !note.comments.is_empty() {
-            column = column.push(Text::new(note.comments.as_str()));
+            column = column.push(text(&note.comments));
         }
 
-        column = column.push(
-            Row::with_children(style::horizontal_rules::<Message>(7))
-                .push(delete)
-                .push(style::horizontal_rule()),
-        );
-        iced::pure::widget::Container::new(column)
-            .style(style::note(theme))
+        column = column.push(row![
+            horizontal_space(FillPortion(12)),
+            delete,
+            horizontal_space(FillPortion(1))
+        ]);
+
+        container(column)
+            .padding(1)
+            .style(crate::style::SimpleBox)
             .into()
     }
     pub fn update(&mut self, msg: Message) {
@@ -120,7 +118,7 @@ impl NoteView {
                 }
                 None => {
                     self.qrcode.replace(
-                        iced::pure::widget::qr_code::State::new(self.note.url.as_bytes()).unwrap(),
+                        iced::widget::qr_code::State::new(self.note.url.as_bytes()).unwrap(),
                     );
                 }
             },
@@ -165,7 +163,7 @@ impl iced::Sandbox for NoteView {
         self.update(message)
     }
 
-    fn view(&mut self) -> Element<'_, Self::Message> {
-        self.view(style::Theme::Light)
+    fn view(&self) -> Element<'_, Self::Message> {
+        self.view()
     }
 }

@@ -1,16 +1,14 @@
 use iced::{
-    pure::{
-        widget::{Button, Checkbox, Column, Radio, Row, Text},
-        Element,
-    },
-    Command,
+    widget::{button, checkbox, column, horizontal_space, radio, row, text, Text},
+    Command, Element,
+    Length::Fill,
+    Length::Shrink,
 };
-use iced_aw::pure::{Card, Modal, NumberInput};
+use iced_aw::{Card, Modal, NumberInput};
 
 use crate::{
     config::Config,
     sidebar::Sidebar,
-    style::{self, Theme},
     tr,
     translate::{self, Language},
 };
@@ -34,7 +32,6 @@ pub enum Message {
 impl Settings {
     pub fn view<'settings, 'underlay: 'settings>(
         &'settings self,
-        theme: Theme,
         underlay: Element<'underlay, Message>,
         config: &'underlay Config,
     ) -> Element<'settings, Message> {
@@ -42,81 +39,75 @@ impl Settings {
         let language = config.language;
         let limit = config.limit;
         Modal::new(self.show_modal, underlay, move || {
-            let ok_button = Button::new(Text::new(tr!("ok"))).on_press(Message::Save);
-            let cancel_button = Button::new(Text::new(tr!("cancel"))).on_press(Message::Cancel);
+            let ok_button = button(text(tr!("ok"))).on_press(Message::Save);
+            let cancel_button = button(text(tr!("cancel"))).on_press(Message::Cancel);
             let disable_delete_tip =
-                Checkbox::new(disable_delete_tip, "", Message::DisableTip).spacing(0);
-            let try_fix_host =
-                Button::new(Text::new(tr!("try-fix-host"))).on_press(Message::TryFixHost);
+                checkbox("", disable_delete_tip, Message::DisableTip).spacing(0);
+            let try_fix_host = button(text(tr!("try-fix-host"))).on_press(Message::TryFixHost);
             // TODO: picklist not normaly work with modal
-            // let language_selector = PickList::new(
-            //     &mut state.language_selector,
+            // let language_selector = pick_list(
             //     &[Language::English, Language::Chinese][..],
             //     Some(language),
             //     Message::LanguageChanged,
             // )
             // .padding(3)
-            // .width(iced::Length::Shrink);
-            let language_selector = Row::new()
-                .push(style::horizontal_rule())
-                .push(Radio::new(
-                    Language::English,
+            // .width(Shrink);
+            let language_selector = row![
+                horizontal_space(Fill),
+                radio(
                     tr!("english"),
+                    Language::English,
                     Some(language),
                     Message::LanguageChanged,
-                ))
-                .push(Radio::new(
-                    Language::Chinese,
+                ),
+                radio(
                     tr!("chinese"),
+                    Language::Chinese,
                     Some(language),
                     Message::LanguageChanged,
-                ))
-                .push(style::horizontal_rule())
-                .spacing(30);
+                ),
+                horizontal_space(Fill)
+            ]
+            .spacing(30);
+
             let limit_input = NumberInput::new(limit, 1000, Message::LimitChanged)
                 .min(5)
                 .step(1)
-                .padding(0);
+                .padding(0.);
 
-            let body = Column::new()
-                .push(
-                    Row::new()
-                        .push(Text::new(tr!("disable-delete-tip")))
-                        .push(style::horizontal_rule())
-                        .push(disable_delete_tip),
-                )
-                .push(
-                    Column::new()
-                        .push(Text::new(tr!("language")))
-                        //.push(style::horizontal_rule())
-                        .push(language_selector),
-                )
-                .push(
-                    Row::new()
-                        .push(Text::new(tr!("limit")))
-                        .push(style::horizontal_rule())
-                        .push(limit_input),
-                )
-                .push(try_fix_host)
-                .align_items(iced::Alignment::Center)
-                .padding(0)
-                .spacing(10);
+            let body = column![
+                row![
+                    text(tr!("disable-delete-tip")),
+                    horizontal_space(Fill),
+                    disable_delete_tip
+                ],
+                column![
+                    text(tr!("lanuage")),
+                    horizontal_space(Shrink),
+                    language_selector
+                ],
+                row![text(tr!("limit")), horizontal_space(Fill), limit_input],
+                try_fix_host
+            ]
+            .align_items(iced::Alignment::Center)
+            .padding(0)
+            .spacing(10);
             Element::<'_, Message>::new(
                 Card::new(Text::new(tr!("settings")), body)
                     .foot(
-                        Row::new()
-                            .push(style::horizontal_rule())
-                            .push(ok_button)
-                            .push(cancel_button)
-                            .push(style::horizontal_rule())
-                            .spacing(10)
-                            .align_items(iced::Alignment::Center),
+                        row![
+                            horizontal_space(Fill),
+                            ok_button,
+                            cancel_button,
+                            horizontal_space(Fill),
+                        ]
+                        .spacing(10)
+                        .align_items(iced::Alignment::Center),
                     )
                     .on_close(Message::Cancel)
-                    .max_width(400),
+                    .max_width(400.),
             )
         })
-        .style(style::transparent(theme))
         .on_esc(Message::Cancel)
         .into()
     }

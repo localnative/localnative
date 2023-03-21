@@ -1,9 +1,14 @@
-use iced::pure::widget::{qr_code, Column, QRCode};
-use iced::pure::widget::{Button, Row, Text, TextInput};
-use iced::pure::Element;
+use iced::widget::Text;
+use iced::widget::{
+    button, column, horizontal_space, qr_code, row, text, text_input, tooltip, QRCode,
+};
 use iced::Command;
-use iced_aw::pure::NumberInput;
+use iced::Element;
+use iced::Length::Fill;
+use iced_aw::NumberInput;
+
 use once_cell::sync::OnceCell;
+use ouroboros::self_referencing;
 use regex::RegexSet;
 use std::borrow::Cow;
 use std::net::{IpAddr, Ipv4Addr};
@@ -17,14 +22,17 @@ use std::{
 use localnative_core::rpc::server::Stop;
 use tinyfiledialogs::open_file_dialog;
 
-use crate::{args, tr, Conn};
-
 use crate::{
-    error_handle,
-    icons::IconItem,
-    style::{self, Theme},
+    tr,
+    translate::{self, TranslateWithArgs},
+    Conn,
 };
 
+use crate::{error_handle, icons::IconItem};
+
+use self::ouroboros_impl_sync_view::Heads;
+
+#[self_referencing]
 pub struct SyncView {
     ip: String,
     pub port: u16,
@@ -33,6 +41,9 @@ pub struct SyncView {
     pub sync_state: SyncState,
     pub server_state: ServerState,
     pub stop: Option<Stop>,
+    #[borrows(server_addr)]
+    #[covariant]
+    pub translate: TranslateWithArgs<'this>,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -70,74 +81,84 @@ pub enum Message {
 }
 
 impl SyncView {
-    pub fn new() -> Self {
-        Self {
-            ip: String::new(),
-            port: 2345,
-            server_state: ServerState::Closed,
-            server_addr: String::new(),
-            ip_qr_code: qr_code::State::new(&[0]).unwrap(),
-            sync_state: SyncState::Waiting,
-            stop: None,
-        }
+    pub fn update_server_addr(&mut self, server_addr: String) {
+        let old = core::mem::take(self);
+        *self = Self::inner_update_server_addr(old, server_addr);
     }
-    pub fn view(&self, theme: Theme) -> Element<Message> {
-        let ip_input = TextInput::new("xxx.xxx.xxx.xxx", &self.ip, Message::IpInput)
+
+    fn inner_update_server_addr(self, server_addr: String) -> Self {
+        let Heads {
+            stop,
+            server_state,
+            sync_state,
+            ip_qr_code,
+            port,
+            ip,
+            ..
+        } = self.into_heads();
+
+        SyncViewBuilder {
+            stop,
+            server_state,
+            sync_state,
+            ip_qr_code,
+            server_addr,
+            port,
+            ip,
+            translate_builder: |server_addr: &String| {
+                translate::TranslateWithArgs::new("ip-qr", translate::args("ip", server_addr))
+            },
+        }
+        .build()
+    }
+
+    pub fn view(&self) -> Element<Message> {
+        let ip_input = text_input("xxx.xxx.xxx.xxx", self.borrow_ip(), Message::IpInput)
             .padding(0)
             .on_submit(Message::IpAddrVerify);
 
-        let ip_tip = iced::pure::widget::Tooltip::new(
+        let ip_tip = tooltip(
             ip_input,
             r"输入格式:xxx.xxx.xxx.xxx",
-            iced::tooltip::Position::Bottom,
+            iced::widget::tooltip::Position::Bottom,
         );
 
-        let port_input = NumberInput::new(self.port, u16::MAX, Message::PortInput)
-            .padding(0)
+        let port_input = NumberInput::new(*self.borrow_port(), u16::MAX, Message::PortInput)
+            .padding(0.)
             .on_submit(Message::IpAddrVerify);
 
-        let clear_button = Button::new(IconItem::Clear)
-            .style(style::transparent(theme))
+        let clear_button = button(IconItem::Clear)
             .padding(0)
             .on_press(Message::ClearAddrInput);
 
-        let ip_input_row = Row::new()
-            .push(style::horizontal_rule())
-            .push(Text::new(tr!("input-ip")))
-            .push(ip_tip)
-            .push(Text::new(":"))
-            .push(port_input)
-            .push(clear_button)
-            .push(style::horizontal_rule());
+        let ip_input_row = row![
+            horizontal_space(Fill),
+            text(tr!("input-ip")),
+            ip_tip,
+            text(":"),
+            port_input,
+            clear_button,
+            horizontal_space(Fill)
+        ];
 
-        let sync_from_server_button = Button::new(
-            Row::new()
-                .push(IconItem::SyncFromServer)
-                .push(Text::new(tr!("sync-from-server"))),
-        )
-        .style(style::transparent(theme))
+        let sync_from_server_button = button(row![
+            IconItem::SyncFromServer,
+            text(tr!("sync-from-server"))
+        ])
         .padding(0)
         .on_press(Message::SyncFromServer);
 
-        let sync_to_server_button = Button::new(
-            Row::new()
-                .push(IconItem::SyncToServer)
-                .push(Text::new(tr!("sync-to-server"))),
-        )
-        .style(style::transparent(theme))
-        .padding(0)
-        .on_press(Message::SyncToServer);
+        let sync_to_server_button =
+            button(row![IconItem::SyncToServer, text(tr!("sync-to-server"))])
+                .padding(0)
+                .on_press(Message::SyncToServer);
 
-        let sync_form_file_button = Button::new(
-            Row::new()
-                .push(IconItem::SyncFromFile)
-                .push(Text::new(tr!("sync-from-file"))),
-        )
-        .style(style::transparent(theme))
-        .padding(0)
-        .on_press(Message::SyncFromFile);
+        let sync_form_file_button =
+            button(row![IconItem::SyncFromFile, text(tr!("sync-from-file"))])
+                .padding(0)
+                .on_press(Message::SyncFromFile);
 
-        let text = match self.sync_state {
+        let content_text = match self.borrow_sync_state() {
             SyncState::Waiting => tr!("sync-waiting"),
             SyncState::Syncing => tr!("sync-syncing"),
             SyncState::SyncError(err) => {
@@ -151,28 +172,16 @@ impl SyncView {
             SyncState::SyncFromFileUnknownError => tr!("sync-from-file-unknown-error"),
         };
 
-        let server_button_text = match self.server_state {
-            ServerState::Closed => Row::new()
-                .push(IconItem::CloseServer)
-                .push(Text::new(tr!("closed"))),
-            ServerState::Starting => Row::new()
-                .push(IconItem::Sync)
-                .push(Text::new(tr!("starting"))),
-            ServerState::Opened => Row::new()
-                .push(IconItem::OpenServer)
-                .push(Text::new(tr!("opened"))),
-            ServerState::Closing => Row::new()
-                .push(IconItem::Sync)
-                .push(Text::new(tr!("closing"))),
-            ServerState::Error => Row::new()
-                .push(IconItem::Clear)
-                .push(Text::new(tr!("unknow-error"))),
+        let server_button_text = match self.borrow_server_state() {
+            ServerState::Closed => row![IconItem::CloseServer, text(tr!("closed"))],
+            ServerState::Starting => row![IconItem::Sync, text(tr!("starting"))],
+            ServerState::Opened => row![IconItem::OpenServer, text(tr!("opened"))],
+            ServerState::Closing => row![IconItem::Sync, text(tr!("closing"))],
+            ServerState::Error => row![IconItem::Clear, text(tr!("unknow-error"))],
         };
-        let mut server_button = Button::new(server_button_text)
-            .padding(0)
-            .style(style::transparent(theme));
+        let mut server_button = button(server_button_text).padding(0);
 
-        server_button = match self.server_state {
+        server_button = match self.borrow_server_state() {
             ServerState::Closed => server_button.on_press(Message::OpenServer),
             ServerState::Starting | ServerState::Closing | ServerState::Error => {
                 server_button.on_press(Message::Waiting)
@@ -180,29 +189,28 @@ impl SyncView {
             ServerState::Opened => server_button.on_press(Message::CloseServer),
         };
 
-        let mut res = Column::new()
+        let mut res = column![
+            text(content_text),
+            text(tr!("sync-client-tip")),
+            text(tr!("input-ip-tip")),
+            ip_input_row,
+            row![
+                sync_from_server_button,
+                sync_to_server_button,
+                sync_form_file_button
+            ]
             .spacing(20)
-            .push(Text::new(text))
-            .push(Text::new(tr!("sync-client-tip")))
-            .push(Text::new(tr!("input-ip-tip")))
-            .push(ip_input_row)
-            .push(
-                Row::new()
-                    .push(sync_from_server_button)
-                    .push(sync_to_server_button)
-                    .push(sync_form_file_button)
-                    .spacing(20)
-                    .align_items(iced::Alignment::Center),
-            )
-            .align_items(iced::Alignment::Center)
-            .push(Text::new(tr!("sync-server-tip")))
-            .push(server_button);
-        if self.server_state == ServerState::Opened {
-            println!("ip: {}", self.server_addr.clone());
-            let args = args!("ip"=>self.server_addr.clone());
+            .align_items(iced::Alignment::Center),
+            text(tr!("sync-server-tip")),
+            server_button
+        ]
+        .spacing(20)
+        .align_items(iced::Alignment::Center);
+
+        if *self.borrow_server_state() == ServerState::Opened {
             res = res
-                .push(Text::new(tr!("ip-qr";&args)))
-                .push(QRCode::new(&self.ip_qr_code));
+                .push(Text::new(self.borrow_translate().tr()))
+                .push(QRCode::new(self.borrow_ip_qr_code()));
         }
 
         res.into()
@@ -221,75 +229,87 @@ impl SyncView {
                     ]).unwrap()
                 });
                 if ip_regex.is_match(&input) || Ipv6Addr::from_str(&input).is_ok() {
-                    self.ip = input;
+                    self.with_ip_mut(|ip| *ip = input);
                 }
             }
             Message::PortInput(input) => {
-                self.port = input;
+                self.with_port_mut(|port| *port = input);
             }
             Message::SyncFromServer => {
-                if let Ok(ip) = IpAddr::from_str(&self.ip) {
-                    let addr = SocketAddr::new(ip, self.port);
-                    self.sync_state = SyncState::Syncing;
+                if let Ok(ip) = IpAddr::from_str(self.borrow_ip()) {
+                    let addr = SocketAddr::new(ip, *self.borrow_port());
+                    self.with_sync_state_mut(|state| *state = SyncState::Syncing);
                     return Command::perform(
                         client_sync_from_server(addr),
                         crate::Message::SyncResult,
                     );
                 } else {
-                    self.sync_state = SyncState::IpAddrParseError;
+                    self.with_sync_state_mut(|state| *state = SyncState::IpAddrParseError);
                 }
             }
             Message::ClearAddrInput => {
-                self.ip.clear();
-                self.sync_state = SyncState::Waiting;
-                self.port = 2345;
+                self.with_ip_mut(|ip| ip.clear());
+                self.with_sync_state_mut(|state| *state = SyncState::Waiting);
+
+                self.with_port_mut(|port| *port = 2345);
             }
             Message::SyncToServer => {
-                if let Ok(ip) = IpAddr::from_str(&self.ip) {
-                    let addr = SocketAddr::new(ip, self.port);
-                    self.sync_state = SyncState::Syncing;
+                if let Ok(ip) = IpAddr::from_str(self.borrow_ip()) {
+                    let addr = SocketAddr::new(ip, *self.borrow_port());
+                    self.with_sync_state_mut(|state| *state = SyncState::Syncing);
                     return Command::perform(
                         client_sync_to_server(addr),
                         crate::Message::SyncResult,
                     );
                 } else {
-                    self.sync_state = SyncState::IpAddrParseError;
+                    self.with_sync_state_mut(|state| *state = SyncState::IpAddrParseError);
                 }
             }
             Message::IpAddrVerify => {
-                if IpAddr::from_str(&self.ip).is_err() {
-                    self.sync_state = SyncState::IpAddrParseError;
+                if IpAddr::from_str(&self.borrow_ip()).is_err() {
+                    self.with_sync_state_mut(|state| *state = SyncState::IpAddrParseError);
                 } else {
-                    self.sync_state = SyncState::IpAddrParsePass;
+                    self.with_sync_state_mut(|state| *state = SyncState::IpAddrParsePass);
                 }
             }
             Message::SyncFromFile => {
                 if let Some(path) = get_sync_file_path() {
-                    self.sync_state = SyncState::Syncing;
+                    self.with_sync_state_mut(|state| *state = SyncState::Syncing);
+
                     return Command::perform(sync_via_file(path, conn), crate::Message::SyncOption);
                 } else {
-                    self.sync_state = SyncState::FilePathGetError;
+                    self.with_sync_state_mut(|state| *state = SyncState::FilePathGetError);
                 }
             }
             Message::OpenServer => {
-                self.server_state = ServerState::Starting;
+                self.with_server_state_mut(|state| *state = ServerState::Starting);
+
                 return Command::perform(
-                    start_server(self.port),
+                    start_server(*self.borrow_port()),
                     crate::Message::StartServerResult,
                 );
             }
             Message::Waiting => {
                 // waiting...
-                if self.server_state == ServerState::Error {
-                    self.server_state = ServerState::Closed;
+                if *self.borrow_server_state() == ServerState::Error {
+                    self.with_server_state_mut(|state| *state = ServerState::Closed);
                 }
             }
             Message::CloseServer => {
-                self.server_state = ServerState::Closing;
-                if let Some(stop) = self.stop.take() {
-                    return Command::perform(stop_server(stop), crate::Message::ServerOption);
+                self.with_server_state_mut(|state| *state = ServerState::Closing);
+                if let Some(cmd) = self.with_stop_mut(|stop| {
+                    if let Some(stop) = stop.take() {
+                        Some(Command::perform(
+                            stop_server(stop),
+                            crate::Message::ServerOption,
+                        ))
+                    } else {
+                        None
+                    }
+                }) {
+                    return cmd;
                 } else {
-                    self.server_state = ServerState::Closed;
+                    self.with_server_state_mut(|state| *state = ServerState::Closed);
                 }
             }
         }
@@ -299,7 +319,19 @@ impl SyncView {
 
 impl Default for SyncView {
     fn default() -> Self {
-        Self::new()
+        SyncViewBuilder {
+            ip: String::new(),
+            port: 2345,
+            server_addr: String::new(),
+            ip_qr_code: qr_code::State::new(&[0]).unwrap(),
+            sync_state: SyncState::Waiting,
+            server_state: ServerState::Closed,
+            stop: None,
+            translate_builder: |server_addr: &String| {
+                translate::TranslateWithArgs::new("ip-qr", translate::args("ip", server_addr))
+            },
+        }
+        .build()
     }
 }
 
