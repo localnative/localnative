@@ -1,8 +1,6 @@
-use iced::pure::widget::{Button, Row, Text};
-use iced::pure::Element;
+use iced::widget::{button, row, text};
+use iced::Element;
 use serde::{Deserialize, Serialize};
-
-use crate::style::{self, Theme};
 
 #[derive(Debug, Clone)]
 pub enum Message {
@@ -26,19 +24,16 @@ impl From<Tag> for TagView {
     }
 }
 impl TagView {
-    pub fn view(&self, theme: Theme) -> Element<Message> {
-        Row::new()
-            .push(
-                Button::new(Text::new(self.tag.name.as_str()).size(16))
-                    .style(style::tag(theme))
-                    .on_press(Message::Search(self.tag.name.clone())),
-            )
-            .push(
-                Button::new(Text::new(self.tag.count.to_string()).color([1.0, 0.0, 0.0]))
-                    .on_press(Message::Search(self.tag.count.to_string()))
-                    .style(style::count(theme)),
-            )
-            .into()
+    pub fn view(&self) -> Element<Message> {
+        row![
+            button(text(&self.tag.name).size(16))
+                .style(crate::style::Tag.into())
+                .on_press(Message::Search(self.tag.name.clone())),
+            button(text(self.tag.count).size(20))
+                .style(crate::style::TagNum.into())
+                .on_press(Message::Search(self.tag.count.to_string())),
+        ]
+        .into()
     }
 }
 
@@ -64,7 +59,7 @@ impl iced::Sandbox for TagView {
         }
     }
 
-    fn view(&mut self) -> Element<'_, Self::Message> {
-        self.view(Theme::Light)
+    fn view(&self) -> Element<'_, Self::Message> {
+        self.view()
     }
 }

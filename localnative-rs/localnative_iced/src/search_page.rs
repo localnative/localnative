@@ -1,17 +1,16 @@
 use iced::{
-    pure::{
-        widget::{Button, Column, Container, Row, Scrollable, Text, TextInput},
-        Element,
+    theme,
+    widget::{
+        button, column, container, horizontal_space, row, scrollable, scrollable::Properties, text,
+        text_input, vertical_space,
     },
-    Command,
+    Command, Element,
+    Length::Fill,
 };
 
 use crate::{
-    config::Config,
-    icons::IconItem,
-    middle_date::MiddleDate,
-    style::{self, Theme},
-    tr, Conn, DateView, NoteView, TagView,
+    config::ThemeType, icons::IconItem, middle_date::MiddleDate, tr, Conn, DateView, NoteView,
+    TagView,
 };
 
 #[cfg(feature = "preview")]
@@ -40,9 +39,9 @@ pub enum Message {
     PrePage,
 }
 impl SearchPage {
-    pub fn from_config(config: &Config) -> Self {
+    pub fn default_with_theme(theme: ThemeType) -> Self {
         Self {
-            days: DateView::new(config),
+            days: DateView::new(theme),
             ..Default::default()
         }
     }
@@ -55,7 +54,7 @@ impl SearchPage {
             ..Default::default()
         }
     }
-    pub fn view(&self, theme: Theme, limit: u32) -> Element<Message> {
+    pub fn view(&self, limit: u32) -> Element<Message> {
         let Self {
             notes,
             tags,
@@ -63,98 +62,111 @@ impl SearchPage {
             search_value,
             ..
         } = self;
-        let mut search_bar = Row::new().push(IconItem::Search).push(
-            TextInput::new(&tr!("search"), search_value, Message::SearchInput)
-                .on_submit(Message::Search),
-        );
+        let mut search_bar = row![
+            IconItem::Search,
+            text_input(&tr!("search"), search_value, Message::SearchInput)
+                .on_submit(Message::Search)
+        ];
+
         if !self.search_value.is_empty() {
             search_bar = search_bar.push(
-                Button::new(IconItem::Clear)
-                    .style(style::transparent(theme))
+                button(IconItem::Clear)
+                    .style(theme::Button::Text)
                     .padding(0)
                     .on_press(Message::Clear),
             );
         }
-        let refresh_button = Button::new(IconItem::Refresh)
+        let refresh_button = button(IconItem::Refresh)
+            .style(theme::Button::Text)
             .padding(0)
-            .style(style::transparent(theme))
             .on_press(Message::Refresh);
+
         search_bar = search_bar.push(refresh_button);
-        let tags = Container::new(Scrollable::new(
-            tags.iter().fold(
-                iced_aw::pure::Wrap::new()
-                    .spacing(5)
-                    .push(Text::new(tr!("tags"))),
-                |tags, tag| tags.push(tag.view(theme).map(Message::Tag)),
-            ),
-        ))
+
+        let tags = container(scrollable(tags.iter().fold(
+            iced_aw::Wrap::new().spacing(5.).push(text(tr!("tags"))),
+            |tags, tag| tags.push(tag.view().map(Message::Tag)),
+        )))
         .width(iced::Length::FillPortion(2));
-        let days = Container::new(days.view(theme).map(Message::Day))
-            .padding(2)
-            .height(iced::Length::Units(256));
-        let next_button = Button::new(IconItem::Next)
-            .style(style::transparent(theme))
+
+        let days = container(days.view().map(Message::Day)).padding(2).height({
+            if days.is_show {
+                iced::Length::Fixed(256.)
+            } else {
+                iced::Length::Shrink
+            }
+        });
+        let next_button = button(IconItem::Next)
+            .style(theme::Button::Text)
             .padding(0)
             .on_press(Message::NextPage);
-        let pre_button = Button::new(IconItem::Pre)
-            .style(style::transparent(theme))
+        let pre_button = button(IconItem::Pre)
+            .style(theme::Button::Text)
             .padding(0)
             .on_press(Message::PrePage);
-        let page_info = Text::new(format!(
+        let page_info = text(format!(
             "{}-{}/{}",
             self.offset + 1,
             (self.offset + limit).min(self.count),
             self.count
         ));
-        let page_ctrl = Row::new()
-            .push(style::horizontal_rule())
-            .push(pre_button)
-            .push(page_info)
-            .push(next_button)
-            .push(style::horizontal_rule());
+        let page_ctrl = row![
+            horizontal_space(Fill),
+            pre_button,
+            page_info,
+            next_button,
+            horizontal_space(Fill)
+        ];
+
         let note_page = if self.count > 0 {
-            let notes = Container::new(
-                Scrollable::new(notes.iter().enumerate().fold(
-                    iced_aw::pure::Wrap::new_vertical().push(days),
-                    |notes, (idx, note_view)| {
-                        notes.push(
-                            note_view
-                                .view(theme)
-                                .map(move |note_msg| Message::Note(note_msg, idx)),
+            let notes = container(
+                scrollable(
+                    notes
+                        .iter()
+                        .enumerate()
+                        .fold(
+                            iced_aw::Wrap::new_vertical().spacing(5.).push(days),
+                            |notes, (idx, note_view)| {
+                                notes.push(
+                                    note_view
+                                        .view()
+                                        .map(move |note_msg| Message::Note(note_msg, idx)),
+                                )
+                            },
                         )
-                    },
-                ))
-                .scroller_width(5),
+                        .padding(12.),
+                )
+                .vertical_scroll(Properties::new().width(10).scroller_width(10)),
             )
             .height(iced::Length::FillPortion(8));
 
-            Column::new().push(search_bar).push(notes).push(page_ctrl)
+            column![search_bar, notes, page_ctrl]
         } else {
             let tip = if self.search_value.is_empty() && self.range.is_none() {
                 tr!("nothing")
             } else {
                 tr!("not-found")
             };
-            let tip = Container::new(
-                Column::new()
-                    .push(style::vertical_rule())
-                    .push(
-                        Row::new()
-                            .push(style::horizontal_rule())
-                            .push(Text::new(tip).size(50))
-                            .push(style::horizontal_rule()),
-                    )
-                    .push(style::vertical_rule()),
-            )
+            let tip = container(column![
+                vertical_space(Fill),
+                row![
+                    horizontal_space(Fill),
+                    text(tip).size(50),
+                    horizontal_space(Fill)
+                ],
+                vertical_space(Fill)
+            ])
             .height(iced::Length::FillPortion(8));
-            Column::new()
-                .push(search_bar)
-                .push(Column::new().push(days).push(tip))
-                .push(page_ctrl)
+            column![
+                search_bar,
+                container(column![days, tip]).padding(12.),
+                page_ctrl
+            ]
         }
         .align_items(iced::Alignment::Center)
         .width(iced::Length::FillPortion(8));
-        Container::new(Row::new().push(note_page).push(tags)).into()
+
+        container(row![note_page, tags]).into()
     }
     pub fn update(
         &mut self,
@@ -286,62 +298,15 @@ impl SearchPage {
                 )
             }
             Message::Day(dm) => match dm {
-                crate::days::Message::DayOrMonth => {
-                    self.days.day_or_month();
-                    self.days.clear_cache_and_convert_selected_range();
-                    Command::none()
-                }
-
-                crate::days::Message::ChartMsg(crate::days::ChartMsg::ClearRange) => {
-                    self.days.clear_cahce();
-                    self.days.chart.selected.take();
-                    self.range.take();
-                    if self.days.is_full {
-                        match self.days.chart.level {
-                            crate::days::ChartLevel::Day => {
-                                self.days.chart.full_days = self.days.full_days;
-                                self.days.chart.last_day = self.days.last_day;
-                            }
-                            crate::days::ChartLevel::Month => {
-                                self.days.chart.full_months = self.days.full_months;
-                                self.days.chart.last_month = self.days.last_month;
-                            }
-                        }
-                    }
-                    search(
-                        conn,
-                        self.search_value.to_owned(),
-                        limit,
-                        self.offset,
-                        self.range,
-                    )
-                }
-                crate::days::Message::ChartMsg(crate::days::ChartMsg::FilterSearch(selected)) => {
-                    self.days.clear_cahce();
-                    if matches!(self.days.chart.level, crate::days::ChartLevel::Month) {
-                        let day_selected = selected
-                            .months_to_days(self.days.chart.base_day, &self.days.chart.base_month);
-                        self.days.preview_chart(day_selected);
-                        self.days.preview_chart_update(day_selected);
-                    }
-
-                    let range = self.days.get_range(selected);
-                    self.range = Some(range);
-                    search(
-                        conn,
-                        self.search_value.to_owned(),
-                        limit,
-                        self.offset,
-                        self.range,
-                    )
-                }
-                crate::days::Message::PreviewChartMsg(crate::days::ChartMsg::FilterSearch(
-                    selected,
-                )) => {
-                    self.days.preview_chart(selected);
-                    self.days.preview_chart_update(selected);
-                    let range = selected.get_days_range(self.days.preview_chart.base_day);
-                    self.range = Some(range);
+                crate::days::Message::Clear => search(
+                    conn,
+                    self.search_value.to_owned(),
+                    limit,
+                    self.offset,
+                    self.range,
+                ),
+                crate::days::Message::Selected { start, end } => {
+                    self.range = Some((start, end));
                     search(
                         conn,
                         self.search_value.to_owned(),
@@ -418,7 +383,7 @@ impl iced::Sandbox for SearchPage {
         // TODO:
     }
 
-    fn view(&mut self) -> Element<'_, Self::Message> {
-        self.view(Theme::Light, 10)
+    fn view(&self) -> Element<'_, Self::Message> {
+        self.view(10)
     }
 }

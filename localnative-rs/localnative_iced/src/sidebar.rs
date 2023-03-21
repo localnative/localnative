@@ -1,16 +1,12 @@
 use iced::{
-    pure::{
-        widget::{Button, Column, Text},
-        Element,
-    },
-    Command,
+    widget::{button, column, text, vertical_space},
+    Command, Element, Length,
 };
 
 use crate::{
-    config::Config,
+    config::{Config, ThemeType},
     icons::IconItem,
     settings::Settings,
-    style::{self, Theme},
     tr,
 };
 #[derive(Default)]
@@ -29,7 +25,7 @@ impl Default for State {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum Message {
     TurnSearchPage,
     TurnSettings,
@@ -39,56 +35,62 @@ pub enum Message {
 
 impl Sidebar {
     pub const SIDEBAR_ICON_SIZE: u16 = 32;
-    pub fn view(&self, theme: Theme) -> Element<Message> {
-        let search_page = Button::new(
-            Column::new()
-                .push(IconItem::Note.into_text().size(Self::SIDEBAR_ICON_SIZE))
-                .push(Text::new(tr!("notes")))
-                .align_items(iced::Alignment::Center),
+    pub fn view(&self, theme: &ThemeType) -> Element<Message> {
+        let search_page = button(
+            column![
+                IconItem::Note.into_text().size(Self::SIDEBAR_ICON_SIZE),
+                text(tr!("notes"))
+            ]
+            .align_items(iced::Alignment::Center),
         )
-        .style(style::transparent(theme))
+        .style(iced::theme::Button::Text)
         .padding(0)
         .on_press(Message::TurnSearchPage);
-        let settings = Button::new(IconItem::Settings.into_text().size(Self::SIDEBAR_ICON_SIZE))
+
+        let settings = button(IconItem::Settings.into_text().size(Self::SIDEBAR_ICON_SIZE))
+            .style(iced::theme::Button::Text)
             .padding(0)
-            .style(style::transparent(theme))
             .on_press(Message::TurnSettings);
 
-        let sync_view = Button::new(
-            Column::new()
-                .push(IconItem::Sync.into_text().size(Self::SIDEBAR_ICON_SIZE))
-                .push(Text::new(tr!("sync")))
-                .align_items(iced::Alignment::Center),
+        let sync_view = button(
+            column![
+                IconItem::Sync.into_text().size(Self::SIDEBAR_ICON_SIZE),
+                text(tr!("sync"))
+            ]
+            .align_items(iced::Alignment::Center),
         )
+        .style(iced::theme::Button::Text)
         .padding(0)
-        .style(style::transparent(theme))
         .on_press(Message::TurnSyncView);
-        let theme_button = Button::new(
+
+        let theme_button = button(
             match theme {
-                Theme::Light => IconItem::Light,
-                Theme::Dark => IconItem::Dark,
+                ThemeType::Light => IconItem::Light,
+                ThemeType::Dark => IconItem::Dark,
             }
             .into_text()
             .size(Self::SIDEBAR_ICON_SIZE),
         )
+        .style(iced::theme::Button::Text)
         .padding(0)
-        .style(style::transparent(theme))
         .on_press(Message::ThemeChanged);
 
-        Column::new()
-            .push(search_page)
-            .push(sync_view)
-            .push(style::vertical_rule())
-            .push(theme_button)
-            .push(settings)
-            .align_items(iced::Alignment::Center)
-            .into()
+        column![
+            search_page,
+            sync_view,
+            vertical_space(Length::Fill),
+            theme_button,
+            settings
+        ]
+        .align_items(iced::Alignment::Center)
+        .into()
     }
     pub fn update(
         &mut self,
         message: Message,
         settings: &mut Settings,
         config: &mut Config,
+        theme: &mut ThemeType,
     ) -> Command<crate::Message> {
         match message {
             Message::TurnSearchPage => {
@@ -119,6 +121,7 @@ impl Sidebar {
             }
             Message::ThemeChanged => {
                 config.theme = !config.theme;
+                *theme = config.theme;
             }
         }
         Command::none()

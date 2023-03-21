@@ -1,12 +1,71 @@
+use core::ops::Not;
 use std::path::PathBuf;
 
-use crate::{error_handle, style::Theme, translate::Language};
+use crate::{error_handle, translate::Language};
+use plotters::style::RGBColor;
 use serde::{Deserialize, Serialize};
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
+pub enum ThemeType {
+    Light,
+    Dark,
+    // Custom,
+}
+
+impl ThemeType {
+    pub fn selection_color(&self) -> RGBColor {
+        match self {
+            Self::Light => RGBColor(255, 204, 128), // 橙色
+            Self::Dark => RGBColor(255, 153, 51),   // 橙黄色
+        }
+    }
+
+    pub fn line_color(&self) -> RGBColor {
+        match self {
+            Self::Light => RGBColor(0, 128, 255), // 蓝色
+            Self::Dark => RGBColor(255, 102, 0),  // 橙红色
+        }
+    }
+
+    pub fn fill_color(&self) -> RGBColor {
+        match self {
+            Self::Light => RGBColor(204, 229, 255), // 淡蓝色
+            Self::Dark => RGBColor(80, 80, 80),     // 深灰色
+        }
+    }
+
+    pub fn text_color(&self) -> RGBColor {
+        match self {
+            Self::Light => RGBColor(0, 0, 0),      // 黑色
+            Self::Dark => RGBColor(255, 255, 255), // 白色
+        }
+    }
+}
+
+impl Not for ThemeType {
+    type Output = Self;
+
+    fn not(self) -> Self::Output {
+        match self {
+            ThemeType::Light => ThemeType::Dark,
+            ThemeType::Dark => ThemeType::Light,
+        }
+    }
+}
+
+impl Into<iced::Theme> for ThemeType {
+    fn into(self) -> iced::Theme {
+        match self {
+            ThemeType::Light => iced::Theme::Light,
+            ThemeType::Dark => iced::Theme::Dark,
+        }
+    }
+}
 
 // config 需要保存主题、语言、limit、disable_delete_tip、is_first_open
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Config {
-    pub theme: Theme,
+    pub theme: ThemeType,
     pub language: Language,
     pub limit: u32,
     pub disable_delete_tip: bool,
@@ -19,7 +78,7 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            theme: Theme::Light,
+            theme: ThemeType::Light,
             language: Language::English,
             limit: 10,
             disable_delete_tip: false,
