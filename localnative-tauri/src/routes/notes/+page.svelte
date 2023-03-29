@@ -93,7 +93,7 @@
 					class="btn btn-sm"
 					on:click={() => {
 						globalThis.AppState.decOffset();
-						cmdSearchOrFilter();
+						cmdSearchOrFilter(searchText);
 					}}
 				>
 					«
@@ -103,7 +103,7 @@
 					class="btn btn-sm"
 					on:click={() => {
 						globalThis.AppState.incOffset();
-						cmdSearchOrFilter();
+						cmdSearchOrFilter(searchText);
 					}}
 				>
 					»

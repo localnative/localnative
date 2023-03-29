@@ -41,3 +41,8 @@ pub async fn test_sync_server_addr(addr: String) -> bool {
 
     std::net::TcpStream::connect_timeout(&addr, Duration::from_secs(5)).is_ok()
 }
+
+#[tauri::command]
+pub async fn fix_browser() {
+    crate::init::WebKind::init_all().await;
+}
