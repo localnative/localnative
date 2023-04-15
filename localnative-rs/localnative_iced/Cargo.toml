@@ -8,7 +8,7 @@ edition = "2021"
 
 [dependencies]
 localnative_core = { path = "../localnative_core", features = ["no_print"] }
-open = "3"
+open = "4"
 image = "0.24"
 
 # -- impl tags start --
@@ -16,10 +16,10 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 # -- impl tags end --
 
-iced_style = "0.7"
+iced_style = "0.8"
 num-traits = "0.2"
-iced_native = "0.9"
-iced_graphics = { version = "0.7", features = ["font-source"] }
+iced_native = "0.10"
+iced_graphics = { version = "0.8", features = ["font-source"] }
 time = { version = "0.3", features = ["serde-human-readable", "macros"] }
 
 # -- impl lang start --
@@ -33,23 +33,23 @@ tokio = { version = "1", features = ["fs", "io-util", "macros"] }
 # -- impl lang end --
 
 # -- impl ip input start --
-regex = "1.6"
+regex = "1.7"
 tinyfiledialogs = "3"
 # -- impl ip input end --
 anyhow = "1"
 
-ouroboros = "0.15.5"
+ouroboros = "0.15"
 
-palette = "0.6"
+palette = "0.7"
 
 chrono = { version = "0.4", default-features = false }
 
-plotters-iced = "0.7"
+plotters-iced = "0.8"
 plotters = { version = "0.3", features = ["histogram"] }
 
 # -- impl init start --
 [target."cfg(target_os = \"windows\")".dependencies]
-winreg = "0.10"
+winreg = "0.50"
 # -- impl init end --
 
 
@@ -58,7 +58,7 @@ version = "0.8"
 optional = true
 
 [dependencies.iced_aw]
-version = "^0.4.0"
+version = "^0.5.0"
 git = "https://github.com/iced-rs/iced_aw.git"
 branch = "main"
 default-features = false
@@ -66,7 +66,7 @@ features = ["wrap", "number_input", "modal", "icons", "card"]
 
 
 [dependencies.iced]
-version = "0.8"
+version = "0.9"
 features = ["canvas", "qr_code", "tokio", "palette"]
 
 [features]

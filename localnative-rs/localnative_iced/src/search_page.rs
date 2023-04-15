@@ -62,11 +62,18 @@ impl SearchPage {
             search_value,
             ..
         } = self;
-        let mut search_bar = row![
-            IconItem::Search,
-            text_input(&tr!("search"), search_value, Message::SearchInput)
-                .on_submit(Message::Search)
-        ];
+        let search_icon = iced::widget::text_input::Icon {
+            font: crate::icons::ICONS,
+            code_point: '\u{f0d1}',
+            spacing: 8.5,
+            side: iced::widget::text_input::Side::Left,
+            size: Some(22.0),
+        };
+
+        let mut search_bar = row![text_input(&tr!("search"), search_value)
+            .icon(search_icon)
+            .on_input(Message::SearchInput)
+            .on_submit(Message::Search)];
 
         if !self.search_value.is_empty() {
             search_bar = search_bar.push(
