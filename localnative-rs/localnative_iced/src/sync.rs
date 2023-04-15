@@ -113,7 +113,8 @@ impl SyncView {
     }
 
     pub fn view(&self) -> Element<Message> {
-        let ip_input = text_input("xxx.xxx.xxx.xxx", self.borrow_ip(), Message::IpInput)
+        let ip_input = text_input("xxx.xxx.xxx.xxx", self.borrow_ip())
+            .on_input(Message::IpInput)
             .padding(0)
             .on_submit(Message::IpAddrVerify);
 

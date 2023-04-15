@@ -521,7 +521,7 @@ pub fn logo() -> Option<iced::window::Icon> {
     .and_then(|dyn_img| {
         let img = dyn_img.to_rgb8();
         let (width, height) = img.dimensions();
-        iced::window::Icon::from_rgba(img.into_raw(), width, height).ok()
+        iced::window::icon::from_rgba(img.into_raw(), width, height).ok()
     })
 }
 
