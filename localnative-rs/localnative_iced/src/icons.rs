@@ -64,7 +64,7 @@ impl IconItem {
         }
     }
     pub fn into_text<'a>(self) -> Text<'a> {
-        Text::new(self.into_char().to_string()).font(ICONS)
+        Text::new(self.into_char().to_string()).size(25).font(ICONS)
     }
 }
 

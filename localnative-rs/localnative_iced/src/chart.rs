@@ -16,7 +16,7 @@ use plotters::{
 };
 use plotters_iced::{Chart, DrawingBackend};
 
-use crate::{config::ThemeType, days::Message};
+use crate::{config::ThemeType, days::Message, tr};
 mod constants {
     pub const DAILY: i64 = 400;
     pub const MONTHLY: i64 = 2500;
@@ -128,9 +128,11 @@ where
 impl ChartState {
     fn date_text(&self, date: NaiveDate) -> String {
         match self {
-            ChartState::Daily { .. } => format!("Data: {:?}", date),
-            ChartState::Monthly { .. } => format!("Data: {:?}-{:?}", date.year(), date.month()),
-            ChartState::Yearly { .. } => format!("Data: {:?}", date.year()),
+            ChartState::Daily { .. } => format!("{}: {:?}", tr!("date"), date),
+            ChartState::Monthly { .. } => {
+                format!("{}: {:?}-{:?}", tr!("date"), date.year(), date.month())
+            }
+            ChartState::Yearly { .. } => format!("{}: {:?}", tr!("date"), date.year()),
         }
     }
 }
@@ -284,7 +286,7 @@ impl ChartView {
             chart
                 .draw_series(once(plotters::prelude::Rectangle::new(
                     selected,
-                    style.selection_color().mix(0.1).filled(),
+                    style.selection_color().mix(0.3).filled(),
                 )))
                 .expect("failed to draw selected rect");
         }
@@ -329,7 +331,7 @@ impl ChartView {
                                         .color(&text_color),
                                 )
                                 + plotters::prelude::Text::new(
-                                    format!("Count: {:?}", coord.1),
+                                    format!("{}: {:?}", tr!("count"), coord.1),
                                     (0, -15),
                                     TextStyle::from(("sans-serif", 12).into_font())
                                         .color(&text_color),

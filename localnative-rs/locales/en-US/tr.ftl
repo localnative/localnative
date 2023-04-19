@@ -53,3 +53,6 @@ try-fix-host = Your browser can’t communicate normally? Try clicking here to f
 sync-file-title = Select the sqlite3 file you will use for synchronization
 
 sync-file = *.sqlite3 file for synchronization
+
+date = Date
+count = Count
