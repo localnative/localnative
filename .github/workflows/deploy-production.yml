@@ -23,11 +23,6 @@ jobs:
           cd localnative-android
           ./gradlew bundleRelease
       - name: Sign Release
-           cd localnative-android
-           echo "find bundle file"
-           ls -l app/build/outputs/bundle
-           echo "find bundle file2"
-           ls -l app/build/outputs/bundle/release
         uses: r0adkll/sign-android-release@v1
         with:
           releaseDirectory: localnative-android/app/build/outputs/bundle/release
