@@ -1,4 +1,4 @@
-name: Deploy Production to Alpha
+name: Deploy Android to Google Play Alpha
 
 on: workflow_dispatch
 
