@@ -64,11 +64,15 @@ impl Default for DateView {
 impl DateView {
     pub fn view(&self) -> Element<Message> {
         let DateView { chart, .. } = self;
-        let minimize_or_maximize_button = button(if self.is_show {
-            IconItem::FilterOff
-        } else {
-            IconItem::Filter
-        })
+        let minimize_or_maximize_button = button(
+            if self.is_show {
+                IconItem::FilterOff
+            } else {
+                IconItem::Filter
+            }
+            .into_text()
+            .size(20),
+        )
         .style(theme::Button::Text)
         .padding(0)
         .on_press(Message::MaxOrMin);

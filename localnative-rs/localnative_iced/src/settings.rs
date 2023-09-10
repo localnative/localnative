@@ -1,13 +1,14 @@
 use iced::{
-    widget::{button, checkbox, column, horizontal_space, radio, row, text, Text},
+    widget::{button, checkbox, column, horizontal_space, radio, row},
     Command, Element,
     Length::Fill,
     Length::Shrink,
 };
-use iced_aw::{Card, Modal, NumberInput};
+use iced_aw::{card, modal, number_input};
 
 use crate::{
     config::Config,
+    icons::text,
     sidebar::Sidebar,
     tr,
     translate::{self, Language},
@@ -38,7 +39,7 @@ impl Settings {
         let disable_delete_tip = config.disable_delete_tip;
         let language = config.language;
         let limit = config.limit;
-        Modal::new(self.show_modal, underlay, move || {
+        modal(self.show_modal, underlay, {
             let ok_button = button(text(tr!("ok"))).on_press(Message::Save);
             let cancel_button = button(text(tr!("cancel"))).on_press(Message::Cancel);
             let disable_delete_tip =
@@ -59,18 +60,20 @@ impl Settings {
                     Language::English,
                     Some(language),
                     Message::LanguageChanged,
-                ),
+                )
+                .text_shaping(iced_graphics::core::text::Shaping::Advanced),
                 radio(
                     tr!("chinese"),
                     Language::Chinese,
                     Some(language),
                     Message::LanguageChanged,
-                ),
+                )
+                .text_shaping(iced_graphics::core::text::Shaping::Advanced),
                 horizontal_space(Fill)
             ]
             .spacing(30);
 
-            let limit_input = NumberInput::new(limit, 1000, Message::LimitChanged)
+            let limit_input = number_input(limit, 1000, Message::LimitChanged)
                 .min(5)
                 .step(1)
                 .padding(0.);
@@ -92,21 +95,20 @@ impl Settings {
             .align_items(iced::Alignment::Center)
             .padding(0)
             .spacing(10);
-            Element::<'_, Message>::new(
-                Card::new(Text::new(tr!("settings")), body)
-                    .foot(
-                        row![
-                            horizontal_space(Fill),
-                            ok_button,
-                            cancel_button,
-                            horizontal_space(Fill),
-                        ]
-                        .spacing(10)
-                        .align_items(iced::Alignment::Center),
-                    )
-                    .on_close(Message::Cancel)
-                    .max_width(400.),
-            )
+
+            card(text(tr!("settings")), body)
+                .foot(
+                    row![
+                        horizontal_space(Fill),
+                        ok_button,
+                        cancel_button,
+                        horizontal_space(Fill),
+                    ]
+                    .spacing(10)
+                    .align_items(iced::Alignment::Center),
+                )
+                .on_close(Message::Cancel)
+                .max_width(400.)
         })
         .on_esc(Message::Cancel)
         .into()

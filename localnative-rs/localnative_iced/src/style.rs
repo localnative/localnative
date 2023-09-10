@@ -50,7 +50,7 @@ impl iced::widget::button::StyleSheet for Tag {
 
     fn active(&self, style: &Self::Style) -> iced_style::button::Appearance {
         iced_style::button::Appearance {
-            border_radius: 6.5,
+            border_radius: 6.5.into(),
             background: Some(Background::Color(match style {
                 iced::Theme::Light => light_tag(),
                 iced::Theme::Dark => dark_tag(),
@@ -110,7 +110,7 @@ impl iced::widget::container::StyleSheet for SimpleBox {
 
     fn appearance(&self, style: &Self::Style) -> iced_style::container::Appearance {
         iced_style::container::Appearance {
-            border_radius: 6.6,
+            border_radius: 6.6.into(),
             background: Some(Background::Color(match style {
                 iced::Theme::Light => Color::from_rgba8(144, 140, 170, 0.15),
                 iced::Theme::Dark => Color::from_rgba8(64, 61, 82, 0.15),

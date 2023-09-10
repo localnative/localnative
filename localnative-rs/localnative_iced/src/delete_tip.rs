@@ -1,10 +1,10 @@
+use crate::icons::text;
+use crate::tr;
 use iced::{
-    widget::{button, horizontal_space, row, text},
+    widget::{button, horizontal_space, row},
     Element,
 };
-use iced_aw::{Card, Modal};
-
-use crate::tr;
+use iced_aw::{card, modal};
 
 pub struct DeleteTip {
     pub rowid: i64,
@@ -25,10 +25,10 @@ impl DeleteTip {
     ) -> Element<'tip, Message> {
         let underlay = search_page.view(limit).map(Message::SearchPage);
 
-        Modal::new(self.show_modal, underlay, || {
+        modal(self.show_modal, underlay, {
             let ok_button = button(text(tr!("ok"))).on_press(Message::Enter);
             let cancel_button = button(text(tr!("cancel"))).on_press(Message::Cancel);
-            Card::new(
+            card(
                 // TODO: make a head
                 row!(text("⚠️")),
                 row!(
@@ -48,7 +48,6 @@ impl DeleteTip {
             )
             .on_close(Message::Cancel)
             .max_width(300.)
-            .into()
         })
         .on_esc(Message::Cancel)
         .backdrop(Message::Cancel)

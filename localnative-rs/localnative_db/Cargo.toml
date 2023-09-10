@@ -1,0 +1,20 @@
+[package]
+name = "localnative_db"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+sea-orm = { version = "0.12", features = ["sqlx-sqlite", "runtime-tokio-rustls"] }
+sea-query = "0.30"
+sea-orm-migration = { version = "0.12", features = ["sqlx-sqlite", "runtime-tokio-rustls"] }
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+futures-util = "0.3"
+uuid = { workspace = true, features = ["v4"] }
+chrono = { workspace = true, default-features = false }
+anyhow.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["full"] }

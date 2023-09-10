@@ -17,26 +17,23 @@ mod translate;
 use std::cmp::Ordering;
 use std::sync::Arc;
 
+use crate::icons::text;
 use chart::ChartView;
 #[cfg(feature = "preview")]
 pub use chart::NewChart;
 use config::{Config, ThemeType};
 pub use days::DateView;
 use delete_tip::DeleteTip;
-use iced::{futures::lock::Mutex, widget::container, Command};
+use iced::{futures::lock::Mutex, widget::container, window::close, Command};
 use iced::{
-    widget::{column, horizontal_space, row, text, vertical_space},
+    widget::{column, horizontal_space, row, vertical_space},
     Length::Fill,
     Theme,
 };
-use iced_native::window;
-use iced_native::Event;
-use iced_native::{command, event::Status};
 use localnative_core::rpc::server::Stop;
 use localnative_core::{exe::get_sqlite_connection, rusqlite::Connection};
 use middle_date::MiddleDate;
 pub use note::NoteView;
-use once_cell::sync::OnceCell;
 pub use search_page::SearchPage;
 use sidebar::Sidebar;
 pub use tags::TagView;
@@ -85,6 +82,7 @@ pub enum Message {
     ServerOption(Option<()>),
     InitHost(()),
     Receiver(Option<MiddleDate>),
+    FontLoaded(Result<(), iced::font::Error>),
 }
 
 impl iced::Application for LocalNative {
@@ -108,6 +106,8 @@ impl iced::Application for LocalNative {
                 theme: theme.into(),
             },
             Command::batch([
+                iced::font::load(include_bytes!("../fonts/icons.ttf").as_slice())
+                    .map(Message::FontLoaded),
                 Command::perform(async {}, Message::Loading),
                 Command::perform(translate::init_bundle(language), Message::ApplyLanguage),
                 if is_first_open {
@@ -260,7 +260,7 @@ impl iced::Application for LocalNative {
                     if res.is_some() {
                         println!("ok!");
                     }
-                    Command::single(command::Action::Window(window::Action::Close))
+                    close()
                 }
                 Message::SidebarMessage(smsg) => {
                     let Data {
@@ -440,12 +440,13 @@ impl iced::Application for LocalNative {
                 }
                 Message::InitHost(..) => Command::none(),
                 Message::Receiver(None) => Command::none(),
+                Message::FontLoaded(_) => Command::none(),
             },
         }
     }
 
     fn subscription(&self) -> iced::Subscription<Self::Message> {
-        iced_native::subscription::events_with(events_handler)
+        iced::subscription::events_with(events_handler)
     }
 
     fn view(&self) -> iced::Element<'_, Self::Message> {
@@ -504,9 +505,9 @@ impl iced::Application for LocalNative {
         self.theme.into()
     }
 }
-fn events_handler(event: Event, states: Status) -> Option<Message> {
-    if states == Status::Ignored {
-        if let Event::Window(window::Event::CloseRequested) = event {
+fn events_handler(event: iced::Event, states: iced::event::Status) -> Option<Message> {
+    if states == iced::event::Status::Ignored {
+        if let iced::Event::Window(iced::window::Event::CloseRequested) = event {
             return Some(Message::RequestClosed);
         }
     }
@@ -527,7 +528,6 @@ pub fn logo() -> Option<iced::window::Icon> {
 
 pub fn settings() -> iced::Settings<Option<Config>> {
     iced::Settings {
-        default_font: font(),
         exit_on_close_request: false,
         flags: Config::load(),
         window: iced::window::Settings {
@@ -540,44 +540,11 @@ pub fn settings() -> iced::Settings<Option<Config>> {
 }
 pub fn none_flags_settings() -> iced::Settings<()> {
     iced::Settings {
-        default_font: font(),
         exit_on_close_request: false,
         ..Default::default()
     }
 }
-static FONT: OnceCell<Option<Vec<u8>>> = OnceCell::new();
 
-fn font() -> Option<&'static [u8]> {
-    FONT.get_or_init(|| {
-        use iced_graphics::font::Family;
-        let source = iced_graphics::font::Source::new();
-
-        source
-            .load(&[
-                Family::Title("PingFang SC".to_owned()),
-                Family::Title("Hiragino Sans GB".to_owned()),
-                Family::Title("Heiti SC".to_owned()),
-                Family::Title("Microsoft YaHei".to_owned()),
-                Family::Title("WenQuanYi Micro Hei".to_owned()),
-                Family::Title("Microsoft YaHei".to_owned()),
-                // TODO:iced 目前没有字体fallback，所以我们只能尽可能选择中英文支持的字体
-                Family::Title("Helvetica".to_owned()),
-                Family::Title("Tahoma".to_owned()),
-                Family::Title("Arial".to_owned()),
-                Family::SansSerif,
-            ])
-            .ok()
-    })
-    .as_ref()
-    .map(|f| f.as_slice())
-}
-
-// pub fn handle_notes(notes: Vec<Note>) -> (Vec<NoteView>) {
-//     for note in notes {
-//         let time = note.created_at;
-//     }
-//     todo!()
-// }
 #[inline(always)]
 pub fn error_handle(error: impl std::error::Error) {
     eprintln!("{:?}", error);

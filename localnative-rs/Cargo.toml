@@ -1,4 +1,13 @@
 [workspace]
-members = [ "localnative_iced", "localnative_core", "localnative_cli", "xtask" ]
+members = ["localnative_*", "xtask"]
 
 resolver = "2"
+
+
+[workspace.dependencies]
+tokio = "1"
+serde = "1"
+serde_json = "1"
+uuid = "1"
+chrono = { version = "0.4", default-features = false }
+anyhow = "1"

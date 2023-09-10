@@ -1,6 +1,7 @@
+use crate::icons::text;
 use iced::{
     theme,
-    widget::{button, column, container, horizontal_space, row, text, QRCode},
+    widget::{button, column, container, horizontal_space, row, QRCode},
     Element,
     Length::Fill,
     Length::FillPortion,
@@ -71,12 +72,13 @@ impl NoteView {
             .iter()
             .fold(iced_aw::Wrap::new().spacing(5.).push(row), |wrap, tag| {
                 let Tag { name } = tag;
-                let tag_button = button(text(&name))
+                let tag_button = button(text(&name).size(14))
                     .style(crate::style::Tag.into())
-                    .padding(0)
+                    .padding(1)
                     .on_press(Message::Search(name.to_owned()));
                 wrap.push(tag_button)
-            });
+            })
+            .align_items(iced::Alignment::Center);
         let mut column = column![wrap];
         if let Some(qrcode) = qrcode {
             column = column.push(row![horizontal_space(Fill), qrcode, horizontal_space(Fill)]);

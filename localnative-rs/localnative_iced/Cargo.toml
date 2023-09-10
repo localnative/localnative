@@ -8,43 +8,41 @@ edition = "2021"
 
 [dependencies]
 localnative_core = { path = "../localnative_core", features = ["no_print"] }
-open = "4"
+open = "5"
 image = "0.24"
 
 # -- impl tags start --
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
 # -- impl tags end --
 
-iced_style = "0.8"
+iced_style = "0.9"
 num-traits = "0.2"
-iced_native = "0.10"
-iced_graphics = { version = "0.8", features = ["font-source"] }
+iced_graphics = { version = "0.9" }
 time = { version = "0.3", features = ["serde-human-readable", "macros"] }
 
 # -- impl lang start --
 fluent-bundle = "0.15"
-once_cell = "1"
 unic-langid = { version = "0.9", features = ["macros"] }
 elsa = "1"
 intl-memoizer = "0.5"
 fern = "0.6"
-tokio = { version = "1", features = ["fs", "io-util", "macros"] }
+tokio = { workspace = true, features = ["fs", "io-util", "macros"] }
 # -- impl lang end --
 
 # -- impl ip input start --
-regex = "1.7"
+regex = "1.9"
 tinyfiledialogs = "3"
 # -- impl ip input end --
 anyhow = "1"
 
-ouroboros = "0.15"
+ouroboros = "0.17"
 
 palette = "0.7"
 
-chrono = { version = "0.4", default-features = false }
+chrono = { workspace = true, default-features = false }
 
-plotters-iced = "0.8"
+plotters-iced = "0.9"
 plotters = { version = "0.3", features = ["histogram"] }
 
 # -- impl init start --
@@ -58,15 +56,13 @@ version = "0.8"
 optional = true
 
 [dependencies.iced_aw]
-version = "^0.5.0"
-git = "https://github.com/iced-rs/iced_aw.git"
-branch = "main"
+version = "0.6"
 default-features = false
 features = ["wrap", "number_input", "modal", "icons", "card"]
 
 
 [dependencies.iced]
-version = "0.9"
+version = "0.10"
 features = ["canvas", "qr_code", "tokio", "palette"]
 
 [features]
@@ -94,11 +90,6 @@ required-features = ["preview"]
 [[bin]]
 name = "search_page"
 path = "./previews/search_page.rs"
-required-features = ["preview"]
-
-[[bin]]
-name = "chart"
-path = "./previews/days.rs"
 required-features = ["preview"]
 
 [[bin]]

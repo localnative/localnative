@@ -1,7 +1,7 @@
 use iced::{
     theme,
     widget::{
-        button, column, container, horizontal_space, row, scrollable, scrollable::Properties, text,
+        button, column, container, horizontal_space, row, scrollable, scrollable::Properties,
         text_input, vertical_space,
     },
     Command, Element,
@@ -9,8 +9,10 @@ use iced::{
 };
 
 use crate::{
-    config::ThemeType, icons::IconItem, middle_date::MiddleDate, tr, Conn, DateView, NoteView,
-    TagView,
+    config::ThemeType,
+    icons::{text, IconItem},
+    middle_date::MiddleDate,
+    tr, Conn, DateView, NoteView, TagView,
 };
 
 #[cfg(feature = "preview")]
@@ -67,7 +69,7 @@ impl SearchPage {
             code_point: '\u{f0d1}',
             spacing: 8.5,
             side: iced::widget::text_input::Side::Left,
-            size: Some(22.0),
+            size: Some(18.0),
         };
 
         let mut search_bar = row![text_input(&tr!("search"), search_value)
@@ -77,7 +79,7 @@ impl SearchPage {
 
         if !self.search_value.is_empty() {
             search_bar = search_bar.push(
-                button(IconItem::Clear)
+                button(IconItem::Clear.into_text().size(22))
                     .style(theme::Button::Text)
                     .padding(0)
                     .on_press(Message::Clear),
@@ -143,7 +145,9 @@ impl SearchPage {
                         )
                         .padding(12.),
                 )
-                .vertical_scroll(Properties::new().width(10).scroller_width(10)),
+                .direction(scrollable::Direction::Vertical(
+                    Properties::new().width(10).scroller_width(10),
+                )),
             )
             .height(iced::Length::FillPortion(8));
 
@@ -295,6 +299,7 @@ impl SearchPage {
             Message::Tag(tag_msg) => {
                 match tag_msg {
                     crate::tags::Message::Search(text) => self.search_value = text,
+                    crate::tags::Message::SearchCount(_) => todo!(),
                 }
                 search(
                     conn,

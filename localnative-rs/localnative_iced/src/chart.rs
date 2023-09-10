@@ -1,8 +1,8 @@
 use std::{cell::RefCell, collections::BTreeMap, fmt::Debug, iter::once, ops::Deref};
 
 use chrono::{Datelike, NaiveDate, Utc};
-use iced::widget::canvas::{self, Cursor};
 use iced::Point;
+use iced::{mouse::Cursor, widget::canvas};
 use plotters::{
     coord::{
         ranged1d::{ReversibleRanged, ValueFormatter},
@@ -484,14 +484,13 @@ impl Chart<Message> for DayChart {
         self.build_chart(state, builder);
     }
 
-    fn draw<F: Fn(&mut iced::widget::canvas::Frame)>(
+    fn draw<R: plotters_iced::Renderer, F: Fn(&mut iced::widget::canvas::Frame)>(
         &self,
+        renderer: &R,
         size: iced::Size,
         f: F,
     ) -> iced::widget::canvas::Geometry {
-        let mut frame = iced::widget::canvas::Frame::new(size);
-        f(&mut frame);
-        frame.into_geometry()
+        R::draw(renderer, size, f)
     }
 
     fn update(
@@ -499,10 +498,10 @@ impl Chart<Message> for DayChart {
         state: &mut Self::State,
         event: iced::widget::canvas::Event,
         bounds: iced::Rectangle,
-        cursor: iced::widget::canvas::Cursor,
+        cursor: iced::mouse::Cursor,
     ) -> (iced::event::Status, Option<Message>) {
         if let Cursor::Available(point) = cursor {
-            state.cursor_position = cursor.position_in(&bounds);
+            state.cursor_position = cursor.position_in(bounds);
 
             match event {
                 canvas::Event::Mouse(mouse) if bounds.contains(point) => match mouse {
@@ -576,9 +575,9 @@ impl Chart<Message> for DayChart {
         &self,
         _state: &Self::State,
         _bounds: iced::Rectangle,
-        _cursor: iced::widget::canvas::Cursor,
-    ) -> iced_native::mouse::Interaction {
-        iced_native::mouse::Interaction::Idle
+        _cursor: iced::mouse::Cursor,
+    ) -> iced::mouse::Interaction {
+        iced::mouse::Interaction::Idle
     }
 }
 
@@ -595,7 +594,10 @@ impl iced::Sandbox for NewChart {
         Self {
             chart: crate::DateView {
                 is_show: true,
-                chart: ChartView::new_test(),
+                chart: DayChart {
+                    view: ChartView::new_test(),
+                    style: ThemeType::Light,
+                },
             },
         }
     }

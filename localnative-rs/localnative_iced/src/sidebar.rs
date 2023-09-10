@@ -1,11 +1,11 @@
 use iced::{
-    widget::{button, column, text, vertical_space},
+    widget::{button, column, vertical_space},
     Command, Element, Length,
 };
 
 use crate::{
     config::{Config, ThemeType},
-    icons::IconItem,
+    icons::{text, IconItem},
     settings::Settings,
     tr,
 };

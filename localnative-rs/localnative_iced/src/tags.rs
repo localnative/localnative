@@ -1,10 +1,11 @@
-use iced::widget::{button, row, text};
+use crate::icons::text;
+use iced::widget::{button, row};
 use iced::Element;
 use serde::{Deserialize, Serialize};
-
 #[derive(Debug, Clone)]
 pub enum Message {
     Search(String),
+    SearchCount(i64),
 }
 
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]
@@ -26,13 +27,15 @@ impl From<Tag> for TagView {
 impl TagView {
     pub fn view(&self) -> Element<Message> {
         row![
-            button(text(&self.tag.name).size(16))
+            button(text(&self.tag.name).size(14))
                 .style(crate::style::Tag.into())
+                .padding(1)
                 .on_press(Message::Search(self.tag.name.clone())),
             button(text(self.tag.count).size(20))
                 .style(crate::style::TagNum.into())
-                .on_press(Message::Search(self.tag.count.to_string())),
+                .on_press(Message::SearchCount(self.tag.count)),
         ]
+        .align_items(iced::Alignment::Center)
         .into()
     }
 }
@@ -43,7 +46,7 @@ impl iced::Sandbox for TagView {
 
     fn new() -> Self {
         Tag {
-            name: "testtag".to_owned(),
+            name: "测试".to_owned(),
             count: 16,
         }
         .into()
@@ -56,6 +59,7 @@ impl iced::Sandbox for TagView {
     fn update(&mut self, message: Self::Message) {
         match message {
             Message::Search(s) => println!("{}", s),
+            Message::SearchCount(c) => println!("{}", c),
         }
     }
 

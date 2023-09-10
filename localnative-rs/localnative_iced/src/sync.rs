@@ -1,18 +1,15 @@
-use iced::widget::Text;
-use iced::widget::{
-    button, column, horizontal_space, qr_code, row, text, text_input, tooltip, QRCode,
-};
+use crate::icons::text;
+use iced::widget::{button, column, horizontal_space, qr_code, row, text_input, tooltip, QRCode};
 use iced::Command;
 use iced::Element;
 use iced::Length::Fill;
 use iced_aw::NumberInput;
 
-use once_cell::sync::OnceCell;
 use ouroboros::self_referencing;
 use regex::RegexSet;
-use std::borrow::Cow;
 use std::net::{IpAddr, Ipv4Addr};
 use std::str::FromStr;
+use std::{borrow::Cow, sync::OnceLock};
 
 use std::{
     net::{Ipv6Addr, SocketAddr},
@@ -210,7 +207,7 @@ impl SyncView {
 
         if *self.borrow_server_state() == ServerState::Opened {
             res = res
-                .push(Text::new(self.borrow_translate().tr()))
+                .push(text(self.borrow_translate().tr()))
                 .push(QRCode::new(self.borrow_ip_qr_code()));
         }
 
@@ -336,7 +333,7 @@ impl Default for SyncView {
     }
 }
 
-pub static IP_REGEX_SET: OnceCell<RegexSet> = OnceCell::new();
+pub static IP_REGEX_SET: OnceLock<RegexSet> = OnceLock::new();
 
 pub async fn client_sync_from_server(addr: SocketAddr) -> anyhow::Result<()> {
     localnative_core::rpc::client::run_sync_from_server(&addr).await
