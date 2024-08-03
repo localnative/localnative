@@ -27,10 +27,10 @@ impl TagView {
     pub fn view(&self) -> Element<Message> {
         row![
             button(text(&self.tag.name).size(16))
-                .style(crate::style::Tag.into())
+                .style(crate::style::Tag)
                 .on_press(Message::Search(self.tag.name.clone())),
             button(text(self.tag.count).size(20))
-                .style(crate::style::TagNum.into())
+                .style(crate::style::TagNum)
                 .on_press(Message::Search(self.tag.count.to_string())),
         ]
         .into()

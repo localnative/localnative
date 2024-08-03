@@ -1,8 +1,8 @@
 use std::{cell::RefCell, collections::BTreeMap, fmt::Debug, iter::once, ops::Deref};
 
 use chrono::{Datelike, NaiveDate, Utc};
-use iced::widget::canvas::{self, Cursor};
 use iced::Point;
+use iced::{mouse::Cursor, widget::canvas};
 use plotters::{
     coord::{
         ranged1d::{ReversibleRanged, ValueFormatter},
@@ -17,6 +17,7 @@ use plotters::{
 use plotters_iced::{Chart, DrawingBackend};
 
 use crate::{config::ThemeType, days::Message, tr};
+
 mod constants {
     pub const DAILY: i64 = 400;
     pub const MONTHLY: i64 = 2500;
@@ -24,13 +25,47 @@ mod constants {
     pub const MINIMUM_COUNT: i64 = 12;
 }
 
-impl From<crate::days::Day> for (NaiveDate, i64) {
-    fn from(value: crate::days::Day) -> Self {
-        (
-            NaiveDate::from_yo_opt(value.date.year(), value.date.ordinal() as u32)
-                .expect("create date failed."),
-            value.count,
-        )
+mod utils {
+    use super::*;
+
+    pub fn fold_map<K, F>(
+        days: impl IntoIterator<Item = (NaiveDate, i64)>,
+        key_func: F,
+    ) -> BTreeMap<K, i64>
+    where
+        F: Fn(NaiveDate) -> K,
+        K: Ord,
+    {
+        days.into_iter()
+            .map(|(k, v)| (key_func(k), v))
+            .fold(BTreeMap::new(), |mut init, (k, v)| {
+                init.entry(k).and_modify(|vv| *vv += v).or_insert(v);
+                init
+            })
+    }
+
+    pub fn max_count<K>(days: &BTreeMap<K, i64>) -> i64 {
+        let max_count = days
+            .values()
+            .max()
+            .filter(|s| s.cmp(&&constants::MINIMUM_COUNT).is_gt())
+            .copied()
+            .unwrap_or(constants::MINIMUM_COUNT);
+        max_count
+    }
+
+    pub fn calculate_suitable_range(
+        max_date: &mut NaiveDate,
+        min_date: &mut NaiveDate,
+    ) -> chrono::Duration {
+        let date_diff = *max_date - *min_date;
+        if date_diff.num_days() < constants::MINIMUM {
+            *min_date =
+                *min_date - chrono::Duration::days((constants::MINIMUM - date_diff.num_days()) / 2);
+            *max_date = *max_date
+                + chrono::Duration::days((constants::MINIMUM - date_diff.num_days() + 1) / 2);
+        }
+        *max_date - *min_date
     }
 }
 
@@ -50,97 +85,22 @@ impl Deref for DayChart {
 
 #[derive(Clone, Debug)]
 pub struct ChartView {
-    days: Vec<(NaiveDate, i64)>, // 存储每天的日期和计数值
-    min_date: NaiveDate,         // 最小日期
-    max_date: NaiveDate,         // 最大日期
-    max_count: i64,              // 最大计数值
-    state: ChartState,           // 图表状态，包括日、月、年
+    days: Vec<(NaiveDate, i64)>,
+    min_date: NaiveDate,
+    max_date: NaiveDate,
+    max_count: i64,
+    state: ChartState,
 }
 
 impl ChartView {
     fn will_draw<'a>(&'a self, state: &'a State) -> &'a Self {
         state.temporary.last().unwrap_or(self)
     }
-}
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd)]
-struct MonthMapKey(i32, u32);
-
-impl Ord for MonthMapKey {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        match self.0.cmp(&other.0) {
-            std::cmp::Ordering::Equal => self.1.cmp(&other.1),
-            ordering => ordering,
-        }
-    }
-}
-#[derive(Clone, Debug)]
-enum ChartState {
-    Daily(InnerState<RangedDate<NaiveDate>, NaiveDate>),
-    Monthly(InnerState<Monthly<NaiveDate>, MonthMapKey>),
-    Yearly(InnerState<Yearly<NaiveDate>, i32>),
-}
-
-fn fold_map<K, F>(days: impl IntoIterator<Item = (NaiveDate, i64)>, key_func: F) -> BTreeMap<K, i64>
-where
-    F: Fn(NaiveDate) -> K,
-    K: Ord,
-{
-    days.into_iter()
-        .map(|(k, v)| (key_func(k), v))
-        .fold(BTreeMap::new(), |mut init, (k, v)| {
-            init.entry(k).and_modify(|vv| *vv += v).or_insert(v);
-            init
-        })
-}
-#[derive(Clone)]
-struct InnerState<X, K>
-where
-    X: plotters::prelude::Ranged,
-{
-    spec: RefCell<Option<Cartesian2d<X, RangedCoordi64>>>,
-    map: BTreeMap<K, i64>,
-}
-
-impl<X, K: Debug> Debug for InnerState<X, K>
-where
-    X: plotters::prelude::Ranged,
-{
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("InnerState")
-            .field("map", &self.map)
-            .finish()
-    }
-}
-
-impl<X, K> Default for InnerState<X, K>
-where
-    X: plotters::prelude::Ranged,
-{
-    fn default() -> Self {
-        Self {
-            spec: RefCell::new(None),
-            map: BTreeMap::new(),
-        }
-    }
-}
-
-impl ChartState {
-    fn date_text(&self, date: NaiveDate) -> String {
-        match self {
-            ChartState::Daily { .. } => format!("{}: {:?}", tr!("date"), date),
-            ChartState::Monthly { .. } => {
-                format!("{}: {:?}-{:?}", tr!("date"), date.year(), date.month())
-            }
-            ChartState::Yearly { .. } => format!("{}: {:?}", tr!("date"), date.year()),
-        }
-    }
-}
-
-impl ChartView {
     pub fn empty() -> Self {
         Self::new(vec![])
     }
+
     pub fn from_days(days: Vec<crate::days::Day>) -> Self {
         let raw = days
             .into_iter()
@@ -148,8 +108,9 @@ impl ChartView {
             .collect::<Vec<_>>();
         Self::new(raw)
     }
+
     pub fn new(raw: Vec<(NaiveDate, i64)>) -> Self {
-        let days = fold_map(raw.clone(), |k| k);
+        let days = utils::fold_map(raw.clone(), |k| k);
 
         let now = Utc::now().date_naive();
         let mut min_date = days.first_key_value().map(|(d, _)| *d).unwrap_or(now);
@@ -157,9 +118,9 @@ impl ChartView {
             .last_key_value()
             .map(|(d, _)| *d)
             .unwrap_or(now + chrono::Days::new(constants::MINIMUM as u64));
-        let date_diff = calculate_suitable_range(&mut max_date, &mut min_date);
+        let date_diff = utils::calculate_suitable_range(&mut max_date, &mut min_date);
         let (state, max_count) = if date_diff.num_days() <= constants::DAILY {
-            let max_count = max_count(&days);
+            let max_count = utils::max_count(&days);
             (
                 ChartState::Daily(InnerState {
                     spec: RefCell::new(None),
@@ -168,8 +129,8 @@ impl ChartView {
                 max_count,
             )
         } else if date_diff.num_days() <= constants::MONTHLY {
-            let map = fold_map(days, |d| MonthMapKey(d.year(), d.month()));
-            let max_count = max_count(&map);
+            let map = utils::fold_map(days, |d| MonthMapKey(d.year(), d.month()));
+            let max_count = utils::max_count(&map);
             (
                 ChartState::Monthly(InnerState {
                     spec: RefCell::new(None),
@@ -178,8 +139,8 @@ impl ChartView {
                 max_count,
             )
         } else {
-            let map = fold_map(days, |d| d.year());
-            let max_count = max_count(&map);
+            let map = utils::fold_map(days, |d| d.year());
+            let max_count = utils::max_count(&map);
             (
                 ChartState::Yearly(InnerState {
                     spec: RefCell::new(None),
@@ -197,6 +158,7 @@ impl ChartView {
             state,
         }
     }
+
     #[cfg(feature = "preview")]
     fn new_test() -> Self {
         use rand::Rng;
@@ -210,7 +172,7 @@ impl ChartView {
 
             for i in 0..num_days {
                 let date = start_date + Duration::days(i as i64);
-                let count = rng.gen_range(-10..10); // 生成0到99之间的随机数
+                let count = rng.gen_range(-10..10);
                 if count <= 0 {
                     continue;
                 }
@@ -381,33 +343,67 @@ impl ChartView {
     }
 }
 
-fn max_count<K>(days: &BTreeMap<K, i64>) -> i64 {
-    let max_count = days
-        .values()
-        .max()
-        .filter(|s| s.cmp(&&constants::MINIMUM_COUNT).is_gt())
-        .copied()
-        .unwrap_or(constants::MINIMUM_COUNT);
-    max_count
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd)]
+struct MonthMapKey(i32, u32);
+
+impl Ord for MonthMapKey {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        match self.0.cmp(&other.0) {
+            std::cmp::Ordering::Equal => self.1.cmp(&other.1),
+            ordering => ordering,
+        }
+    }
 }
 
-fn calculate_suitable_range(
-    max_date: &mut NaiveDate,
-    min_date: &mut NaiveDate,
-) -> chrono::Duration {
-    // Determine the time range and generate different states based on the time length
-    let date_diff = *max_date - *min_date;
-    // Ensure the date_diff is at least constants::MINIMUM days
-    let date_diff = if date_diff.num_days() < constants::MINIMUM {
-        *min_date =
-            *min_date - chrono::Duration::days((constants::MINIMUM - date_diff.num_days()) / 2);
-        *max_date =
-            *max_date + chrono::Duration::days((constants::MINIMUM - date_diff.num_days() + 1) / 2);
-        *max_date - *min_date
-    } else {
-        date_diff
-    };
-    date_diff
+#[derive(Clone, Debug)]
+enum ChartState {
+    Daily(InnerState<RangedDate<NaiveDate>, NaiveDate>),
+    Monthly(InnerState<Monthly<NaiveDate>, MonthMapKey>),
+    Yearly(InnerState<Yearly<NaiveDate>, i32>),
+}
+
+impl ChartState {
+    fn date_text(&self, date: NaiveDate) -> String {
+        match self {
+            ChartState::Daily { .. } => format!("{}: {:?}", tr!("date"), date),
+            ChartState::Monthly { .. } => {
+                format!("{}: {:?}-{:?}", tr!("date"), date.year(), date.month())
+            }
+            ChartState::Yearly { .. } => format!("{}: {:?}", tr!("date"), date.year()),
+        }
+    }
+}
+
+#[derive(Clone)]
+struct InnerState<X, K>
+where
+    X: plotters::prelude::Ranged,
+{
+    spec: RefCell<Option<Cartesian2d<X, RangedCoordi64>>>,
+    map: BTreeMap<K, i64>,
+}
+
+impl<X, K: Debug> Debug for InnerState<X, K>
+where
+    X: plotters::prelude::Ranged,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("InnerState")
+            .field("map", &self.map)
+            .finish()
+    }
+}
+
+impl<X, K> Default for InnerState<X, K>
+where
+    X: plotters::prelude::Ranged,
+{
+    fn default() -> Self {
+        Self {
+            spec: RefCell::new(None),
+            map: BTreeMap::new(),
+        }
+    }
 }
 
 #[derive(Default)]
@@ -475,34 +471,15 @@ impl Chart<Message> for DayChart {
         }
     }
 
-    fn draw_chart<DB: plotters_iced::DrawingBackend>(
-        &self,
-        state: &Self::State,
-        root: plotters_iced::DrawingArea<DB, plotters::coord::Shift>,
-    ) {
-        let builder = plotters_iced::ChartBuilder::on(&root);
-        self.build_chart(state, builder);
-    }
-
-    fn draw<F: Fn(&mut iced::widget::canvas::Frame)>(
-        &self,
-        size: iced::Size,
-        f: F,
-    ) -> iced::widget::canvas::Geometry {
-        let mut frame = iced::widget::canvas::Frame::new(size);
-        f(&mut frame);
-        frame.into_geometry()
-    }
-
     fn update(
         &self,
         state: &mut Self::State,
         event: iced::widget::canvas::Event,
         bounds: iced::Rectangle,
-        cursor: iced::widget::canvas::Cursor,
+        cursor: Cursor,
     ) -> (iced::event::Status, Option<Message>) {
         if let Cursor::Available(point) = cursor {
-            state.cursor_position = cursor.position_in(&bounds);
+            state.cursor_position = cursor.position_in(bounds);
 
             match event {
                 canvas::Event::Mouse(mouse) if bounds.contains(point) => match mouse {
@@ -548,7 +525,7 @@ impl Chart<Message> for DayChart {
                             if let Some([(mut start, _), (mut end, _)]) =
                                 self.reverse_selected(state)
                             {
-                                calculate_suitable_range(&mut end, &mut start);
+                                utils::calculate_suitable_range(&mut end, &mut start);
                                 let selected = start..=end;
                                 let new_days = self
                                     .days
@@ -570,15 +547,6 @@ impl Chart<Message> for DayChart {
         }
 
         (iced::event::Status::Ignored, None)
-    }
-
-    fn mouse_interaction(
-        &self,
-        _state: &Self::State,
-        _bounds: iced::Rectangle,
-        _cursor: iced::widget::canvas::Cursor,
-    ) -> iced_native::mouse::Interaction {
-        iced_native::mouse::Interaction::Idle
     }
 }
 

@@ -6,33 +6,36 @@ authors = ["Yi Wang"]
 version = "0.6.0"
 license = "AGPL-3.0"
 edition = "2021"
-[dependencies.rusqlite]
-version = "0.28"
-features = ["bundled"]
 
 [target.'cfg(target_os="android")'.dependencies]
-jni = { version = "0.20", default-features = false }
+jni = { workspace = true, default-features = false }
 
 [dependencies]
-linked_hash_set = "0.1.4"
-regex = "1"
-time = { version = "0.3", features = ["formatting", "macros"] }
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-dirs = "4"
-base64 = "0.13"
-rustc-serialize = "0.3.24"
-uuid = { version = "1", features = ["v4"] }
-semver = "1"
-tokio = { version = "1", features = ["full"] }
-tokio-serde = { version = "0.8", features = ["bincode"] }
-futures = "0.3"
-tarpc = { version = "0.31", features = ["full"] }
-get_if_addrs = "0.5.3"
-anyhow = "1"
-stream-cancel = "0.8"
-thiserror = "1.0"
-
+linked_hash_set = { workspace = true }
+regex = { workspace = true }
+time = { workspace = true, features = ["formatting", "macros"] }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+dirs = { workspace = true }
+base64 = { workspace = true }
+uuid = { workspace = true, features = ["v4"] }
+semver = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
+tokio-serde = { workspace = true, features = ["bincode"] }
+futures = { workspace = true }
+tarpc = { workspace = true, features = ["full"] }
+get_if_addrs = { workspace = true }
+anyhow = { workspace = true }
+tokio-util = { workspace = true }
+thiserror = { workspace = true }
+hex = { workspace = true }
+sqlx = { workspace = true, features = [
+    "sqlite",
+    "runtime-tokio-rustls",
+    "chrono",
+] }
+tracing = { workspace = true }
+chrono = { workspace = true, default-features = false }
 
 [lib]
 name = "localnative_core"

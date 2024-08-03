@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0"
-xshell = "0.2"
-xflags = "0.3"
-tauri-bundler = "1.1"
+anyhow = { workspace = true }
+xshell = { workspace = true }
+xflags = { workspace = true }
+tauri-bundler = { workspace = true }

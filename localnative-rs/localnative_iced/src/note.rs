@@ -1,19 +1,21 @@
 use iced::{
     theme,
-    widget::{button, column, container, horizontal_space, row, text, QRCode},
+    widget::{button, column, container, horizontal_space, row, text, Column, QRCode, Row, Space},
     Element,
-    Length::Fill,
     Length::FillPortion,
 };
+use iced_aw::direction::Horizontal;
 use localnative_core::Note;
 
 use crate::icons::IconItem;
+
 #[derive(Debug)]
 pub struct NoteView {
     note: Note,
     tags: Vec<Tag>,
-    qrcode: Option<iced::widget::qr_code::State>,
+    qrcode: Option<iced::widget::qr_code::Data>,
 }
+
 #[derive(Debug, Clone)]
 pub struct Tag {
     name: String,
@@ -47,91 +49,136 @@ impl From<Note> for NoteView {
 
 impl NoteView {
     pub fn view(&self) -> Element<Message> {
-        let Self { note, tags, qrcode } = self;
-        let qrcode = qrcode.as_ref().map(|state| QRCode::new(state));
-        let url = button(text(&note.url))
-            .style(crate::style::Url.into())
-            .padding(0)
-            .on_press(Message::OpenUrl);
-        let delete = button(IconItem::Delete)
-            .style(theme::Button::Text)
-            .on_press(Message::Delete(note.rowid));
-        let qrcode_button = button(IconItem::QRCode)
-            .style(theme::Button::Text)
-            .padding(0)
-            .on_press(Message::QRCode);
-        let row = row![
-            text(&note.created_at),
-            text(&note.uuid4),
-            text(format!("rowid {}", note.rowid)),
-            qrcode_button
-        ]
-        .spacing(5);
-        let wrap = tags
-            .iter()
-            .fold(iced_aw::Wrap::new().spacing(5.).push(row), |wrap, tag| {
-                let Tag { name } = tag;
-                let tag_button = button(text(&name))
-                    .style(crate::style::Tag.into())
-                    .padding(0)
-                    .on_press(Message::Search(name.to_owned()));
-                wrap.push(tag_button)
-            });
-        let mut column = column![wrap];
-        if let Some(qrcode) = qrcode {
-            column = column.push(row![horizontal_space(Fill), qrcode, horizontal_space(Fill)]);
-        }
-        if !note.title.is_empty() {
-            column = column.push(text(&note.title));
-        }
-        if !note.url.is_empty() {
-            column = column.push(url);
-        }
-        if !note.description.is_empty() {
-            column = column.push(text(&note.description));
-        }
-        if !note.comments.is_empty() {
-            column = column.push(text(&note.comments));
-        }
-
-        column = column.push(row![
-            horizontal_space(FillPortion(12)),
-            delete,
-            horizontal_space(FillPortion(1))
-        ]);
+        let qrcode_widget = self.qrcode.as_ref().map(QRCode::new);
+        let url_button = self.create_url_button();
+        let delete_button = self.create_delete_button();
+        let qrcode_button = self.create_qrcode_button();
+        let row = self.create_info_row(qrcode_button);
+        let wrap = self.create_tag_buttons(row);
+        let mut column = self.create_content_column(wrap, qrcode_widget);
+        column = self.add_note_details(column, url_button);
+        column = self.add_delete_button(column, delete_button);
 
         container(column)
             .padding(1)
             .style(crate::style::SimpleBox)
             .into()
     }
+
+    fn create_url_button(&self) -> button::Button<Message> {
+        button(text(&self.note.url))
+            .style(crate::style::Url)
+            .padding(0)
+            .on_press(Message::OpenUrl)
+    }
+
+    fn create_delete_button(&self) -> button::Button<Message> {
+        button(IconItem::Delete)
+            .style(theme::Button::Text)
+            .on_press(Message::Delete(self.note.rowid))
+    }
+
+    fn create_qrcode_button(&self) -> button::Button<Message> {
+        button(IconItem::QRCode)
+            .style(theme::Button::Text)
+            .padding(0)
+            .on_press(Message::QRCode)
+    }
+
+    fn create_info_row<'note_view, 'qrcode_button: 'note_view>(
+        &'note_view self,
+        qrcode_button: button::Button<'qrcode_button, Message>,
+    ) -> Row<'note_view, Message> {
+        row![
+            text(&self.note.created_at),
+            text(&self.note.uuid4),
+            text(format!("rowid {}", self.note.rowid)),
+            qrcode_button
+        ]
+        .spacing(5)
+    }
+
+    fn create_tag_buttons<'note_view, 'row: 'note_view>(
+        &'note_view self,
+        row: Row<'row, Message>,
+    ) -> iced_aw::Wrap<'note_view, Message, Horizontal> {
+        self.tags
+            .iter()
+            .fold(iced_aw::Wrap::new().spacing(5.).push(row), |wrap, tag| {
+                let tag_button = button(text(&tag.name))
+                    .style(crate::style::Tag)
+                    .padding(0)
+                    .on_press(Message::Search(tag.name.to_owned()));
+                wrap.push(tag_button)
+            })
+    }
+
+    fn create_content_column<'note_view, 'wrap: 'note_view, 'qrcode: 'note_view>(
+        &'note_view self,
+        wrap: iced_aw::Wrap<'wrap, Message, Horizontal>,
+        qrcode_widget: Option<QRCode<'qrcode>>,
+    ) -> Column<'note_view, Message> {
+        let mut column = column![wrap];
+        if let Some(qrcode) = qrcode_widget {
+            column = column.push(row![horizontal_space(), qrcode, horizontal_space()]);
+        }
+        column
+    }
+
+    fn add_note_details<'note_view, 'column: 'note_view, 'button: 'column>(
+        &'note_view self,
+        mut column: Column<'column, Message>,
+        url_button: button::Button<'button, Message>,
+    ) -> Column<'note_view, Message> {
+        if !self.note.title.is_empty() {
+            column = column.push(text(&self.note.title));
+        }
+        if !self.note.url.is_empty() {
+            column = column.push(url_button);
+        }
+        if !self.note.description.is_empty() {
+            column = column.push(text(&self.note.description));
+        }
+        if !self.note.comments.is_empty() {
+            column = column.push(text(&self.note.comments));
+        }
+        column
+    }
+
+    fn add_delete_button<'note_view, 'column: 'note_view, 'button: 'note_view>(
+        &'note_view self,
+        column: Column<'column, Message>,
+        delete_button: button::Button<'button, Message>,
+    ) -> Column<'note_view, Message> {
+        column.push(row![
+            Space::with_width(FillPortion(12)),
+            delete_button,
+            Space::with_width(FillPortion(1))
+        ])
+    }
+
     pub fn update(&mut self, msg: Message) {
         match msg {
-            Message::OpenUrl => open(self.note.url.as_str()),
-            Message::Delete(..) => {
-                // 上层处理
-                println!("delete");
-            }
-            Message::QRCode => match self.qrcode {
-                Some(_) => {
-                    self.qrcode.take();
-                }
-                None => {
-                    self.qrcode.replace(
-                        iced::widget::qr_code::State::new(self.note.url.as_bytes()).unwrap(),
-                    );
-                }
-            },
-            Message::Search(tag) => {
-                // 上层处理
-                println!("search tag: {}", tag);
-            }
+            Message::OpenUrl => self.open_url(),
+            Message::Delete(_) => println!("delete"),
+            Message::QRCode => self.toggle_qrcode(),
+            Message::Search(tag) => println!("search tag: {}", tag),
         }
     }
-}
-fn open(url: &str) {
-    if let Err(err) = open::that(url) {
-        println!("open url fail:{:?}", err);
+
+    fn open_url(&self) {
+        if let Err(err) = open::that(&self.note.url) {
+            println!("open url fail:{:?}", err);
+        }
+    }
+
+    fn toggle_qrcode(&mut self) {
+        match self.qrcode {
+            Some(_) => self.qrcode.take(),
+            None => self
+                .qrcode
+                .replace(iced::widget::qr_code::Data::new(self.note.url.as_bytes()).unwrap()),
+        };
     }
 }
 

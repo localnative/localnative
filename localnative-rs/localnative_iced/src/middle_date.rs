@@ -1,11 +1,8 @@
-use localnative_core::{
-    cmd::{delete, insert},
-    rusqlite::Connection,
-    Note,
-};
-use serde::{Deserialize, Serialize};
+use crate::{days::Day, tags::Tag};
+use localnative_core::db::{self, CmdDelete, Note};
+use sqlx::SqlitePool;
 
-use crate::{days::Day, tags::Tag, Conn};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]
 pub struct MiddleDate {
@@ -17,88 +14,114 @@ pub struct MiddleDate {
 
 impl MiddleDate {
     pub async fn delete(
-        conn: Conn,
+        pool: &SqlitePool,
         query: String,
         limit: u32,
         offset: u32,
         rowid: i64,
     ) -> Option<Self> {
-        let conn = &*conn.lock().await;
-        delete(conn, rowid).ok()?;
-        Self::from_select_inner(conn, query, limit, offset)
-    }
-    pub async fn upgrade(conn: Conn, query: String, limit: u32, offset: u32) -> Option<Self> {
-        let conn = &*conn.lock().await;
-
-        if let Ok(version) = localnative_core::upgrade::upgrade(conn) {
-            println!("upgrade done:{}", version);
-        } else {
-            println!("upgrade error");
+        let delete = CmdDelete {
+            query,
+            rowid,
+            limit,
+            offset,
+        };
+        if let Err(e) = delete.process(pool).await {
+            eprintln!("Error deleting note: {}", e);
+            return None;
         }
-        Self::from_select_inner(conn, query, limit, offset)
+
+        Self::from_select_inner(pool, delete.query, limit, offset).await
     }
-    pub async fn insert(
-        conn: Conn,
+
+    pub async fn upgrade(
+        pool: &SqlitePool,
         query: String,
         limit: u32,
         offset: u32,
-        rowid: i64,
+    ) -> Option<Self> {
+        if let Err(e) = db::upgrade(pool).await {
+            eprintln!("Error upgrading database: {}", e);
+            return None;
+        }
+
+        Self::from_select_inner(pool, query, limit, offset).await
+    }
+
+    pub async fn insert(
+        pool: &SqlitePool,
+        query: String,
+        limit: u32,
+        offset: u32,
         note: Note,
     ) -> Option<Self> {
-        let conn = &*conn.lock().await;
-        delete(conn, rowid).ok()?;
-        insert(note).ok()?;
-        Self::from_select_inner(conn, query, limit, offset)
-    }
-    pub async fn from_select(conn: Conn, query: String, limit: u32, offset: u32) -> Option<Self> {
-        let conn = &*conn.lock().await;
-        Self::from_select_inner(conn, query, limit, offset)
-    }
-    pub async fn from_filter(
-        conn: Conn,
-        query: String,
-        limit: u32,
-        offset: u32,
-        from: time::Date,
-        to: time::Date,
-    ) -> Option<Self> {
-        let conn = &*conn.lock().await;
-        let from = from.to_string();
-        let to = to.to_string();
-        Self::from_filter_inner(conn, &query, limit, offset, &from, &to)
-    }
-    pub async fn from_someday(
-        conn: Conn,
-        query: String,
-        limit: u32,
-        offset: u32,
-        day: time::Date,
-    ) -> Option<Self> {
-        let conn = &*conn.lock().await;
-        let day = day.to_string();
-        Self::from_filter_inner(conn, &query, limit, offset, &day, &day)
-    }
-    fn from_select_inner(
-        conn: &Connection,
-        query: String,
-        limit: u32,
-        offset: u32,
-    ) -> Option<Self> {
-        let search_result = localnative_core::exe::do_search(conn, &query, limit, offset).ok()?;
+        if let Err(e) = db::insert(pool, note).await {
+            eprintln!("Error inserting note: {}", e);
+            return None;
+        }
 
-        serde_json::from_str::<Self>(&search_result).ok()
+        Self::from_select_inner(pool, query, limit, offset).await
     }
-    fn from_filter_inner(
-        conn: &Connection,
+
+    pub async fn from_select(
+        pool: &SqlitePool,
+        query: String,
+        limit: u32,
+        offset: u32,
+    ) -> Option<Self> {
+        Self::from_select_inner(pool, query, limit, offset).await
+    }
+
+    pub async fn from_filter(
+        pool: &SqlitePool,
+        query: String,
+        limit: u32,
+        offset: u32,
+        from: String,
+        to: String,
+    ) -> Option<Self> {
+        Self::from_filter_inner(pool, &query, limit, offset, &from, &to).await
+    }
+
+    pub async fn from_someday(
+        pool: &SqlitePool,
+        query: String,
+        limit: u32,
+        offset: u32,
+        day: String,
+    ) -> Option<Self> {
+        Self::from_filter_inner(pool, &query, limit, offset, &day, &day).await
+    }
+
+    async fn from_select_inner(
+        pool: &SqlitePool,
+        query: String,
+        limit: u32,
+        offset: u32,
+    ) -> Option<Self> {
+        match db::do_search(pool, &query, limit, offset).await {
+            Ok(search_result) => serde_json::from_str::<Self>(&search_result).ok(),
+            Err(e) => {
+                eprintln!("Error searching notes: {}", e);
+                None
+            }
+        }
+    }
+
+    async fn from_filter_inner(
+        pool: &SqlitePool,
         query: &str,
         limit: u32,
         offset: u32,
         from: &str,
         to: &str,
     ) -> Option<Self> {
-        let filter_result =
-            localnative_core::exe::do_filter(conn, query, limit, offset, from, to).ok()?;
-
-        serde_json::from_str::<Self>(&filter_result).ok()
+        match db::do_filter(pool, query, limit, offset, from, to).await {
+            Ok(filter_result) => serde_json::from_str::<Self>(&filter_result).ok(),
+            Err(e) => {
+                eprintln!("Error filtering notes: {}", e);
+                None
+            }
+        }
     }
 }

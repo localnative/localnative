@@ -56,3 +56,6 @@ sync-file = *.sqlite3 file for synchronization
 
 date = Date
 count = Count
+
+dark-theme = Dark theme
+light-theme = Light theme

@@ -4,7 +4,6 @@ use iced::widget::{
 };
 use iced::Command;
 use iced::Element;
-use iced::Length::Fill;
 use iced_aw::NumberInput;
 
 use once_cell::sync::OnceCell;
@@ -37,7 +36,7 @@ pub struct SyncView {
     ip: String,
     pub port: u16,
     pub server_addr: String,
-    pub ip_qr_code: qr_code::State,
+    pub ip_qr_code: qr_code::Data,
     pub sync_state: SyncState,
     pub server_state: ServerState,
     pub stop: Option<Stop>,
@@ -133,13 +132,13 @@ impl SyncView {
             .on_press(Message::ClearAddrInput);
 
         let ip_input_row = row![
-            horizontal_space(Fill),
+            horizontal_space(),
             text(tr!("input-ip")),
             ip_tip,
             text(":"),
             port_input,
             clear_button,
-            horizontal_space(Fill)
+            horizontal_space()
         ];
 
         let sync_from_server_button = button(row![
@@ -324,7 +323,7 @@ impl Default for SyncView {
             ip: String::new(),
             port: 2345,
             server_addr: String::new(),
-            ip_qr_code: qr_code::State::new(&[0]).unwrap(),
+            ip_qr_code: qr_code::Data::new(&[0]).unwrap(),
             sync_state: SyncState::Waiting,
             server_state: ServerState::Closed,
             stop: None,
@@ -347,7 +346,7 @@ pub async fn client_sync_to_server(addr: SocketAddr) -> anyhow::Result<()> {
 }
 
 pub fn get_sync_file_path() -> Option<PathBuf> {
-    localnative_core::dirs::desktop_dir()
+    dirs::desktop_dir()
         .unwrap_or_else(std::env::temp_dir)
         .to_str()
         .and_then(|path| {

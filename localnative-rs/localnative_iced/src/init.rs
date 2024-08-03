@@ -112,7 +112,7 @@ fn registr(kind: WebKind) {
 }
 
 pub fn firefox_path() -> Option<PathBuf> {
-    localnative_core::dirs::home_dir().map(|home_dir| {
+    dirs::home_dir().map(|home_dir| {
         #[cfg(target_os = "macos")]
         {
             home_dir
@@ -132,7 +132,7 @@ pub fn firefox_path() -> Option<PathBuf> {
 }
 
 pub fn chrome_path() -> Option<PathBuf> {
-    localnative_core::dirs::home_dir().map(|home_dir| {
+    dirs::home_dir().map(|home_dir| {
         #[cfg(target_os = "macos")]
         {
             home_dir
