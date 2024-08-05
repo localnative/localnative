@@ -3,6 +3,7 @@ use std::{cell::RefCell, collections::BTreeMap, fmt::Debug, iter::once, ops::Der
 use chrono::{Datelike, NaiveDate, Utc};
 use iced::Point;
 use iced::{mouse::Cursor, widget::canvas};
+use localnative_core::db::models::Day;
 use plotters::{
     coord::{
         ranged1d::{ReversibleRanged, ValueFormatter},
@@ -28,16 +29,13 @@ mod constants {
 mod utils {
     use super::*;
 
-    pub fn fold_map<K, F>(
-        days: impl IntoIterator<Item = (NaiveDate, i64)>,
-        key_func: F,
-    ) -> BTreeMap<K, i64>
+    pub fn fold_map<K, F>(days: impl IntoIterator<Item = Day>, key_func: F) -> BTreeMap<K, i64>
     where
         F: Fn(NaiveDate) -> K,
         K: Ord,
     {
         days.into_iter()
-            .map(|(k, v)| (key_func(k), v))
+            .map(|day| (key_func(day.date), day.count))
             .fold(BTreeMap::new(), |mut init, (k, v)| {
                 init.entry(k).and_modify(|vv| *vv += v).or_insert(v);
                 init
@@ -85,7 +83,7 @@ impl Deref for DayChart {
 
 #[derive(Clone, Debug)]
 pub struct ChartView {
-    days: Vec<(NaiveDate, i64)>,
+    days: Vec<Day>,
     min_date: NaiveDate,
     max_date: NaiveDate,
     max_count: i64,
@@ -98,18 +96,10 @@ impl ChartView {
     }
 
     pub fn empty() -> Self {
-        Self::new(vec![])
+        Self::from_days(vec![])
     }
 
-    pub fn from_days(days: Vec<crate::days::Day>) -> Self {
-        let raw = days
-            .into_iter()
-            .map(Into::<(NaiveDate, i64)>::into)
-            .collect::<Vec<_>>();
-        Self::new(raw)
-    }
-
-    pub fn new(raw: Vec<(NaiveDate, i64)>) -> Self {
+    pub fn from_days(raw: Vec<Day>) -> Self {
         let days = utils::fold_map(raw.clone(), |k| k);
 
         let now = Utc::now().date_naive();
@@ -129,7 +119,7 @@ impl ChartView {
                 max_count,
             )
         } else if date_diff.num_days() <= constants::MONTHLY {
-            let map = utils::fold_map(days, |d| MonthMapKey(d.year(), d.month()));
+            let map = utils::fold_map(raw.clone(), |d| MonthMapKey(d.year(), d.month()));
             let max_count = utils::max_count(&map);
             (
                 ChartState::Monthly(InnerState {
@@ -139,7 +129,7 @@ impl ChartView {
                 max_count,
             )
         } else {
-            let map = utils::fold_map(days, |d| d.year());
+            let map = utils::fold_map(raw.clone(), |d| d.year());
             let max_count = utils::max_count(&map);
             (
                 ChartState::Yearly(InnerState {
@@ -201,7 +191,7 @@ impl ChartView {
         DB: DrawingBackend,
         X: Ranged<ValueType = NaiveDate> + ValueFormatter<NaiveDate> + DiscreteRanged + Clone,
         Cartesian2d<X, RangedCoordi64>: CoordTranslate<From = (NaiveDate, i64)>,
-        Data: IntoIterator<Item = (NaiveDate, i64)> + Clone,
+        Data: IntoIterator<Item = Day> + Clone,
         (NaiveDate, i64): Clone,
     {
         let mut chart = builder
@@ -236,7 +226,7 @@ impl ChartView {
         chart
             .draw_series(
                 plotters::series::Histogram::vertical(&chart)
-                    .data(data.clone())
+                    .data(data.clone().into_iter().map(|day| (day.date, day.count)))
                     .style(style.fill_color().mix(0.95).filled())
                     .margin(0),
             )
@@ -496,21 +486,7 @@ impl Chart<Message> for DayChart {
                         return (
                             iced::event::Status::Ignored,
                             self.reverse_selected(state)
-                                .and_then(|[(start, _), (end, _)]| {
-                                    time::Date::from_ordinal_date(
-                                        start.year(),
-                                        start.ordinal() as u16,
-                                    )
-                                    .ok()
-                                    .zip(
-                                        time::Date::from_ordinal_date(
-                                            end.year(),
-                                            end.ordinal() as u16,
-                                        )
-                                        .ok(),
-                                    )
-                                    .map(|(start, end)| Message::Selected { start, end })
-                                }),
+                                .map(|[(start, _), (end, _)]| Message::Selected { start, end }),
                         );
                     }
                     iced::mouse::Event::WheelScrolled {
@@ -530,10 +506,10 @@ impl Chart<Message> for DayChart {
                                 let new_days = self
                                     .days
                                     .iter()
-                                    .filter(|(d, _)| selected.contains(d))
+                                    .filter(|day| selected.contains(&day.date))
                                     .cloned()
                                     .collect::<Vec<_>>();
-                                let new = ChartView::new(new_days);
+                                let new = ChartView::from_days(new_days);
                                 state.temporary.push(new);
                                 state.selected.take();
                             }

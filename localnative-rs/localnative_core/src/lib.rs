@@ -78,7 +78,7 @@ pub enum Cmd {
     ClientSync(CmdRpcClient),
     ClientStopServer(CmdRpcClient),
     #[serde(untagged)]
-    DbCmd(db::Cmd),
+    DbCmd(db::models::Cmd),
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -177,119 +177,4 @@ async fn process(cmd: Cmd) -> Result<String, ProcessError> {
 fn run_async(text: &str) -> String {
     let rt = Runtime::new().unwrap();
     rt.block_on(run(text))
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::db::{
-        self, CmdDelete, CmdFilter, CmdInsert, CmdSearch, CmdSelect, CmdSyncViaAttach,
-    };
-    use crate::{Cmd, CmdRpcClient, CmdRpcServer};
-
-    #[test]
-    fn test_cmd_server_serialization() {
-        let cmd_server = Cmd::Server(CmdRpcServer {
-            addr: "127.0.0.1:8080".to_string(),
-        });
-
-        let serialized = serde_json::to_string(&cmd_server).unwrap();
-        println!("Serialized CmdServer: {}", serialized);
-    }
-
-    #[test]
-    fn test_cmd_client_sync_serialization() {
-        let cmd_client_sync = Cmd::ClientSync(CmdRpcClient {
-            addr: "127.0.0.1:8080".to_string(),
-        });
-
-        let serialized = serde_json::to_string(&cmd_client_sync).unwrap();
-        println!("Serialized CmdClientSync: {}", serialized);
-    }
-
-    #[test]
-    fn test_cmd_client_stop_server_serialization() {
-        let cmd_client_stop_server = Cmd::ClientStopServer(CmdRpcClient {
-            addr: "127.0.0.1:8080".to_string(),
-        });
-
-        let serialized = serde_json::to_string(&cmd_client_stop_server).unwrap();
-        println!("Serialized CmdClientStopServer: {}", serialized);
-    }
-    #[test]
-    fn test_cmd_insert_serialization() {
-        let cmd_insert = Cmd::DbCmd(db::Cmd::Insert(CmdInsert {
-            title: "Test Title".to_string(),
-            url: "http://example.com".to_string(),
-            tags: "test,example".to_string(),
-            description: "Test Description".to_string(),
-            comments: "Test Comments".to_string(),
-            annotations: "Test Annotations".to_string(),
-            limit: 10,
-            offset: 0,
-            is_public: false,
-        }));
-
-        let serialized = serde_json::to_string(&cmd_insert).unwrap();
-        println!("Serialized CmdInsert: {}", serialized);
-    }
-
-    #[test]
-    fn test_cmd_delete_serialization() {
-        let cmd_delete = Cmd::DbCmd(db::Cmd::Delete(CmdDelete {
-            query: "delete query".to_string(),
-            rowid: 1,
-            limit: 10,
-            offset: 0,
-        }));
-
-        let serialized = serde_json::to_string(&cmd_delete).unwrap();
-        println!("Serialized CmdDelete: {}", serialized);
-    }
-
-    #[test]
-    fn test_cmd_select_serialization() {
-        let cmd_select = Cmd::DbCmd(db::Cmd::Select(CmdSelect {
-            limit: 10,
-            offset: 0,
-        }));
-
-        let serialized = serde_json::to_string(&cmd_select).unwrap();
-        println!("Serialized CmdSelect: {}", serialized);
-    }
-
-    #[test]
-    fn test_cmd_search_serialization() {
-        let cmd_search = Cmd::DbCmd(db::Cmd::Search(CmdSearch {
-            query: "search query".to_string(),
-            limit: 10,
-            offset: 0,
-        }));
-
-        let serialized = serde_json::to_string(&cmd_search).unwrap();
-        println!("Serialized CmdSearch: {}", serialized);
-    }
-
-    #[test]
-    fn test_cmd_filter_serialization() {
-        let cmd_filter = Cmd::DbCmd(db::Cmd::Filter(CmdFilter {
-            query: "filter query".to_string(),
-            limit: 10,
-            offset: 0,
-            from: "2023-01-01".to_string(),
-            to: "2023-12-31".to_string(),
-        }));
-
-        let serialized = serde_json::to_string(&cmd_filter).unwrap();
-        println!("Serialized CmdFilter: {}", serialized);
-    }
-
-    #[test]
-    fn test_cmd_sync_via_attach_serialization() {
-        let cmd_sync_via_attach = Cmd::DbCmd(db::Cmd::SyncViaAttach(CmdSyncViaAttach {
-            uri: "file:///path/to/db".to_string(),
-        }));
-
-        let serialized = serde_json::to_string(&cmd_sync_via_attach).unwrap();
-        println!("Serialized CmdSyncViaAttach: {}", serialized);
-    }
 }

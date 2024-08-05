@@ -1,10 +1,10 @@
 mod chart;
 mod config;
 mod days;
+mod db_operations;
 mod delete_tip;
 mod icons;
 mod init;
-mod middle_date;
 mod note;
 mod search_page;
 mod settings;
@@ -15,7 +15,6 @@ mod tags;
 mod translate;
 
 use std::cmp::Ordering;
-use std::sync::Arc;
 
 use chart::ChartView;
 #[cfg(feature = "preview")]
@@ -23,20 +22,19 @@ pub use chart::NewChart;
 use config::Config;
 pub use days::DateView;
 use delete_tip::DeleteTip;
-use iced::{futures::lock::Mutex, widget::container, Command};
+use iced::{event, window, Font, Size};
+use iced::{widget::container, Command};
 use iced::{
     widget::{column, horizontal_space, row, text, vertical_space},
     Theme,
 };
-use iced::{Font, Size};
-use localnative_core::exe::get_sqlite_connection;
-use localnative_core::rpc::server::Stop;
-use middle_date::MiddleDate;
+use localnative_core::db::{init_db, models::QueryResult, DbError};
 pub use note::NoteView;
-use rusqlite::Connection;
 pub use search_page::SearchPage;
 use sidebar::Sidebar;
+use sqlx::SqlitePool;
 pub use tags::TagView;
+use tokio_util::sync::CancellationToken;
 
 use crate::sync::SyncView;
 
@@ -45,13 +43,10 @@ pub struct LocalNative {
     state: State,
 }
 
-#[allow(clippy::large_enum_variant)]
 pub enum State {
-    Loading,
+    Loading(String),
     Loaded(Data),
 }
-
-pub type Conn = Arc<Mutex<Connection>>;
 
 pub struct Data {
     search_page: SearchPage,
@@ -59,12 +54,11 @@ pub struct Data {
     delete_tip: DeleteTip,
     settings: settings::Settings,
     sync_view: SyncView,
-    conn: Conn,
+    pool: SqlitePool,
 }
 
 impl Data {
-    fn new(config: &Config) -> Self {
-        let conn = Arc::new(Mutex::new(get_sqlite_connection()));
+    fn new(config: &Config, pool: SqlitePool) -> Self {
         Self {
             search_page: SearchPage::default_with_theme(config.theme()),
             sidebar: Sidebar::default(),
@@ -79,22 +73,22 @@ impl Data {
                 limit_temp: config.limit,
                 show_modal: false,
             },
-            conn,
+            pool,
         }
     }
 
-    fn handle_receiver_message(&mut self, md: MiddleDate, config: &Config) -> Command<Message> {
-        let MiddleDate {
-            tags,
-            notes,
+    fn handle_receiver_message(&mut self, res: QueryResult, config: &Config) -> Command<Message> {
+        let QueryResult {
             count,
+            notes,
             days,
-        } = md;
+            tags,
+        } = res;
         self.search_page.count = count;
         if self.search_page.offset > count && notes.is_empty() {
             self.search_page.offset = count.max(config.limit) - config.limit;
             return search_page::search(
-                self.conn.clone(),
+                &self.pool,
                 self.search_page.search_value.clone(),
                 config.limit,
                 self.search_page.offset,
@@ -108,7 +102,7 @@ impl Data {
                     tags.sort_by(|a, b| {
                         let ord = b.count.cmp(&a.count);
                         if ord == Ordering::Equal {
-                            b.name.cmp(&a.name)
+                            b.tag.cmp(&a.tag)
                         } else {
                             ord
                         }
@@ -122,13 +116,7 @@ impl Data {
                 async move { notes.into_iter().map(NoteView::from).collect() },
                 Message::NoteView,
             ),
-            {
-                if let Some(days) = days {
-                    Command::perform(async move { ChartView::from_days(days) }, Message::DayView)
-                } else {
-                    Command::none()
-                }
-            },
+            { Command::perform(async move { ChartView::from_days(days) }, Message::DayView) },
         ])
     }
 
@@ -139,7 +127,7 @@ impl Data {
     ) -> Command<Message> {
         let search_page = &mut self.search_page;
         let delete_tip = &mut self.delete_tip;
-        search_page.update(spmsg, config.limit, self.conn.clone(), true, delete_tip)
+        search_page.update(spmsg, config.limit, &self.pool, true, delete_tip)
     }
 
     fn handle_note_view_message(&mut self, notes: Vec<NoteView>) -> Command<Message> {
@@ -167,7 +155,7 @@ impl Data {
         if res.is_some() {
             println!("ok!");
         }
-        Command::none()
+        window::close(window::Id::MAIN)
     }
 
     fn handle_sidebar_message(
@@ -190,13 +178,13 @@ impl Data {
     ) -> Command<Message> {
         let search_page = &mut self.search_page;
         let delete_tip = &mut self.delete_tip;
-        let conn = &self.conn;
+        let pool = &self.pool;
         match msg {
             delete_tip::Message::Enter => {
                 delete_tip.show_modal = false;
                 Command::perform(
-                    MiddleDate::delete(
-                        conn.clone(),
+                    db_operations::delete(
+                        pool.clone(),
                         search_page.search_value.to_string(),
                         config.limit,
                         search_page.offset,
@@ -208,7 +196,7 @@ impl Data {
             delete_tip::Message::SearchPage(spmsg) => search_page.update(
                 spmsg,
                 config.limit,
-                conn.clone(),
+                pool,
                 config.disable_delete_tip,
                 delete_tip,
             ),
@@ -220,7 +208,7 @@ impl Data {
     }
 
     fn handle_sync_client_message(&mut self, sync_msg: sync::Message) -> Command<Message> {
-        self.sync_view.update(sync_msg, self.conn.clone())
+        self.sync_view.update(sync_msg, self.pool.clone())
     }
 
     fn handle_sync_result_message(
@@ -231,7 +219,7 @@ impl Data {
         if let Err(err) = res {
             if let Some(io_error) = err.downcast_ref::<std::io::Error>() {
                 self.sync_view.with_sync_state_mut(|state| {
-                    *state = sync::SyncState::SyncError(io_error.kind())
+                    *state = sync::SyncState::SyncError(io_error.to_string())
                 });
             }
             Command::none()
@@ -240,7 +228,7 @@ impl Data {
                 .with_sync_state_mut(|state| *state = sync::SyncState::Complete);
 
             search_page::search(
-                self.conn.clone(),
+                &self.pool,
                 self.search_page.search_value.clone(),
                 config.limit,
                 self.search_page.offset,
@@ -259,7 +247,7 @@ impl Data {
             self.sync_view
                 .with_sync_state_mut(|state| *state = sync::SyncState::Complete);
             search_page::search(
-                self.conn.clone(),
+                &self.pool,
                 self.search_page.search_value.clone(),
                 config.limit,
                 self.search_page.offset,
@@ -270,7 +258,7 @@ impl Data {
 
     fn handle_start_server_result_message(
         &mut self,
-        res: std::io::Result<Stop>,
+        res: anyhow::Result<CancellationToken>,
     ) -> Command<Message> {
         match res {
             Ok(stop) => {
@@ -329,8 +317,9 @@ impl Data {
                 }
             }
             Err(err) => {
-                self.sync_view
-                    .with_sync_state_mut(|state| *state = sync::SyncState::SyncError(err.kind()));
+                self.sync_view.with_sync_state_mut(|state| {
+                    *state = sync::SyncState::SyncError(err.to_string())
+                });
             }
         }
         Command::none()
@@ -387,13 +376,15 @@ impl Data {
             Message::InitHost(..) => Command::none(),
             Message::Receiver(None) => Command::none(),
             Message::LoadFont(res) => self.handle_load_font_message(res),
+            Message::InitDatabase(_) => Command::none(),
         }
     }
 }
 
 #[derive(Debug)]
 pub enum Message {
-    Loading(()),
+    Loading(SqlitePool),
+    InitDatabase(Result<SqlitePool, DbError>),
     SearchPageMessage(search_page::Message),
     SidebarMessage(sidebar::Message),
     DeleteTipMessage(delete_tip::Message),
@@ -407,10 +398,10 @@ pub enum Message {
     CloseWindow(Option<()>),
     SyncResult(anyhow::Result<()>),
     SyncOption(Option<()>),
-    StartServerResult(std::io::Result<Stop>),
+    StartServerResult(anyhow::Result<CancellationToken>),
     ServerOption(Option<()>),
     InitHost(()),
-    Receiver(Option<MiddleDate>),
+    Receiver(Option<QueryResult>),
     LoadFont(Result<(), iced::font::Error>),
 }
 
@@ -420,7 +411,7 @@ impl iced::Application for LocalNative {
     type Flags = Option<Config>;
     type Theme = Theme;
 
-    fn new(flags: Self::Flags) -> (Self, Command<Self::Message>) {
+    fn new(flags: Option<Config>) -> (Self, Command<Self::Message>) {
         let is_first_open = flags.is_none();
         let config = flags.unwrap_or_default();
         let language = config.language;
@@ -428,11 +419,11 @@ impl iced::Application for LocalNative {
         (
             LocalNative {
                 config,
-                state: State::Loading,
+                state: State::Loading(String::new()),
             },
             Command::batch([
                 iced::font::load(include_bytes!("../fonts/icons.ttf")).map(Message::LoadFont),
-                Command::perform(async {}, Message::Loading),
+                Command::perform(init_db(), Message::InitDatabase),
                 Command::perform(translate::init_bundle(language), Message::ApplyLanguage),
                 if is_first_open {
                     Command::perform(init::WebKind::init_all(), Message::InitHost)
@@ -450,14 +441,14 @@ impl iced::Application for LocalNative {
 
     fn update(&mut self, message: Self::Message) -> Command<Self::Message> {
         match &mut self.state {
-            State::Loading => self.handle_loading_state(message),
+            State::Loading(..) => self.handle_loading_state(message),
             State::Loaded(data) => data.handle_loaded_state(&mut self.config, message),
         }
     }
 
     fn view(&self) -> iced::Element<'_, Self::Message> {
         match &self.state {
-            State::Loading => self.loading_view(),
+            State::Loading(info) => self.loading_view(info),
             State::Loaded(data) => self.loaded_view(data),
         }
     }
@@ -465,20 +456,39 @@ impl iced::Application for LocalNative {
     fn theme(&self) -> Self::Theme {
         self.config.theme().into()
     }
+
+    fn subscription(&self) -> iced::Subscription<Self::Message> {
+        event::listen_raw(|event, status| match (event, status) {
+            (iced::Event::Window(_, window::Event::CloseRequested), event::Status::Ignored) => {
+                Some(Message::RequestClosed)
+            }
+            _ => None,
+        })
+    }
 }
 
 impl LocalNative {
     fn handle_loading_state(&mut self, message: Message) -> Command<Message> {
+        let State::Loading(ref mut info) = self.state else {
+            return Command::none();
+        };
         match message {
-            Message::Loading(..) => {
-                let data = Data::new(&self.config);
+            Message::InitDatabase(Ok(pool)) => {
+                Command::perform(async {}, move |_| Message::Loading(pool.clone()))
+            }
+            Message::InitDatabase(Err(err)) => {
+                *info = err.to_string();
+                Command::none()
+            }
+            Message::Loading(pool) => {
+                let data = Data::new(&self.config, pool);
                 self.state = State::Loaded(data);
                 if let State::Loaded(ref mut data) = self.state {
-                    let conn = &data.conn;
                     let search_page = &data.search_page;
+                    let pool = data.pool.clone();
                     Command::perform(
-                        MiddleDate::upgrade(
-                            conn.clone(),
+                        db_operations::upgrade(
+                            pool,
                             search_page.search_value.clone(),
                             self.config.limit,
                             search_page.offset,
@@ -494,12 +504,17 @@ impl LocalNative {
         }
     }
 
-    fn loading_view(&self) -> iced::Element<'_, Message> {
+    fn loading_view(&self, info: &String) -> iced::Element<'_, Message> {
         column![
             vertical_space(),
             row![
                 horizontal_space(),
-                text("Loading...").size(50),
+                if info.is_empty() {
+                    text("Loading...")
+                } else {
+                    text(info)
+                }
+                .size(50),
                 horizontal_space()
             ],
             vertical_space(),
@@ -571,6 +586,7 @@ pub fn settings() -> iced::Settings<Option<Config>> {
         window: iced::window::Settings {
             size: Size::new(1080., 720.),
             icon: logo(),
+            exit_on_close_request: false,
             ..Default::default()
         },
         default_font: if cfg!(target_os = "windows") {

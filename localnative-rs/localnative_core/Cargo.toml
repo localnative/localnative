@@ -3,7 +3,7 @@ name = "localnative_core"
 description = "localnative core lib"
 homepage = "https://localnative.app"
 authors = ["Yi Wang"]
-version = "0.6.0"
+version = "0.7.0"
 license = "AGPL-3.0"
 edition = "2021"
 
@@ -35,7 +35,7 @@ sqlx = { workspace = true, features = [
     "chrono",
 ] }
 tracing = { workspace = true }
-chrono = { workspace = true, default-features = false }
+chrono = { workspace = true, default-features = false, features = ["serde"] }
 
 [lib]
 name = "localnative_core"
@@ -44,4 +44,3 @@ crate-type = ["rlib", "cdylib", "staticlib"]
 
 [features]
 default = []
-no_print = []

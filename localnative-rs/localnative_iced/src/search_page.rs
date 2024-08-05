@@ -7,21 +7,17 @@ use iced::{
     },
     Command, Element, Pixels,
 };
+use sqlx::SqlitePool;
 
-use crate::{
-    config::ThemeType, icons::IconItem, middle_date::MiddleDate, tr, Conn, DateView, NoteView,
-    TagView,
-};
-
-#[cfg(feature = "preview")]
-use crate::tags::Tag;
+use crate::db_operations;
+use crate::{config::ThemeType, icons::IconItem, tr, DateView, NoteView, TagView};
 
 #[derive(Default)]
 pub struct SearchPage {
     pub notes: Vec<NoteView>,
     pub tags: Vec<TagView>,
     pub days: DateView,
-    pub range: Option<(time::Date, time::Date)>,
+    pub range: Option<(chrono::NaiveDate, chrono::NaiveDate)>,
     pub search_value: String,
     pub offset: u32,
     pub count: u32,
@@ -66,7 +62,9 @@ impl SearchPage {
             self.create_note_page(days, limit)
         } else {
             self.create_empty_page(days)
-        };
+        }
+        .align_items(iced::Alignment::Center)
+        .width(iced::Length::FillPortion(8));
 
         container(row![note_page, tags]).into()
     }
@@ -213,34 +211,34 @@ impl SearchPage {
         &mut self,
         message: Message,
         limit: u32,
-        conn: Conn,
+        pool: &SqlitePool,
         disabel_delete_tip: bool,
         delete_tip: &mut crate::DeleteTip,
     ) -> Command<crate::Message> {
         match message {
-            Message::Search => self.handle_search(conn, limit),
+            Message::Search => self.handle_search(pool, limit),
             Message::SearchInput(search_value) => {
                 self.search_value = search_value;
-                self.handle_search(conn, limit)
+                self.handle_search(pool, limit)
             }
             Message::Clear => {
                 self.search_value.clear();
-                self.handle_search(conn, limit)
+                self.handle_search(pool, limit)
             }
-            Message::Refresh => self.handle_search(conn, limit),
-            Message::NextPage => self.handle_next_page(conn, limit),
-            Message::PrePage => self.handle_pre_page(conn, limit),
+            Message::Refresh => self.handle_search(pool, limit),
+            Message::NextPage => self.handle_next_page(pool, limit),
+            Message::PrePage => self.handle_pre_page(pool, limit),
             Message::Note(msg, idx) => {
-                self.handle_note_message(msg, idx, conn, limit, disabel_delete_tip, delete_tip)
+                self.handle_note_message(msg, idx, pool, limit, disabel_delete_tip, delete_tip)
             }
-            Message::Tag(tag_msg) => self.handle_tag_message(tag_msg, conn, limit),
-            Message::Day(dm) => self.handle_day_message(dm, conn, limit),
+            Message::Tag(tag_msg) => self.handle_tag_message(tag_msg, pool, limit),
+            Message::Day(dm) => self.handle_day_message(dm, pool, limit),
         }
     }
 
-    fn handle_search(&self, conn: Conn, limit: u32) -> Command<crate::Message> {
+    fn handle_search(&self, pool: &SqlitePool, limit: u32) -> Command<crate::Message> {
         search(
-            conn,
+            pool,
             self.search_value.to_owned(),
             limit,
             self.offset,
@@ -248,23 +246,23 @@ impl SearchPage {
         )
     }
 
-    fn handle_next_page(&mut self, conn: Conn, limit: u32) -> Command<crate::Message> {
+    fn handle_next_page(&mut self, pool: &SqlitePool, limit: u32) -> Command<crate::Message> {
         let current_count = self.offset + limit;
         if current_count < self.count {
             self.offset = current_count;
-            self.handle_search(conn, limit)
+            self.handle_search(pool, limit)
         } else {
             Command::none()
         }
     }
 
-    fn handle_pre_page(&mut self, conn: Conn, limit: u32) -> Command<crate::Message> {
+    fn handle_pre_page(&mut self, pool: &SqlitePool, limit: u32) -> Command<crate::Message> {
         if self.offset >= limit {
             self.offset -= limit;
-            self.handle_search(conn, limit)
+            self.handle_search(pool, limit)
         } else if self.offset != 0 {
             self.offset = 0;
-            self.handle_search(conn, limit)
+            self.handle_search(pool, limit)
         } else {
             Command::none()
         }
@@ -274,7 +272,7 @@ impl SearchPage {
         &mut self,
         msg: crate::note::Message,
         idx: usize,
-        conn: Conn,
+        pool: &SqlitePool,
         limit: u32,
         disabel_delete_tip: bool,
         delete_tip: &mut crate::DeleteTip,
@@ -283,8 +281,8 @@ impl SearchPage {
             crate::note::Message::Delete(rowid) => {
                 if disabel_delete_tip {
                     Command::perform(
-                        MiddleDate::delete(
-                            conn,
+                        db_operations::delete(
+                            pool.clone(),
                             self.search_value.to_string(),
                             limit,
                             self.offset,
@@ -300,7 +298,7 @@ impl SearchPage {
             }
             crate::note::Message::Search(s) => {
                 self.search_value = s;
-                self.handle_search(conn, limit)
+                self.handle_search(pool, limit)
             }
             msg => {
                 if let Some(note) = self.notes.get_mut(idx) {
@@ -314,26 +312,26 @@ impl SearchPage {
     fn handle_tag_message(
         &mut self,
         tag_msg: crate::tags::Message,
-        conn: Conn,
+        pool: &SqlitePool,
         limit: u32,
     ) -> Command<crate::Message> {
         match tag_msg {
             crate::tags::Message::Search(text) => self.search_value = text,
         }
-        self.handle_search(conn, limit)
+        self.handle_search(pool, limit)
     }
 
     fn handle_day_message(
         &mut self,
         dm: crate::days::Message,
-        conn: Conn,
+        pool: &SqlitePool,
         limit: u32,
     ) -> Command<crate::Message> {
         match dm {
-            crate::days::Message::Clear => self.handle_search(conn, limit),
+            crate::days::Message::Clear => self.handle_search(pool, limit),
             crate::days::Message::Selected { start, end } => {
                 self.range = Some((start, end));
-                self.handle_search(conn, limit)
+                self.handle_search(pool, limit)
             }
             dm => {
                 self.days.update(dm);
@@ -344,65 +342,21 @@ impl SearchPage {
 }
 
 pub fn search(
-    conn: Conn,
+    pool: &SqlitePool,
     query: String,
     limit: u32,
     offset: u32,
-    range: Option<(time::Date, time::Date)>,
+    range: Option<(chrono::NaiveDate, chrono::NaiveDate)>,
 ) -> Command<crate::Message> {
     if let Some((from, to)) = range {
         Command::perform(
-            MiddleDate::from_filter(conn, query, limit, offset, from, to),
+            db_operations::filter(pool.clone(), query, limit, offset, from, to),
             crate::Message::Receiver,
         )
     } else {
         Command::perform(
-            MiddleDate::from_select(conn, query, limit, offset),
+            db_operations::select(pool.clone(), query, limit, offset),
             crate::Message::Receiver,
         )
-    }
-}
-
-#[cfg(feature = "preview")]
-impl iced::Sandbox for SearchPage {
-    type Message = Message;
-
-    fn new() -> Self {
-        let count = 20;
-        let mut notes = Vec::with_capacity(count as usize);
-        for _ in 0..count {
-            notes.push(NoteView::new());
-        }
-        let tags = vec![
-            Tag {
-                name: "testtag".to_owned(),
-                count: 16,
-            };
-            50
-        ]
-        .into_iter()
-        .map(TagView::from)
-        .collect();
-        let days = DateView::default();
-        Self {
-            notes,
-            tags,
-            offset: 0,
-            days,
-            count,
-            ..Default::default()
-        }
-    }
-
-    fn title(&self) -> String {
-        "search page preview".to_owned()
-    }
-
-    fn update(&mut self, _message: Self::Message) {
-        // TODO:
-    }
-
-    fn view(&self) -> Element<'_, Self::Message> {
-        self.view(10)
     }
 }

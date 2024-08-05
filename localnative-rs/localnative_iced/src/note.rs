@@ -5,7 +5,7 @@ use iced::{
     Length::FillPortion,
 };
 use iced_aw::direction::Horizontal;
-use localnative_core::Note;
+use localnative_core::db::models::Note;
 
 use crate::icons::IconItem;
 

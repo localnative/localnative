@@ -1,11 +1,12 @@
 [package]
 name = "localnative_iced"
 version = "0.7.0"
-authors = ["Cupnfish <yrainbxqc@gmail.com>"]
+authors = ["Cupnfish <cupnfish@icloud.com>"]
 edition = "2021"
 
 [dependencies]
-localnative_core = { path = "../localnative_core", features = ["no_print"] }
+localnative_core = { path = "../localnative_core" }
+tracing = { workspace = true }
 dirs = { workspace = true }
 open = { workspace = true }
 image = { workspace = true }
@@ -48,6 +49,9 @@ iced = { workspace = true, features = [
     "tokio",
     "palette",
 ] }
+tokio-util = { workspace = true }
+tracing-subscriber = { workspace = true, features = ["registry"] }
+
 
 [target."cfg(target_os = \"windows\")".dependencies]
 winreg = { workspace = true }

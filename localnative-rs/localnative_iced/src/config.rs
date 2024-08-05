@@ -245,6 +245,7 @@ impl Not for ThemeKind {
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
+#[serde(default)]
 pub struct Config {
     pub light_theme: ThemeType,
     pub dark_theme: ThemeType,

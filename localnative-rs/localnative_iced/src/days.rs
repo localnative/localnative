@@ -2,43 +2,16 @@ use iced::widget::{button, container, horizontal_space, Column, Row};
 use iced::Length;
 use iced::{theme, Element};
 
-use serde::{Deserialize, Serialize};
-use time::Date;
-
 use crate::chart::{ChartView, DayChart};
 use crate::icons::IconItem;
-
-#[derive(Debug, Deserialize, Serialize, Clone, Copy)]
-pub struct Day {
-    #[serde(rename = "k")]
-    pub date: Date,
-    #[serde(rename = "v")]
-    pub count: i64,
-}
-
-impl From<Day> for (chrono::NaiveDate, i64) {
-    fn from(value: Day) -> Self {
-        (
-            chrono::NaiveDate::from_yo_opt(value.date.year(), value.date.ordinal() as u32)
-                .expect("create date failed."),
-            value.count,
-        )
-    }
-}
-
-impl Default for Day {
-    fn default() -> Self {
-        Self {
-            date: time::macros::date!(2021 - 06 - 24),
-            count: 0,
-        }
-    }
-}
 
 #[derive(Debug, Clone)]
 pub enum Message {
     MaxOrMin,
-    Selected { start: time::Date, end: time::Date },
+    Selected {
+        start: chrono::NaiveDate,
+        end: chrono::NaiveDate,
+    },
     Clear,
 }
 

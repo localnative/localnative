@@ -1,34 +1,27 @@
 use iced::widget::{button, row, text};
 use iced::Element;
-use serde::{Deserialize, Serialize};
+use localnative_core::db::models::Tags;
 
 #[derive(Debug, Clone)]
 pub enum Message {
     Search(String),
 }
 
-#[derive(Debug, Default, Deserialize, Serialize, Clone)]
-pub struct Tag {
-    #[serde(rename = "k")]
-    pub name: String,
-    #[serde(rename = "v")]
-    pub count: i64,
-}
 #[derive(Debug, Default, Clone)]
 pub struct TagView {
-    pub tag: Tag,
+    pub tag: Tags,
 }
-impl From<Tag> for TagView {
-    fn from(tag: Tag) -> Self {
+impl From<Tags> for TagView {
+    fn from(tag: Tags) -> Self {
         Self { tag }
     }
 }
 impl TagView {
     pub fn view(&self) -> Element<Message> {
         row![
-            button(text(&self.tag.name).size(16))
+            button(text(&self.tag.tag).size(16))
                 .style(crate::style::Tag)
-                .on_press(Message::Search(self.tag.name.clone())),
+                .on_press(Message::Search(self.tag.tag.clone())),
             button(text(self.tag.count).size(20))
                 .style(crate::style::TagNum)
                 .on_press(Message::Search(self.tag.count.to_string())),

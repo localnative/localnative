@@ -1,6 +1,10 @@
 use crate::db::{
-    diff_uuid4_from_server, diff_uuid4_to_server, get_meta_version, get_note_by_uuid4, insert,
-    next_uuid4_candidates, DbError, Note,
+    models::Note,
+    sync::{
+        diff_uuid4_from_server, diff_uuid4_to_server, get_meta_version, get_note_by_uuid4, insert,
+        next_uuid4_candidates,
+    },
+    DbError,
 };
 use futures::{future, FutureExt, StreamExt};
 use sqlx::SqlitePool;
@@ -96,7 +100,7 @@ impl LocalNative for LocalNativeServer {
     }
 }
 
-async fn setup_server(
+pub async fn setup_server(
     addr: SocketAddr,
     pool: SqlitePool,
     stop_token: Option<CancellationToken>,
