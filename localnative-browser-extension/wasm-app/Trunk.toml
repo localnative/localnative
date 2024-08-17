@@ -1,0 +1,6 @@
+[build]
+target = "index.html"
+dist = "dist"
+pattern_preload = "<link rel=\"preload\" href=\"/wasm-app_bg.wasm\" as=\"fetch\" type=\"application/wasm\" crossorigin=\"\"><link rel=\"modulepreload\" href=\"/wasm-app.js\">"
+pattern_script = "<script type=\"module\" src=\"/init.js\"></script>"
+filehash = false
