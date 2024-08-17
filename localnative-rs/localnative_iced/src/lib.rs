@@ -72,6 +72,7 @@ impl Data {
                 language_temp: config.language,
                 limit_temp: config.limit,
                 show_modal: false,
+                allowed_origins_temp: None,
             },
             pool,
         }
@@ -426,7 +427,7 @@ impl iced::Application for LocalNative {
                 Command::perform(init_db(), Message::InitDatabase),
                 Command::perform(translate::init_bundle(language), Message::ApplyLanguage),
                 if is_first_open {
-                    Command::perform(init::WebKind::init_all(), Message::InitHost)
+                    Command::perform(init::WebKind::init_all(None), Message::InitHost)
                 } else {
                     Command::none()
                 },

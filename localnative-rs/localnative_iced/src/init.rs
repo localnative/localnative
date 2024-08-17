@@ -43,44 +43,56 @@ impl AppHost {
         path
     }
 
+    pub fn new(
+        name: String,
+        description: String,
+        path: PathBuf,
+        tp: String,
+        allowed_extensions: Option<Vec<String>>,
+        allowed_origins: Option<Vec<String>>,
+    ) -> Self {
+        Self {
+            name,
+            description,
+            path,
+            tp,
+            allowed_extensions,
+            allowed_origins,
+        }
+    }
+
     pub fn firefox() -> Self {
-        Self {
-            name: "app.localnative".to_owned(),
-            description: "Local Native Host".to_owned(),
-            path: Self::path(),
-            tp: "stdio".to_owned(),
-            allowed_extensions: Some(vec!["localnative@example.org".to_owned()]),
-            allowed_origins: None,
-        }
+        Self::new(
+            "app.localnative".to_owned(),
+            "Local Native Host".to_owned(),
+            Self::path(),
+            "stdio".to_owned(),
+            Some(vec!["localnative@example.org".to_owned()]),
+            None,
+        )
     }
-    pub fn chrome() -> Self {
-        Self {
-            name: "app.localnative".to_owned(),
-            description: "Local Native Host".to_owned(),
-            path: Self::path(),
-            tp: "stdio".to_owned(),
-            allowed_extensions: None,
-            allowed_origins: Some(vec![
-                "chrome-extension://oclkmkeameccmgnajgogjlhdjeaconnb/".to_owned()
-            ]),
-        }
+
+    pub fn chrome(allowed_origins: Option<Vec<String>>) -> Self {
+        Self::new(
+            "app.localnative".to_owned(),
+            "Local Native Host".to_owned(),
+            Self::path(),
+            "stdio".to_owned(),
+            None,
+            allowed_origins.or_else(|| {
+                Some(vec![
+                    "chrome-extension://oclkmkeameccmgnajgogjlhdjeaconnb/".to_owned()
+                ])
+            }),
+        )
     }
+    // chrome-extension://npalnbpkafhmpninmfbajakbdjlknmnj/
     pub fn raw_data(&self) -> Vec<u8> {
         println!("{:?}", serde_json::to_string_pretty(self));
         serde_json::to_vec(self).unwrap()
     }
 }
 
-//     Windows Registry Editor Version 5.00
-// [HKEY_CURRENT_USER\Software\Google\Chrome\NativeMessagingHosts\app.localnative]
-// @="PATH_TO_CHROME_MANIFEST\\app.localnative.json"
-//let hkey = winreg::RegKey::predef(HKEY_CURRENT_USER);
-
-// [HKEY_CURRENT_USER\Software\Chromium\NativeMessagingHosts\app.localnative]
-// @="PATH_TO_CHROME_MANIFEST\\app.localnative.json"
-
-// [HKEY_CURRENT_USER\Software\Mozilla\NativeMessagingHosts\app.localnative]
-// @="PATH_TO_FIREFOX_MANIFEST\\app.localnative.json"
 #[cfg(target_os = "windows")]
 fn registr(kind: WebKind) {
     use winreg::enums::*;
@@ -159,7 +171,7 @@ pub enum WebKind {
 }
 
 impl WebKind {
-    pub async fn init_all() {
+    pub async fn init_all(allowed_origins: Option<Vec<String>>) {
         #[cfg(target_os = "linux")]
         {
             let from = std::env::current_exe()
@@ -178,8 +190,12 @@ impl WebKind {
 
             tokio::fs::copy(from, to).await.unwrap();
         }
-        tokio::join!(try_init_file(Self::FireFox), try_init_file(Self::Chrome),);
+        tokio::join!(
+            try_init_file(Self::FireFox, None),
+            try_init_file(Self::Chrome, allowed_origins),
+        );
     }
+
     #[cfg(target_os = "windows")]
     fn registr_path(&self) -> PathBuf {
         match self {
@@ -212,23 +228,26 @@ impl WebKind {
             browser_path
         })
     }
-    fn host(&self) -> AppHost {
+
+    fn host(&self, allowed_origins: Option<Vec<String>>) -> AppHost {
         match self {
             WebKind::FireFox => AppHost::firefox(),
-            WebKind::Chrome => AppHost::chrome(),
+            WebKind::Chrome => AppHost::chrome(allowed_origins),
         }
     }
+
     #[cfg(target_os = "windows")]
     fn json_path(&self) -> Option<String> {
         let path = self.path()?.join("app.localnative.json");
         path.into_os_string().into_string().ok()
     }
 }
-async fn try_init_file(kind: WebKind) {
+
+async fn try_init_file(kind: WebKind, allowed_origins: Option<Vec<String>>) {
     if let Some(dir_path) = kind.path() {
         #[cfg(target_os = "windows")]
         registr(kind);
-        let raw_file = kind.host().raw_data();
+        let raw_file = kind.host(allowed_origins).raw_data();
         init_file(&dir_path, &raw_file).await.unwrap();
     }
 }

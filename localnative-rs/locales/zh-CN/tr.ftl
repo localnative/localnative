@@ -59,3 +59,4 @@ count = 数量
 
 dark-theme = 暗色主题
 light-theme = 亮色主题
+allowed-origins = Allow Origins

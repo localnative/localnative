@@ -321,7 +321,7 @@ pub mod queries {
         is_public: bool,
     ) -> DbResult<Note> {
         let uuid4 = Uuid::new_v4().to_string();
-        let created_at = Utc::now().to_string();
+        let created_at = Utc::now().naive_utc();
         sqlx::query(
             "INSERT INTO note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -333,7 +333,7 @@ pub mod queries {
         .bind(description)
         .bind(comments)
         .bind(annotations)
-        .bind(created_at.clone())
+        .bind(created_at)
         .bind(is_public)
         .execute(pool)
         .await?;

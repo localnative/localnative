@@ -16,7 +16,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use localnative_core::exe::run;
+use localnative_core::run_sync as run;
 fn main() {
     run(r#"{"action":"upgrade"}"#);
 }

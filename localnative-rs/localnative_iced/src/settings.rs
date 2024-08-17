@@ -1,7 +1,7 @@
 use iced::{
-    widget::{button, checkbox, column, horizontal_space, row, text, Space, Text},
+    widget::{button, checkbox, column, horizontal_space, row, text, text_input, Space, Text},
     Command, Element,
-    Length::Shrink,
+    Length::{self, Shrink},
 };
 use iced_aw::{Card, Modal, NumberInput};
 
@@ -17,9 +17,10 @@ pub struct Settings {
     pub disable_delete_tip_temp: bool,
     pub limit_temp: u32,
     pub show_modal: bool,
+    pub allowed_origins_temp: Option<String>,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum Message {
     Save,
     Cancel,
@@ -29,6 +30,7 @@ pub enum Message {
     LimitChanged(u32),
     LightThemeChanged(ThemeType),
     DarkThemeChanged(ThemeType),
+    AllowedOriginsChanged(String),
     Other,
 }
 
@@ -81,6 +83,14 @@ impl Settings {
             .step(1)
             .padding(0.);
 
+        let allowed_origins_input = text_input(
+            "Allowed Origin",
+            self.allowed_origins_temp.as_deref().unwrap_or(""),
+        )
+        .on_input(Message::AllowedOriginsChanged)
+        .padding(3)
+        .width(Length::Fill);
+
         let body = column![
             row![
                 text(tr!("disable-delete-tip")),
@@ -103,11 +113,12 @@ impl Settings {
                 dark_theme_selector
             ],
             row![text(tr!("limit")), horizontal_space(), limit_input],
+            row![text(tr!("allowed-origins")), allowed_origins_input],
             try_fix_host
         ]
         .align_items(iced::Alignment::Center)
         .padding(0)
-        .spacing(10);
+        .spacing(20);
 
         Some(Element::new(
             Card::new(Text::new(tr!("settings")), body)
@@ -162,7 +173,12 @@ impl Settings {
                 config.limit = limit;
             }
             Message::TryFixHost => {
-                return Command::perform(crate::init::WebKind::init_all(), crate::Message::InitHost)
+                return Command::perform(
+                    crate::init::WebKind::init_all(
+                        self.allowed_origins_temp.take().map(|s| vec![s]),
+                    ),
+                    crate::Message::InitHost,
+                )
             }
             Message::Other => {}
             Message::LightThemeChanged(t) => {
@@ -170,6 +186,9 @@ impl Settings {
             }
             Message::DarkThemeChanged(t) => {
                 config.dark_theme = t;
+            }
+            Message::AllowedOriginsChanged(origins) => {
+                self.allowed_origins_temp = Some(origins);
             }
         }
         Command::none()

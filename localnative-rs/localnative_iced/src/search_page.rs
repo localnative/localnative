@@ -117,7 +117,7 @@ impl SearchPage {
                 if self.days.is_show {
                     iced::Length::Fixed(256.)
                 } else {
-                    iced::Length::Shrink
+                    iced::Length::Fixed(36.5)
                 }
             })
     }

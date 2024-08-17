@@ -81,6 +81,33 @@ pub enum Cmd {
     DbCmd(db::models::Cmd),
 }
 
+#[test]
+fn test_serde() {
+    let cmd = Cmd::DbCmd(db::models::Cmd::Insert(db::models::CmdInsert {
+        title: "Test Title".into(),
+        url: "http://example.com".into(),
+        tags: "tag1,tag2".into(),
+        description: "This is a test description".into(),
+        comments: "Comment 1".into(),
+        annotations: "Annotation 1".into(),
+        limit: 10,
+        offset: 0,
+        is_public: true,
+    }));
+    let json = serde_json::to_string_pretty(&cmd).expect("Failed to serialize command");
+    println!("{:#}", json);
+
+    let cmd = Cmd::DbCmd(db::models::Cmd::Search(db::models::CmdSearch {
+        query: "hello".into(),
+        limit: 10,
+        offset: 0,
+    }));
+    let json = serde_json::to_string_pretty(&cmd).expect("Failed to serialize command");
+    println!("{:#}", json);
+    let cmd = serde_json::from_str::<'_, Cmd>(&json).unwrap();
+    println!("{:#?}", cmd);
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CmdSyncViaAttach {
     pub uri: String,
@@ -114,17 +141,44 @@ pub enum ProcessError {
     SerializedErr(String),
 }
 
-async fn run(text: &str) -> String {
+pub async fn run(text: &str) -> String {
     match serde_json::from_str::<Cmd>(text) {
         Ok(cmd) => match process(cmd).await {
             Ok(rs) => rs,
-            Err(err) => serialize_error(ProcessError::from(err)),
+            Err(err) => serialize_error(ProcessError::from(err), text),
         },
-        Err(e) => serialize_error(ProcessError::SerdeError(e)),
+        Err(e) => serialize_error(ProcessError::SerdeError(e), text),
     }
 }
 
-fn serialize_error(err: ProcessError) -> String {
+pub fn run_sync(text: &str) -> String {
+    let rt = Runtime::new().unwrap();
+    rt.block_on(run(text))
+}
+
+#[derive(Serialize)]
+struct SerializeError<'s> {
+    #[serde(flatten)]
+    error: ProcessError,
+    source_text: &'s str,
+}
+#[test]
+fn test_serialize_error() {
+    let err = SerializeError {
+        error: ProcessError::IoError(std::io::Error::new(
+            std::io::ErrorKind::AddrInUse,
+            "addres in use.",
+        )),
+        source_text: "source_text",
+    };
+    println!("json: {:#}", serde_json::to_string(&err).unwrap())
+}
+
+fn serialize_error(err: ProcessError, text: &str) -> String {
+    let err = SerializeError {
+        error: err,
+        source_text: text,
+    };
     serde_json::to_string(&err).unwrap_or_else(|_| "Serialization error".to_string())
 }
 

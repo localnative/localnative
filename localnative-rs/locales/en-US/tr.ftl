@@ -8,7 +8,7 @@ to = to
 search = Type your search text ...
 tags = tags:
 
-# sync page 
+# sync page
 sync-waiting = Waiting for your operating...
 sync-syncing = Attempting to sync...
 sync-error = Synchronization process error:
@@ -59,3 +59,4 @@ count = Count
 
 dark-theme = Dark theme
 light-theme = Light theme
+allowed-origins = Allow Origins
