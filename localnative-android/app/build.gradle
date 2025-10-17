@@ -5,14 +5,15 @@ plugins {
 }
 
 android {
+    namespace 'app.localnative'
     compileSdkVersion 33
 
     defaultConfig {
         applicationId "app.localnative"
         minSdkVersion 19
         targetSdkVersion 33
-        versionCode 18
-        versionName "0.5.4"
+        versionCode 84
+        versionName "0.6.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         ndk.abiFilters 'armeabi-v7a','arm64-v8a','x86','x86_64'
     }
@@ -29,6 +30,9 @@ android {
     compileOptions {
         targetCompatibility JavaVersion.VERSION_1_8
         sourceCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
     }
     buildFeatures {
         viewBinding true
