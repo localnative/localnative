@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId "app.localnative"
-        minSdkVersion 19
+        minSdkVersion 21
         targetSdkVersion 33
         versionCode 84
         versionName "0.6.0"

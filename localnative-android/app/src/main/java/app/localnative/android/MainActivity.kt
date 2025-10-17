@@ -115,7 +115,6 @@ class MainActivity : AppCompatActivity(), SearchView.OnQueryTextListener, NoteLi
         prevButton.setOnClickListener(this)
         val nextButton = findViewById<View>(R.id.next_button) as Button
         nextButton.setOnClickListener(this)
-        findViewById<TextView>(R.id.bottomTextView).movementMethod = LinkMovementMethod.getInstance()
 
 //        KeyboardVisibilityEvent.setEventListener(
 //            this

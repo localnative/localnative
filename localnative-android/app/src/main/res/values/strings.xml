@@ -20,6 +20,5 @@
     <string name="save">Save</string>
     <string name="scan_qrcode_title">Scan QR Code to Sync</string>
     <string name="qrcode">QR Code</string>
-    <string name="bottom_line_text">Write your own geolocation notes with <a href="https://hexagon.place/">Hexagon Place App</a>.</string>
 
 </resources>
