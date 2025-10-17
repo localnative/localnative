@@ -17,12 +17,12 @@
 */
 use super::make_tags;
 use crate::Note;
-use base64::decode;
+use base64::{Engine as _, engine::general_purpose};
 use rusqlite::types::ToSql;
 
 pub fn insert_image(note: Note) -> anyhow::Result<()> {
     let data64 = note.annotations.replace("data:image/png;base64,", "");
-    let decoded = decode(&data64)?;
+    let decoded = general_purpose::STANDARD.decode(&data64)?;
     let conn = &mut super::super::exe::get_sqlite_connection();
     let tx = conn.transaction()?;
     {

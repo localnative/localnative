@@ -54,7 +54,7 @@ pub mod android {
             .new_string(output_ptr.to_str().unwrap())
             .expect("Couldn't create java output string!");
 
-        output.into_inner()
+        output.into_raw()
     }
 }
 
@@ -80,8 +80,8 @@ pub extern "C" fn localnative_free(s: *mut c_char) {
         if s.is_null() {
             return;
         }
-        CString::from_raw(s)
-    };
+        let _ = CString::from_raw(s);
+    }
 }
 use serde::{Deserialize, Serialize};
 #[allow(clippy::upper_case_acronyms)]

@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace 'app.localnative'
-    compileSdkVersion 33
+    compileSdkVersion 36
 
     defaultConfig {
         applicationId "app.localnative"

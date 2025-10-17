@@ -1,4 +1,4 @@
-BIN_PATH=$HOME/Library/Android/sdk/ndk-bundle/toolchains/llvm/prebuilt/darwin-x86_64/bin
+BIN_PATH=$HOME/Library/Android/sdk/ndk/29.0.14033849/toolchains/llvm/prebuilt/darwin-x86_64/bin
 cd `dirname $0`/../localnative-rs/localnative_core
 
 # echo 'crate-type = ["cdylib"]' >> Cargo.toml
