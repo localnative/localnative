@@ -21,5 +21,4 @@
     <string name="save">保存</string>
     <string name="scan_qrcode_title">扫描二维码同步</string>
     <string name="qrcode">二维码</string>
-    <string name="bottom_line_text">在<a href="https://hexagon.place/">Hexagon.Place</a>中记录你的地理定位信息。</string>
 </resources>
