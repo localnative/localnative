@@ -23,21 +23,17 @@
 //
 
 import SwiftUI
-import MMWormhole
 
 @main
 struct LocalNativeApp: App {
     @StateObject private var env = AppState.getEnv()
-    let wormhole = MMWormhole(applicationGroupIdentifier: "group.app.localnative.ios", optionalDirectory: "wormhole")
 
     init() {
-        // Set up wormhole listener
-        wormhole.listenForMessage(withIdentifier: "message", listener: { (messageObject) -> Void in
-            if let message = messageObject as? String {
-                AppState.ln.run(json_input: message)
-                AppState.search(input: "", offset: 0)
-            }
-        })
+        // Set up App Groups listener (replaces MMWormhole)
+        AppGroupsHelper.shared.startListening { message in
+            AppState.ln.run(json_input: message)
+            AppState.search(input: "", offset: 0)
+        }
 
         // Perform initial search
         AppState.search(input: "", offset: 0)

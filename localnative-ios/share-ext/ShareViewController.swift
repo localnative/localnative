@@ -25,22 +25,145 @@
 
 import MobileCoreServices
 import UIKit
-import Social
-import UITextView_Placeholder
-import MMWormhole
-let wormhole = MMWormhole(applicationGroupIdentifier: "group.app.localnative.ios", optionalDirectory: "wormhole")
+import SwiftUI
+import UniformTypeIdentifiers
 
 class ShareViewController: UIViewController {
-    @IBOutlet weak var saveButton: UIButton!
-    @IBOutlet weak var cancelButton: UIButton!
-    @IBOutlet weak var titleText: UITextView!
-    @IBOutlet weak var urlText: UITextView!
-    @IBOutlet weak var tagsText: UITextView!
-    @IBOutlet weak var descriptionText: UITextView!
-    @IBAction func cancelButtonTouchDown(_ sender: Any) {
-        self.extensionContext!.completeRequest(returningItems: [], completionHandler: nil)
+
+    private var sharedTitle: String = ""
+    private var sharedURL: String = ""
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+
+        // Extract shared content from extension context
+        extractSharedContent { [weak self] title, url in
+            guard let self = self else { return }
+            self.sharedTitle = title
+            self.sharedURL = url
+            self.setupSwiftUIView()
+        }
     }
-    
+
+    private func setupSwiftUIView() {
+        let sharedData = SharedData(title: sharedTitle, url: sharedURL)
+
+        let shareView = ShareView(
+            sharedData: sharedData,
+            onSave: { [weak self] title, url, tags, description in
+                self?.saveNote(title: title, url: url, tags: tags, description: description)
+            },
+            onCancel: { [weak self] in
+                self?.cancelShare()
+            }
+        )
+
+        let hostingController = UIHostingController(rootView: shareView)
+        addChild(hostingController)
+        view.addSubview(hostingController.view)
+        hostingController.view.frame = view.bounds
+        hostingController.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        hostingController.didMove(toParent: self)
+    }
+
+    private func extractSharedContent(completion: @escaping (String, String) -> Void) {
+        guard let extensionItem = extensionContext?.inputItems.first as? NSExtensionItem,
+              let itemProvider = extensionItem.attachments?.first else {
+            completion("", "")
+            return
+        }
+
+        // Try to get URL and title from different content types
+        let propertyList = String(kUTTypePropertyList)
+
+        if itemProvider.hasItemConformingToTypeIdentifier(propertyList) {
+            itemProvider.loadItem(forTypeIdentifier: propertyList, options: nil) { item, error in
+                guard let dictionary = item as? NSDictionary,
+                      let results = dictionary[NSExtensionJavaScriptPreprocessingResultsKey] as? NSDictionary else {
+                    DispatchQueue.main.async {
+                        completion("", "")
+                    }
+                    return
+                }
+
+                let title = results["title"] as? String ?? ""
+                let url = results["url"] as? String ?? ""
+
+                DispatchQueue.main.async {
+                    completion(title, url)
+                }
+            }
+        } else if itemProvider.hasItemConformingToTypeIdentifier(UTType.url.identifier) {
+            itemProvider.loadItem(forTypeIdentifier: UTType.url.identifier, options: nil) { item, error in
+                guard let url = item as? URL else {
+                    DispatchQueue.main.async {
+                        completion("", "")
+                    }
+                    return
+                }
+
+                DispatchQueue.main.async {
+                    completion(url.absoluteString, url.absoluteString)
+                }
+            }
+        } else if itemProvider.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) {
+            itemProvider.loadItem(forTypeIdentifier: UTType.plainText.identifier, options: nil) { item, error in
+                guard let text = item as? String else {
+                    DispatchQueue.main.async {
+                        completion("", "")
+                    }
+                    return
+                }
+
+                DispatchQueue.main.async {
+                    completion(text, text)
+                }
+            }
+        } else {
+            completion("", "")
+        }
+    }
+
+    private func saveNote(title: String, url: String, tags: String, description: String) {
+        let message: [String: Any] = [
+            "action": "insert",
+            "title": title,
+            "url": url,
+            "tags": tags,
+            "description": description,
+            "comments": "",
+            "annotations": "",
+            "limit": 10,
+            "offset": 0,
+            "is_public": false
+        ]
+
+        if let jsonData = try? JSONSerialization.data(withJSONObject: message),
+           let jsonString = String(data: jsonData, encoding: .utf8) {
+            // Send message to main app using App Groups
+            AppGroupsHelper.shared.sendMessage(jsonString)
+
+            // Try to open the main app
+            if let appURL = URL(string: "localnative://insert") {
+                var responder: UIResponder? = self
+                while responder != nil {
+                    if let application = responder as? UIApplication {
+                        application.perform(#selector(openURL(_:)), with: appURL)
+                        break
+                    }
+                    responder = responder?.next
+                }
+            }
+        }
+
+        // Complete the extension request
+        extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
+    }
+
+    private func cancelShare() {
+        extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
+    }
+
     @objc func openURL(_ url: URL) -> Bool {
         var responder: UIResponder? = self
         while responder != nil {
@@ -51,82 +174,4 @@ class ShareViewController: UIViewController {
         }
         return false
     }
-    
-    @IBAction func saveButtonTouchDown(_ sender: Any) {
-        let message : [String: Any] = [
-            "action": "insert",
-            
-            "title": titleText.text,
-            "url": urlText.text,
-            "tags": tagsText.text,
-            "description": descriptionText.text,
-            "comments": "",
-            "annotations": "",
-            
-            "limit": 10,
-            "offset": 0,
-            "is_public": false
-        ]
-
-        let valid = JSONSerialization.isValidJSONObject(message)
-        
-        let url = URL(string: "localnative://insert") as! URL
-        openURL(url)
-        // send json after container app open
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-           if valid {
-                let jsonText = try? JSONSerialization.data(withJSONObject: message)
-                wormhole.passMessageObject( String(data: jsonText!, encoding: .utf8)! as NSCoding, identifier: "message")
-            }
-            self.extensionContext!.completeRequest(returningItems: [], completionHandler: nil)
-        }
-
-    }
-
-    override func viewDidLoad() {
-        // super.viewDidLoad()
-        titleText.placeholder = "title"
-        urlText.placeholder = "url"
-        tagsText.placeholder = "type to add tags, comma or space as tag seperator"
-        descriptionText.placeholder = "description"
-        // tagsText.becomeFirstResponder()
-        // https://hackernoon.com/how-to-build-an-ios-share-extension-in-swift-4a2019935b2e
-        let extensionItem = extensionContext?.inputItems.first as! NSExtensionItem
-        let itemProvider = extensionItem.attachments?.first as! NSItemProvider
-        let propertyList = String(kUTTypePropertyList)
-        if itemProvider.hasItemConformingToTypeIdentifier(propertyList) {
-            itemProvider.loadItem(forTypeIdentifier: propertyList, options: nil, completionHandler: { (item, error) -> Void in
-                guard let dictionary = item as? NSDictionary else { return }
-                OperationQueue.main.addOperation {
-                    if let results = dictionary[NSExtensionJavaScriptPreprocessingResultsKey] as? NSDictionary
-                    {
-                        print("results")
-                        print(results)
-                        self.urlText.text =  results["url"] as? String
-                        self.titleText.text = results["title"] as? String
-                        
-                    }
-                }
-            })
-        } else {
-            print("error")
-        }
-    }
-    func isContentValid() -> Bool {
-        // Do validation of contentText and/or NSExtensionContext attachments here
-        return true
-    }
-    
-    func didSelectPost() {
-        // This is called after the user selects Post. Do the upload of contentText and/or NSExtensionContext attachments.
-    
-        // Inform the host that we're done, so it un-blocks its UI. Note: Alternatively you could call super's -didSelectPost, which will similarly complete the extension context.
-        self.extensionContext!.completeRequest(returningItems: [], completionHandler: nil)
-    }
-
-    func configurationItems() -> [Any]! {
-        // To add configuration options via table cells at the bottom of the sheet, return an array of SLComposeSheetConfigurationItem here.
-        return []
-    }
-
 }
