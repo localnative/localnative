@@ -1,0 +1,65 @@
+name: localnative_flutter
+description: Cross-platform Local Native note-taking application built with Flutter
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State management
+  provider: ^6.1.1
+
+  # FFI and Rust bridge
+  flutter_rust_bridge: ^2.0.0
+  ffi: ^2.1.0
+
+  # QR Code
+  qr_flutter: ^4.1.0
+  mobile_scanner: ^3.5.5
+
+  # JSON serialization
+  json_annotation: ^4.8.1
+
+  # Shared preferences for settings
+  shared_preferences: ^2.2.2
+
+  # Path provider for database location
+  path_provider: ^2.1.1
+
+  # Intl for date formatting
+  intl: ^0.18.1
+
+  # UUID generation
+  uuid: ^4.2.2
+
+  # Material design
+  material_design_icons_flutter: ^7.0.7296
+
+  # URL launcher
+  url_launcher: ^6.2.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+
+  # Code generation
+  build_runner: ^2.4.7
+  json_serializable: ^6.7.1
+  flutter_rust_bridge_codegen: ^2.0.0
+
+flutter:
+  uses-material-design: true
+
+  # If you have assets like images or fonts, add them here
+  # assets:
+  #   - assets/images/
+
+  # fonts:
+  #   - family: Roboto
+  #     fonts:
+  #       - asset: fonts/Roboto-Regular.ttf

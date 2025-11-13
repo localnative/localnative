@@ -1,0 +1,3 @@
+rust_input: rust/src/lib.rs
+dart_output: lib/bridge_generated.dart
+c_output: ios/Runner/bridge_generated.h
