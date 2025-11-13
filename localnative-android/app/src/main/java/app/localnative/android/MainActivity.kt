@@ -21,6 +21,7 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -29,7 +30,7 @@ import androidx.compose.material3.Surface
 import com.google.zxing.integration.android.IntentIntegrator
 import app.localnative.R
 
-class MainActivity : ComponentActivity() {
+class MainActivity : ComponentActivity(), View.OnClickListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -75,5 +76,19 @@ class MainActivity : ComponentActivity() {
         } else {
             super.onActivityResult(requestCode, resultCode, data)
         }
+    }
+
+    // Legacy method for backward compatibility with old RecyclerView adapter
+    @Deprecated("This method is for legacy code compatibility only")
+    fun doSearch(query: String, offset: Long) {
+        // This method is no longer used in the Compose-based UI
+        Log.d("MainActivity", "Legacy doSearch called: query=$query, offset=$offset")
+    }
+
+    // Legacy OnClickListener implementation for backward compatibility
+    @Deprecated("This method is for legacy code compatibility only")
+    override fun onClick(v: View?) {
+        // This method is no longer used in the Compose-based UI
+        Log.d("MainActivity", "Legacy onClick called")
     }
 }
