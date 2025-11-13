@@ -9,95 +9,79 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var searchText : String = ""
-    @EnvironmentObject var env : Env
+    @State private var searchText: String = ""
+    @EnvironmentObject var env: Env
     @State private var showingSync = false
+
     var body: some View {
+        NavigationView {
             VStack {
-                HStack{
-                    Text("   LN")
-                    SearchBar(text: $searchText, placeholder: "type to search")
-                    Button(action:{
-                        self.showingSync.toggle()
-                    }){
-                        Text("Sync   ")
-                    }.sheet(isPresented: $showingSync){
-                     SyncView()
-                    }
-                }
-                HStack{
-                    Button(action:{
+                HStack {
+                    Button(action: {
                         let offset = AppState.decOffset()
                         AppState.search(input: AppState.getQuery(), offset: offset)
-                    }){
-                        Text("   Prev")
-                    }//.padding()
+                    }) {
+                        Text("Prev")
+                    }
+                    .padding(.leading)
+
                     Spacer()
                     Text(env.paginationText)
                     Spacer()
-                    Button(action:{
+
+                    Button(action: {
                         let offset = AppState.incOffset()
                         AppState.search(input: AppState.getQuery(), offset: offset)
-                    }){
-                        Text("Next   ")
-                    }//.padding()
+                    }) {
+                        Text("Next")
+                    }
+                    .padding(.trailing)
                 }
-                List (env.notes){
-                    note in
-                    NoteRowView(note: note, query: self.$searchText)
+
+                List(env.notes) { note in
+                    NoteRowView(note: note, query: $searchText)
                 }
-                HStack{
+                .listStyle(.plain)
+
+                HStack {
                     Text("Write your own geolocation notes with")
-                    Button(action:{
+                    Button(action: {
                         guard let url = URL(string: "https://hexagon.place/") else { return }
                         UIApplication.shared.open(url)
-                    }){
+                    }) {
                         Text("Hexagon Place App")
                     }
                 }
+                .font(.caption)
+                .padding()
             }
-        
+            .navigationTitle("LN")
+            .navigationBarTitleDisplayMode(.inline)
+            .searchable(text: $searchText, prompt: "Search notes")
+            .onChange(of: searchText) { newValue in
+                AppState.clearOffset()
+                AppState.search(input: newValue, offset: 0)
+            }
+            .autocorrectionDisabled()
+            .textInputAutocapitalization(.never)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        showingSync.toggle()
+                    }) {
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                    }
+                }
+            }
+            .sheet(isPresented: $showingSync) {
+                SyncView()
+            }
+        }
     }
 }
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
-    }
-}
-
-struct SearchBar: UIViewRepresentable {
-    @Binding var text: String
-    var placeholder: String
-    
-    class Coordinator: NSObject, UISearchBarDelegate {
-        
-        @Binding var text: String
-
-        init(text: Binding<String>) {
-            _text = text
-        }
-
-        func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-            AppState.clearOffset()
-            AppState.search(input: searchText, offset: 0)
-        }
-    }
-
-    func makeCoordinator() -> SearchBar.Coordinator {
-        return Coordinator(text: $text)
-    }
-
-    func makeUIView(context: UIViewRepresentableContext<SearchBar>) -> UISearchBar {
-        let searchBar = UISearchBar(frame: .zero)
-        searchBar.delegate = context.coordinator
-        searchBar.placeholder = placeholder
-        searchBar.searchBarStyle = .minimal
-        searchBar.autocapitalizationType = .none
-        return searchBar
-    }
-
-    func updateUIView(_ uiView: UISearchBar, context: UIViewRepresentableContext<SearchBar>) {
-        uiView.text = text
     }
 }

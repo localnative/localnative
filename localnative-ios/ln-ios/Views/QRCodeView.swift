@@ -11,23 +11,61 @@ import SwiftUI
 struct QRCodeView: View {
     var note: Note
     var image: UIImage
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        VStack(alignment: .leading){
-            HStack{
-                Text(note.created_at.prefix(19))
+        NavigationView {
+            VStack(alignment: .leading, spacing: 16) {
+                HStack {
+                    Text(note.created_at.prefix(19))
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    Text("\(String(note.uuid4.prefix(5))).. \(String(note.id))")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+
+                Text(makeText(note: note))
+                    .font(.body)
+
+                if let url = URL(string: note.url), !note.url.isEmpty {
+                    Link(destination: url) {
+                        Text(note.url)
+                            .foregroundColor(.blue)
+                            .lineLimit(3)
+                    }
+                    .font(.caption)
+                }
+
+                VStack {
+                    Text("QR Code")
+                        .font(.headline)
+                    Image(uiImage: image)
+                        .interpolation(.none)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(maxWidth: 300, maxHeight: 300)
+                        .padding()
+                        .background(Color.white)
+                        .cornerRadius(12)
+                        .shadow(radius: 4)
+                }
+                .frame(maxWidth: .infinity)
+
                 Spacer()
-                Text("\(String(note.uuid4.prefix(5))).. \(String(note.id))")
             }
-            Text(makeText(note: note))
-            Text(note.url).onTapGesture {
-                UIApplication.shared.open(URL(string: self.note.url)!)
-            }.foregroundColor(.blue)
-            Image(uiImage: image).interpolation(.none)
-            .resizable()
-            .aspectRatio(contentMode: .fit)
-            Spacer()
-        }.padding()
+            .padding()
+            .navigationTitle("Note QR Code")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
     }
     func makeText(note: Note) -> String{
         return note.title
