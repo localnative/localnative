@@ -125,6 +125,9 @@ class AppGroupsHelper {
     private let messageKey = "shared_message"
     private let timestampKey = "message_timestamp"
 
+    // Store the callback to avoid capturing context in C function pointer
+    private var messageCallback: ((String) -> Void)?
+
     private var sharedDefaults: UserDefaults? {
         return UserDefaults(suiteName: appGroupIdentifier)
     }
@@ -172,6 +175,9 @@ class AppGroupsHelper {
 
     /// Start listening for messages (for main app)
     func startListening(callback: @escaping (String) -> Void) {
+        // Store callback in the object
+        self.messageCallback = callback
+
         // Listen for Darwin notifications
         let notificationName = CFNotificationName("app.localnative.ios.message" as CFString)
         let observer = UnsafeRawPointer(Unmanaged.passUnretained(self).toOpaque())
@@ -183,7 +189,7 @@ class AppGroupsHelper {
                 guard let observer = observer else { return }
                 let helper = Unmanaged<AppGroupsHelper>.fromOpaque(observer).takeUnretainedValue()
 
-                if let message = helper.readMessage() {
+                if let message = helper.readMessage(), let callback = helper.messageCallback {
                     // Execute callback on main thread
                     DispatchQueue.main.async {
                         callback(message)
