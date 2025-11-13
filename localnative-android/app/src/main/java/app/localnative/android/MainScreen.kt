@@ -23,7 +23,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.QrCode
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -72,7 +72,7 @@ fun MainScreen(
                             Icon(Icons.Default.Search, contentDescription = "Search")
                         }
                         IconButton(onClick = onQRScanClick) {
-                            Icon(Icons.Default.QrCode, contentDescription = "Sync")
+                            Icon(Icons.Default.QrCodeScanner, contentDescription = "Sync")
                         }
                     }
                 )
