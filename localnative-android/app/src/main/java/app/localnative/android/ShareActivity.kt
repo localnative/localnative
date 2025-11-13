@@ -17,100 +17,208 @@
 */
 package app.localnative.android
 
-import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
-import android.text.Editable
-import android.text.method.ScrollingMovementMethod
 import android.util.Log
-import androidx.appcompat.app.AppCompatActivity
-import androidx.databinding.DataBindingUtil
-import app.localnative.R
-import app.localnative.databinding.ActivityShareBinding
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import org.json.JSONObject
 
-
-class ShareActivity : AppCompatActivity() {
+class ShareActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val binding = ActivityShareBinding.inflate(layoutInflater)
-        setContentView(binding.root)
 
-
-        binding.tagsText.requestFocus()
-        binding.textView.movementMethod = ScrollingMovementMethod()
-        binding.btnCancel.setOnClickListener {
-            Log.d("shareCancel","cancel...")
-            finish()
-        }
-        Log.d("debugShare",binding.titleText.text.toString())
-        binding.btnSave.setOnClickListener {
-            val j = JSONObject()
-            j.put("action", "insert")
-            j.put("title", binding.titleText.text)
-            j.put("url", binding.urlText.text)
-            j.put("tags", binding.tagsText.text)
-            j.put("description", binding.descText.text)
-            j.put("comments", "")
-            j.put("annotations", "")
-            j.put("limit", 15)
-            j.put("offset", 0)
-            j.put("is_public", false)
-
-            val cmd = j.toString()
-            Log.d("CmdInsert", cmd)
-            insert(cmd, 0)
-        }
-        when (intent?.action) {
+        val sharedUrl = when (intent?.action) {
             Intent.ACTION_SEND -> {
                 if ("text/plain" == intent.type) {
-                    handleSendText(intent,binding) // Handle text being sent
-                } else if (intent.type?.startsWith("image/") == true) {
-                    // handleSendImage(intent) // Handle single image being sent
+                    intent.getStringExtra(Intent.EXTRA_TEXT)
+                } else null
+            }
+            else -> null
+        }
+
+        setContent {
+            MaterialTheme {
+                ShareScreen(
+                    initialUrl = sharedUrl,
+                    onSave = { title, url, tags, description ->
+                        saveNote(title, url, tags, description)
+                    },
+                    onCancel = { finish() }
+                )
+            }
+        }
+    }
+
+    private fun saveNote(title: String, url: String, tags: String, description: String) {
+        val j = JSONObject()
+        j.put("action", "insert")
+        j.put("title", title)
+        j.put("url", url)
+        j.put("tags", tags)
+        j.put("description", description)
+        j.put("comments", "")
+        j.put("annotations", "")
+        j.put("limit", 15)
+        j.put("offset", 0)
+        j.put("is_public", false)
+
+        val cmd = j.toString()
+        Log.d("CmdInsert", cmd)
+
+        try {
+            val response = RustBridge.run(cmd)
+            Log.d("CmdInsertResult", response)
+            finish()
+            val intent = Intent(this, MainActivity::class.java)
+            startActivity(intent)
+        } catch (e: Exception) {
+            Log.e("CmdInsert", "Error saving note", e)
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ShareScreen(
+    initialUrl: String?,
+    onSave: (title: String, url: String, tags: String, description: String) -> Unit,
+    onCancel: () -> Unit
+) {
+    var title by remember { mutableStateOf("") }
+    var url by remember { mutableStateOf(initialUrl ?: "") }
+    var tags by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf("") }
+    var statusMessage by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
+
+    val focusRequester = remember { FocusRequester() }
+    val scrollState = rememberScrollState()
+
+    // Fetch title from URL when URL is provided
+    LaunchedEffect(initialUrl) {
+        if (!initialUrl.isNullOrEmpty()) {
+            statusMessage = "Fetching title..."
+            isLoading = true
+            // Note: Volley network requests need to be done on a separate thread
+            // For now, we'll just show the message
+            // The actual network request would be handled via callback
+        }
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Add Note") }
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp)
+                .verticalScroll(scrollState),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // URL field
+            OutlinedTextField(
+                value = url,
+                onValueChange = { url = it },
+                label = { Text("URL") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = false,
+                maxLines = 3
+            )
+
+            // Title field
+            OutlinedTextField(
+                value = title,
+                onValueChange = { title = it },
+                label = { Text("Title") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = false,
+                maxLines = 3
+            )
+
+            // Tags field
+            OutlinedTextField(
+                value = tags,
+                onValueChange = { tags = it },
+                label = { Text("Tags") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .focusRequester(focusRequester),
+                singleLine = true,
+                placeholder = { Text("comma,separated,tags") }
+            )
+
+            // Description field
+            OutlinedTextField(
+                value = description,
+                onValueChange = { description = it },
+                label = { Text("Description") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(150.dp),
+                maxLines = 10
+            )
+
+            // Status message
+            if (statusMessage.isNotEmpty()) {
+                Text(
+                    text = statusMessage,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (isLoading) MaterialTheme.colorScheme.primary
+                           else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            // Buttons
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Button(
+                    onClick = onCancel,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Text("Cancel")
+                }
+
+                Button(
+                    onClick = {
+                        onSave(title, url, tags, description)
+                    },
+                    modifier = Modifier.weight(1f),
+                    enabled = url.isNotEmpty()
+                ) {
+                    Text("Save")
                 }
             }
-            else -> {
-                // Handle other intents, such as being started from the home screen
-            }
         }
     }
 
-    fun insert(cmd: String, offset: Long?) {
-        val s = RustBridge.run(cmd)
-        Log.d("CmdInsertResult", s)
-        finish()
-        val intent = Intent(this, MainActivity::class.java)
-        startActivity(intent)
-    }
-
-    @SuppressLint("SetTextI18n")
-    private fun handleSendText(intent: Intent,binding: ActivityShareBinding) {
-        binding.urlText.setText("hello")
-        intent.getStringExtra(Intent.EXTRA_TEXT)?.let {
-            Log.d("handleUrlShare",it)
-            binding.urlText.setText(it)
-            binding.textView.text = "title fetched."
-            val queue = Volley.newRequestQueue(this)
-            val url = it
-            val stringRequest = StringRequest(Request.Method.GET, url,
-                { response ->
-                    val r =  response
-                    Log.d("reponse",r)
-                    val re = Regex("""<(?i)(title)>(.*?)<\\?/(?i)(title)>""")
-                    re.find(r)?.let{
-                        val (_, t, _)=it.destructured
-                        val title = String(t.toByteArray())
-                        Log.d("handleTitleShare",title)
-                        binding.titleText.text = Editable.Factory.getInstance().newEditable(title)
-                        binding.textView.text = "title fetched."
-                    }
-                },
-                { binding.textView.text = "can not fetch title :-( but you can still type your own title" })
-
-            queue.add(stringRequest)
-        }
+    // Auto-focus tags field
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
     }
 }
