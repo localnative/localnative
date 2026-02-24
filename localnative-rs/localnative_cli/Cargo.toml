@@ -6,8 +6,7 @@ version = "0.6.0"
 authors = ["Yi Wang"]
 license = "AGPL-3.0"
 edition = "2021"
-[dependencies.localnative_core]
-path = "../localnative_core"
 
 [dependencies]
-clap = { version = "4", features = ["cargo"] }
+clap = { workspace = true, features = ["cargo"] }
+localnative_core = { path = "../localnative_core" }

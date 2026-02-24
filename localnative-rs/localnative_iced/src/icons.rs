@@ -1,11 +1,7 @@
 use iced::Font;
 use iced::{widget::Text, Element};
 
-pub const ICONS: Font = Font::External {
-    // 注意，如果使用诸如iiced_aw此类的crrate时，不要将自己的字体命名为Icons，因为会和内部的字体冲突
-    name: "LocalNativeIcons",
-    bytes: include_bytes!("../fonts/icons.ttf"),
-};
+pub const ICONS: Font = Font::with_name("remixicon");
 
 pub enum IconItem {
     Search,
@@ -35,7 +31,7 @@ pub enum IconItem {
 }
 
 impl IconItem {
-    fn into_char(self) -> char {
+    fn to_char(&self) -> char {
         match self {
             IconItem::Search => '\u{f0d1}',
             IconItem::Clear => '\u{eb99}',
@@ -63,8 +59,9 @@ impl IconItem {
             IconItem::Note => '\u{ea7e}',
         }
     }
-    pub fn into_text<'a>(self) -> Text<'a> {
-        Text::new(self.into_char().to_string()).size(25).font(ICONS)
+
+    pub fn to_text<'text>(self) -> Text<'text> {
+        Text::new(self.to_char().to_string()).size(25).font(ICONS)
     }
 }
 
@@ -73,6 +70,6 @@ where
     Message: 'a,
 {
     fn from(icon: IconItem) -> Element<'a, Message> {
-        Element::new(icon.into_text())
+        Element::new(icon.to_text())
     }
 }

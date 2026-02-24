@@ -1,0 +1,47 @@
+[package]
+name = "wasm-app"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+console_error_panic_hook = "0.1"
+console_log = "1"
+gloo-net = { version = "0.6", default-features = false, features = [
+    "http",
+    "json",
+    "serde",
+] }
+log = "0.4"
+serde = { version = "1", features = ["derive"] }
+web-sys = { version = "0.3", features = [
+    "Event",
+    "HtmlInputElement",
+    "Storage",
+] }
+wasm-bindgen = "0.2"
+# xilem_web = { git = "https://github.com/linebender/xilem.git" }
+xilem_web = { git = "https://github.com/Philipp-M/xilem.git", branch = "xilem_web-event-handler" }
+js-sys = "0.3"
+wasm-bindgen-futures = "0.4"
+serde_json = { version = "1", features = ["alloc"], default-features = false }
+tokio = { version = "1", default-features = false }
+anyhow = { version = "1", default-features = false }
+serde-wasm-bindgen = { version = "0.6", default-features = false }
+futures = { version = "0.3", default-features = false, features = ["alloc"] }
+web-extensions-sys = { git = "https://github.com/Cupnfish/web-extensions-sys.git" }
+chrono = { version = "0.4", default-features = false, features = [
+    "alloc",
+    "clock",
+    "now",
+    "wasmbind",
+] }
+fluent-static = "0.4"
+
+[build-dependencies]
+fluent-static-codegen = "0.4"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"

@@ -4,28 +4,29 @@ use iced::widget::{
 };
 use iced::Command;
 use iced::Element;
-use iced::Length::Fill;
 use iced_aw::NumberInput;
 
+use localnative_core::db::queries;
 use once_cell::sync::OnceCell;
 use ouroboros::self_referencing;
 use regex::RegexSet;
+use sqlx::SqlitePool;
 use std::borrow::Cow;
 use std::net::{IpAddr, Ipv4Addr};
 use std::str::FromStr;
+use tokio_util::sync::CancellationToken;
+use tracing::error;
 
 use std::{
     net::{Ipv6Addr, SocketAddr},
     path::PathBuf,
 };
 
-use localnative_core::rpc::server::Stop;
 use tinyfiledialogs::open_file_dialog;
 
 use crate::{
     tr,
     translate::{self, TranslateWithArgs},
-    Conn,
 };
 
 use crate::{error_handle, icons::IconItem};
@@ -37,20 +38,20 @@ pub struct SyncView {
     ip: String,
     pub port: u16,
     pub server_addr: String,
-    pub ip_qr_code: qr_code::State,
+    pub ip_qr_code: qr_code::Data,
     pub sync_state: SyncState,
     pub server_state: ServerState,
-    pub stop: Option<Stop>,
+    pub stop: Option<tokio_util::sync::CancellationToken>,
     #[borrows(server_addr)]
     #[covariant]
     pub translate: TranslateWithArgs<'this>,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SyncState {
     Waiting,
     Syncing,
-    SyncError(std::io::ErrorKind),
+    SyncError(String),
     Complete,
     IpAddrParseError,
     IpAddrParsePass,
@@ -133,13 +134,13 @@ impl SyncView {
             .on_press(Message::ClearAddrInput);
 
         let ip_input_row = row![
-            horizontal_space(Fill),
+            horizontal_space(),
             text(tr!("input-ip")),
             ip_tip,
             text(":"),
             port_input,
             clear_button,
-            horizontal_space(Fill)
+            horizontal_space()
         ];
 
         let sync_from_server_button = button(row![
@@ -217,7 +218,7 @@ impl SyncView {
         res.into()
     }
 
-    pub fn update(&mut self, message: Message, conn: Conn) -> Command<crate::Message> {
+    pub fn update(&mut self, message: Message, pool: SqlitePool) -> Command<crate::Message> {
         match message {
             Message::IpInput(input) => {
                 let ip_regex = IP_REGEX_SET.get_or_init(||{
@@ -241,7 +242,7 @@ impl SyncView {
                     let addr = SocketAddr::new(ip, *self.borrow_port());
                     self.with_sync_state_mut(|state| *state = SyncState::Syncing);
                     return Command::perform(
-                        client_sync_from_server(addr),
+                        client_sync_from_server(addr, pool.clone()),
                         crate::Message::SyncResult,
                     );
                 } else {
@@ -259,7 +260,7 @@ impl SyncView {
                     let addr = SocketAddr::new(ip, *self.borrow_port());
                     self.with_sync_state_mut(|state| *state = SyncState::Syncing);
                     return Command::perform(
-                        client_sync_to_server(addr),
+                        client_sync_to_server(addr, pool.clone()),
                         crate::Message::SyncResult,
                     );
                 } else {
@@ -277,7 +278,10 @@ impl SyncView {
                 if let Some(path) = get_sync_file_path() {
                     self.with_sync_state_mut(|state| *state = SyncState::Syncing);
 
-                    return Command::perform(sync_via_file(path, conn), crate::Message::SyncOption);
+                    return Command::perform(
+                        sync_via_file(path, pool.clone()),
+                        crate::Message::SyncOption,
+                    );
                 } else {
                     self.with_sync_state_mut(|state| *state = SyncState::FilePathGetError);
                 }
@@ -286,7 +290,7 @@ impl SyncView {
                 self.with_server_state_mut(|state| *state = ServerState::Starting);
 
                 return Command::perform(
-                    start_server(*self.borrow_port()),
+                    start_server(*self.borrow_port(), pool.clone()),
                     crate::Message::StartServerResult,
                 );
             }
@@ -324,7 +328,7 @@ impl Default for SyncView {
             ip: String::new(),
             port: 2345,
             server_addr: String::new(),
-            ip_qr_code: qr_code::State::new(&[0]).unwrap(),
+            ip_qr_code: qr_code::Data::new(&[0]).unwrap(),
             sync_state: SyncState::Waiting,
             server_state: ServerState::Closed,
             stop: None,
@@ -338,16 +342,18 @@ impl Default for SyncView {
 
 pub static IP_REGEX_SET: OnceCell<RegexSet> = OnceCell::new();
 
-pub async fn client_sync_from_server(addr: SocketAddr) -> anyhow::Result<()> {
-    localnative_core::rpc::client::run_sync_from_server(&addr).await
+pub async fn client_sync_from_server(addr: SocketAddr, pool: SqlitePool) -> anyhow::Result<()> {
+    localnative_core::rpc::run_sync_from_server(&addr, &pool).await?;
+    Ok(())
 }
 
-pub async fn client_sync_to_server(addr: SocketAddr) -> anyhow::Result<()> {
-    localnative_core::rpc::client::run_sync_to_server(&addr).await
+pub async fn client_sync_to_server(addr: SocketAddr, pool: SqlitePool) -> anyhow::Result<()> {
+    localnative_core::rpc::run_sync_to_server(&addr, &pool).await?;
+    Ok(())
 }
 
 pub fn get_sync_file_path() -> Option<PathBuf> {
-    localnative_core::dirs::desktop_dir()
+    dirs::desktop_dir()
         .unwrap_or_else(std::env::temp_dir)
         .to_str()
         .and_then(|path| {
@@ -360,11 +366,12 @@ pub fn get_sync_file_path() -> Option<PathBuf> {
         .map(PathBuf::from)
 }
 
-pub async fn sync_via_file(path: PathBuf, conn: Conn) -> Option<()> {
+pub async fn sync_via_file(path: PathBuf, pool: SqlitePool) -> Option<()> {
     tokio::task::spawn(async move {
         if let Some(uri) = path.to_str() {
-            let conn = &*conn.lock().await;
-            localnative_core::cmd::sync_via_attach(conn, uri);
+            if let Err(e) = queries::sync_via_attach(&pool, uri).await {
+                error!("sync via file failed: {e}");
+            };
         }
     })
     .await
@@ -381,13 +388,14 @@ pub fn get_ip() -> Option<String> {
         .ok()
 }
 
-pub async fn start_server(port: u16) -> std::io::Result<Stop> {
+pub async fn start_server(port: u16, pool: SqlitePool) -> anyhow::Result<CancellationToken> {
     let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), port);
-    localnative_core::rpc::server::iced_start_server(addr).await
+    let stop_token = CancellationToken::new();
+    localnative_core::rpc::setup_server(addr, pool, Some(stop_token.clone())).await?;
+    Ok(stop_token)
 }
 
-pub async fn stop_server(stop: Stop) -> Option<()> {
-    let res = stop.await.map_err(error_handle).ok()?;
-    drop(res);
+pub async fn stop_server(stop: CancellationToken) -> Option<()> {
+    stop.cancelled().await;
     Some(())
 }

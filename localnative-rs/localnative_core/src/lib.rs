@@ -15,27 +15,22 @@
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-// #![feature(arbitrary_self_types, async_await, proc_macro_hygiene)]
+use serde::{Deserialize, Serialize};
+use std::ffi::{CStr, CString};
+use std::os::raw::c_char;
+use thiserror::Error;
+use tokio::runtime::Runtime;
+
+pub mod db;
+mod error;
 pub mod rpc;
 
-pub extern crate dirs;
-pub extern crate rusqlite;
-pub extern crate serde_json;
-
-pub mod cmd;
-pub mod exe;
-pub mod upgrade;
-
-// JNI interface for android
 #[cfg(target_os = "android")]
-#[allow(non_snake_case)]
 pub mod android {
-    extern crate jni;
-
-    use self::jni::objects::{JClass, JString};
-    use self::jni::sys::jstring;
-    use self::jni::JNIEnv;
     use super::*;
+    use jni::objects::{JClass, JString};
+    use jni::sys::jstring;
+    use jni::JNIEnv;
 
     #[no_mangle]
     pub unsafe extern "C" fn Java_app_localnative_android_RustBridge_localnativeRun(
@@ -43,176 +38,79 @@ pub mod android {
         _: JClass,
         json_input: JString,
     ) -> jstring {
-        let json = localnative_run(
-            env.get_string(json_input)
-                .expect("Invalid json input string!")
-                .as_ptr(),
-        );
-        // Retake pointer so that we can use it below and allow memory to be freed when it goes out of scope.
-        let output_ptr = CString::from_raw(json);
+        let json = env
+            .get_string(json_input)
+            .expect("Invalid json input string!")
+            .to_string_lossy()
+            .into_owned();
+
+        let result = run_async(&json);
         let output = env
-            .new_string(output_ptr.to_str().unwrap())
+            .new_string(result)
             .expect("Couldn't create java output string!");
 
         output.into_raw()
     }
 }
 
-use std::ffi::{CStr, CString};
-use std::os::raw::c_char;
-
 #[no_mangle]
-#[allow(clippy::not_unsafe_ptr_arg_deref)]
-pub extern "C" fn localnative_run(json_input: *const c_char) -> *mut c_char {
-    let c_str = unsafe { CStr::from_ptr(json_input) };
+pub unsafe extern "C" fn localnative_run(json_input: *const c_char) -> *mut c_char {
+    let c_str = CStr::from_ptr(json_input);
     let json = match c_str.to_str() {
-        Err(_) => r#"{"error": "ios json input error"}"#.to_string(),
-        Ok(text) => exe::run(text),
+        Ok(s) => run_async(s),
+        Err(_) => r#"{"error": "Invalid UTF-8 in input"}"#.to_string(),
     };
 
     CString::new(json).unwrap().into_raw()
 }
 
 #[no_mangle]
-#[allow(clippy::not_unsafe_ptr_arg_deref)]
-pub extern "C" fn localnative_free(s: *mut c_char) {
-    unsafe {
-        if s.is_null() {
-            return;
-        }
-        let _ = CString::from_raw(s);
+pub unsafe extern "C" fn localnative_free(s: *mut c_char) {
+    if !s.is_null() {
+        drop(CString::from_raw(s));
     }
 }
-use serde::{Deserialize, Serialize};
-#[allow(clippy::upper_case_acronyms)]
-#[derive(Serialize, Deserialize, Debug)]
-pub struct KVStringI64 {
-    pub k: String,
-    pub v: i64,
-}
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Tags {
-    pub tags: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Ssbify {
-    pub hash: String,
-    pub markdown: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct SsbNote {
-    pub note_title: String,
-    pub note_url: String,
-    pub note_tags: String,
-    pub note_description: String,
-    pub note_comments: String,
-    pub note_annotations: String,
-    pub note_created_at: String,
-
-    pub author: String,
-    pub ts: i64,
-    pub key: String,
-    pub prev: String,
-    pub seq: i64,
-    pub is_public: bool,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Ssb {
-    pub note_rowid: i64,
-    pub author: String,
-    pub is_active_author: bool,
-    pub is_last_note: bool,
-    pub ts: i64,
-    pub seq: i64,
-    pub key: String,
-    pub prev: String,
-}
-
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, Default)]
-pub struct Note {
-    pub rowid: i64,
-    pub uuid4: String,
-    pub title: String,
-    pub url: String,
-    pub tags: String,
-    pub description: String,
-    pub comments: String,
-    pub annotations: String,
-    pub created_at: String,
-    pub is_public: bool,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(tag = "action")]
-#[serde(rename_all = "kebab-case")]
+#[serde(tag = "action", rename_all = "kebab-case")]
 pub enum Cmd {
     Server(CmdRpcServer),
     ClientSync(CmdRpcClient),
     ClientStopServer(CmdRpcClient),
-    Upgrade,
-    SyncViaAttach(CmdSyncViaAttach),
-    InsertImage(CmdInsert),
-    Insert(CmdInsert),
-    Delete(CmdDelete),
-    Select(CmdSelect),
-    Search(CmdSearch),
-    Filter(CmdFilter),
+    #[serde(untagged)]
+    DbCmd(db::models::Cmd),
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct CmdInsert {
-    pub title: String,
-    pub url: String,
-    pub tags: String,
-    pub description: String,
-    pub comments: String,
-    pub annotations: String,
+#[test]
+fn test_serde() {
+    let cmd = Cmd::DbCmd(db::models::Cmd::Insert(db::models::CmdInsert {
+        title: "Test Title".into(),
+        url: "http://example.com".into(),
+        tags: "tag1,tag2".into(),
+        description: "This is a test description".into(),
+        comments: "Comment 1".into(),
+        annotations: "Annotation 1".into(),
+        limit: 10,
+        offset: 0,
+        is_public: true,
+    }));
+    let json = serde_json::to_string_pretty(&cmd).expect("Failed to serialize command");
+    println!("{:#}", json);
 
-    pub limit: u32,
-    pub offset: u32,
-    pub is_public: bool,
+    let cmd = Cmd::DbCmd(db::models::Cmd::Search(db::models::CmdSearch {
+        query: "hello".into(),
+        limit: 10,
+        offset: 0,
+    }));
+    let json = serde_json::to_string_pretty(&cmd).expect("Failed to serialize command");
+    println!("{:#}", json);
+    let cmd = serde_json::from_str::<'_, Cmd>(&json).unwrap();
+    println!("{:#?}", cmd);
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CmdSyncViaAttach {
     pub uri: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct CmdFilter {
-    pub query: String,
-
-    pub limit: u32,
-    pub offset: u32,
-    pub from: String,
-    pub to: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct CmdSearch {
-    pub query: String,
-
-    pub limit: u32,
-    pub offset: u32,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct CmdDelete {
-    pub query: String,
-    pub rowid: i64,
-
-    pub limit: u32,
-    pub offset: u32,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct CmdSelect {
-    pub limit: u32,
-    pub offset: u32,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -225,7 +123,112 @@ pub struct CmdRpcServer {
     pub addr: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct OneString {
-    pub s: String,
+#[derive(Debug, Error)]
+pub enum ProcessError {
+    #[error("database error: {0}")]
+    DbError(#[from] db::DbError),
+    #[error("io error: {0}")]
+    IoError(#[from] std::io::Error),
+    #[error("address parse error: {0}")]
+    AddrParseError(#[from] std::net::AddrParseError),
+    #[error("rpc error: {0}")]
+    RpcError(#[from] tarpc::client::RpcError),
+    #[error("rpc internal error: {0}")]
+    RpcInternalError(#[from] rpc::RpcError),
+    #[error("serialization error: {0}")]
+    SerdeError(#[from] serde_json::Error),
+    #[error("Process error (serialized): {0}")]
+    SerializedErr(String),
+}
+
+pub async fn run(text: &str) -> String {
+    match serde_json::from_str::<Cmd>(text) {
+        Ok(cmd) => match process(cmd).await {
+            Ok(rs) => rs,
+            Err(err) => serialize_error(ProcessError::from(err), text),
+        },
+        Err(e) => serialize_error(ProcessError::SerdeError(e), text),
+    }
+}
+
+pub fn run_sync(text: &str) -> String {
+    let rt = Runtime::new().unwrap();
+    rt.block_on(run(text))
+}
+
+#[derive(Serialize)]
+struct SerializeError<'s> {
+    #[serde(flatten)]
+    error: ProcessError,
+    source_text: &'s str,
+}
+#[test]
+fn test_serialize_error() {
+    let err = SerializeError {
+        error: ProcessError::IoError(std::io::Error::new(
+            std::io::ErrorKind::AddrInUse,
+            "addres in use.",
+        )),
+        source_text: "source_text",
+    };
+    println!("json: {:#}", serde_json::to_string(&err).unwrap())
+}
+
+fn serialize_error(err: ProcessError, text: &str) -> String {
+    let err = SerializeError {
+        error: err,
+        source_text: text,
+    };
+    serde_json::to_string(&err).unwrap_or_else(|_| "Serialization error".to_string())
+}
+
+#[derive(Serialize)]
+struct ServerResponse {
+    server: String,
+}
+
+#[derive(Serialize)]
+struct ClientSyncResponse {
+    #[serde(rename = "client-sync")]
+    client_sync: String,
+}
+
+#[derive(Serialize)]
+struct ClientStopServerResponse {
+    #[serde(rename = "client-stop-server")]
+    client_stop_server: String,
+}
+
+async fn process(cmd: Cmd) -> Result<String, ProcessError> {
+    eprintln!("process cmd {:?}", cmd);
+    let pool = db::init_db().await?;
+
+    let result = match cmd {
+        Cmd::Server(s) => {
+            crate::rpc::start(&s.addr, &pool).await?;
+            Ok(serde_json::to_string(&ServerResponse {
+                server: "started".to_string(),
+            })?)
+        }
+        Cmd::ClientSync(s) => {
+            let resp = crate::rpc::sync(&s.addr, &pool).await?;
+            Ok(serde_json::to_string(&ClientSyncResponse {
+                client_sync: resp,
+            })?)
+        }
+        Cmd::ClientStopServer(s) => {
+            let resp = crate::rpc::stop_server(&s.addr, &pool).await?;
+            Ok(serde_json::to_string(&ClientStopServerResponse {
+                client_stop_server: resp,
+            })?)
+        }
+        Cmd::DbCmd(db_cmd) => Ok(db::process_cmd(db_cmd, &pool).await?),
+    };
+
+    result
+}
+
+fn run_async(text: &str) -> String {
+    let rt = Runtime::new().unwrap();
+    rt.block_on(run(text))
 }

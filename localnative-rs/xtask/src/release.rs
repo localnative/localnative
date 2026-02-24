@@ -83,6 +83,7 @@ impl Release {
                     "Hill Chen".into(),
                 ]),
                 default_run: Some("localnative_iced".into()),
+                license: None,
             })
             .project_out_directory(dst)
             .bundle_settings(BundleSettings {
@@ -120,6 +121,9 @@ impl Release {
                     ..Default::default()
                 },
                 publisher: Some("Cupnfish".into()),
+                resources_map: None,
+                rpm: Default::default(),
+                dmg: Default::default(),
             })
             .binaries(vec![
                 BundleBinary::new("localnative_iced".into(), true),

@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link data-trunk rel="copy-file" href="manifest.json" />
+        <link data-trunk rel="copy-file" href="icon.png" />
+        <link data-trunk rel="copy-file" href="init.js" />
+        <link data-trunk rel="copy-file" href="content_script.js" />
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
+        />
+        <title>Local Native</title>
+        <style>
+            :root {
+                --bg-color: #f8f9fa;
+                --text-color: #212529;
+                --container-bg: #ffffff;
+                --input-border: #ced4da;
+                --btn-bg: #007bff;
+                --btn-color: white;
+                --note-hover-bg: #f1f3f5;
+                --note-title-color: #0056b3;
+                --note-url-color: #17a2b8;
+                --tag-bg: #e9ecef;
+                --response-bg: #f1f3f5;
+                --note-date-color: #6c757d;
+                --delete-btn-color: #dc3545;
+            }
+
+            .dark-theme {
+                --bg-color: #212529;
+                --text-color: #f8f9fa;
+                --container-bg: #343a40;
+                --input-border: #495057;
+                --btn-bg: #007bff;
+                --btn-color: white;
+                --note-hover-bg: #495057;
+                --note-title-color: #63b3ed;
+                --note-url-color: #4fd1c5;
+                --tag-bg: #5a6268;
+                --response-bg: #495057;
+                --note-date-color: #adb5bd;
+                --delete-btn-color: #ff6b6b;
+            }
+
+            html,
+            body {
+                font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+                background-color: var(--container-bg);
+                margin: 0;
+                height: 0%;
+                width: 0%;
+                transition:
+                    background-color 0.3s ease,
+                    color 0.3s ease;
+                font-size: 14px;
+            }
+
+            .app-container {
+                background-color: var(--container-bg);
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                padding: 5px;
+                min-width: 628px;
+                max-width: 768px;
+                margin: 0 auto;
+                transition: background-color 0.3s ease;
+                position: relative;
+                overflow: hidden;
+            }
+
+            .header-section {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                color: var(--text-color);
+                margin-bottom: 25px;
+            }
+
+            .app-title {
+                font-size: 24px;
+                font-weight: bold;
+                color: var(--text-color);
+                margin: 0;
+                transition: transform 0.3s ease;
+            }
+
+            .app-title:hover {
+                transform: scale(1.05);
+            }
+
+            .theme-toggle {
+                background: none;
+                border: none;
+                cursor: pointer;
+                font-size: 24px;
+                color: var(--text-color);
+                transition: transform 0.3s ease;
+            }
+
+            .theme-toggle:hover {
+                transform: rotate(15deg);
+            }
+
+            .language-select {
+                padding: 8px;
+                border-radius: 6px;
+                background-color: var(--container-bg);
+                color: var(--text-color);
+                border: 1px solid var(--input-border);
+                font-size: 14px;
+                transition:
+                    transform 0.3s ease,
+                    box-shadow 0.3s ease;
+            }
+
+            .language-select:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+
+            .input-section {
+                display: grid;
+                gap: 15px;
+                margin-bottom: 25px;
+            }
+
+            .input-row {
+                display: flex;
+                width: 98%;
+                gap: 15px;
+            }
+
+            .text-input,
+            .textarea-input {
+                width: 95%;
+                padding: 12px;
+                border: 1px solid var(--input-border);
+                border-radius: 6px;
+                font-size: 14px;
+                background-color: var(--container-bg);
+                color: var(--text-color);
+                transition: box-shadow 0.3s ease;
+            }
+
+            .text-input:focus,
+            .textarea-input:focus {
+                outline: none;
+                box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+            }
+
+            .textarea-input {
+                resize: vertical;
+                min-height: 50px;
+            }
+
+            .insert-btn {
+                padding: 12px;
+                background-color: var(--btn-bg);
+                color: var(--btn-color);
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                font-weight: bold;
+                transition:
+                    opacity 0.3s ease,
+                    transform 0.3s ease,
+                    box-shadow 0.3s ease;
+            }
+
+            .insert-btn:hover {
+                opacity: 0.9;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+
+            .search-section {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 25px;
+            }
+
+            .search-input-container {
+                display: flex;
+                flex-grow: 1;
+                margin-right: 15px;
+            }
+
+            .clear-btn,
+            .nav-btn {
+                background: none;
+                border: none;
+                cursor: pointer;
+                font-size: 18px;
+                color: var(--text-color);
+                transition:
+                    opacity 0.3s ease,
+                    transform 0.3s ease;
+            }
+
+            .clear-btn:hover,
+            .nav-btn:hover {
+                opacity: 0.7;
+                transform: scale(1.1);
+            }
+
+            .page-indicator {
+                color: var(--text-color);
+                font-size: 14px;
+            }
+
+            .notes-container {
+                display: grid;
+                gap: 25px;
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            }
+
+            .note {
+                min-width: 85%;
+                background-color: var(--container-bg);
+                border: 1px solid var(--input-border);
+                border-radius: 8px;
+                padding: 20px;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+                transition:
+                    transform 0.3s ease,
+                    box-shadow 0.3s ease;
+            }
+
+            .note:hover {
+                background-color: var(--note-hover-bg);
+                transform: translateY(-3px);
+                box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+            }
+
+            .note-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 15px;
+            }
+
+            .note-date {
+                font-size: 12px;
+                color: var(--note-date-color);
+            }
+
+            .delete-btn {
+                background: none;
+                border: none;
+                color: var(--delete-btn-color);
+                cursor: pointer;
+                transition: transform 0.3s ease;
+            }
+
+            .delete-btn:hover {
+                transform: scale(1.2) rotate(15deg);
+            }
+
+            .expand-text {
+                color: var(--text-color);
+                cursor: pointer;
+                text-decoration: underline;
+                transition: opacity 0.3s ease;
+            }
+
+            .expand-text:hover {
+                opacity: 0.7;
+            }
+
+            .note-title {
+                font-size: 18px;
+                font-weight: bold;
+                margin: 0 0 15px 0;
+                color: var(--note-title-color);
+                transition: color 0.3s ease;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 100%;
+                cursor: pointer;
+            }
+
+            .note-url {
+                color: var(--note-url-color);
+                text-decoration: none;
+                display: block;
+                margin-bottom: 15px;
+                font-size: 14px;
+                transition:
+                    text-decoration 0.3s ease,
+                    transform 0.3s ease;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 100%;
+            }
+
+            .note-url:hover {
+                text-decoration: underline;
+                transform: translateX(5px);
+            }
+
+            .note-desc {
+                white-space: pre-wrap;
+                margin-bottom: 15px;
+                font-size: 14px;
+                display: inline;
+                color: var(--text-color);
+            }
+
+            .note-tags {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .tag-btn {
+                background-color: var(--tag-bg);
+                color: var(--text-color);
+                border: none;
+                border-radius: 20px;
+                padding: 6px 12px;
+                font-size: 12px;
+                cursor: pointer;
+                transition:
+                    opacity 0.3s ease,
+                    transform 0.3s ease,
+                    box-shadow 0.3s ease;
+            }
+
+            .tag-btn:hover {
+                opacity: 0.8;
+                transform: translateY(-2px);
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+
+            .response-section {
+                font-size: 14px;
+                color: var(--text-color);
+                margin-top: 25px;
+                padding: 15px;
+                background-color: var(--response-bg);
+                border-radius: 8px;
+                transition: background-color 0.3s ease;
+            }
+
+            .none {
+                display: none;
+            }
+
+            @media (max-width: 768px) {
+                body {
+                    padding: 0px;
+                }
+
+                .app-container {
+                    padding: 15px;
+                }
+
+                .notes-container {
+                    grid-template-columns: 1fr;
+                }
+            }
+        </style>
+    </head>
+    <body></body>
+</html>

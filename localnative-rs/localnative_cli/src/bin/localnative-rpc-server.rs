@@ -17,7 +17,7 @@
 */
 
 use clap::{arg, Command};
-use localnative_core::exe::run;
+use localnative_core::run_sync as run;
 fn main() {
     let matches = Command::new("localnative-rpc-server")
         .arg(arg!(-a - -addr[ADDR]))
