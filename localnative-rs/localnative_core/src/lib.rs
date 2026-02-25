@@ -18,6 +18,7 @@
 use serde::{Deserialize, Serialize};
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
+use std::sync::{Arc, Mutex};
 use thiserror::Error;
 use tokio::runtime::Runtime;
 
@@ -201,28 +202,31 @@ struct ClientStopServerResponse {
 
 async fn process(cmd: Cmd) -> Result<String, ProcessError> {
     eprintln!("process cmd {:?}", cmd);
-    let pool = db::init_db().await?;
+    let conn = db::init_db()?;
 
     let result = match cmd {
         Cmd::Server(s) => {
+            let pool = Arc::new(Mutex::new(conn));
             crate::rpc::start(&s.addr, &pool).await?;
             Ok(serde_json::to_string(&ServerResponse {
                 server: "started".to_string(),
             })?)
         }
         Cmd::ClientSync(s) => {
+            let pool = Arc::new(Mutex::new(conn));
             let resp = crate::rpc::sync(&s.addr, &pool).await?;
             Ok(serde_json::to_string(&ClientSyncResponse {
                 client_sync: resp,
             })?)
         }
         Cmd::ClientStopServer(s) => {
+            let pool = Arc::new(Mutex::new(conn));
             let resp = crate::rpc::stop_server(&s.addr, &pool).await?;
             Ok(serde_json::to_string(&ClientStopServerResponse {
                 client_stop_server: resp,
             })?)
         }
-        Cmd::DbCmd(db_cmd) => Ok(db::process_cmd(db_cmd, &pool).await?),
+        Cmd::DbCmd(db_cmd) => Ok(db::process_cmd(db_cmd, &conn)?),
     };
 
     result

@@ -17,7 +17,7 @@ fn main() -> Result<(), iced::Error> {
         .without_time()
         .with_level(true);
 
-    let targets = ["sqlx", "localnative"];
+    let targets = ["rusqlite", "localnative"];
     let filter = tracing_subscriber::filter::filter_fn(move |metadata| {
         metadata.level() <= &level
             && targets

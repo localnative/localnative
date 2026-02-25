@@ -31,8 +31,9 @@ use iced::{
 use localnative_core::db::{init_db, models::QueryResult, DbError};
 pub use note::NoteView;
 pub use search_page::SearchPage;
+use rusqlite::Connection;
 use sidebar::Sidebar;
-use sqlx::SqlitePool;
+use std::sync::{Arc, Mutex};
 pub use tags::TagView;
 use tokio_util::sync::CancellationToken;
 
@@ -54,11 +55,11 @@ pub struct Data {
     delete_tip: DeleteTip,
     settings: settings::Settings,
     sync_view: SyncView,
-    pool: SqlitePool,
+    pool: Arc<Mutex<Connection>>,
 }
 
 impl Data {
-    fn new(config: &Config, pool: SqlitePool) -> Self {
+    fn new(config: &Config, pool: Arc<Mutex<Connection>>) -> Self {
         Self {
             search_page: SearchPage::default_with_theme(config.theme()),
             sidebar: Sidebar::default(),
@@ -384,8 +385,8 @@ impl Data {
 
 #[derive(Debug)]
 pub enum Message {
-    Loading(SqlitePool),
-    InitDatabase(Result<SqlitePool, DbError>),
+    Loading(Arc<Mutex<Connection>>),
+    InitDatabase(Result<Connection, DbError>),
     SearchPageMessage(search_page::Message),
     SidebarMessage(sidebar::Message),
     DeleteTipMessage(delete_tip::Message),
@@ -424,7 +425,10 @@ impl iced::Application for LocalNative {
             },
             Command::batch([
                 iced::font::load(include_bytes!("../fonts/icons.ttf")).map(Message::LoadFont),
-                Command::perform(init_db(), Message::InitDatabase),
+                Command::perform(
+                    async { tokio::task::spawn_blocking(init_db).await.unwrap() },
+                    Message::InitDatabase,
+                ),
                 Command::perform(translate::init_bundle(language), Message::ApplyLanguage),
                 if is_first_open {
                     Command::perform(init::WebKind::init_all(None), Message::InitHost)
@@ -474,7 +478,8 @@ impl LocalNative {
             return Command::none();
         };
         match message {
-            Message::InitDatabase(Ok(pool)) => {
+            Message::InitDatabase(Ok(conn)) => {
+                let pool = Arc::new(Mutex::new(conn));
                 Command::perform(async {}, move |_| Message::Loading(pool.clone()))
             }
             Message::InitDatabase(Err(err)) => {

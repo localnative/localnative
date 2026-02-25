@@ -30,11 +30,7 @@ chrono = { workspace = true, default-features = false }
 plotters-iced = { workspace = true }
 plotters = { workspace = true, features = ["histogram"] }
 iced_runtime = { workspace = true }
-sqlx = { workspace = true, features = [
-    "sqlite",
-    "runtime-tokio-rustls",
-    "chrono",
-] }
+rusqlite = { workspace = true }
 rand = { workspace = true, optional = true }
 iced_aw = { workspace = true, default-features = false, features = [
     "wrap",

@@ -1,123 +1,149 @@
 use localnative_core::db::models::{CmdDelete, Note, QueryResult};
 use localnative_core::db::{migrations, queries, sync};
-use sqlx::SqlitePool;
-use tracing::error;
+use rusqlite::Connection;
+use std::sync::{Arc, Mutex};
 
 pub async fn delete(
-    pool: SqlitePool,
+    pool: Arc<Mutex<Connection>>,
     query: String,
     limit: u32,
     offset: u32,
     rowid: i64,
 ) -> Option<QueryResult> {
-    let delete_cmd = CmdDelete {
-        query,
-        rowid,
-        limit,
-        offset,
-    };
-    if let Err(e) = delete_cmd.process(&pool).await {
-        error!("Error deleting note: {}", e);
-        return None;
-    }
-
-    select_inner(&pool, delete_cmd.query, limit, offset).await
+    tokio::task::spawn_blocking(move || {
+        let conn = pool.lock().unwrap();
+        let delete_cmd = CmdDelete {
+            query: query.clone(),
+            rowid,
+            limit,
+            offset,
+        };
+        if let Err(e) = delete_cmd.process(&conn) {
+            eprintln!("Error deleting note: {}", e);
+            return None;
+        }
+        select_inner(&conn, query, limit, offset)
+    })
+    .await
+    .unwrap_or(None)
 }
 
 pub async fn upgrade(
-    pool: SqlitePool,
+    pool: Arc<Mutex<Connection>>,
     query: String,
     limit: u32,
     offset: u32,
 ) -> Option<QueryResult> {
-    if let Err(e) = migrations::upgrade(&pool).await {
-        error!("Error upgrading database: {}", e);
-        return None;
-    }
-
-    select_inner(&pool, query, limit, offset).await
+    tokio::task::spawn_blocking(move || {
+        let conn = pool.lock().unwrap();
+        if let Err(e) = migrations::upgrade(&conn) {
+            eprintln!("Error upgrading database: {}", e);
+            return None;
+        }
+        select_inner(&conn, query, limit, offset)
+    })
+    .await
+    .unwrap_or(None)
 }
 
 pub async fn insert(
-    pool: &SqlitePool,
+    pool: Arc<Mutex<Connection>>,
     query: String,
     limit: u32,
     offset: u32,
     note: Note,
 ) -> Option<QueryResult> {
-    if let Err(e) = sync::insert(pool, note).await {
-        error!("Error inserting note: {}", e);
-        return None;
-    }
-
-    select_inner(pool, query, limit, offset).await
+    tokio::task::spawn_blocking(move || {
+        let conn = pool.lock().unwrap();
+        if let Err(e) = sync::insert(&conn, &note) {
+            eprintln!("Error inserting note: {}", e);
+            return None;
+        }
+        select_inner(&conn, query, limit, offset)
+    })
+    .await
+    .unwrap_or(None)
 }
 
 pub async fn select(
-    pool: SqlitePool,
+    pool: Arc<Mutex<Connection>>,
     query: String,
     limit: u32,
     offset: u32,
 ) -> Option<QueryResult> {
-    select_inner(&pool, query, limit, offset).await
+    tokio::task::spawn_blocking(move || {
+        let conn = pool.lock().unwrap();
+        select_inner(&conn, query, limit, offset)
+    })
+    .await
+    .unwrap_or(None)
 }
 
 pub async fn filter(
-    pool: SqlitePool,
+    pool: Arc<Mutex<Connection>>,
     query: String,
     limit: u32,
     offset: u32,
     from: chrono::NaiveDate,
     to: chrono::NaiveDate,
 ) -> Option<QueryResult> {
-    filter_inner(
-        &pool,
-        &query,
-        limit,
-        offset,
-        &from.to_string(),
-        &to.to_string(),
-    )
+    tokio::task::spawn_blocking(move || {
+        let conn = pool.lock().unwrap();
+        filter_inner(
+            &conn,
+            &query,
+            limit,
+            offset,
+            &from.to_string(),
+            &to.to_string(),
+        )
+    })
     .await
+    .unwrap_or(None)
 }
 
 pub async fn someday(
-    pool: &SqlitePool,
+    pool: Arc<Mutex<Connection>>,
     query: String,
     limit: u32,
     offset: u32,
     day: String,
 ) -> Option<QueryResult> {
-    filter_inner(pool, &query, limit, offset, &day, &day).await
+    tokio::task::spawn_blocking(move || {
+        let conn = pool.lock().unwrap();
+        filter_inner(&conn, &query, limit, offset, &day, &day)
+    })
+    .await
+    .unwrap_or(None)
 }
 
-async fn select_inner(
-    pool: &SqlitePool,
+fn select_inner(
+    conn: &Connection,
     query: String,
     limit: u32,
     offset: u32,
 ) -> Option<QueryResult> {
-    match queries::do_search(pool, &query, limit, offset).await {
+    match queries::do_search(conn, &query, limit, offset) {
         Ok(search_result) => Some(search_result),
         Err(e) => {
-            error!("Error searching notes: {}", e);
+            eprintln!("Error searching notes: {}", e);
             None
         }
     }
 }
 
-async fn filter_inner(
-    pool: &SqlitePool,
+fn filter_inner(
+    conn: &Connection,
     query: &str,
     limit: u32,
     offset: u32,
     from: &str,
     to: &str,
 ) -> Option<QueryResult> {
-    match queries::do_filter(pool, query, limit, offset, from, to).await {
+    match queries::do_filter(conn, query, limit, offset, from, to) {
         Ok(filter_result) => Some(filter_result),
         Err(e) => {
-            error!("Error filtering notes: {}", e);
+            eprintln!("Error filtering notes: {}", e);
             None
         }
     }

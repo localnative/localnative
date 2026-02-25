@@ -8,14 +8,13 @@ xshell = "0.2"
 xflags = "0.3"
 tauri-bundler = "1.1"
 clap = { version = "4", features = ["cargo"] }
-# rusqlite = { version = "0.32", features = ["bundled"] }
-sqlx = { version = "0.8", features = ["sqlite", "runtime-tokio-rustls", "chrono"] }
+rusqlite = { version = "0.32", features = ["bundled"] }
 linked_hash_set = "0.1"
 regex = "1.7"
 time = { version = "0.3", features = ["formatting", "macros", "serde-human-readable"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-dirs = "5"
+dirs = "6"
 base64 = "0.22"
 uuid = { version = "1", features = ["v4"] }
 semver = "1"
@@ -24,7 +23,7 @@ tokio-serde = { version = "0.9", features = ["bincode"] }
 futures = "0.3"
 tarpc = { version = "0.34", features = ["full"] }
 get_if_addrs = "0.5"
-thiserror = "1.0"
+thiserror = "2.0"
 open = "5.3"
 image = "0.25"
 num-traits = "0.2"
@@ -37,7 +36,7 @@ fern = "0.6"
 tinyfiledialogs = "3"
 ouroboros = "0.18"
 palette = "0.7"
-chrono = { version = "0.4", default-features = false }
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
 plotters-iced = "0.10"
 plotters = { version = "0.3", features = ["histogram"] }
 rand = "0.8"

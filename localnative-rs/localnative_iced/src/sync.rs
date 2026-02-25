@@ -10,12 +10,12 @@ use localnative_core::db::queries;
 use once_cell::sync::OnceCell;
 use ouroboros::self_referencing;
 use regex::RegexSet;
-use sqlx::SqlitePool;
+use rusqlite::Connection;
 use std::borrow::Cow;
 use std::net::{IpAddr, Ipv4Addr};
 use std::str::FromStr;
+use std::sync::{Arc, Mutex};
 use tokio_util::sync::CancellationToken;
-use tracing::error;
 
 use std::{
     net::{Ipv6Addr, SocketAddr},
@@ -218,7 +218,7 @@ impl SyncView {
         res.into()
     }
 
-    pub fn update(&mut self, message: Message, pool: SqlitePool) -> Command<crate::Message> {
+    pub fn update(&mut self, message: Message, pool: Arc<Mutex<Connection>>) -> Command<crate::Message> {
         match message {
             Message::IpInput(input) => {
                 let ip_regex = IP_REGEX_SET.get_or_init(||{
@@ -342,12 +342,12 @@ impl Default for SyncView {
 
 pub static IP_REGEX_SET: OnceCell<RegexSet> = OnceCell::new();
 
-pub async fn client_sync_from_server(addr: SocketAddr, pool: SqlitePool) -> anyhow::Result<()> {
+pub async fn client_sync_from_server(addr: SocketAddr, pool: Arc<Mutex<Connection>>) -> anyhow::Result<()> {
     localnative_core::rpc::run_sync_from_server(&addr, &pool).await?;
     Ok(())
 }
 
-pub async fn client_sync_to_server(addr: SocketAddr, pool: SqlitePool) -> anyhow::Result<()> {
+pub async fn client_sync_to_server(addr: SocketAddr, pool: Arc<Mutex<Connection>>) -> anyhow::Result<()> {
     localnative_core::rpc::run_sync_to_server(&addr, &pool).await?;
     Ok(())
 }
@@ -366,11 +366,12 @@ pub fn get_sync_file_path() -> Option<PathBuf> {
         .map(PathBuf::from)
 }
 
-pub async fn sync_via_file(path: PathBuf, pool: SqlitePool) -> Option<()> {
-    tokio::task::spawn(async move {
+pub async fn sync_via_file(path: PathBuf, pool: Arc<Mutex<Connection>>) -> Option<()> {
+    tokio::task::spawn_blocking(move || {
         if let Some(uri) = path.to_str() {
-            if let Err(e) = queries::sync_via_attach(&pool, uri).await {
-                error!("sync via file failed: {e}");
+            let conn = pool.lock().unwrap();
+            if let Err(e) = queries::sync_via_attach(&conn, uri) {
+                eprintln!("sync via file failed: {e}");
             };
         }
     })
@@ -388,7 +389,7 @@ pub fn get_ip() -> Option<String> {
         .ok()
 }
 
-pub async fn start_server(port: u16, pool: SqlitePool) -> anyhow::Result<CancellationToken> {
+pub async fn start_server(port: u16, pool: Arc<Mutex<Connection>>) -> anyhow::Result<CancellationToken> {
     let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), port);
     let stop_token = CancellationToken::new();
     localnative_core::rpc::setup_server(addr, pool, Some(stop_token.clone())).await?;

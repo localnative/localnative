@@ -29,12 +29,7 @@ anyhow = { workspace = true }
 tokio-util = { workspace = true }
 thiserror = { workspace = true }
 hex = { workspace = true }
-sqlx = { workspace = true, features = [
-    "sqlite",
-    "runtime-tokio-rustls",
-    "chrono",
-] }
-tracing = { workspace = true }
+rusqlite = { workspace = true }
 chrono = { workspace = true, default-features = false, features = ["serde"] }
 
 [lib]

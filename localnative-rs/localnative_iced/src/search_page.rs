@@ -7,7 +7,8 @@ use iced::{
     },
     Command, Element, Pixels,
 };
-use sqlx::SqlitePool;
+use rusqlite::Connection;
+use std::sync::{Arc, Mutex};
 
 use crate::db_operations;
 use crate::{config::ThemeType, icons::IconItem, tr, DateView, NoteView, TagView};
@@ -211,7 +212,7 @@ impl SearchPage {
         &mut self,
         message: Message,
         limit: u32,
-        pool: &SqlitePool,
+        pool: &Arc<Mutex<Connection>>,
         disabel_delete_tip: bool,
         delete_tip: &mut crate::DeleteTip,
     ) -> Command<crate::Message> {
@@ -236,7 +237,7 @@ impl SearchPage {
         }
     }
 
-    fn handle_search(&self, pool: &SqlitePool, limit: u32) -> Command<crate::Message> {
+    fn handle_search(&self, pool: &Arc<Mutex<Connection>>, limit: u32) -> Command<crate::Message> {
         search(
             pool,
             self.search_value.to_owned(),
@@ -246,7 +247,7 @@ impl SearchPage {
         )
     }
 
-    fn handle_next_page(&mut self, pool: &SqlitePool, limit: u32) -> Command<crate::Message> {
+    fn handle_next_page(&mut self, pool: &Arc<Mutex<Connection>>, limit: u32) -> Command<crate::Message> {
         let current_count = self.offset + limit;
         if current_count < self.count {
             self.offset = current_count;
@@ -256,7 +257,7 @@ impl SearchPage {
         }
     }
 
-    fn handle_pre_page(&mut self, pool: &SqlitePool, limit: u32) -> Command<crate::Message> {
+    fn handle_pre_page(&mut self, pool: &Arc<Mutex<Connection>>, limit: u32) -> Command<crate::Message> {
         if self.offset >= limit {
             self.offset -= limit;
             self.handle_search(pool, limit)
@@ -272,7 +273,7 @@ impl SearchPage {
         &mut self,
         msg: crate::note::Message,
         idx: usize,
-        pool: &SqlitePool,
+        pool: &Arc<Mutex<Connection>>,
         limit: u32,
         disabel_delete_tip: bool,
         delete_tip: &mut crate::DeleteTip,
@@ -312,7 +313,7 @@ impl SearchPage {
     fn handle_tag_message(
         &mut self,
         tag_msg: crate::tags::Message,
-        pool: &SqlitePool,
+        pool: &Arc<Mutex<Connection>>,
         limit: u32,
     ) -> Command<crate::Message> {
         match tag_msg {
@@ -324,7 +325,7 @@ impl SearchPage {
     fn handle_day_message(
         &mut self,
         dm: crate::days::Message,
-        pool: &SqlitePool,
+        pool: &Arc<Mutex<Connection>>,
         limit: u32,
     ) -> Command<crate::Message> {
         match dm {
@@ -342,7 +343,7 @@ impl SearchPage {
 }
 
 pub fn search(
-    pool: &SqlitePool,
+    pool: &Arc<Mutex<Connection>>,
     query: String,
     limit: u32,
     offset: u32,

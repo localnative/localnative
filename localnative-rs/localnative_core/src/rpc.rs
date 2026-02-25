@@ -7,15 +7,15 @@ use crate::db::{
     DbError,
 };
 use futures::{future, FutureExt, StreamExt};
-use sqlx::SqlitePool;
+use rusqlite::Connection;
 use std::net::SocketAddr;
 use std::process;
+use std::sync::{Arc, Mutex};
 use tarpc::client;
 use tarpc::server::incoming::Incoming as _;
 use tarpc::server::Channel as _;
 use tarpc::{context, serde_transport::tcp, server::BaseChannel};
 use thiserror::Error;
-use tokio_serde::formats::Bincode;
 use tokio_util::sync::CancellationToken;
 
 #[derive(Debug, Error)]
@@ -46,7 +46,7 @@ pub trait LocalNative {
 
 #[derive(Clone)]
 struct LocalNativeServer {
-    pool: SqlitePool,
+    pool: Arc<Mutex<Connection>>,
     stop_token: Option<CancellationToken>,
 }
 
@@ -56,7 +56,10 @@ impl LocalNative for LocalNativeServer {
         _: context::Context,
         version: String,
     ) -> Result<bool, RpcError> {
-        let meta_version = get_meta_version(&self.pool).await?;
+        let meta_version = {
+            let conn = self.pool.lock().unwrap();
+            get_meta_version(&conn)?
+        };
         Ok(version == meta_version)
     }
 
@@ -65,7 +68,10 @@ impl LocalNative for LocalNativeServer {
         _: context::Context,
         candidates: Vec<String>,
     ) -> Result<Vec<String>, RpcError> {
-        let diff_uuid4 = diff_uuid4_to_server(&self.pool, candidates).await?;
+        let diff_uuid4 = {
+            let conn = self.pool.lock().unwrap();
+            diff_uuid4_to_server(&conn, candidates)?
+        };
         Ok(diff_uuid4)
     }
 
@@ -74,18 +80,24 @@ impl LocalNative for LocalNativeServer {
         _: context::Context,
         candidates: Vec<String>,
     ) -> Result<Vec<String>, RpcError> {
-        let diff_uuid4 = diff_uuid4_from_server(&self.pool, candidates).await?;
+        let diff_uuid4 = {
+            let conn = self.pool.lock().unwrap();
+            diff_uuid4_from_server(&conn, candidates)?
+        };
         Ok(diff_uuid4)
     }
 
     async fn send_note(self, _: context::Context, note: Note) -> Result<bool, RpcError> {
-        // Implement note sending logic here
-        insert(&self.pool, note).await?;
+        let conn = self.pool.lock().unwrap();
+        insert(&conn, &note)?;
         Ok(true)
     }
 
     async fn receive_note(self, _: context::Context, uuid4: String) -> Result<Note, RpcError> {
-        let note = get_note_by_uuid4(&self.pool, &uuid4).await?;
+        let note = {
+            let conn = self.pool.lock().unwrap();
+            get_note_by_uuid4(&conn, &uuid4)?
+        };
         Ok(note)
     }
 
@@ -102,7 +114,7 @@ impl LocalNative for LocalNativeServer {
 
 pub async fn setup_server(
     addr: SocketAddr,
-    pool: SqlitePool,
+    pool: Arc<Mutex<Connection>>,
     stop_token: Option<CancellationToken>,
 ) -> Result<(), RpcError> {
     let listener = tcp::listen(addr, tarpc::tokio_serde::formats::Bincode::default).await?;
@@ -146,9 +158,12 @@ pub fn get_server_addr() -> String {
 
 async fn check_version_match(
     client: &LocalNativeClient,
-    pool: &SqlitePool,
+    pool: &Arc<Mutex<Connection>>,
 ) -> Result<bool, RpcError> {
-    let version = get_meta_version(pool).await?;
+    let version = {
+        let conn = pool.lock().unwrap();
+        get_meta_version(&conn)?
+    };
     let is_version_match = client
         .is_version_match(context::current(), version)
         .await??;
@@ -159,34 +174,49 @@ async fn check_version_match(
     Ok(is_version_match)
 }
 
-pub async fn run_sync_to_server(addr: &SocketAddr, pool: &SqlitePool) -> Result<(), RpcError> {
-    let transport = tarpc::serde_transport::tcp::connect(addr, Bincode::default).await?;
+pub async fn run_sync_to_server(
+    addr: &SocketAddr,
+    pool: &Arc<Mutex<Connection>>,
+) -> Result<(), RpcError> {
+    let transport = tarpc::serde_transport::tcp::connect(addr, tarpc::tokio_serde::formats::Bincode::default).await?;
     let client = LocalNativeClient::new(client::Config::default(), transport).spawn();
 
     check_version_match(&client, pool).await?;
 
-    let candidates = next_uuid4_candidates(pool).await?;
+    let candidates = {
+        let conn = pool.lock().unwrap();
+        next_uuid4_candidates(&conn)?
+    };
     let diff_uuid4 = client
         .diff_uuid4_to_server(context::current(), candidates)
         .await??;
     eprintln!("diff_uuid4_to_server len: {:?}", diff_uuid4.len());
 
     for u in diff_uuid4 {
-        let uuid4 = get_note_by_uuid4(pool, &u).await?;
-        client.send_note(context::current(), uuid4).await??;
+        let note = {
+            let conn = pool.lock().unwrap();
+            get_note_by_uuid4(&conn, &u)?
+        };
+        client.send_note(context::current(), note).await??;
     }
     eprintln!("send_note done");
 
     Ok(())
 }
 
-pub async fn run_sync_from_server(addr: &SocketAddr, pool: &SqlitePool) -> Result<(), RpcError> {
-    let transport = tarpc::serde_transport::tcp::connect(addr, Bincode::default).await?;
+pub async fn run_sync_from_server(
+    addr: &SocketAddr,
+    pool: &Arc<Mutex<Connection>>,
+) -> Result<(), RpcError> {
+    let transport = tarpc::serde_transport::tcp::connect(addr, tarpc::tokio_serde::formats::Bincode::default).await?;
     let client = LocalNativeClient::new(client::Config::default(), transport).spawn();
 
     check_version_match(&client, pool).await?;
 
-    let candidates = next_uuid4_candidates(pool).await?;
+    let candidates = {
+        let conn = pool.lock().unwrap();
+        next_uuid4_candidates(&conn)?
+    };
     let diff_uuid4 = client
         .diff_uuid4_from_server(context::current(), candidates)
         .await??;
@@ -200,7 +230,7 @@ pub async fn run_sync_from_server(addr: &SocketAddr, pool: &SqlitePool) -> Resul
     Ok(())
 }
 
-pub async fn sync(addr: &str, pool: &SqlitePool) -> Result<String, RpcError> {
+pub async fn sync(addr: &str, pool: &Arc<Mutex<Connection>>) -> Result<String, RpcError> {
     let server_addr: SocketAddr = addr.parse()?;
 
     tokio::try_join!(
@@ -211,8 +241,11 @@ pub async fn sync(addr: &str, pool: &SqlitePool) -> Result<String, RpcError> {
     Ok("sync ok".to_string())
 }
 
-pub async fn run_stop_server(addr: &SocketAddr, pool: &SqlitePool) -> Result<(), RpcError> {
-    let transport = tarpc::serde_transport::tcp::connect(addr, Bincode::default).await?;
+pub async fn run_stop_server(
+    addr: &SocketAddr,
+    pool: &Arc<Mutex<Connection>>,
+) -> Result<(), RpcError> {
+    let transport = tarpc::serde_transport::tcp::connect(addr, tarpc::tokio_serde::formats::Bincode::default).await?;
     let client = LocalNativeClient::new(client::Config::default(), transport).spawn();
 
     check_version_match(&client, pool).await?;
@@ -221,13 +254,19 @@ pub async fn run_stop_server(addr: &SocketAddr, pool: &SqlitePool) -> Result<(),
     Ok(())
 }
 
-pub async fn stop_server(addr: &str, pool: &SqlitePool) -> Result<String, RpcError> {
+pub async fn stop_server(
+    addr: &str,
+    pool: &Arc<Mutex<Connection>>,
+) -> Result<String, RpcError> {
     let server_addr: SocketAddr = addr.parse()?;
     run_stop_server(&server_addr, pool).await?;
     Ok("stop ok".to_string())
 }
 
-pub async fn start(addr: &str, pool: &SqlitePool) -> Result<(), RpcError> {
+pub async fn start(
+    addr: &str,
+    pool: &Arc<Mutex<Connection>>,
+) -> Result<(), RpcError> {
     let server_addr: SocketAddr = addr.parse()?;
 
     setup_server(server_addr, pool.clone(), Some(CancellationToken::new())).await?;
