@@ -1,12 +1,10 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use iced::Application;
-use localnative_iced::settings;
-use localnative_iced::LocalNative;
+use localnative_iced::run_app;
 use tracing_subscriber::layer::{Layer, SubscriberExt};
 use tracing_subscriber::util::SubscriberInitExt;
 
-fn main() -> Result<(), iced::Error> {
+fn main() -> iced::Result {
     let level = if cfg!(debug_assertions) {
         tracing::Level::DEBUG
     } else {
@@ -29,6 +27,5 @@ fn main() -> Result<(), iced::Error> {
         .with(layer.with_filter(filter))
         .init();
 
-    LocalNative::run(settings())?;
-    Ok(())
+    run_app()
 }

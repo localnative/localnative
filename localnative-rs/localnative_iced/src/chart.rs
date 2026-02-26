@@ -90,6 +90,10 @@ pub struct ChartView {
     state: ChartState,
 }
 
+// SAFETY: ChartView is only created on background threads with empty RefCells (spec: None)
+// and consumed on the GUI thread. The RefCells are never shared across threads.
+unsafe impl Send for ChartView {}
+
 impl ChartView {
     fn will_draw<'a>(&'a self, state: &'a State) -> &'a Self {
         state.temporary.last().unwrap_or(self)
@@ -152,17 +156,17 @@ impl ChartView {
     #[cfg(feature = "preview")]
     fn new_test() -> Self {
         use rand::Rng;
-        use time::{Date, Duration};
 
-        use crate::days::Day;
+        use localnative_core::db::models::Day;
 
-        fn generate_test_days(start_date: Date, num_days: usize) -> Vec<Day> {
-            let mut rng = rand::thread_rng();
+        fn generate_test_days(num_days: usize) -> Vec<Day> {
+            let mut rng = rand::rng();
             let mut test_days = Vec::new();
+            let start = chrono::NaiveDate::from_ymd_opt(2022, 1, 1).unwrap();
 
             for i in 0..num_days {
-                let date = start_date + Duration::days(i as i64);
-                let count = rng.gen_range(-10..10);
+                let date = start + chrono::Duration::days(i as i64);
+                let count = rng.random_range(-10..10);
                 if count <= 0 {
                     continue;
                 }
@@ -172,9 +176,8 @@ impl ChartView {
             test_days
         }
 
-        let start_date = time::macros::date!(2022 - 01 - 01);
         let num_days = 90;
-        let test_days = generate_test_days(start_date, num_days);
+        let test_days = generate_test_days(num_days);
 
         Self::from_days(test_days)
     }
@@ -526,33 +529,4 @@ impl Chart<Message> for DayChart {
     }
 }
 
-#[cfg(feature = "preview")]
-pub struct NewChart {
-    chart: crate::DateView,
-}
-
-#[cfg(feature = "preview")]
-impl iced::Sandbox for NewChart {
-    type Message = Message;
-
-    fn new() -> Self {
-        Self {
-            chart: crate::DateView {
-                is_show: true,
-                chart: ChartView::new_test(),
-            },
-        }
-    }
-
-    fn title(&self) -> String {
-        "test chart".into()
-    }
-
-    fn update(&mut self, message: Self::Message) {
-        self.chart.update(message);
-    }
-
-    fn view(&self) -> iced::Element<'_, Self::Message> {
-        self.chart.view()
-    }
-}
+// Preview support removed - iced::Sandbox no longer exists in iced 0.13

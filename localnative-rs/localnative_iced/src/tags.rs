@@ -20,39 +20,14 @@ impl TagView {
     pub fn view(&self) -> Element<Message> {
         row![
             button(text(&self.tag.tag).size(16))
-                .style(crate::style::Tag)
+                .style(crate::style::tag_style)
                 .on_press(Message::Search(self.tag.tag.clone())),
             button(text(self.tag.count).size(20))
-                .style(crate::style::TagNum)
+                .style(crate::style::tag_num_style)
                 .on_press(Message::Search(self.tag.count.to_string())),
         ]
         .into()
     }
 }
 
-#[cfg(feature = "preview")]
-impl iced::Sandbox for TagView {
-    type Message = Message;
-
-    fn new() -> Self {
-        Tag {
-            name: "testtag".to_owned(),
-            count: 16,
-        }
-        .into()
-    }
-
-    fn title(&self) -> String {
-        "tagview preview".to_owned()
-    }
-
-    fn update(&mut self, message: Self::Message) {
-        match message {
-            Message::Search(s) => println!("{}", s),
-        }
-    }
-
-    fn view(&self) -> Element<'_, Self::Message> {
-        self.view()
-    }
-}
+// Preview support removed - iced::Sandbox no longer exists in iced 0.13

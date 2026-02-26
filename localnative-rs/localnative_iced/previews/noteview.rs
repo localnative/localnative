@@ -1,6 +1,4 @@
-use iced::Sandbox;
-use localnative_iced::NoteView;
-
-fn main() -> iced::Result {
-    NoteView::run(localnative_iced::none_flags_settings())
+// Preview support removed - iced::Sandbox no longer exists in iced 0.13
+fn main() {
+    println!("Preview not available - iced::Sandbox was removed in iced 0.13");
 }

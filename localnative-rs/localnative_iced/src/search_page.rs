@@ -1,11 +1,10 @@
 use iced::widget::{scrollable, Column, Row};
 use iced::{
-    theme,
     widget::{
-        button, column, container, horizontal_space, row, scrollable::Properties, text, text_input,
+        button, column, container, horizontal_space, row, scrollable::Scrollbar, text, text_input,
         vertical_space,
     },
-    Command, Element, Pixels,
+    Element, Pixels, Task,
 };
 use rusqlite::Connection;
 use std::sync::{Arc, Mutex};
@@ -64,7 +63,7 @@ impl SearchPage {
         } else {
             self.create_empty_page(days)
         }
-        .align_items(iced::Alignment::Center)
+        .align_x(iced::Alignment::Center)
         .width(iced::Length::FillPortion(8));
 
         container(row![note_page, tags]).into()
@@ -87,7 +86,7 @@ impl SearchPage {
         if !self.search_value.is_empty() {
             search_bar = search_bar.push(
                 button(IconItem::Clear)
-                    .style(theme::Button::Text)
+                    .style(button::text)
                     .padding(0)
                     .on_press(Message::Clear),
             );
@@ -95,7 +94,7 @@ impl SearchPage {
 
         search_bar = search_bar.push(
             button(IconItem::Refresh)
-                .style(theme::Button::Text)
+                .style(button::text)
                 .padding(0)
                 .on_press(Message::Refresh),
         );
@@ -125,11 +124,11 @@ impl SearchPage {
 
     fn create_page_control(&self, limit: u32) -> Row<Message> {
         let next_button = button(IconItem::Next)
-            .style(theme::Button::Text)
+            .style(button::text)
             .padding(0)
             .on_press(Message::NextPage);
         let pre_button = button(IconItem::Pre)
-            .style(theme::Button::Text)
+            .style(button::text)
             .padding(0)
             .on_press(Message::PrePage);
         let page_info = text(format!(
@@ -171,7 +170,7 @@ impl SearchPage {
                     .padding(12.),
             )
             .direction(scrollable::Direction::Vertical(
-                Properties::new().width(10).scroller_width(10),
+                Scrollbar::default().width(10).scroller_width(10),
             )),
         )
         .height(iced::Length::FillPortion(8));
@@ -204,7 +203,7 @@ impl SearchPage {
             container(column![days, tip]).padding(12.),
             self.create_page_control(10)
         ]
-        .align_items(iced::Alignment::Center)
+        .align_x(iced::Alignment::Center)
         .width(iced::Length::FillPortion(8))
     }
 
@@ -215,7 +214,7 @@ impl SearchPage {
         pool: &Arc<Mutex<Connection>>,
         disabel_delete_tip: bool,
         delete_tip: &mut crate::DeleteTip,
-    ) -> Command<crate::Message> {
+    ) -> Task<crate::Message> {
         match message {
             Message::Search => self.handle_search(pool, limit),
             Message::SearchInput(search_value) => {
@@ -237,7 +236,7 @@ impl SearchPage {
         }
     }
 
-    fn handle_search(&self, pool: &Arc<Mutex<Connection>>, limit: u32) -> Command<crate::Message> {
+    fn handle_search(&self, pool: &Arc<Mutex<Connection>>, limit: u32) -> Task<crate::Message> {
         search(
             pool,
             self.search_value.to_owned(),
@@ -247,17 +246,17 @@ impl SearchPage {
         )
     }
 
-    fn handle_next_page(&mut self, pool: &Arc<Mutex<Connection>>, limit: u32) -> Command<crate::Message> {
+    fn handle_next_page(&mut self, pool: &Arc<Mutex<Connection>>, limit: u32) -> Task<crate::Message> {
         let current_count = self.offset + limit;
         if current_count < self.count {
             self.offset = current_count;
             self.handle_search(pool, limit)
         } else {
-            Command::none()
+            Task::none()
         }
     }
 
-    fn handle_pre_page(&mut self, pool: &Arc<Mutex<Connection>>, limit: u32) -> Command<crate::Message> {
+    fn handle_pre_page(&mut self, pool: &Arc<Mutex<Connection>>, limit: u32) -> Task<crate::Message> {
         if self.offset >= limit {
             self.offset -= limit;
             self.handle_search(pool, limit)
@@ -265,7 +264,7 @@ impl SearchPage {
             self.offset = 0;
             self.handle_search(pool, limit)
         } else {
-            Command::none()
+            Task::none()
         }
     }
 
@@ -277,11 +276,11 @@ impl SearchPage {
         limit: u32,
         disabel_delete_tip: bool,
         delete_tip: &mut crate::DeleteTip,
-    ) -> Command<crate::Message> {
+    ) -> Task<crate::Message> {
         match msg {
             crate::note::Message::Delete(rowid) => {
                 if disabel_delete_tip {
-                    Command::perform(
+                    Task::perform(
                         db_operations::delete(
                             pool.clone(),
                             self.search_value.to_string(),
@@ -294,7 +293,7 @@ impl SearchPage {
                 } else {
                     delete_tip.show_modal = true;
                     delete_tip.rowid = rowid;
-                    Command::none()
+                    Task::none()
                 }
             }
             crate::note::Message::Search(s) => {
@@ -305,7 +304,7 @@ impl SearchPage {
                 if let Some(note) = self.notes.get_mut(idx) {
                     note.update(msg)
                 };
-                Command::none()
+                Task::none()
             }
         }
     }
@@ -315,7 +314,7 @@ impl SearchPage {
         tag_msg: crate::tags::Message,
         pool: &Arc<Mutex<Connection>>,
         limit: u32,
-    ) -> Command<crate::Message> {
+    ) -> Task<crate::Message> {
         match tag_msg {
             crate::tags::Message::Search(text) => self.search_value = text,
         }
@@ -327,7 +326,7 @@ impl SearchPage {
         dm: crate::days::Message,
         pool: &Arc<Mutex<Connection>>,
         limit: u32,
-    ) -> Command<crate::Message> {
+    ) -> Task<crate::Message> {
         match dm {
             crate::days::Message::Clear => self.handle_search(pool, limit),
             crate::days::Message::Selected { start, end } => {
@@ -336,7 +335,7 @@ impl SearchPage {
             }
             dm => {
                 self.days.update(dm);
-                Command::none()
+                Task::none()
             }
         }
     }
@@ -348,14 +347,14 @@ pub fn search(
     limit: u32,
     offset: u32,
     range: Option<(chrono::NaiveDate, chrono::NaiveDate)>,
-) -> Command<crate::Message> {
+) -> Task<crate::Message> {
     if let Some((from, to)) = range {
-        Command::perform(
+        Task::perform(
             db_operations::filter(pool.clone(), query, limit, offset, from, to),
             crate::Message::Receiver,
         )
     } else {
-        Command::perform(
+        Task::perform(
             db_operations::select(pool.clone(), query, limit, offset),
             crate::Message::Receiver,
         )

@@ -1,6 +1,6 @@
 use iced::widget::{button, container, horizontal_space, Column, Row};
 use iced::Length;
-use iced::{theme, Element};
+use iced::Element;
 
 use crate::chart::{ChartView, DayChart};
 use crate::icons::IconItem;
@@ -61,7 +61,7 @@ impl DateView {
         } else {
             IconItem::Filter
         })
-        .style(theme::Button::Text)
+        .style(button::text)
         .padding(0)
         .on_press(Message::MaxOrMin)
     }

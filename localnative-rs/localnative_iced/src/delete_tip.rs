@@ -1,8 +1,8 @@
 use iced::{
-    widget::{button, horizontal_space, row, text},
+    widget::{button, center, container, horizontal_space, mouse_area, opaque, row, stack, text},
     Element,
 };
-use iced_aw::{Card, Modal};
+use iced_aw::Card;
 
 use crate::tr;
 
@@ -25,30 +25,41 @@ impl DeleteTip {
         search_page: &'page crate::SearchPage,
     ) -> Element<'tip, Message> {
         let underlay = search_page.view(limit).map(Message::SearchPage);
-        let modal_content = self.create_modal_content();
 
-        Modal::new(underlay, modal_content)
-            .on_esc(Message::Cancel)
-            .backdrop(Message::Cancel)
-            .into()
-    }
-
-    fn create_modal_content(&self) -> Option<Card<Message>> {
         if self.show_modal {
-            Some(self.create_card())
+            let card = self.create_card();
+            stack![
+                underlay,
+                opaque(
+                    mouse_area(center(opaque(card)).style(|_theme| {
+                        container::Style {
+                            background: Some(
+                                iced::Color {
+                                    a: 0.8,
+                                    ..iced::Color::BLACK
+                                }
+                                .into(),
+                            ),
+                            ..container::Style::default()
+                        }
+                    }))
+                    .on_press(Message::Cancel)
+                )
+            ]
+            .into()
         } else {
-            None
+            underlay
         }
     }
 
-    fn create_card(&self) -> Card<Message> {
+    fn create_card(&self) -> Element<'_, Message> {
         let ok_button = button(text(tr!("ok"))).on_press(Message::Enter);
         let cancel_button = button(text(tr!("cancel"))).on_press(Message::Cancel);
 
         Card::new(
             row!(text("⚠️")),
             row!(
-                text(iced_aw::Bootstrap::ExclamationDiamond).font(iced_aw::BOOTSTRAP_FONT),
+                text("⚠ "),
                 text(tr!("delete-tip")),
                 text(tr!("delete-tip-content"))
             ),
@@ -64,5 +75,6 @@ impl DeleteTip {
         )
         .on_close(Message::Cancel)
         .max_width(300.)
+        .into()
     }
 }

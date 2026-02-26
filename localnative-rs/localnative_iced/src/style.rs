@@ -1,7 +1,6 @@
 use iced::{
-    theme,
     widget::{button, container},
-    Background, Border,
+    Background, Border, Theme,
 };
 
 mod themes {
@@ -152,31 +151,10 @@ mod themes {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
-pub struct Url;
-
-impl From<Url> for theme::Button {
-    fn from(value: Url) -> Self {
-        theme::Button::Custom(Box::new(value))
-    }
-}
-
-impl button::StyleSheet for Url {
-    type Style = theme::Theme;
-
-    fn active(&self, style: &Self::Style) -> button::Appearance {
-        let colors = themes::get_theme_colors(style);
-        button::Appearance {
-            background: Some(Background::Color(colors.active_background)),
-            text_color: colors.text_color,
-            border: Border::with_radius(6.5),
-            ..button::StyleSheet::active(style, &theme::Button::Text)
-        }
-    }
-
-    fn hovered(&self, style: &Self::Style) -> button::Appearance {
-        let colors = themes::get_theme_colors(style);
-        button::Appearance {
+pub fn url_style(theme: &Theme, status: button::Status) -> button::Style {
+    let colors = themes::get_theme_colors(theme);
+    match status {
+        button::Status::Hovered => button::Style {
             background: Some(Background::Color(colors.hovered_background)),
             text_color: colors.text_color,
             border: Border {
@@ -184,86 +162,51 @@ impl button::StyleSheet for Url {
                 radius: 6.5.into(),
                 ..Default::default()
             },
-            ..self.active(style)
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct Tag;
-
-impl From<Tag> for theme::Button {
-    fn from(value: Tag) -> Self {
-        theme::Button::Custom(Box::new(value))
-    }
-}
-
-impl button::StyleSheet for Tag {
-    type Style = theme::Theme;
-
-    fn active(&self, style: &Self::Style) -> button::Appearance {
-        let colors = themes::get_theme_colors(style);
-        button::Appearance {
+            ..button::Style::default()
+        },
+        _ => button::Style {
             background: Some(Background::Color(colors.active_background)),
             text_color: colors.text_color,
-            border: Border::with_radius(6.5),
-            ..button::StyleSheet::active(style, &theme::Button::Primary)
-        }
+            border: Border::default().rounded(6.5),
+            ..button::Style::default()
+        },
     }
 }
 
-#[derive(Debug, Clone, Copy)]
-pub struct TagNum;
-
-impl From<TagNum> for theme::Button {
-    fn from(value: TagNum) -> Self {
-        theme::Button::Custom(Box::new(value))
+pub fn tag_style(theme: &Theme, _status: button::Status) -> button::Style {
+    let colors = themes::get_theme_colors(theme);
+    button::Style {
+        background: Some(Background::Color(colors.active_background)),
+        text_color: colors.text_color,
+        border: Border::default().rounded(6.5),
+        ..button::Style::default()
     }
 }
 
-impl button::StyleSheet for TagNum {
-    type Style = theme::Theme;
-
-    fn active(&self, style: &Self::Style) -> button::Appearance {
-        let colors = themes::get_theme_colors(style);
-        button::Appearance {
-            background: Some(Background::Color(colors.active_background)),
-            text_color: colors.text_color,
-            border: Border::with_radius(4.0),
-            ..button::StyleSheet::active(style, &theme::Button::Secondary)
-        }
-    }
-
-    fn hovered(&self, style: &Self::Style) -> button::Appearance {
-        let colors = themes::get_theme_colors(style);
-        button::Appearance {
+pub fn tag_num_style(theme: &Theme, status: button::Status) -> button::Style {
+    let colors = themes::get_theme_colors(theme);
+    match status {
+        button::Status::Hovered => button::Style {
             background: Some(Background::Color(colors.hovered_background)),
             text_color: colors.text_color,
-            border: Border::with_radius(4.0),
-            ..self.active(style)
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct SimpleBox;
-
-impl From<SimpleBox> for theme::Container {
-    fn from(value: SimpleBox) -> Self {
-        theme::Container::Custom(Box::new(value))
-    }
-}
-
-impl iced::widget::container::StyleSheet for SimpleBox {
-    type Style = theme::Theme;
-
-    fn appearance(&self, style: &Self::Style) -> iced::widget::container::Appearance {
-        let colors = themes::get_theme_colors(style);
-        container::Appearance {
-            border: Border::with_radius(6.6),
+            border: Border::default().rounded(4.0),
+            ..button::Style::default()
+        },
+        _ => button::Style {
             background: Some(Background::Color(colors.active_background)),
-            text_color: Some(colors.text_color),
-            ..style.appearance(&theme::Container::Box)
-        }
+            text_color: colors.text_color,
+            border: Border::default().rounded(4.0),
+            ..button::Style::default()
+        },
+    }
+}
+
+pub fn simple_box_style(theme: &Theme) -> container::Style {
+    let colors = themes::get_theme_colors(theme);
+    container::Style {
+        border: Border::default().rounded(6.6),
+        background: Some(Background::Color(colors.active_background)),
+        text_color: Some(colors.text_color),
+        ..container::Style::default()
     }
 }
