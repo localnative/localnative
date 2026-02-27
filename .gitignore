@@ -4,6 +4,8 @@ external-libs/*
 .idea/*
 .*
 !.cargo
+!.github
 !.gitignore
 !.gitkeep
+!.gitlab-ci.yml
 !.mrconfig-template
