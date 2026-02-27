@@ -1,6 +1,6 @@
 use iced::{
     widget::{button, column, text, vertical_space},
-    Command, Element,
+    Task, Element,
 };
 
 use crate::{
@@ -55,7 +55,7 @@ impl Sidebar {
             theme_button,
             settings
         ]
-        .align_items(iced::Alignment::Center)
+        .align_x(iced::Alignment::Center)
         .into()
     }
 
@@ -66,17 +66,17 @@ impl Sidebar {
         message: Message,
     ) -> button::Button<Message> {
         button(
-            column![icon.to_text().size(Self::SIDEBAR_ICON_SIZE), text(label)]
-                .align_items(iced::Alignment::Center),
+            column![icon.to_text().size(Self::SIDEBAR_ICON_SIZE), text(label.to_string())]
+                .align_x(iced::Alignment::Center),
         )
-        .style(iced::theme::Button::Text)
+        .style(button::text)
         .padding(0)
         .on_press(message)
     }
 
     fn create_icon_button(&self, icon: IconItem, message: Message) -> button::Button<Message> {
         button(icon.to_text().size(Self::SIDEBAR_ICON_SIZE))
-            .style(iced::theme::Button::Text)
+            .style(button::text)
             .padding(0)
             .on_press(message)
     }
@@ -88,7 +88,7 @@ impl Sidebar {
         };
 
         button(icon.to_text().size(Self::SIDEBAR_ICON_SIZE))
-            .style(iced::theme::Button::Text)
+            .style(button::text)
             .padding(0)
             .on_press(Message::ThemeChanged)
     }
@@ -98,7 +98,7 @@ impl Sidebar {
         message: Message,
         settings: &mut Settings,
         config: &mut Config,
-    ) -> Command<crate::Message> {
+    ) -> Task<crate::Message> {
         match message {
             Message::TurnSearchPage => {
                 self.state = State::SearchPage;
@@ -111,14 +111,14 @@ impl Sidebar {
                 config.theme_kind = !config.theme_kind;
             }
         }
-        Command::none()
+        Task::none()
     }
 
     fn toggle_settings(
         &mut self,
         settings: &mut Settings,
         config: &mut Config,
-    ) -> Command<crate::Message> {
+    ) -> Task<crate::Message> {
         if self.settings_is_open {
             self.settings_is_open = false;
             settings.show_modal = false;
@@ -133,7 +133,7 @@ impl Sidebar {
             settings.language_temp = config.language;
             settings.disable_delete_tip_temp = config.disable_delete_tip;
         }
-        Command::perform(
+        Task::perform(
             crate::translate::init_bundle(config.language),
             crate::Message::ApplyLanguage,
         )

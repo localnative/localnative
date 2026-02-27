@@ -1,6 +1,4 @@
-use iced::Sandbox;
-use localnative_iced::TagView;
-
-fn main() -> iced::Result {
-    TagView::run(localnative_iced::none_flags_settings())
+// Preview support removed - iced::Sandbox no longer exists in iced 0.13
+fn main() {
+    println!("Preview not available - iced::Sandbox was removed in iced 0.13");
 }

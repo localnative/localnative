@@ -2,7 +2,7 @@ use iced::widget::Text;
 use iced::widget::{
     button, column, horizontal_space, qr_code, row, text, text_input, tooltip, QRCode,
 };
-use iced::Command;
+use iced::Task;
 use iced::Element;
 use iced_aw::NumberInput;
 
@@ -125,7 +125,7 @@ impl SyncView {
             iced::widget::tooltip::Position::Bottom,
         );
 
-        let port_input = NumberInput::new(*self.borrow_port(), u16::MAX, Message::PortInput)
+        let port_input = NumberInput::new(*self.borrow_port(), 0..=u16::MAX, Message::PortInput)
             .padding(0.)
             .on_submit(Message::IpAddrVerify);
 
@@ -202,12 +202,12 @@ impl SyncView {
                 sync_form_file_button
             ]
             .spacing(20)
-            .align_items(iced::Alignment::Center),
+            .align_y(iced::Alignment::Center),
             text(tr!("sync-server-tip")),
             server_button
         ]
         .spacing(20)
-        .align_items(iced::Alignment::Center);
+        .align_x(iced::Alignment::Center);
 
         if *self.borrow_server_state() == ServerState::Opened {
             res = res
@@ -218,7 +218,7 @@ impl SyncView {
         res.into()
     }
 
-    pub fn update(&mut self, message: Message, pool: Arc<Mutex<Connection>>) -> Command<crate::Message> {
+    pub fn update(&mut self, message: Message, pool: Arc<Mutex<Connection>>) -> Task<crate::Message> {
         match message {
             Message::IpInput(input) => {
                 let ip_regex = IP_REGEX_SET.get_or_init(||{
@@ -241,7 +241,7 @@ impl SyncView {
                 if let Ok(ip) = IpAddr::from_str(self.borrow_ip()) {
                     let addr = SocketAddr::new(ip, *self.borrow_port());
                     self.with_sync_state_mut(|state| *state = SyncState::Syncing);
-                    return Command::perform(
+                    return Task::perform(
                         client_sync_from_server(addr, pool.clone()),
                         crate::Message::SyncResult,
                     );
@@ -259,7 +259,7 @@ impl SyncView {
                 if let Ok(ip) = IpAddr::from_str(self.borrow_ip()) {
                     let addr = SocketAddr::new(ip, *self.borrow_port());
                     self.with_sync_state_mut(|state| *state = SyncState::Syncing);
-                    return Command::perform(
+                    return Task::perform(
                         client_sync_to_server(addr, pool.clone()),
                         crate::Message::SyncResult,
                     );
@@ -278,7 +278,7 @@ impl SyncView {
                 if let Some(path) = get_sync_file_path() {
                     self.with_sync_state_mut(|state| *state = SyncState::Syncing);
 
-                    return Command::perform(
+                    return Task::perform(
                         sync_via_file(path, pool.clone()),
                         crate::Message::SyncOption,
                     );
@@ -289,7 +289,7 @@ impl SyncView {
             Message::OpenServer => {
                 self.with_server_state_mut(|state| *state = ServerState::Starting);
 
-                return Command::perform(
+                return Task::perform(
                     start_server(*self.borrow_port(), pool.clone()),
                     crate::Message::StartServerResult,
                 );
@@ -304,7 +304,7 @@ impl SyncView {
                 self.with_server_state_mut(|state| *state = ServerState::Closing);
                 if let Some(cmd) = self.with_stop_mut(|stop| {
                     if let Some(stop) = stop.take() {
-                        Some(Command::perform(
+                        Some(Task::perform(
                             stop_server(stop),
                             crate::Message::ServerOption,
                         ))
@@ -318,7 +318,7 @@ impl SyncView {
                 }
             }
         }
-        Command::none()
+        Task::none()
     }
 }
 

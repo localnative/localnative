@@ -1,9 +1,9 @@
 use iced::{
-    widget::{button, checkbox, column, horizontal_space, row, text, text_input, Space, Text},
-    Command, Element,
+    widget::{button, center, checkbox, column, container, horizontal_space, mouse_area, opaque, row, stack, text, text_input, Space, Text},
+    Element, Task,
     Length::{self, Shrink},
 };
-use iced_aw::{Card, Modal, NumberInput};
+use iced_aw::{Card, NumberInput};
 
 use crate::{
     config::{Config, ThemeType},
@@ -40,9 +40,29 @@ impl Settings {
         underlay: Element<'underlay, Message>,
         config: &'underlay Config,
     ) -> Element<'settings, Message> {
-        Modal::new(underlay, self.create_modal_content(config))
-            .on_esc(Message::Cancel)
+        if let Some(modal_content) = self.create_modal_content(config) {
+            stack![
+                underlay,
+                opaque(
+                    mouse_area(center(opaque(modal_content)).style(|_theme| {
+                        container::Style {
+                            background: Some(
+                                iced::Color {
+                                    a: 0.8,
+                                    ..iced::Color::BLACK
+                                }
+                                .into(),
+                            ),
+                            ..container::Style::default()
+                        }
+                    }))
+                    .on_press(Message::Cancel)
+                )
+            ]
             .into()
+        } else {
+            underlay
+        }
     }
 
     fn create_modal_content(&self, config: &Config) -> Option<Element<'_, Message>> {
@@ -78,8 +98,7 @@ impl Settings {
         .padding(3)
         .width(Shrink);
 
-        let limit_input = NumberInput::new(config.limit, 1000, Message::LimitChanged)
-            .min(5)
+        let limit_input = NumberInput::new(config.limit, 5..=1000, Message::LimitChanged)
             .step(1)
             .padding(0.);
 
@@ -116,7 +135,7 @@ impl Settings {
             row![text(tr!("allowed-origins")), allowed_origins_input],
             try_fix_host
         ]
-        .align_items(iced::Alignment::Center)
+        .align_x(iced::Alignment::Center)
         .padding(0)
         .spacing(20);
 
@@ -130,7 +149,7 @@ impl Settings {
                         horizontal_space(),
                     ]
                     .spacing(10)
-                    .align_items(iced::Alignment::Center),
+                    .align_y(iced::Alignment::Center),
                 )
                 .on_close(Message::Cancel)
                 .max_width(400.),
@@ -142,7 +161,7 @@ impl Settings {
         message: Message,
         config: &mut Config,
         sidebar: &mut Sidebar,
-    ) -> Command<crate::Message> {
+    ) -> Task<crate::Message> {
         match message {
             Message::Save => {
                 self.show_modal = false;
@@ -154,7 +173,7 @@ impl Settings {
                 config.disable_delete_tip = self.disable_delete_tip_temp;
                 config.language = self.language_temp;
                 config.limit = self.limit_temp;
-                return Command::perform(
+                return Task::perform(
                     translate::init_bundle(config.language),
                     crate::Message::ApplyLanguage,
                 );
@@ -164,7 +183,7 @@ impl Settings {
             }
             Message::LanguageChanged(language) => {
                 config.language = language;
-                return Command::perform(
+                return Task::perform(
                     translate::init_bundle(language),
                     crate::Message::ApplyLanguage,
                 );
@@ -173,7 +192,7 @@ impl Settings {
                 config.limit = limit;
             }
             Message::TryFixHost => {
-                return Command::perform(
+                return Task::perform(
                     crate::init::WebKind::init_all(
                         self.allowed_origins_temp.take().map(|s| vec![s]),
                     ),
@@ -191,6 +210,6 @@ impl Settings {
                 self.allowed_origins_temp = Some(origins);
             }
         }
-        Command::none()
+        Task::none()
     }
 }

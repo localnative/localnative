@@ -17,13 +17,11 @@ mod translate;
 use std::cmp::Ordering;
 
 use chart::ChartView;
-#[cfg(feature = "preview")]
-pub use chart::NewChart;
 use config::Config;
 pub use days::DateView;
 use delete_tip::DeleteTip;
 use iced::{event, window, Font, Size};
-use iced::{widget::container, Command};
+use iced::{widget::container, Task};
 use iced::{
     widget::{column, horizontal_space, row, text, vertical_space},
     Theme,
@@ -79,7 +77,7 @@ impl Data {
         }
     }
 
-    fn handle_receiver_message(&mut self, res: QueryResult, config: &Config) -> Command<Message> {
+    fn handle_receiver_message(&mut self, res: QueryResult, config: &Config) -> Task<Message> {
         let QueryResult {
             count,
             notes,
@@ -97,8 +95,8 @@ impl Data {
                 self.search_page.range,
             );
         }
-        Command::batch([
-            Command::perform(
+        Task::batch([
+            Task::perform(
                 async move {
                     let mut tags = tags;
                     tags.sort_by(|a, b| {
@@ -114,11 +112,11 @@ impl Data {
                 },
                 Message::TagView,
             ),
-            Command::perform(
+            Task::perform(
                 async move { notes.into_iter().map(NoteView::from).collect() },
                 Message::NoteView,
             ),
-            { Command::perform(async move { ChartView::from_days(days) }, Message::DayView) },
+            { Task::perform(async move { ChartView::from_days(days) }, Message::DayView) },
         ])
     }
 
@@ -126,45 +124,45 @@ impl Data {
         &mut self,
         spmsg: search_page::Message,
         config: &Config,
-    ) -> Command<Message> {
+    ) -> Task<Message> {
         let search_page = &mut self.search_page;
         let delete_tip = &mut self.delete_tip;
         search_page.update(spmsg, config.limit, &self.pool, true, delete_tip)
     }
 
-    fn handle_note_view_message(&mut self, notes: Vec<NoteView>) -> Command<Message> {
+    fn handle_note_view_message(&mut self, notes: Vec<NoteView>) -> Task<Message> {
         self.search_page.notes = notes;
-        Command::none()
+        Task::none()
     }
 
-    fn handle_tag_view_message(&mut self, tags: Vec<TagView>) -> Command<Message> {
+    fn handle_tag_view_message(&mut self, tags: Vec<TagView>) -> Task<Message> {
         self.search_page.tags = tags;
-        Command::none()
+        Task::none()
     }
 
-    fn handle_day_view_message(&mut self, chart: ChartView) -> Command<Message> {
+    fn handle_day_view_message(&mut self, chart: ChartView) -> Task<Message> {
         self.search_page.days.chart.view = chart;
-        Command::none()
+        Task::none()
     }
 
-    fn handle_request_closed_message(&mut self, config: &mut Config) -> Command<Message> {
+    fn handle_request_closed_message(&mut self, config: &mut Config) -> Task<Message> {
         config.date_filter_is_show = self.search_page.days.is_show;
         let json = serde_json::to_string_pretty(&config).unwrap();
-        Command::perform(config::save(json), Message::CloseWindow)
+        Task::perform(config::save(json), Message::CloseWindow)
     }
 
-    fn handle_close_window_message(&self, res: Option<()>) -> Command<Message> {
+    fn handle_close_window_message(&self, res: Option<()>) -> Task<Message> {
         if res.is_some() {
             println!("ok!");
         }
-        window::close(window::Id::MAIN)
+        iced::exit()
     }
 
     fn handle_sidebar_message(
         &mut self,
         smsg: sidebar::Message,
         config: &mut Config,
-    ) -> Command<Message> {
+    ) -> Task<Message> {
         let sidebar = &mut self.sidebar;
         let settings = &mut self.settings;
         if matches!(smsg, sidebar::Message::ThemeChanged) {
@@ -177,14 +175,14 @@ impl Data {
         &mut self,
         msg: delete_tip::Message,
         config: &Config,
-    ) -> Command<Message> {
+    ) -> Task<Message> {
         let search_page = &mut self.search_page;
         let delete_tip = &mut self.delete_tip;
         let pool = &self.pool;
         match msg {
             delete_tip::Message::Enter => {
                 delete_tip.show_modal = false;
-                Command::perform(
+                Task::perform(
                     db_operations::delete(
                         pool.clone(),
                         search_page.search_value.to_string(),
@@ -204,12 +202,12 @@ impl Data {
             ),
             delete_tip::Message::Cancel => {
                 delete_tip.show_modal = false;
-                Command::none()
+                Task::none()
             }
         }
     }
 
-    fn handle_sync_client_message(&mut self, sync_msg: sync::Message) -> Command<Message> {
+    fn handle_sync_client_message(&mut self, sync_msg: sync::Message) -> Task<Message> {
         self.sync_view.update(sync_msg, self.pool.clone())
     }
 
@@ -217,14 +215,14 @@ impl Data {
         &mut self,
         res: anyhow::Result<()>,
         config: &Config,
-    ) -> Command<Message> {
+    ) -> Task<Message> {
         if let Err(err) = res {
             if let Some(io_error) = err.downcast_ref::<std::io::Error>() {
                 self.sync_view.with_sync_state_mut(|state| {
                     *state = sync::SyncState::SyncError(io_error.to_string())
                 });
             }
-            Command::none()
+            Task::none()
         } else {
             self.sync_view
                 .with_sync_state_mut(|state| *state = sync::SyncState::Complete);
@@ -239,12 +237,12 @@ impl Data {
         }
     }
 
-    fn handle_sync_option_message(&mut self, opt: Option<()>, config: &Config) -> Command<Message> {
+    fn handle_sync_option_message(&mut self, opt: Option<()>, config: &Config) -> Task<Message> {
         if opt.is_none() {
             self.sync_view
                 .with_sync_state_mut(|state| *state = sync::SyncState::SyncFromFileUnknownError);
 
-            Command::none()
+            Task::none()
         } else {
             self.sync_view
                 .with_sync_state_mut(|state| *state = sync::SyncState::Complete);
@@ -261,7 +259,7 @@ impl Data {
     fn handle_start_server_result_message(
         &mut self,
         res: anyhow::Result<CancellationToken>,
-    ) -> Command<Message> {
+    ) -> Task<Message> {
         match res {
             Ok(stop) => {
                 let is_none = sync::get_ip()
@@ -283,12 +281,12 @@ impl Data {
                         .with_server_state_mut(|state| *state = sync::ServerState::Closed);
                     if let Some(cmd) = self.sync_view.with_stop_mut(|ref_mut_stop| {
                         if let Some(old_stop) = ref_mut_stop.take() {
-                            Some(Command::batch([
-                                Command::perform(
+                            Some(Task::batch([
+                                Task::perform(
                                     sync::stop_server(old_stop),
                                     Message::ServerOption,
                                 ),
-                                Command::perform(sync::stop_server(stop), Message::ServerOption),
+                                Task::perform(sync::stop_server(stop), Message::ServerOption),
                             ]))
                         } else {
                             None
@@ -301,7 +299,7 @@ impl Data {
                         if let Some(cmd) = self.sync_view.with_stop_mut(|ref_mut_stop| {
                             if let Some(old_stop) = ref_mut_stop.take() {
                                 ref_mut_stop.replace(stop);
-                                Some(Command::perform(
+                                Some(Task::perform(
                                     sync::stop_server(old_stop),
                                     Message::ServerOption,
                                 ))
@@ -324,10 +322,10 @@ impl Data {
                 });
             }
         }
-        Command::none()
+        Task::none()
     }
 
-    fn handle_server_option_message(&mut self, opt: Option<()>) -> Command<Message> {
+    fn handle_server_option_message(&mut self, opt: Option<()>) -> Task<Message> {
         if opt.is_some() {
             self.sync_view
                 .with_server_state_mut(|state| *state = sync::ServerState::Closed);
@@ -335,36 +333,36 @@ impl Data {
             self.sync_view
                 .with_server_state_mut(|state| *state = sync::ServerState::Error);
         }
-        Command::none()
+        Task::none()
     }
 
     fn handle_settings_message(
         &mut self,
         msg: settings::Message,
         config: &mut Config,
-    ) -> Command<Message> {
+    ) -> Task<Message> {
         let settings = &mut self.settings;
         let sidebar = &mut self.sidebar;
         settings.update(msg, config, sidebar)
     }
 
-    fn handle_load_font_message(&self, res: Result<(), iced::font::Error>) -> Command<Message> {
+    fn handle_load_font_message(&self, res: Result<(), iced::font::Error>) -> Task<Message> {
         match res {
             Ok(_) => println!("Font loaded successfully!"),
             Err(e) => eprintln!("Failed to load font: {:?}", e),
         }
-        Command::none()
+        Task::none()
     }
 
-    fn handle_loaded_state(&mut self, config: &mut Config, message: Message) -> Command<Message> {
+    fn handle_loaded_state(&mut self, config: &mut Config, message: Message) -> Task<Message> {
         match message {
             Message::Receiver(Some(md)) => self.handle_receiver_message(md, &*config),
             Message::SearchPageMessage(spmsg) => self.handle_search_page_message(spmsg, &*config),
             Message::NoteView(notes) => self.handle_note_view_message(notes),
             Message::TagView(tags) => self.handle_tag_view_message(tags),
-            Message::Loading(..) => Command::none(),
+            Message::Loading(..) => Task::none(),
             Message::DayView(chart) => self.handle_day_view_message(chart),
-            Message::ApplyLanguage(..) => Command::none(),
+            Message::ApplyLanguage(..) => Task::none(),
             Message::RequestClosed => self.handle_request_closed_message(config),
             Message::CloseWindow(res) => self.handle_close_window_message(res),
             Message::SidebarMessage(smsg) => self.handle_sidebar_message(smsg, config),
@@ -375,10 +373,10 @@ impl Data {
             Message::StartServerResult(res) => self.handle_start_server_result_message(res),
             Message::ServerOption(opt) => self.handle_server_option_message(opt),
             Message::SettingsMessage(msg) => self.handle_settings_message(msg, config),
-            Message::InitHost(..) => Command::none(),
-            Message::Receiver(None) => Command::none(),
+            Message::InitHost(..) => Task::none(),
+            Message::Receiver(None) => Task::none(),
             Message::LoadFont(res) => self.handle_load_font_message(res),
-            Message::InitDatabase(_) => Command::none(),
+            Message::InitDatabase(_) => Task::none(),
         }
     }
 }
@@ -407,64 +405,77 @@ pub enum Message {
     LoadFont(Result<(), iced::font::Error>),
 }
 
-impl iced::Application for LocalNative {
-    type Executor = iced::executor::Default;
-    type Message = Message;
-    type Flags = Option<Config>;
-    type Theme = Theme;
+pub fn run_app() -> iced::Result {
+    let flags = Config::load();
+    let is_first_open = flags.is_none();
+    let config = flags.unwrap_or_default();
+    let language = config.language;
 
-    fn new(flags: Option<Config>) -> (Self, Command<Self::Message>) {
-        let is_first_open = flags.is_none();
-        let config = flags.unwrap_or_default();
-        let language = config.language;
+    let default_font = if cfg!(target_os = "windows") {
+        Font::with_name("Microsoft YaHei")
+    } else if cfg!(target_os = "macos") {
+        Font::with_name("PingFang SC")
+    } else if cfg!(target_os = "linux") {
+        Font::with_name("Noto Sans CJK SC")
+    } else {
+        Font::with_name("Arial Unicode MS")
+    };
 
-        (
-            LocalNative {
-                config,
-                state: State::Loading(String::new()),
-            },
-            Command::batch([
-                iced::font::load(include_bytes!("../fonts/icons.ttf")).map(Message::LoadFont),
-                Command::perform(
-                    async { tokio::task::spawn_blocking(init_db).await.unwrap() },
-                    Message::InitDatabase,
-                ),
-                Command::perform(translate::init_bundle(language), Message::ApplyLanguage),
-                if is_first_open {
-                    Command::perform(init::WebKind::init_all(None), Message::InitHost)
-                } else {
-                    Command::none()
+    iced::application("Local Native", LocalNative::update, LocalNative::view)
+        .subscription(LocalNative::subscription)
+        .theme(LocalNative::theme)
+        .window(iced::window::Settings {
+            size: Size::new(1080., 720.),
+            icon: logo(),
+            exit_on_close_request: false,
+            ..Default::default()
+        })
+        .default_font(default_font)
+        .run_with(move || {
+            (
+                LocalNative {
+                    config,
+                    state: State::Loading(String::new()),
                 },
-            ]),
-        )
-    }
+                Task::batch([
+                    iced::font::load(include_bytes!("../fonts/icons.ttf")).map(Message::LoadFont),
+                    Task::perform(
+                        async { tokio::task::spawn_blocking(init_db).await.unwrap() },
+                        Message::InitDatabase,
+                    ),
+                    Task::perform(translate::init_bundle(language), Message::ApplyLanguage),
+                    if is_first_open {
+                        Task::perform(init::WebKind::init_all(None), Message::InitHost)
+                    } else {
+                        Task::none()
+                    },
+                ]),
+            )
+        })
+}
 
-    fn title(&self) -> String {
-        let version = env!("CARGO_PKG_VERSION");
-        format!("Local Native {}", version)
-    }
-
-    fn update(&mut self, message: Self::Message) -> Command<Self::Message> {
+impl LocalNative {
+    fn update(&mut self, message: Message) -> Task<Message> {
         match &mut self.state {
             State::Loading(..) => self.handle_loading_state(message),
             State::Loaded(data) => data.handle_loaded_state(&mut self.config, message),
         }
     }
 
-    fn view(&self) -> iced::Element<'_, Self::Message> {
+    fn view(&self) -> iced::Element<'_, Message> {
         match &self.state {
             State::Loading(info) => self.loading_view(info),
             State::Loaded(data) => self.loaded_view(data),
         }
     }
 
-    fn theme(&self) -> Self::Theme {
+    fn theme(&self) -> Theme {
         self.config.theme().into()
     }
 
-    fn subscription(&self) -> iced::Subscription<Self::Message> {
-        event::listen_raw(|event, status| match (event, status) {
-            (iced::Event::Window(_, window::Event::CloseRequested), event::Status::Ignored) => {
+    fn subscription(&self) -> iced::Subscription<Message> {
+        event::listen_with(|event, status, _id| match (event, status) {
+            (iced::Event::Window(window::Event::CloseRequested), event::Status::Ignored) => {
                 Some(Message::RequestClosed)
             }
             _ => None,
@@ -473,18 +484,18 @@ impl iced::Application for LocalNative {
 }
 
 impl LocalNative {
-    fn handle_loading_state(&mut self, message: Message) -> Command<Message> {
+    fn handle_loading_state(&mut self, message: Message) -> Task<Message> {
         let State::Loading(ref mut info) = self.state else {
-            return Command::none();
+            return Task::none();
         };
         match message {
             Message::InitDatabase(Ok(conn)) => {
                 let pool = Arc::new(Mutex::new(conn));
-                Command::perform(async {}, move |_| Message::Loading(pool.clone()))
+                Task::perform(async {}, move |_| Message::Loading(pool.clone()))
             }
             Message::InitDatabase(Err(err)) => {
                 *info = err.to_string();
-                Command::none()
+                Task::none()
             }
             Message::Loading(pool) => {
                 let data = Data::new(&self.config, pool);
@@ -492,7 +503,7 @@ impl LocalNative {
                 if let State::Loaded(ref mut data) = self.state {
                     let search_page = &data.search_page;
                     let pool = data.pool.clone();
-                    Command::perform(
+                    Task::perform(
                         db_operations::upgrade(
                             pool,
                             search_page.search_value.clone(),
@@ -505,12 +516,12 @@ impl LocalNative {
                     unreachable!()
                 }
             }
-            Message::InitHost(_) => Command::none(),
-            _ => Command::none(),
+            Message::InitHost(_) => Task::none(),
+            _ => Task::none(),
         }
     }
 
-    fn loading_view(&self, info: &String) -> iced::Element<'_, Message> {
+    fn loading_view<'a>(&'a self, info: &'a String) -> iced::Element<'a, Message> {
         column![
             vertical_space(),
             row![
@@ -586,29 +597,13 @@ pub fn logo() -> Option<iced::window::Icon> {
     })
 }
 
-pub fn settings() -> iced::Settings<Option<Config>> {
+pub fn settings() -> iced::Settings {
     iced::Settings {
-        flags: Config::load(),
-        window: iced::window::Settings {
-            size: Size::new(1080., 720.),
-            icon: logo(),
-            exit_on_close_request: false,
-            ..Default::default()
-        },
-        default_font: if cfg!(target_os = "windows") {
-            Font::with_name("Microsoft YaHei") // Common system font on Windows that supports Chinese
-        } else if cfg!(target_os = "macos") {
-            Font::with_name("PingFang SC") // Common system font on macOS that supports Chinese
-        } else if cfg!(target_os = "linux") {
-            Font::with_name("Noto Sans CJK SC") // Common open-source font on Linux that supports Chinese
-        } else {
-            Font::with_name("Arial Unicode MS") // Fallback to a widely supported font that supports Chinese
-        },
         ..Default::default()
     }
 }
 
-pub fn none_flags_settings() -> iced::Settings<()> {
+pub fn none_flags_settings() -> iced::Settings {
     iced::Settings::default()
 }
 

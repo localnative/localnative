@@ -13,16 +13,16 @@ gloo-net = { version = "0.6", default-features = false, features = [
 ] }
 log = "0.4"
 serde = { version = "1", features = ["derive"] }
-web-sys = { version = "0.3", features = [
+web-sys = { version = "0.3.90", features = [
     "Event",
     "HtmlInputElement",
     "Storage",
 ] }
-wasm-bindgen = "0.2"
+wasm-bindgen = "0.2.113"
 # xilem_web = { git = "https://github.com/linebender/xilem.git" }
 xilem_web = { git = "https://github.com/Philipp-M/xilem.git", branch = "xilem_web-event-handler" }
-js-sys = "0.3"
-wasm-bindgen-futures = "0.4"
+js-sys = "0.3.90"
+wasm-bindgen-futures = "0.4.63"
 serde_json = { version = "1", features = ["alloc"], default-features = false }
 tokio = { version = "1", default-features = false }
 anyhow = { version = "1", default-features = false }
@@ -35,10 +35,10 @@ chrono = { version = "0.4", default-features = false, features = [
     "now",
     "wasmbind",
 ] }
-fluent-static = "0.4"
+fluent-static = "0.5"
 
 [build-dependencies]
-fluent-static-codegen = "0.4"
+fluent-static-codegen = "0.6"
 
 [profile.release]
 opt-level = 3

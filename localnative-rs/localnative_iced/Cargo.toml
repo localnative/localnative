@@ -35,15 +35,12 @@ rand = { workspace = true, optional = true }
 iced_aw = { workspace = true, default-features = false, features = [
     "wrap",
     "number_input",
-    "modal",
-    "icons",
     "card",
 ] }
 iced = { workspace = true, features = [
     "canvas",
     "qr_code",
     "tokio",
-    "palette",
 ] }
 tokio-util = { workspace = true }
 tracing-subscriber = { workspace = true, features = ["registry"] }
