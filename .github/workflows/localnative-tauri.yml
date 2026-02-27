@@ -13,6 +13,7 @@ on:
       - "localnative-tauri/**"
       - "localnative-rs/localnative_core/**"
       - ".github/workflows/localnative-tauri.yml"
+  workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
@@ -20,6 +21,8 @@ env:
 jobs:
   build:
     name: Build (${{ matrix.platform }})
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -60,9 +63,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   publish:
-    name: Publish Release
+    name: Publish Release (${{ matrix.platform }})
     if: github.event_name == 'workflow_dispatch'
     needs: build
+    permissions:
+      contents: write
     strategy:
       fail-fast: true
       matrix:
