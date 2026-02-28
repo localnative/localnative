@@ -35,10 +35,10 @@ chrono = { version = "0.4", default-features = false, features = [
     "now",
     "wasmbind",
 ] }
-fluent-static = "0.5"
+fluent-static = "0.4"
 
 [build-dependencies]
-fluent-static-codegen = "0.6"
+fluent-static-codegen = "0.4"
 
 [profile.release]
 opt-level = 3

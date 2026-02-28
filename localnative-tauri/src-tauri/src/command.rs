@@ -5,7 +5,7 @@ pub async fn input(input: String) -> String {
     let (tx, mut rx) = tauri::async_runtime::channel(1);
 
     tauri::async_runtime::spawn_blocking(move || {
-        let _ = tx.blocking_send(localnative_core::exe::run(&input));
+        let _ = tx.blocking_send(localnative_core::run_sync(&input));
     });
 
     rx.recv()

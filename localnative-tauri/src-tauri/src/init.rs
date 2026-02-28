@@ -34,7 +34,7 @@ impl AppHost {
             .to_path_buf();
 
         #[cfg(target_os = "linux")]
-        let mut path = localnative_core::dirs::home_dir()
+        let mut path = dirs::home_dir()
             .unwrap()
             .join("LocalNative");
 
@@ -112,7 +112,7 @@ fn registr(kind: WebKind) {
 }
 
 pub fn firefox_path() -> Option<PathBuf> {
-    localnative_core::dirs::home_dir().map(|home_dir| {
+    dirs::home_dir().map(|home_dir| {
         #[cfg(target_os = "macos")]
         {
             home_dir
@@ -132,7 +132,7 @@ pub fn firefox_path() -> Option<PathBuf> {
 }
 
 pub fn chrome_path() -> Option<PathBuf> {
-    localnative_core::dirs::home_dir().map(|home_dir| {
+    dirs::home_dir().map(|home_dir| {
         #[cfg(target_os = "macos")]
         {
             home_dir
@@ -167,7 +167,7 @@ impl WebKind {
                 .parent()
                 .unwrap()
                 .join("localnative-web-ext-host");
-            let to = localnative_core::dirs::home_dir()
+            let to = dirs::home_dir()
                 .unwrap()
                 .join("LocalNative")
                 .join("localnative-web-ext-host");
