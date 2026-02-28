@@ -1,0 +1,95 @@
+name: Rust CI
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "localnative-rs/**"
+      - ".github/workflows/rust.yml"
+  pull_request:
+    branches: [main, master]
+    paths:
+      - "localnative-rs/**"
+      - ".github/workflows/rust.yml"
+
+env:
+  CARGO_TERM_COLOR: always
+
+permissions:
+  contents: read
+
+jobs:
+  fmt:
+    name: Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - run: cargo fmt --all -- --check
+        working-directory: localnative-rs
+
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            localnative-rs/target
+          key: ${{ runner.os }}-cargo-clippy-${{ hashFiles('localnative-rs/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-clippy-
+      - run: cargo clippy --workspace --all-targets -- -D warnings -A clippy::type_complexity
+        working-directory: localnative-rs
+
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            localnative-rs/target
+          key: ${{ runner.os }}-cargo-build-${{ hashFiles('localnative-rs/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-build-
+      - run: cargo build --workspace
+        working-directory: localnative-rs
+
+  test:
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            localnative-rs/target
+          key: ${{ runner.os }}-cargo-test-${{ hashFiles('localnative-rs/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-test-
+      - run: cargo test --workspace
+        working-directory: localnative-rs

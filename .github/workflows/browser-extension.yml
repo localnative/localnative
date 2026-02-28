@@ -1,0 +1,43 @@
+name: Browser Extension CI
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "localnative-browser-extension/**"
+      - ".github/workflows/browser-extension.yml"
+  pull_request:
+    branches: [main, master]
+    paths:
+      - "localnative-browser-extension/**"
+      - ".github/workflows/browser-extension.yml"
+
+env:
+  CARGO_TERM_COLOR: always
+
+permissions:
+  contents: read
+
+jobs:
+  build-wasm:
+    name: Build WASM App
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - name: Install Trunk
+        uses: jetli/trunk-action@v0.5.0
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            localnative-browser-extension/wasm-app/target
+          key: ${{ runner.os }}-cargo-wasm-${{ hashFiles('localnative-browser-extension/wasm-app/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-wasm-
+      - name: Build WASM app
+        working-directory: localnative-browser-extension/wasm-app
+        run: trunk build --release
