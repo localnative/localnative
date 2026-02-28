@@ -34,6 +34,8 @@ pub enum RpcError {
     SerializedErr(String),
     #[error("Input validation error: {0}")]
     InputValidation(String),
+    #[error("Server configuration error: {0}")]
+    ServerConfigError(String),
 }
 
 /// Maximum allowed size for individual note text fields (1 MB).
@@ -56,16 +58,16 @@ fn validate_note(note: &Note) -> Result<(), RpcError> {
         return Err(RpcError::InputValidation("URL exceeds maximum size".to_string()));
     }
     if note.tags.len() > MAX_NOTE_FIELD_SIZE {
-        return Err(RpcError::InputValidation("Tags exceeds maximum size".to_string()));
+        return Err(RpcError::InputValidation("Tags field exceeds maximum size".to_string()));
     }
     if note.description.len() > MAX_NOTE_FIELD_SIZE {
-        return Err(RpcError::InputValidation("Description exceeds maximum size".to_string()));
+        return Err(RpcError::InputValidation("Description field exceeds maximum size".to_string()));
     }
     if note.comments.len() > MAX_NOTE_FIELD_SIZE {
-        return Err(RpcError::InputValidation("Comments exceeds maximum size".to_string()));
+        return Err(RpcError::InputValidation("Comments field exceeds maximum size".to_string()));
     }
     if note.annotations.len() > MAX_ANNOTATION_SIZE {
-        return Err(RpcError::InputValidation("Annotations exceeds maximum size".to_string()));
+        return Err(RpcError::InputValidation("Annotations field exceeds maximum size".to_string()));
     }
     Ok(())
 }
@@ -143,7 +145,7 @@ impl LocalNative for LocalNativeServer {
         if let Some(stop_tx) = self.stop_token {
             stop_tx.cancel();
         } else {
-            return Err(RpcError::InputValidation(
+            return Err(RpcError::ServerConfigError(
                 "Server was not started with a stop token".to_string(),
             ));
         }
