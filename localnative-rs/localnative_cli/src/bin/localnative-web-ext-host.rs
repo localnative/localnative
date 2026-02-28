@@ -22,6 +22,7 @@ use std::str;
 
 const LOG_FILE: &str = "debug.log";
 const MAX_LOG_SIZE: u64 = 1 * 1024 * 1024; // 1MB
+const MAX_MESSAGE_SIZE: usize = 10 * 1024 * 1024; // 10MB
 
 fn main() -> io::Result<()> {
     // Read the message length (first 4 bytes).
@@ -35,10 +36,26 @@ fn main() -> io::Result<()> {
     eprintln!("text_length {:?}", text_length);
     log_to_file(format!("text_length {:?}", text_length))?;
 
+    if text_length > MAX_MESSAGE_SIZE {
+        let err_msg = format!("Message too large: {} bytes (max {})", text_length, MAX_MESSAGE_SIZE);
+        eprintln!("{}", err_msg);
+        log_to_file(err_msg)?;
+        let error_response = r#"{"error": "Message exceeds maximum allowed size"}"#;
+        send_message(error_response)?;
+        return Ok(());
+    }
+
     // Read the text (JSON object) of the message.
     let mut text_buf = vec![0; text_length];
     handle.read_exact(&mut text_buf)?;
-    let text = str::from_utf8(&text_buf).expect("not utf8 string");
+    let text = match str::from_utf8(&text_buf) {
+        Ok(s) => s,
+        Err(_) => {
+            let error_response = r#"{"error": "Invalid UTF-8 in message"}"#;
+            send_message(error_response)?;
+            return Ok(());
+        }
+    };
     eprintln!("text_buf {:?}", text);
     log_to_file(format!("text_buf {:?}", text))?;
 

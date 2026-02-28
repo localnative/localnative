@@ -174,6 +174,8 @@ mod error {
         InvalidFormat,
         #[error("IO error: {0}")]
         IoError(#[from] std::io::Error),
+        #[error("Validation error: {0}")]
+        ValidationError(String),
     }
 
     pub type DbResult<T> = Result<T, DbError>;
@@ -296,6 +298,7 @@ pub mod queries {
     use regex::Regex;
     use rusqlite::Connection;
     use std::collections::HashMap;
+    use std::path::Path;
     use uuid::Uuid;
 
     fn map_note(row: &rusqlite::Row) -> rusqlite::Result<Note> {
@@ -354,7 +357,38 @@ pub mod queries {
         Ok(())
     }
 
+    fn validate_sync_file_path(uri: &str) -> DbResult<()> {
+        let path = Path::new(uri);
+
+        // Ensure the path is absolute to prevent relative path traversal
+        if !path.is_absolute() {
+            return Err(DbError::ValidationError(
+                "Sync file path must be absolute".to_string(),
+            ));
+        }
+
+        // Verify the file exists and is a regular file
+        if !path.is_file() {
+            return Err(DbError::ValidationError(
+                "Sync file does not exist or is not a regular file".to_string(),
+            ));
+        }
+
+        // Validate file extension
+        match path.extension().and_then(|e| e.to_str()) {
+            Some("sqlite3") | Some("db") | Some("sqlite") => {}
+            _ => {
+                return Err(DbError::ValidationError(
+                    "Sync file must have a .sqlite3, .sqlite, or .db extension".to_string(),
+                ));
+            }
+        }
+
+        Ok(())
+    }
+
     pub fn sync_via_attach(conn: &Connection, uri: &str) -> DbResult<()> {
+        validate_sync_file_path(uri)?;
         conn.execute(
             "ATTACH ?1 AS other",
             rusqlite::params![uri],
@@ -742,6 +776,39 @@ pub mod queries {
             })
             .collect::<Vec<_>>()
             .join(" AND ")
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn test_validate_sync_file_path_relative() {
+            assert!(validate_sync_file_path("relative/path.sqlite3").is_err());
+        }
+
+        #[test]
+        fn test_validate_sync_file_path_wrong_extension() {
+            let tmp = std::env::temp_dir().join("test_wrong_ext.txt");
+            std::fs::write(&tmp, "test").unwrap();
+            let result = validate_sync_file_path(tmp.to_str().unwrap());
+            std::fs::remove_file(&tmp).ok();
+            assert!(result.is_err());
+        }
+
+        #[test]
+        fn test_validate_sync_file_path_nonexistent() {
+            assert!(validate_sync_file_path("/tmp/nonexistent_file.sqlite3").is_err());
+        }
+
+        #[test]
+        fn test_validate_sync_file_path_valid() {
+            let tmp = std::env::temp_dir().join("test_valid.sqlite3");
+            std::fs::write(&tmp, "test").unwrap();
+            let result = validate_sync_file_path(tmp.to_str().unwrap());
+            std::fs::remove_file(&tmp).ok();
+            assert!(result.is_ok());
+        }
     }
 }
 

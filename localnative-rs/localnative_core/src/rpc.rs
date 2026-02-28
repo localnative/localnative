@@ -9,7 +9,6 @@ use crate::db::{
 use futures::{future, FutureExt, StreamExt};
 use rusqlite::Connection;
 use std::net::SocketAddr;
-use std::process;
 use std::sync::{Arc, Mutex};
 use tarpc::client;
 use tarpc::server::incoming::Incoming as _;
@@ -17,6 +16,7 @@ use tarpc::server::Channel as _;
 use tarpc::{context, serde_transport::tcp, server::BaseChannel};
 use thiserror::Error;
 use tokio_util::sync::CancellationToken;
+use uuid::Uuid;
 
 #[derive(Debug, Error)]
 pub enum RpcError {
@@ -32,6 +32,44 @@ pub enum RpcError {
     VersionMismatch,
     #[error("Rpc error (serialized): {0}")]
     SerializedErr(String),
+    #[error("Input validation error: {0}")]
+    InputValidation(String),
+    #[error("Server configuration error: {0}")]
+    ServerConfigError(String),
+}
+
+/// Maximum allowed size for individual note text fields (1 MB).
+const MAX_NOTE_FIELD_SIZE: usize = 1_048_576;
+/// Maximum allowed size for note annotations field (10 MB).
+const MAX_ANNOTATION_SIZE: usize = 10_485_760;
+
+fn validate_uuid4(uuid4: &str) -> Result<(), RpcError> {
+    Uuid::parse_str(uuid4)
+        .map_err(|_| RpcError::InputValidation("Invalid UUID4 format".to_string()))?;
+    Ok(())
+}
+
+fn validate_note(note: &Note) -> Result<(), RpcError> {
+    validate_uuid4(&note.uuid4)?;
+    if note.title.len() > MAX_NOTE_FIELD_SIZE {
+        return Err(RpcError::InputValidation("Title exceeds maximum size".to_string()));
+    }
+    if note.url.len() > MAX_NOTE_FIELD_SIZE {
+        return Err(RpcError::InputValidation("URL exceeds maximum size".to_string()));
+    }
+    if note.tags.len() > MAX_NOTE_FIELD_SIZE {
+        return Err(RpcError::InputValidation("Tags field exceeds maximum size".to_string()));
+    }
+    if note.description.len() > MAX_NOTE_FIELD_SIZE {
+        return Err(RpcError::InputValidation("Description field exceeds maximum size".to_string()));
+    }
+    if note.comments.len() > MAX_NOTE_FIELD_SIZE {
+        return Err(RpcError::InputValidation("Comments field exceeds maximum size".to_string()));
+    }
+    if note.annotations.len() > MAX_ANNOTATION_SIZE {
+        return Err(RpcError::InputValidation("Annotations field exceeds maximum size".to_string()));
+    }
+    Ok(())
 }
 
 #[tarpc::service]
@@ -88,12 +126,14 @@ impl LocalNative for LocalNativeServer {
     }
 
     async fn send_note(self, _: context::Context, note: Note) -> Result<bool, RpcError> {
+        validate_note(&note)?;
         let conn = self.pool.lock().unwrap();
         insert(&conn, &note)?;
         Ok(true)
     }
 
     async fn receive_note(self, _: context::Context, uuid4: String) -> Result<Note, RpcError> {
+        validate_uuid4(&uuid4)?;
         let note = {
             let conn = self.pool.lock().unwrap();
             get_note_by_uuid4(&conn, &uuid4)?
@@ -105,7 +145,9 @@ impl LocalNative for LocalNativeServer {
         if let Some(stop_tx) = self.stop_token {
             stop_tx.cancel();
         } else {
-            process::exit(0)
+            return Err(RpcError::ServerConfigError(
+                "Server was not started with a stop token".to_string(),
+            ));
         }
 
         Ok(())
@@ -154,6 +196,32 @@ pub fn get_server_addr() -> String {
         .find(|iface| !iface.is_loopback())
         .map(|iface| format!("{}:3456", iface.addr.ip()))
         .unwrap_or_default()
+}
+
+fn validate_client_addr(addr: &SocketAddr) -> Result<(), RpcError> {
+    if addr.ip().is_unspecified() {
+        return Err(RpcError::InputValidation(
+            "Cannot connect to unspecified address (0.0.0.0)".to_string(),
+        ));
+    }
+    if addr.port() == 0 {
+        return Err(RpcError::InputValidation(
+            "Port must not be 0".to_string(),
+        ));
+    }
+    Ok(())
+}
+
+fn validate_server_addr(addr: &SocketAddr) -> Result<(), RpcError> {
+    if addr.port() == 0 {
+        return Err(RpcError::InputValidation(
+            "Server port must not be 0".to_string(),
+        ));
+    }
+    if addr.ip().is_unspecified() {
+        eprintln!("Warning: Server binding to all interfaces ({}). Ensure this is intentional.", addr);
+    }
+    Ok(())
 }
 
 async fn check_version_match(
@@ -232,6 +300,7 @@ pub async fn run_sync_from_server(
 
 pub async fn sync(addr: &str, pool: &Arc<Mutex<Connection>>) -> Result<String, RpcError> {
     let server_addr: SocketAddr = addr.parse()?;
+    validate_client_addr(&server_addr)?;
 
     tokio::try_join!(
         run_sync_to_server(&server_addr, pool),
@@ -259,6 +328,7 @@ pub async fn stop_server(
     pool: &Arc<Mutex<Connection>>,
 ) -> Result<String, RpcError> {
     let server_addr: SocketAddr = addr.parse()?;
+    validate_client_addr(&server_addr)?;
     run_stop_server(&server_addr, pool).await?;
     Ok("stop ok".to_string())
 }
@@ -268,8 +338,108 @@ pub async fn start(
     pool: &Arc<Mutex<Connection>>,
 ) -> Result<(), RpcError> {
     let server_addr: SocketAddr = addr.parse()?;
+    validate_server_addr(&server_addr)?;
 
     setup_server(server_addr, pool.clone(), Some(CancellationToken::new())).await?;
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_validate_uuid4_valid() {
+        assert!(validate_uuid4("550e8400-e29b-41d4-a716-446655440000").is_ok());
+    }
+
+    #[test]
+    fn test_validate_uuid4_invalid() {
+        assert!(validate_uuid4("not-a-uuid").is_err());
+        assert!(validate_uuid4("").is_err());
+        assert!(validate_uuid4("550e8400-e29b-41d4-a716").is_err());
+    }
+
+    #[test]
+    fn test_validate_note_valid() {
+        let note = Note {
+            rowid: 1,
+            uuid4: "550e8400-e29b-41d4-a716-446655440000".to_string(),
+            title: "Test".to_string(),
+            url: "https://example.com".to_string(),
+            tags: "tag1,tag2".to_string(),
+            description: "desc".to_string(),
+            comments: "comment".to_string(),
+            annotations: "abcd".to_string(),
+            created_at: "2024-01-01 00:00:00".to_string(),
+            is_public: false,
+        };
+        assert!(validate_note(&note).is_ok());
+    }
+
+    #[test]
+    fn test_validate_note_invalid_uuid() {
+        let note = Note {
+            rowid: 1,
+            uuid4: "invalid-uuid".to_string(),
+            title: "Test".to_string(),
+            url: "https://example.com".to_string(),
+            tags: "".to_string(),
+            description: "".to_string(),
+            comments: "".to_string(),
+            annotations: "".to_string(),
+            created_at: "2024-01-01 00:00:00".to_string(),
+            is_public: false,
+        };
+        assert!(validate_note(&note).is_err());
+    }
+
+    #[test]
+    fn test_validate_note_oversized_field() {
+        let oversized = "x".repeat(MAX_NOTE_FIELD_SIZE + 1);
+        let note = Note {
+            rowid: 1,
+            uuid4: "550e8400-e29b-41d4-a716-446655440000".to_string(),
+            title: oversized,
+            url: "https://example.com".to_string(),
+            tags: "".to_string(),
+            description: "".to_string(),
+            comments: "".to_string(),
+            annotations: "".to_string(),
+            created_at: "2024-01-01 00:00:00".to_string(),
+            is_public: false,
+        };
+        assert!(validate_note(&note).is_err());
+    }
+
+    #[test]
+    fn test_validate_client_addr_unspecified() {
+        let addr: SocketAddr = "0.0.0.0:2345".parse().unwrap();
+        assert!(validate_client_addr(&addr).is_err());
+    }
+
+    #[test]
+    fn test_validate_client_addr_zero_port() {
+        let addr: SocketAddr = "127.0.0.1:0".parse().unwrap();
+        assert!(validate_client_addr(&addr).is_err());
+    }
+
+    #[test]
+    fn test_validate_client_addr_valid() {
+        let addr: SocketAddr = "192.168.1.1:2345".parse().unwrap();
+        assert!(validate_client_addr(&addr).is_ok());
+    }
+
+    #[test]
+    fn test_validate_server_addr_zero_port() {
+        let addr: SocketAddr = "127.0.0.1:0".parse().unwrap();
+        assert!(validate_server_addr(&addr).is_err());
+    }
+
+    #[test]
+    fn test_validate_server_addr_valid() {
+        let addr: SocketAddr = "127.0.0.1:2345".parse().unwrap();
+        assert!(validate_server_addr(&addr).is_ok());
+    }
 }
