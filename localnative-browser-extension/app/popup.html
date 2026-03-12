@@ -46,6 +46,25 @@
         --radius-lg: 12px;
       }
 
+      .dark-theme {
+        --primary: #818cf8;
+        --primary-hover: #a5b4fc;
+        --bg-main: #0f172a;
+        --bg-card: #1e293b;
+        --bg-card-hover: #334155;
+        --text-primary: #f1f5f9;
+        --text-secondary: #94a3b8;
+        --text-muted: #64748b;
+        --border: #334155;
+        --border-focus: #818cf8;
+        --danger: #f87171;
+        --danger-hover: #ef4444;
+        --tag-bg: #312e81;
+        --tag-text: #c7d2fe;
+        --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+        --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.4);
+      }
+
       * {
         box-sizing: border-box;
         margin: 0;
@@ -92,6 +111,22 @@
       .version {
         color: var(--text-muted);
         font-size: 12px;
+      }
+
+      .theme-toggle {
+        background: none;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 6px 10px;
+        cursor: pointer;
+        font-size: 16px;
+        color: var(--text-secondary);
+        transition: all 0.2s;
+      }
+
+      .theme-toggle:hover {
+        background: var(--bg-card-hover);
+        border-color: var(--border-focus);
       }
 
       .header-options {
@@ -373,6 +408,7 @@
           <span class="version">v0.5.1</span>
         </div>
         <div class="header-options">
+          <button class="theme-toggle" id="theme-toggle" title="Toggle theme">🌙</button>
           <label class="checkbox-label">
             <input type="checkbox" id='ssbify' name="ssbify" value="ssbify">
             <span id="label-ssbify">Save content</span>

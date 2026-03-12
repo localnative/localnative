@@ -98,6 +98,20 @@ document.addEventListener('DOMContentLoaded', function () {
     file: 'contentScript.js'
   });
 
+  // theme toggle
+  const themeToggle = document.getElementById('theme-toggle');
+  const isDarkTheme = localStorage.getItem('darkTheme') === 'true';
+  if (isDarkTheme) {
+    document.body.classList.add('dark-theme');
+    themeToggle.textContent = '☀️';
+  }
+  themeToggle.onclick = function() {
+    document.body.classList.toggle('dark-theme');
+    const isDark = document.body.classList.contains('dark-theme');
+    themeToggle.textContent = isDark ? '☀️' : '🌙';
+    localStorage.setItem('darkTheme', isDark);
+  };
+
   // focus on tags
   document.getElementById('tags-text').focus();
 
