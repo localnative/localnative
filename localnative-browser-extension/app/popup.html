@@ -25,75 +25,392 @@
     <script src='./locales/en-US.js'></script>
     <script src='./popup.js'></script><script src='./popup-i18n.js'></script>
     <style>
-      .save-input{
-        min-width: 600px;
+      :root {
+        --primary: #4f46e5;
+        --primary-hover: #4338ca;
+        --bg-main: #f8fafc;
+        --bg-card: #ffffff;
+        --bg-card-hover: #f1f5f9;
+        --text-primary: #1e293b;
+        --text-secondary: #64748b;
+        --text-muted: #94a3b8;
+        --border: #e2e8f0;
+        --border-focus: #4f46e5;
+        --danger: #ef4444;
+        --danger-hover: #dc2626;
+        --tag-bg: #e0e7ff;
+        --tag-text: #3730a3;
+        --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+        --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
+        --radius: 8px;
+        --radius-lg: 12px;
       }
-      #search-text{
-        min-width: 400px;
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
       }
-      .note{
-        background-color: #f0f0f5;
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        background: var(--bg-main);
+        color: var(--text-primary);
+        min-width: 700px;
+        max-width: 700px;
+        padding: 16px;
+        line-height: 1.5;
       }
-      .note:hover{
-        background-color: #e0e0eb;
+
+      /* Header */
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-bottom: 12px;
+        margin-bottom: 16px;
+        border-bottom: 1px solid var(--border);
       }
-      .note-created-at{
-        color: grey;
+
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
       }
-      .note-title{
-       font-weight: bold;
+
+      .header a {
+        color: var(--primary);
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 16px;
       }
-      .note-sep{
-        background-color: #ffffff;
-        height: 4px;
+
+      .header a:hover {
+        color: var(--primary-hover);
       }
-      .none{
-        display:none;
+
+      .version {
+        color: var(--text-muted);
+        font-size: 12px;
+      }
+
+      .header-options {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: var(--text-secondary);
+        cursor: pointer;
+      }
+
+      .checkbox-label input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        accent-color: var(--primary);
+        cursor: pointer;
+      }
+
+      /* Language select */
+      .lang-select {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: var(--text-secondary);
+      }
+
+      .lang-select select {
+        padding: 4px 8px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--bg-card);
+        font-size: 13px;
+        cursor: pointer;
+        outline: none;
+      }
+
+      .lang-select select:focus {
+        border-color: var(--border-focus);
+      }
+
+      /* Input fields */
+      .input-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+
+      .save-input {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        font-size: 14px;
+        background: var(--bg-card);
+        color: var(--text-primary);
+        transition: border-color 0.2s, box-shadow 0.2s;
+      }
+
+      .save-input:focus {
+        outline: none;
+        border-color: var(--border-focus);
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+      }
+
+      .save-input::placeholder {
+        color: var(--text-muted);
+      }
+
+      /* Debug info */
+      .debug-info {
+        max-width: 560px;
+        font-size: 11px;
+        color: var(--text-muted);
+        padding: 8px 12px;
+        background: var(--bg-card);
+        border-radius: var(--radius);
+        margin-bottom: 12px;
+        border: 1px solid var(--border);
+      }
+
+      .debug-info a {
+        color: var(--primary);
+      }
+
+      /* Search bar */
+      .search-bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+
+      #search-text {
+        flex: 1;
+        padding: 10px 14px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        font-size: 14px;
+        background: var(--bg-card);
+        transition: border-color 0.2s, box-shadow 0.2s;
+      }
+
+      #search-text:focus {
+        outline: none;
+        border-color: var(--border-focus);
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+      }
+
+      .btn {
+        padding: 8px 16px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        background: var(--bg-card);
+        color: var(--text-secondary);
+        transition: all 0.2s;
+      }
+
+      .btn:hover {
+        background: var(--bg-card-hover);
+        border-color: #cbd5e1;
+      }
+
+      .btn-clear {
+        padding: 8px 12px;
+        font-weight: 600;
+      }
+
+      .pagination {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      #indicator {
+        font-size: 13px;
+        color: var(--text-secondary);
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* Notes list */
+      #notes {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .note {
+        background: var(--bg-card);
+        border-radius: var(--radius-lg);
+        padding: 14px 16px;
+        border: 1px solid var(--border);
+        transition: box-shadow 0.2s, border-color 0.2s;
+      }
+
+      .note:hover {
+        box-shadow: var(--shadow-md);
+        border-color: #cbd5e1;
+      }
+
+      .note-meta {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 8px;
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+
+      .note-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        flex: 1;
+      }
+
+      .tag-btn {
+        padding: 2px 8px;
+        background: var(--tag-bg);
+        color: var(--tag-text);
+        border: none;
+        border-radius: 4px;
+        font-size: 11px;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+
+      .tag-btn:hover {
+        background: #c7d2fe;
+      }
+
+      .btn-delete {
+        padding: 4px 10px;
+        background: transparent;
+        color: var(--danger);
+        border: 1px solid var(--danger);
+        border-radius: 4px;
+        font-size: 11px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .btn-delete:hover {
+        background: var(--danger);
+        color: white;
+      }
+
+      .note-title {
+        font-weight: 600;
+        font-size: 14px;
+        color: var(--text-primary);
+        margin-bottom: 4px;
+      }
+
+      .note-url {
+        margin-bottom: 6px;
+      }
+
+      .note-url a {
+        color: var(--primary);
+        font-size: 12px;
+        text-decoration: none;
+        word-break: break-all;
+      }
+
+      .note-url a:hover {
+        text-decoration: underline;
+      }
+
+      .note-desc {
+        font-size: 13px;
+        color: var(--text-secondary);
+        white-space: pre-wrap;
+      }
+
+      .note-sep {
+        display: none;
+      }
+
+      .none {
+        display: none;
+      }
+
+      /* Scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: var(--bg-main);
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 4px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: #cbd5e1;
       }
     </style>
   </head>
-  <body style="min-width:700px; max-width:700px;">
+  <body>
     <div id='save-input'>
-      <div>
-        <b>
-        <a href="https://localnative.app" target="_blank">Local Native</a>
-v0.5.1
-        </b>
-        <input type="checkbox" id='ssbify' name="ssbify" value="ssbify"> <label for="ssbify" id="label-ssbify">save content</label>
-        <input class="none" type="checkbox" id='cb-public' name="public" value="public">
-        <label class="none" for="cb-public" id="label-public">public</label>
-        <button class="none" id="ssb-sync-btn" title="ssb sync">
-          ssb sync
-        </button>
-        <span style="float: right"> <span id="label-language">language</span>
-          <select id='select-language'>
-            <option value="en-US">en-US English - US</option>
-            <option value="zh-CN">zh-CN 中文简体 - 大陆</option>
-          </select>
-        </span>
+      <div class="header">
+        <div class="header-left">
+          <a href="https://localnative.app" target="_blank">Local Native</a>
+          <span class="version">v0.5.1</span>
+        </div>
+        <div class="header-options">
+          <label class="checkbox-label">
+            <input type="checkbox" id='ssbify' name="ssbify" value="ssbify">
+            <span id="label-ssbify">Save content</span>
+          </label>
+          <label class="checkbox-label none">
+            <input type="checkbox" id='cb-public' name="public" value="public">
+            <span id="label-public">Public</span>
+          </label>
+          <button class="btn none" id="ssb-sync-btn" title="ssb sync">SSB Sync</button>
+          <div class="lang-select">
+            <span id="label-language">Language</span>
+            <select id='select-language'>
+              <option value="en-US">English</option>
+              <option value="zh-CN">中文</option>
+            </select>
+          </div>
+        </div>
       </div>
-      <input class='save-input' id='title' type='text' placeholder='title'/>
-      <input class='save-input' id='url' type='text' placeholder='url'/>
-      <input class='save-input' id='desc-text' type='text' placeholder='description'/>
-      <input class='save-input' id='tags-text' type='text' placeholder='type to add tags, enter to save, comma or space as tag seperator'/>
+      <div class="input-group">
+        <input class='save-input' id='title' type='text' placeholder='Title'/>
+        <input class='save-input' id='url' type='text' placeholder='URL'/>
+        <input class='save-input' id='desc-text' type='text' placeholder='Description'/>
+        <input class='save-input' id='tags-text' type='text' placeholder='Tags (comma or space separated) — Press Enter to save'/>
+      </div>
     </div>
-    <div style="max-width:560px; font-size:smaller;">
+    <div class="debug-info">
       <div id='request-text'></div>
       <div id='response-text'></div>
     </div>
-    <div>
-      <input id='search-text' type='text' placeholder='type to search'/>
-      <button id="search-clear-btn" title="clear search term(s)">
-        X
-      </button>
-      <button id="prev-btn"> prev </button>
-      <button id="next-btn"> next </button>
-      <span style="float: right">
-        <span id="indicator">0-0/0</span>
-      </span>
+    <div class="search-bar">
+      <input id='search-text' type='text' placeholder='Search notes...'/>
+      <button class="btn btn-clear" id="search-clear-btn" title="Clear search">✕</button>
+      <div class="pagination">
+        <button class="btn" id="prev-btn">← Prev</button>
+        <button class="btn" id="next-btn">Next →</button>
+      </div>
+      <span id="indicator">0-0 / 0</span>
     </div>
-    <div>
-      <div id='notes'></div>
-    </div>
+    <div id='notes'></div>
   </body>
 </html>

@@ -41,29 +41,17 @@ function onNativeMessage(message) {
   var notesHTML = message.notes.forEach(function(i){
     // render one item
     document.getElementById('notes').insertAdjacentHTML('beforeend', Sanitizer.escapeHTML`
-    <div class="note-sep"></div>
     <div class="note">
-      <div class="note-created-at">
-        ${i.created_at}
-        ${i.uuid4.substring(0,5)}
-        rowid ${i.rowid}
-        <span class="note-tags" id="note-tags-rowid-${i.rowid}">
-        </span>
-        <button id="btn-delete-rowid-${i.rowid}" title="delete" style="color: red; float:right;">
-        Delete
-        </button>
+      <div class="note-meta">
+        <span>${i.created_at}</span>
+        <span>${i.uuid4.substring(0,5)}</span>
+        <span>rowid ${i.rowid}</span>
+        <span class="note-tags" id="note-tags-rowid-${i.rowid}"></span>
+        <button class="btn-delete" id="btn-delete-rowid-${i.rowid}" title="Delete">Delete</button>
       </div>
-
-      <div class="note-title">
-        ${i.title}
-      </div>
-
+      <div class="note-title">${i.title}</div>
       <div class="note-url"><a target="_blank" href="${i.url}">${i.url}</a></div>
-
-      <div class="note-desc">
-        ${i.description}
-      </div>
-
+      <div class="note-desc">${i.description}</div>
     </div>
       `);
 
@@ -76,12 +64,11 @@ function onNativeMessage(message) {
     if(i.tags.length > 0){
       i.tags.split(',').forEach(function(tag){
         document.getElementById('note-tags-rowid-' + i.rowid ).insertAdjacentHTML('beforeend', Sanitizer.escapeHTML`
-            <button id="note-tags-rowid-${i.rowid}-tag-${tag}">
-             ${tag}
-            </button>
+            <button class="tag-btn" id="note-tags-rowid-${i.rowid}-tag-${tag}">${tag}</button>
             `);
         // tag search
-        document.getElementById('note-tags-rowid-' + i.rowid + '-tag-' + tag).onclick = function(){
+        document.getElementById('note-tags-rowid-' + i.rowid + '-tag-' + tag).onclick = function(e){
+          e.preventDefault();
           document.getElementById('search-text').value = tag;
           offset = 0;
           cmdSearch();
@@ -177,7 +164,8 @@ document.addEventListener('DOMContentLoaded', function () {
       cmdSearch();
   });
 
-  document.getElementById('search-clear-btn').onclick = function(){
+  document.getElementById('search-clear-btn').onclick = function(e){
+    e.preventDefault();
     document.getElementById('search-text').value = '';
     offset = 0;
     document.getElementById('indicator').innerHTML = makePaginationText();
