@@ -38,7 +38,7 @@ impl AppHost {
             .join("LocalNative");
 
         path = path.join(name);
-        println!("path : {:?}", path);
+        tracing::debug!(?path, "web-ext-host path");
         path
     }
 
@@ -87,7 +87,7 @@ impl AppHost {
     }
     // chrome-extension://npalnbpkafhmpninmfbajakbdjlknmnj/
     pub fn raw_data(&self) -> Vec<u8> {
-        println!("{:?}", serde_json::to_string_pretty(self));
+        tracing::debug!("generating host manifest");
         serde_json::to_vec(self).unwrap_or_default()
     }
 }
