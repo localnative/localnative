@@ -13,7 +13,7 @@ pub async fn delete(
     tokio::task::spawn_blocking(move || {
         let conn = pool.lock().unwrap_or_else(|e| e.into_inner());
         let delete_cmd = CmdDelete {
-            query: query.clone(),
+            query,
             rowid,
             limit,
             offset,
@@ -22,7 +22,7 @@ pub async fn delete(
             tracing::error!(%e, "failed to delete note");
             return None;
         }
-        select_inner(&conn, query, limit, offset)
+        select_inner(&conn, &delete_cmd.query, limit, offset)
     })
     .await
     .unwrap_or(None)
@@ -40,7 +40,7 @@ pub async fn upgrade(
             tracing::error!(%e, "failed to upgrade database");
             return None;
         }
-        select_inner(&conn, query, limit, offset)
+        select_inner(&conn, &query, limit, offset)
     })
     .await
     .unwrap_or(None)
@@ -59,7 +59,7 @@ pub async fn insert(
             tracing::error!(%e, "failed to insert note");
             return None;
         }
-        select_inner(&conn, query, limit, offset)
+        select_inner(&conn, &query, limit, offset)
     })
     .await
     .unwrap_or(None)
@@ -73,7 +73,7 @@ pub async fn select(
 ) -> Option<QueryResult> {
     tokio::task::spawn_blocking(move || {
         let conn = pool.lock().unwrap_or_else(|e| e.into_inner());
-        select_inner(&conn, query, limit, offset)
+        select_inner(&conn, &query, limit, offset)
     })
     .await
     .unwrap_or(None)
@@ -119,11 +119,11 @@ pub async fn someday(
 
 fn select_inner(
     conn: &Connection,
-    query: String,
+    query: &str,
     limit: u32,
     offset: u32,
 ) -> Option<QueryResult> {
-    match queries::do_search(conn, &query, limit, offset) {
+    match queries::do_search(conn, query, limit, offset) {
         Ok(search_result) => Some(search_result),
         Err(e) => {
             tracing::error!(%e, "failed to search notes");

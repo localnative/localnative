@@ -32,6 +32,7 @@ hex = { workspace = true }
 rusqlite = { workspace = true }
 chrono = { workspace = true, default-features = false, features = ["serde"] }
 tracing = { workspace = true }
+governor = { workspace = true }
 
 [lib]
 name = "localnative_core"

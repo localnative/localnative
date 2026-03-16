@@ -570,8 +570,8 @@ pub mod queries {
         let mut params: Vec<Box<dyn rusqlite::types::ToSql>> = Vec::new();
         params.push(Box::new(limit));
         params.push(Box::new(offset));
-        for word in &words {
-            params.push(Box::new(word.clone()));
+        for word in words {
+            params.push(Box::new(word));
         }
         let params_refs: Vec<&dyn rusqlite::types::ToSql> =
             params.iter().map(|p| p.as_ref()).collect();
@@ -659,8 +659,8 @@ pub mod queries {
         let mut params: Vec<Box<dyn rusqlite::types::ToSql>> = Vec::new();
         params.push(Box::new(from.to_string()));
         params.push(Box::new(to.to_string()));
-        for word in &words {
-            params.push(Box::new(word.clone()));
+        for word in words {
+            params.push(Box::new(word));
         }
         let params_refs: Vec<&dyn rusqlite::types::ToSql> =
             params.iter().map(|p| p.as_ref()).collect();
@@ -699,8 +699,8 @@ pub mod queries {
         params.push(Box::new(to.to_string()));
         params.push(Box::new(limit));
         params.push(Box::new(offset));
-        for word in &words {
-            params.push(Box::new(word.clone()));
+        for word in words {
+            params.push(Box::new(word));
         }
         let params_refs: Vec<&dyn rusqlite::types::ToSql> =
             params.iter().map(|p| p.as_ref()).collect();
@@ -737,8 +737,8 @@ pub mod queries {
         let mut params: Vec<Box<dyn rusqlite::types::ToSql>> = Vec::new();
         params.push(Box::new(from.to_string()));
         params.push(Box::new(to.to_string()));
-        for word in &words {
-            params.push(Box::new(word.clone()));
+        for word in words {
+            params.push(Box::new(word));
         }
         let params_refs: Vec<&dyn rusqlite::types::ToSql> =
             params.iter().map(|p| p.as_ref()).collect();

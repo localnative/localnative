@@ -16,32 +16,45 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-const os = require('os');
-const ZXing = require('@zxing/library')
-const codeWriter = new ZXing.BrowserQRCodeSvgWriter();
-const cmd = require('./cmd');
-const {cmdServer, cmdClientStopServer} = require('./cmd');
-
-document.addEventListener('DOMContentLoaded', function () {
-  var addr = getIp() + ":2345";
+document.addEventListener('DOMContentLoaded', async function () {
+  var addr = await getIp() + ":2345";
   document.getElementById("addr").innerHTML = addr;
+  var codeWriter = new ZXing.BrowserQRCodeSvgWriter();
   codeWriter.writeToDom("#server-qr-code", addr, 300, 300);
-  setTimeout(() =>{
+  setTimeout(function() {
     cmdServer();
-  }, 3000)
-})
+  }, 3000);
+});
 
-function getIp(){
-  var ifaces = os.networkInterfaces();
-  var ip = "0.0.0.0";
-  Object.keys(ifaces).forEach(function (ifname) {
-    ifaces[ifname].forEach(function (iface) {
-      if ('IPv4' !== iface.family || iface.internal !== false) {
-        // skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
-        return;
-      }
-      ip = iface.address
+async function getIp() {
+  try {
+    var ifaces = await window.localNativeAPI.getNetworkInterfaces();
+    var ip = "0.0.0.0";
+    Object.keys(ifaces).forEach(function (ifname) {
+      ifaces[ifname].forEach(function (iface) {
+        if ('IPv4' !== iface.family || iface.internal !== false) {
+          return;
+        }
+        ip = iface.address;
+      });
     });
-  });
-  return ip;
+    return ip;
+  } catch (err) {
+    console.error('Failed to get network interfaces:', err);
+    return "0.0.0.0";
+  }
+}
+
+async function cmdServer() {
+  var message = {
+    action: "server",
+    addr: "127.0.0.1:2345"
+  };
+  var input = JSON.stringify(message, null, 2);
+  try {
+    var result = await window.localNativeAPI.neonRun(input);
+    console.log('Server started:', result);
+  } catch (err) {
+    console.error('Server start error:', err);
+  }
 }

@@ -19,10 +19,9 @@
 <html>
   <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
     <script src='./sanitizer.js'></script>
-    <script>let i18n = require('roddeh-i18n')</script>
-    <script src='./locales/zh-CN.js'></script>
-    <script src='./locales/en-US.js'></script>
+    <script src='../node_modules/@zxing/library/umd/index.min.js'></script>
     <link rel="stylesheet" href="assets/css/global.css">
   </head>
   <body>
@@ -41,8 +40,6 @@
           <div id='response-text' style="overflow:auto"></div>
         </div>
       </div>
-    <script>
-      require('./renderer-process/server.js')
-    </script>
+    <script src='./renderer-process/server.js'></script>
   </body>
 </html>

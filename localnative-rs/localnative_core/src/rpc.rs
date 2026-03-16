@@ -7,8 +7,10 @@ use crate::db::{
     DbError,
 };
 use futures::{future, FutureExt, StreamExt};
+use governor::{Quota, RateLimiter};
 use rusqlite::Connection;
 use std::net::SocketAddr;
+use std::num::NonZeroU32;
 use std::sync::{Arc, Mutex};
 use tarpc::client;
 use tarpc::server::incoming::Incoming as _;
@@ -36,6 +38,8 @@ pub enum RpcError {
     InputValidation(String),
     #[error("Server configuration error: {0}")]
     ServerConfigError(String),
+    #[error("Rate limited: too many requests")]
+    RateLimited,
 }
 
 /// Maximum allowed size for individual note text fields (1 MB).
@@ -82,10 +86,34 @@ pub trait LocalNative {
     async fn stop() -> Result<(), RpcError>;
 }
 
+type SharedRateLimiter =
+    Arc<RateLimiter<governor::state::NotKeyed, governor::state::InMemoryState, governor::clock::DefaultClock>>;
+
 #[derive(Clone)]
 struct LocalNativeServer {
     pool: Arc<Mutex<Connection>>,
     stop_token: Option<CancellationToken>,
+    /// General rate limiter: 100 requests per second across all methods.
+    general_limiter: SharedRateLimiter,
+    /// Stricter rate limiter for data-intensive operations (send_note, receive_note): 20 req/sec.
+    data_limiter: SharedRateLimiter,
+}
+
+impl LocalNativeServer {
+    fn check_general_limit(&self) -> Result<(), RpcError> {
+        self.general_limiter
+            .check()
+            .map_err(|_| RpcError::RateLimited)
+    }
+
+    fn check_data_limit(&self) -> Result<(), RpcError> {
+        self.general_limiter
+            .check()
+            .map_err(|_| RpcError::RateLimited)?;
+        self.data_limiter
+            .check()
+            .map_err(|_| RpcError::RateLimited)
+    }
 }
 
 impl LocalNative for LocalNativeServer {
@@ -94,6 +122,7 @@ impl LocalNative for LocalNativeServer {
         _: context::Context,
         version: String,
     ) -> Result<bool, RpcError> {
+        self.check_general_limit()?;
         let meta_version = {
             let conn = self.pool.lock().unwrap_or_else(|e| e.into_inner());
             get_meta_version(&conn)?
@@ -106,6 +135,7 @@ impl LocalNative for LocalNativeServer {
         _: context::Context,
         candidates: Vec<String>,
     ) -> Result<Vec<String>, RpcError> {
+        self.check_general_limit()?;
         let diff_uuid4 = {
             let conn = self.pool.lock().unwrap_or_else(|e| e.into_inner());
             diff_uuid4_to_server(&conn, candidates)?
@@ -118,6 +148,7 @@ impl LocalNative for LocalNativeServer {
         _: context::Context,
         candidates: Vec<String>,
     ) -> Result<Vec<String>, RpcError> {
+        self.check_general_limit()?;
         let diff_uuid4 = {
             let conn = self.pool.lock().unwrap_or_else(|e| e.into_inner());
             diff_uuid4_from_server(&conn, candidates)?
@@ -126,6 +157,7 @@ impl LocalNative for LocalNativeServer {
     }
 
     async fn send_note(self, _: context::Context, note: Note) -> Result<bool, RpcError> {
+        self.check_data_limit()?;
         validate_note(&note)?;
         let conn = self.pool.lock().unwrap_or_else(|e| e.into_inner());
         insert(&conn, &note)?;
@@ -133,6 +165,7 @@ impl LocalNative for LocalNativeServer {
     }
 
     async fn receive_note(self, _: context::Context, uuid4: String) -> Result<Note, RpcError> {
+        self.check_data_limit()?;
         validate_uuid4(&uuid4)?;
         let note = {
             let conn = self.pool.lock().unwrap_or_else(|e| e.into_inner());
@@ -142,6 +175,7 @@ impl LocalNative for LocalNativeServer {
     }
 
     async fn stop(self, _: context::Context) -> Result<(), RpcError> {
+        self.check_general_limit()?;
         if let Some(stop_tx) = self.stop_token {
             stop_tx.cancel();
         } else {
@@ -162,6 +196,14 @@ pub async fn setup_server(
     let listener = tcp::listen(addr, tarpc::tokio_serde::formats::Bincode::default).await?;
     let stop_token_clone = stop_token.clone();
 
+    // 100 requests/sec general limit, 20 requests/sec for data-intensive operations
+    let general_limiter: SharedRateLimiter = Arc::new(RateLimiter::direct(
+        Quota::per_second(NonZeroU32::new(100).unwrap()),
+    ));
+    let data_limiter: SharedRateLimiter = Arc::new(RateLimiter::direct(
+        Quota::per_second(NonZeroU32::new(20).unwrap()),
+    ));
+
     tokio::spawn(async move {
         tokio::select! {
             _ = listener
@@ -177,6 +219,8 @@ pub async fn setup_server(
                     let server = LocalNativeServer {
                         pool: pool.clone(),
                         stop_token: stop_token_clone.clone(),
+                        general_limiter: general_limiter.clone(),
+                        data_limiter: data_limiter.clone(),
                     };
                     channel.execute(server.serve()).boxed()
                 })
