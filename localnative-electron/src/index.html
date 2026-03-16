@@ -19,10 +19,18 @@
 <html>
   <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
     <script src='./sanitizer.js'></script>
-    <script>let i18n = require('roddeh-i18n')</script>
-    <script src='./locales/zh-CN.js'></script>
+    <!-- Libraries loaded as UMD scripts (no require() needed with contextIsolation) -->
+    <script src='../node_modules/underscore/underscore-umd.js'></script>
+    <script src='../node_modules/d3/dist/d3.js'></script>
+    <script src='../node_modules/crossfilter2/crossfilter.js'></script>
+    <script src='../node_modules/dc/dist/dc.js'></script>
+    <script src='../node_modules/@zxing/library/umd/index.min.js'></script>
+    <script src='../node_modules/roddeh-i18n/i18n.js'></script>
+    <script>var locales = {};</script>
     <script src='./locales/en-US.js'></script>
+    <script src='./locales/zh-CN.js'></script>
     <link rel="stylesheet" href="assets/css/global.css">
     <link rel="stylesheet" href="assets/css/nav.css">
     <link rel="stylesheet" type="text/css" href="../node_modules/dc/dist/style/dc.css"/>
@@ -108,8 +116,6 @@
       <div class="container">
         <div id="ln-day-chart">
           <strong id="title-charts">Timeseries Charts</strong>
-          <!-- <span class="reset" style="display: none;">range: <span class="filter"></span></span> -->
-          <!-- <a class="reset" href="javascript:lnDayChart.filterAll();lnMonthChart.filterAll();dc.redrawAll();" style="display: none;">reset</a> -->
           <div class="clearfix"></div>
         </div>
         <div id="ln-month-chart">
@@ -139,10 +145,13 @@
       <span id="tags">
       </span>
     </section>
-    <script>
-      require('./renderer-process/renderer.js')
-      require('./i18n.js')
-      require('./renderer-process/screen-capturer.js')
-    </script>
+    <!-- Load renderer scripts (order matters: app-state first, then cmd/ctrl/chart, then renderer) -->
+    <script src='./renderer-process/app-state.js'></script>
+    <script src='./renderer-process/chart.js'></script>
+    <script src='./renderer-process/ctrl.js'></script>
+    <script src='./renderer-process/cmd.js'></script>
+    <script src='./renderer-process/renderer.js'></script>
+    <script src='./renderer-process/screen-capturer.js'></script>
+    <script src='./i18n.js'></script>
   </body>
 </html>

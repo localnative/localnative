@@ -15,101 +15,95 @@
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-var exports = module.exports = {};
-const _ = require('underscore');
-const neon = require('localnative-neon');
-const crossfilter = require('crossfilter2');
-const appState = require('./app-state');
-global.dc = require('dc');
 
 Date.prototype.addDays = function(days) {
     var date = new Date(this.valueOf());
     date.setDate(date.getDate() + days);
     return date;
-}
+};
 
-global.lnDayChart = dc.barChart('#ln-day-chart');
-global.lnMonthChart = dc.barChart('#ln-month-chart');
+window.lnDayChart = dc.barChart('#ln-day-chart');
+window.lnMonthChart = dc.barChart('#ln-month-chart');
 
-exports.refreshChart = function(days){
-  let d3 = require('d3');
-  var dateFormatSpecifier = '%Y-%m-%d';
-  var dateFormat = d3.timeFormat(dateFormatSpecifier);
-  var dateFormatParser = d3.timeParse(dateFormatSpecifier);
-  var dtMin = dtMax = (new Date()).toISOString().substr(0,10);
-  if (days.length){
-    dtMin = dtMax = days[0].k;
-  }
-  days.forEach(function(d){
-    d.dd = dateFormatParser(d.k);
-    d.month = d3.timeMonth(d.dd);
-    dtMin = d.k < dtMin ? d.k : dtMin;
-    dtMax = d.k > dtMax ? d.k : dtMax;
-  });
-  var ln = crossfilter(days);
-  var all = ln.groupAll();
-
-  // Dimensions
-  var daysDimension = ln.dimension(function (d) {
-    return d.dd;
-  });
-  var daysGroup = daysDimension.group().reduceSum(function(d){
-    return d.v;
-  });
-
-  var months = ln.dimension(function (d) {
-      return d.month;
-  });
-  var monthsGroup = months.group()
-
-
-  lnDayChart
-      .width(800)
-      .height(150)
-      .transitionDuration(1000)
-      .margins({top: 10, right: 50, bottom: 20, left: 40})
-      // .dimension(daysDimension)
-      .dimension(months)
-      .centerBar(true)
-      .gap(1)
-      .mouseZoomable(true)
-      .rangeChart(lnMonthChart)
-      .x(d3.scaleTime().domain([(new Date(dtMin)).addDays(-31), (new Date(dtMax)).addDays(31)]))
-      .round(d3.timeMonth.round)
-      // .alwaysUseRounding(true)
-      .xUnits(d3.timeMonths)
-      .elasticY(true)
-      .renderHorizontalGridLines(true)
-      .brushOn(false)
-      .group(daysGroup)
-
-  lnMonthChart.width(800)
-      .height(100)
-      .margins({top: 10, right: 50, bottom: 20, left: 40})
-      .dimension(months)
-      .group(monthsGroup)
-      .centerBar(true)
-      .gap(1)
-      .x(d3.scaleTime().domain([(new Date(dtMin)).addDays(-31), (new Date(dtMax)).addDays(31)]))
-      .y(d3.scaleLinear().domain([0, 31]))
-      .round(d3.timeMonth.round)
-      .alwaysUseRounding(true)
-      .xUnits(d3.timeMonths)
-      .renderHorizontalGridLines(true)
-      .yAxis().tickValues([0, 5, 10, 15, 20, 25, 30])
-
-  lnMonthChart.on('filtered', function(chart, filter){
-    if (filter){
-      lnDayChart.focus(filter)
-      appState.clearOffset();
-      let range_from = filter[0].toISOString().substr(0,10)
-      let range_to = filter[1].toISOString().substr(0,10)
-      appState.setRange([range_from, range_to]);
-      cmd.cmdFilter(range_from, range_to);
+window.chart = (function() {
+  function refreshChart(days) {
+    var dateFormatSpecifier = '%Y-%m-%d';
+    var dateFormat = d3.timeFormat(dateFormatSpecifier);
+    var dateFormatParser = d3.timeParse(dateFormatSpecifier);
+    var dtMin = dtMax = (new Date()).toISOString().substr(0,10);
+    if (days.length) {
+      dtMin = dtMax = days[0].k;
     }
-  });
+    days.forEach(function(d) {
+      d.dd = dateFormatParser(d.k);
+      d.month = d3.timeMonth(d.dd);
+      dtMin = d.k < dtMin ? d.k : dtMin;
+      dtMax = d.k > dtMax ? d.k : dtMax;
+    });
+    var ln = crossfilter(days);
+    var all = ln.groupAll();
 
-  dc.renderAll();
-}
+    // Dimensions
+    var daysDimension = ln.dimension(function(d) {
+      return d.dd;
+    });
+    var daysGroup = daysDimension.group().reduceSum(function(d) {
+      return d.v;
+    });
 
-const cmd = require('./cmd');
+    var months = ln.dimension(function(d) {
+      return d.month;
+    });
+    var monthsGroup = months.group();
+
+    lnDayChart
+        .width(800)
+        .height(150)
+        .transitionDuration(1000)
+        .margins({top: 10, right: 50, bottom: 20, left: 40})
+        .dimension(months)
+        .centerBar(true)
+        .gap(1)
+        .mouseZoomable(true)
+        .rangeChart(lnMonthChart)
+        .x(d3.scaleTime().domain([(new Date(dtMin)).addDays(-31), (new Date(dtMax)).addDays(31)]))
+        .round(d3.timeMonth.round)
+        .xUnits(d3.timeMonths)
+        .elasticY(true)
+        .renderHorizontalGridLines(true)
+        .brushOn(false)
+        .group(daysGroup);
+
+    lnMonthChart.width(800)
+        .height(100)
+        .margins({top: 10, right: 50, bottom: 20, left: 40})
+        .dimension(months)
+        .group(monthsGroup)
+        .centerBar(true)
+        .gap(1)
+        .x(d3.scaleTime().domain([(new Date(dtMin)).addDays(-31), (new Date(dtMax)).addDays(31)]))
+        .y(d3.scaleLinear().domain([0, 31]))
+        .round(d3.timeMonth.round)
+        .alwaysUseRounding(true)
+        .xUnits(d3.timeMonths)
+        .renderHorizontalGridLines(true)
+        .yAxis().tickValues([0, 5, 10, 15, 20, 25, 30]);
+
+    lnMonthChart.on('filtered', function(chart, filter) {
+      if (filter) {
+        lnDayChart.focus(filter);
+        window.appState.clearOffset();
+        let range_from = filter[0].toISOString().substr(0,10);
+        let range_to = filter[1].toISOString().substr(0,10);
+        window.appState.setRange([range_from, range_to]);
+        window.cmd.cmdFilter(range_from, range_to);
+      }
+    });
+
+    dc.renderAll();
+  }
+
+  return {
+    refreshChart: refreshChart
+  };
+})();

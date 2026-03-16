@@ -16,42 +16,103 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 const version = "0.5.0"
-// Modules to control application life and create native browser window
-const {app, BrowserWindow, ipcMain, dialog} = require('electron')
+const {app, BrowserWindow, ipcMain, dialog, shell, screen, desktopCapturer} = require('electron')
 const debug = /--debug/.test(process.argv[2])
+const os = require('os')
+const neon = require('localnative-neon')
 
 const path = require('path')
 const glob = require('glob')
 const files = glob.sync(path.join(__dirname, 'main-process/**/*.js'))
 files.forEach((file) => { require(file) })
 
-ipcMain.on('open-file-dialog', (event) => {
+// --- IPC Handlers ---
+
+// Run localnative-neon commands in the main process (safe from renderer)
+ipcMain.handle('neon-run', (event, input) => {
+  return neon.run(input)
+})
+
+// File dialog using modern Promise-based API
+ipcMain.handle('open-file-dialog', async (event) => {
   const win = BrowserWindow.fromWebContents(event.sender)
-  dialog.showOpenDialog(win, {
+  const result = await dialog.showOpenDialog(win, {
     title: 'Choose another LocalNative sqlite3 file to sync with',
     properties: ['openFile'],
     filters: [
       { name: 'sqlite3 Files', extensions: ['sqlite3'] },
     ]
-  }, (files) => {
-    if (files) {
-      event.sender.send('selected-directory', files)
-    }
   })
+  if (!result.canceled && result.filePaths.length > 0) {
+    return result.filePaths[0]
+  }
+  return null
 })
 
-// Keep a global reference of the window object, if you don't, the window will
-// be closed automatically when the JavaScript object is garbage collected.
+// Open URL in external browser
+ipcMain.handle('open-external', (event, url) => {
+  return shell.openExternal(url)
+})
+
+// Open the server window
+ipcMain.handle('open-server-window', (event) => {
+  const serverWinPath = path.join('file://', __dirname, '/server.html')
+  let win = new BrowserWindow({
+    title: "Local Native Server",
+    width: 600,
+    height: 400,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.join(__dirname, 'preload-server.js')
+    }
+  })
+  win.webContents.on('crashed', () => {
+    win.close()
+  })
+  win.on('close', () => { win = null })
+  win.loadURL(serverWinPath)
+  win.show()
+})
+
+// Desktop capture (moved to main process in Electron 10+)
+ipcMain.handle('get-desktop-sources', async (event, options) => {
+  const sources = await desktopCapturer.getSources(options)
+  // Serialize thumbnails to data URLs since they can't cross contextBridge
+  return sources.map(source => ({
+    id: source.id,
+    name: source.name,
+    thumbnailDataUrl: source.thumbnail.toDataURL({ scaleFactor: 1 })
+  }))
+})
+
+// Get primary display size
+ipcMain.handle('get-primary-display-size', () => {
+  return screen.getPrimaryDisplay().workAreaSize
+})
+
+// Minimize the focused window
+ipcMain.handle('minimize-focused-window', () => {
+  const win = BrowserWindow.getFocusedWindow()
+  if (win) {
+    win.minimize()
+  }
+})
+
+// Get network interfaces for server IP detection
+ipcMain.handle('get-network-interfaces', () => {
+  return os.networkInterfaces()
+})
+
+// Keep a global reference of the window object
 let mainWindow
 
 function createWindow () {
-  // Create the browser window.
-  // TODO: Migrate to contextIsolation: true with a preload script for improved security.
-  // Currently the renderer process relies heavily on require() for Node.js modules.
   mainWindow = new BrowserWindow({
     webPreferences: {
-        nodeIntegration: true,
-        contextIsolation: false
+        nodeIntegration: false,
+        contextIsolation: true,
+        preload: path.join(__dirname, 'preload.js')
     },
     width: 800, height: 600})
 
@@ -72,39 +133,24 @@ function createWindow () {
   if (debug) {
     mainWindow.webContents.openDevTools()
     mainWindow.maximize()
-    require('devtron').install()
   }
 
   // Emitted when the window is closed.
   mainWindow.on('closed', function () {
-    // Dereference the window object, usually you would store windows
-    // in an array if your app supports multi windows, this is the time
-    // when you should delete the corresponding element.
     mainWindow = null
   })
 }
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
 app.on('ready', createWindow)
 
-// Quit when all windows are closed.
 app.on('window-all-closed', function () {
-  // On macOS it is common for applications and their menu bar
-  // to stay active until the user quits explicitly with Cmd + Q
   if (process.platform !== 'darwin') {
     app.quit()
   }
 })
 
 app.on('activate', function () {
-  // On macOS it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
   if (mainWindow === null) {
     createWindow()
   }
 })
-
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and require them here.

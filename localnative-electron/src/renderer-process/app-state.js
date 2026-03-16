@@ -16,63 +16,44 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-var exports = module.exports = {};
-const LIMIT = 10
-let range = null
-let offset = 0
-let count = 0
-let query = ""
+window.appState = (function() {
+  const LIMIT = 10;
+  let range = null;
+  let offset = 0;
+  let count = 0;
+  let query = "";
 
-exports.getLIMIT = function(){
-  return LIMIT
-}
+  return {
+    getLIMIT: function() { return LIMIT; },
 
-exports.makePaginationText = function(){
-    let start = count > 0 ? offset + 1 : 0
-    let end  = offset + LIMIT > count ? count : offset + LIMIT
-    return `${start}-${end} / ${count}`
-}
+    makePaginationText: function() {
+      let start = count > 0 ? offset + 1 : 0;
+      let end  = offset + LIMIT > count ? count : offset + LIMIT;
+      return `${start}-${end} / ${count}`;
+    },
 
-exports.getQuery = function() {
-  return query
-}
+    getQuery: function() { return query; },
+    setQuery: function(q) { query = q; },
+    setCount: function(c) { count = c; },
 
-exports.setQuery = function(q) {
-  query = q
-}
+    incOffset: function() {
+      if(offset + LIMIT < count) {
+        offset += LIMIT;
+      }
+      return offset;
+    },
 
-exports.setCount =  function(c) {
-  count = c
-}
+    decOffset: function() {
+      if(offset - LIMIT >= 0) {
+        offset -= LIMIT;
+      }
+      return offset;
+    },
 
-exports.incOffset = function() {
-  if(offset + LIMIT < count) {
-      offset += LIMIT
-  }
-  return offset
-}
-
-exports.decOffset = function() {
-  if(offset - LIMIT >=0) {
-      offset -= LIMIT
-  }
-  return offset
-}
-
-exports.getOffset = function() {
-  return offset
-}
-
-exports.clearOffset = function() {
-  offset = 0
-}
-
-exports.getRange = function() {
-  return range
-}
-exports.setRange = function(r) {
-  range = r
-}
-exports.clearRange = function() {
-  range = null
-}
+    getOffset: function() { return offset; },
+    clearOffset: function() { offset = 0; },
+    getRange: function() { return range; },
+    setRange: function(r) { range = r; },
+    clearRange: function() { range = null; }
+  };
+})();
