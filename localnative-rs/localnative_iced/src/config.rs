@@ -198,9 +198,9 @@ impl ThemeType {
     }
 }
 
-impl Into<iced::Theme> for ThemeType {
-    fn into(self) -> iced::Theme {
-        match self {
+impl From<ThemeType> for iced::Theme {
+    fn from(theme: ThemeType) -> Self {
+        match theme {
             ThemeType::Light => iced::Theme::Light,
             ThemeType::Dark => iced::Theme::Dark,
             ThemeType::Dracula => iced::Theme::Dracula,
@@ -310,7 +310,7 @@ impl Config {
 pub async fn save(json: String) -> Option<()> {
     use tokio::io::AsyncWriteExt;
 
-    println!("json:{}", json);
+    tracing::debug!("saving config");
     let raw_data = json.as_bytes();
     let path = Config::config_path();
 

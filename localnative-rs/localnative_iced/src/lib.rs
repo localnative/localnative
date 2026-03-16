@@ -153,7 +153,7 @@ impl Data {
 
     fn handle_close_window_message(&self, res: Option<()>) -> Task<Message> {
         if res.is_some() {
-            println!("ok!");
+            tracing::info!("config saved successfully");
         }
         iced::exit()
     }
@@ -348,7 +348,7 @@ impl Data {
 
     fn handle_load_font_message(&self, res: Result<(), iced::font::Error>) -> Task<Message> {
         match res {
-            Ok(_) => println!("Font loaded successfully!"),
+            Ok(_) => tracing::debug!("font loaded successfully"),
             Err(e) => tracing::error!(?e, "failed to load font"),
         }
         Task::none()

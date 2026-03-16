@@ -135,15 +135,15 @@ impl NoteView {
     pub fn update(&mut self, msg: Message) {
         match msg {
             Message::OpenUrl => self.open_url(),
-            Message::Delete(_) => println!("delete"),
+            Message::Delete(_) => tracing::debug!("delete action (handled by parent)"),
             Message::QRCode => self.toggle_qrcode(),
-            Message::Search(tag) => println!("search tag: {}", tag),
+            Message::Search(ref tag) => tracing::debug!(tag, "search by tag (handled by parent)"),
         }
     }
 
     fn open_url(&self) {
         if let Err(err) = open::that(&self.note.url) {
-            println!("open url fail:{:?}", err);
+            tracing::error!(?err, "failed to open url");
         }
     }
 

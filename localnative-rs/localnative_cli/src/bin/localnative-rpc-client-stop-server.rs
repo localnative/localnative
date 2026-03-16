@@ -25,5 +25,6 @@ fn main() {
 
     let addr = matches.get_one::<&str>("addr").unwrap_or(&"127.0.0.1:2345");
     eprintln!("addr: {}", addr);
-    run(&(r#"{"action":"client-stop-server", "addr": ""#.to_string() + addr + r#""}"#));
+    let json = serde_json::json!({"action": "client-stop-server", "addr": addr}).to_string();
+    run(&json);
 }

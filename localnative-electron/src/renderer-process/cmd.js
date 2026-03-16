@@ -75,39 +75,6 @@ function filterImp(from, to) {
   cmd(message);
 }
 
-function cmdSearch() {
-  document.getElementById('search-text').focus();
-  var message = {
-    action: "search",
-
-    query: document.getElementById('search-text').value,
-    limit: LIMIT,
-    offset: appState.getOffset()
-  };
-  cmd(message);
-}
-
-function cmdSelect() {
-  var message = {
-    action: "select",
-    limit: LIMIT,
-    offset: appState.getOffset()
-  };
-  cmd(message);
-}
-
-function cmdDelete(rowid) {
-  var message = {
-    action: "delete",
-
-    query: document.getElementById('search-text').value,
-    rowid: rowid,
-    limit: LIMIT,
-    offset: appState.getOffset()
-  };
-  cmd(message);
-}
-
 function cmd(message){
   let input = JSON.stringify(message, null, 2);
   requestMessage(">> " + input);
