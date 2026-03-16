@@ -212,7 +212,7 @@ function cmdSyncViaAttach(uri) {
 function cmdServer(){
   var message = {
     action: "server",
-    addr: "0.0.0.0:2345"
+    addr: "127.0.0.1:2345"
   };
   cmd(message);
 }

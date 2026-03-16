@@ -147,7 +147,7 @@ impl Data {
 
     fn handle_request_closed_message(&mut self, config: &mut Config) -> Task<Message> {
         config.date_filter_is_show = self.search_page.days.is_show;
-        let json = serde_json::to_string_pretty(&config).unwrap();
+        let json = serde_json::to_string_pretty(&config).unwrap_or_default();
         Task::perform(config::save(json), Message::CloseWindow)
     }
 
@@ -440,7 +440,15 @@ pub fn run_app() -> iced::Result {
                 Task::batch([
                     iced::font::load(include_bytes!("../fonts/icons.ttf")).map(Message::LoadFont),
                     Task::perform(
-                        async { tokio::task::spawn_blocking(init_db).await.unwrap() },
+                        async {
+                            match tokio::task::spawn_blocking(init_db).await {
+                                Ok(result) => result,
+                                Err(e) => Err(DbError::IoError(std::io::Error::new(
+                                    std::io::ErrorKind::Other,
+                                    format!("Task join error: {}", e),
+                                ))),
+                            }
+                        },
                         Message::InitDatabase,
                     ),
                     Task::perform(translate::init_bundle(language), Message::ApplyLanguage),

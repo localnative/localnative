@@ -299,6 +299,7 @@ pub mod queries {
     use rusqlite::Connection;
     use std::collections::HashMap;
     use std::path::Path;
+    use std::sync::OnceLock;
     use uuid::Uuid;
 
     fn map_note(row: &rusqlite::Row) -> rusqlite::Result<Note> {
@@ -319,7 +320,10 @@ pub mod queries {
     fn map_day(row: &rusqlite::Row) -> rusqlite::Result<Day> {
         let date_str: String = row.get("date")?;
         Ok(Day {
-            date: NaiveDate::parse_from_str(&date_str, "%Y-%m-%d").unwrap_or_default(),
+            date: NaiveDate::parse_from_str(&date_str, "%Y-%m-%d").unwrap_or_else(|e| {
+                eprintln!("Warning: failed to parse date '{}': {}", date_str, e);
+                NaiveDate::default()
+            }),
             count: row.get("count")?,
         })
     }
@@ -757,7 +761,8 @@ pub mod queries {
     }
 
     fn make_words(query: &str) -> Vec<String> {
-        let re = Regex::new(r"\s+").unwrap();
+        static WHITESPACE_RE: OnceLock<Regex> = OnceLock::new();
+        let re = WHITESPACE_RE.get_or_init(|| Regex::new(r"\s+").expect("static regex"));
         re.replace_all(query.trim(), " ")
             .split(' ')
             .map(|w| format!("%{}%", w))
@@ -1085,7 +1090,10 @@ pub mod sync {
     }
 
     pub fn insert(conn: &Connection, note: &Note) -> DbResult<()> {
-        let annotations_blob = hex::decode(&note.annotations).unwrap_or_default();
+        let annotations_blob = hex::decode(&note.annotations).unwrap_or_else(|e| {
+            eprintln!("Warning: failed to decode hex annotations for note '{}': {}", note.uuid4, e);
+            Vec::new()
+        });
         conn.execute(
             "INSERT INTO note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public)
             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",

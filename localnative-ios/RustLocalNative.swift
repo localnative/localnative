@@ -25,7 +25,10 @@
 class RustLocalNative {
     func run(json_input: String) -> String {
         let result = localnative_run(json_input)
-        let swift_result = String(cString: result!)
+        guard let result = result else {
+            return "{\"error\": \"localnative_run returned null\"}"
+        }
+        let swift_result = String(cString: result)
         localnative_free(UnsafeMutablePointer(mutating: result))
         return swift_result
     }

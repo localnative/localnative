@@ -28,14 +28,13 @@ impl AppHost {
         };
         #[cfg(not(target_os = "linux"))]
         let mut path = std::env::current_exe()
-            .unwrap()
-            .parent()
-            .unwrap()
-            .to_path_buf();
+            .ok()
+            .and_then(|p| p.parent().map(|p| p.to_path_buf()))
+            .unwrap_or_else(|| std::env::current_dir().unwrap_or_default());
 
         #[cfg(target_os = "linux")]
         let mut path = dirs::home_dir()
-            .unwrap()
+            .unwrap_or_else(|| std::path::PathBuf::from("/tmp"))
             .join("LocalNative");
 
         path = path.join(name);
@@ -89,7 +88,7 @@ impl AppHost {
     // chrome-extension://npalnbpkafhmpninmfbajakbdjlknmnj/
     pub fn raw_data(&self) -> Vec<u8> {
         println!("{:?}", serde_json::to_string_pretty(self));
-        serde_json::to_vec(self).unwrap()
+        serde_json::to_vec(self).unwrap_or_default()
     }
 }
 
@@ -110,16 +109,18 @@ fn registr(kind: WebKind) {
         .ok();
     if let Some(v) = value {
         if v != json_path {
-            key.open_subkey_with_flags(&write_path, KEY_WRITE)
-                .map_err(error_handle)
-                .and_then(|writer| writer.set_value("", &json_path).map_err(error_handle))
-                .unwrap();
+            if let Err(e) = key.open_subkey_with_flags(&write_path, KEY_WRITE)
+                .and_then(|writer| writer.set_value("", &json_path))
+            {
+                error_handle(e);
+            }
         }
     } else {
-        key.create_subkey_with_flags(&write_path, KEY_WRITE)
+        if let Err(e) = key.create_subkey_with_flags(&write_path, KEY_WRITE)
             .and_then(|(writer, _)| writer.set_value("", &json_path))
-            .map_err(error_handle)
-            .unwrap();
+        {
+            error_handle(e);
+        }
     }
 }
 
@@ -174,21 +175,20 @@ impl WebKind {
     pub async fn init_all(allowed_origins: Option<Vec<String>>) {
         #[cfg(target_os = "linux")]
         {
-            let from = std::env::current_exe()
-                .unwrap()
-                .parent()
-                .unwrap()
-                .join("localnative-web-ext-host");
-            let to = dirs::home_dir()
-                .unwrap()
-                .join("LocalNative")
-                .join("localnative-web-ext-host");
+            if let (Ok(exe), Some(home)) = (std::env::current_exe(), dirs::home_dir()) {
+                if let Some(parent) = exe.parent() {
+                    let from = parent.join("localnative-web-ext-host");
+                    let to = home.join("LocalNative").join("localnative-web-ext-host");
 
-            if to.exists() && to.is_dir() {
-                tokio::fs::remove_dir(&to).await.unwrap();
+                    if to.exists() && to.is_dir() {
+                        let _ = tokio::fs::remove_dir(&to).await;
+                    }
+
+                    if let Err(e) = tokio::fs::copy(from, to).await {
+                        eprintln!("Failed to copy web-ext-host binary: {}", e);
+                    }
+                }
             }
-
-            tokio::fs::copy(from, to).await.unwrap();
         }
         tokio::join!(
             try_init_file(Self::FireFox, None),
@@ -248,7 +248,9 @@ async fn try_init_file(kind: WebKind, allowed_origins: Option<Vec<String>>) {
         #[cfg(target_os = "windows")]
         registr(kind);
         let raw_file = kind.host(allowed_origins).raw_data();
-        init_file(&dir_path, &raw_file).await.unwrap();
+        if let Err(e) = init_file(&dir_path, &raw_file).await {
+            eprintln!("Failed to init {:?} host file: {}", kind, e);
+        }
     }
 }
 

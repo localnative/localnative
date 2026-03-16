@@ -18,9 +18,14 @@
 use serde::{Deserialize, Serialize};
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, OnceLock};
 use thiserror::Error;
 use tokio::runtime::Runtime;
+
+fn global_runtime() -> &'static Runtime {
+    static RT: OnceLock<Runtime> = OnceLock::new();
+    RT.get_or_init(|| Runtime::new().expect("Failed to create tokio runtime"))
+}
 
 pub mod db;
 mod error;
@@ -39,18 +44,18 @@ pub mod android {
         _: JClass,
         json_input: JString,
     ) -> jstring {
-        let json = env
-            .get_string(json_input)
-            .expect("Invalid json input string!")
-            .to_string_lossy()
-            .into_owned();
+        let json = match env.get_string(json_input) {
+            Ok(s) => s.to_string_lossy().into_owned(),
+            Err(_) => return env.new_string(r#"{"error": "Invalid json input string"}"#)
+                .map(|s| s.into_raw())
+                .unwrap_or(std::ptr::null_mut()),
+        };
 
         let result = run_async(&json);
-        let output = env
-            .new_string(result)
-            .expect("Couldn't create java output string!");
-
-        output.into_raw()
+        match env.new_string(result) {
+            Ok(output) => output.into_raw(),
+            Err(_) => std::ptr::null_mut(),
+        }
     }
 }
 
@@ -62,7 +67,12 @@ pub unsafe extern "C" fn localnative_run(json_input: *const c_char) -> *mut c_ch
         Err(_) => r#"{"error": "Invalid UTF-8 in input"}"#.to_string(),
     };
 
-    CString::new(json).unwrap().into_raw()
+    match CString::new(json) {
+        Ok(c_str) => c_str.into_raw(),
+        Err(_) => CString::new(r#"{"error": "Response contained null byte"}"#)
+            .unwrap_or_default()
+            .into_raw(),
+    }
 }
 
 #[no_mangle]
@@ -153,8 +163,7 @@ pub async fn run(text: &str) -> String {
 }
 
 pub fn run_sync(text: &str) -> String {
-    let rt = Runtime::new().unwrap();
-    rt.block_on(run(text))
+    global_runtime().block_on(run(text))
 }
 
 #[derive(Serialize)]
@@ -233,6 +242,5 @@ async fn process(cmd: Cmd) -> Result<String, ProcessError> {
 }
 
 fn run_async(text: &str) -> String {
-    let rt = Runtime::new().unwrap();
-    rt.block_on(run(text))
+    global_runtime().block_on(run(text))
 }

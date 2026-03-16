@@ -46,9 +46,12 @@ let mainWindow
 
 function createWindow () {
   // Create the browser window.
+  // TODO: Migrate to contextIsolation: true with a preload script for improved security.
+  // Currently the renderer process relies heavily on require() for Node.js modules.
   mainWindow = new BrowserWindow({
     webPreferences: {
-        nodeIntegration: true
+        nodeIntegration: true,
+        contextIsolation: false
     },
     width: 800, height: 600})
 

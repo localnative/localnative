@@ -18,10 +18,10 @@ format-lint-check :
   script:
     - echo "Check the rust and cargo version:"
     - rustc --version && cargo --version
-    - echo "Check formt"
-    - cd localnative-rs && cargo fmt-check
+    - echo "Check format"
+    - cd localnative-rs && cargo fmt -- --check
     - echo "Check code lint"
-    - cargo lint
+    - cargo clippy -- -D warnings
 
 build-localnative-core:
   stage: build-localnative-core

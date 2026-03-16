@@ -369,7 +369,7 @@ pub fn get_sync_file_path() -> Option<PathBuf> {
 pub async fn sync_via_file(path: PathBuf, pool: Arc<Mutex<Connection>>) -> Option<()> {
     tokio::task::spawn_blocking(move || {
         if let Some(uri) = path.to_str() {
-            let conn = pool.lock().unwrap();
+            let conn = pool.lock().unwrap_or_else(|e| e.into_inner());
             if let Err(e) = queries::sync_via_attach(&conn, uri) {
                 eprintln!("sync via file failed: {e}");
             };

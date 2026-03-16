@@ -617,6 +617,8 @@ pub fn main() {
 }
 
 fn convert_utc_to_local(utc_time_str: &str) -> String {
-    let utc = NaiveDateTime::from_str(utc_time_str).expect("msg");
-    Local.from_utc_datetime(&utc).to_rfc3339()
+    match NaiveDateTime::from_str(utc_time_str) {
+        Ok(utc) => Local.from_utc_datetime(&utc).to_rfc3339(),
+        Err(_) => utc_time_str.to_string(),
+    }
 }

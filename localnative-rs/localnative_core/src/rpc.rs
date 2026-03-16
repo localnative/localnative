@@ -95,7 +95,7 @@ impl LocalNative for LocalNativeServer {
         version: String,
     ) -> Result<bool, RpcError> {
         let meta_version = {
-            let conn = self.pool.lock().unwrap();
+            let conn = self.pool.lock().unwrap_or_else(|e| e.into_inner());
             get_meta_version(&conn)?
         };
         Ok(version == meta_version)
@@ -107,7 +107,7 @@ impl LocalNative for LocalNativeServer {
         candidates: Vec<String>,
     ) -> Result<Vec<String>, RpcError> {
         let diff_uuid4 = {
-            let conn = self.pool.lock().unwrap();
+            let conn = self.pool.lock().unwrap_or_else(|e| e.into_inner());
             diff_uuid4_to_server(&conn, candidates)?
         };
         Ok(diff_uuid4)
@@ -119,7 +119,7 @@ impl LocalNative for LocalNativeServer {
         candidates: Vec<String>,
     ) -> Result<Vec<String>, RpcError> {
         let diff_uuid4 = {
-            let conn = self.pool.lock().unwrap();
+            let conn = self.pool.lock().unwrap_or_else(|e| e.into_inner());
             diff_uuid4_from_server(&conn, candidates)?
         };
         Ok(diff_uuid4)
@@ -127,7 +127,7 @@ impl LocalNative for LocalNativeServer {
 
     async fn send_note(self, _: context::Context, note: Note) -> Result<bool, RpcError> {
         validate_note(&note)?;
-        let conn = self.pool.lock().unwrap();
+        let conn = self.pool.lock().unwrap_or_else(|e| e.into_inner());
         insert(&conn, &note)?;
         Ok(true)
     }
@@ -135,7 +135,7 @@ impl LocalNative for LocalNativeServer {
     async fn receive_note(self, _: context::Context, uuid4: String) -> Result<Note, RpcError> {
         validate_uuid4(&uuid4)?;
         let note = {
-            let conn = self.pool.lock().unwrap();
+            let conn = self.pool.lock().unwrap_or_else(|e| e.into_inner());
             get_note_by_uuid4(&conn, &uuid4)?
         };
         Ok(note)
@@ -167,7 +167,12 @@ pub async fn setup_server(
             _ = listener
                 .filter_map(|r| future::ready(r.ok()))
                 .map(BaseChannel::with_defaults)
-                .max_channels_per_key(2, |t| t.as_ref().peer_addr().unwrap().ip())
+                .max_channels_per_key(2, |t| {
+                    t.as_ref()
+                        .peer_addr()
+                        .map(|a| a.ip())
+                        .unwrap_or(std::net::IpAddr::V4(std::net::Ipv4Addr::UNSPECIFIED))
+                })
                 .map(|channel| {
                     let server = LocalNativeServer {
                         pool: pool.clone(),
@@ -229,7 +234,7 @@ async fn check_version_match(
     pool: &Arc<Mutex<Connection>>,
 ) -> Result<bool, RpcError> {
     let version = {
-        let conn = pool.lock().unwrap();
+        let conn = pool.lock().unwrap_or_else(|e| e.into_inner());
         get_meta_version(&conn)?
     };
     let is_version_match = client
@@ -252,7 +257,7 @@ pub async fn run_sync_to_server(
     check_version_match(&client, pool).await?;
 
     let candidates = {
-        let conn = pool.lock().unwrap();
+        let conn = pool.lock().unwrap_or_else(|e| e.into_inner());
         next_uuid4_candidates(&conn)?
     };
     let diff_uuid4 = client
@@ -262,7 +267,7 @@ pub async fn run_sync_to_server(
 
     for u in diff_uuid4 {
         let note = {
-            let conn = pool.lock().unwrap();
+            let conn = pool.lock().unwrap_or_else(|e| e.into_inner());
             get_note_by_uuid4(&conn, &u)?
         };
         client.send_note(context::current(), note).await??;
@@ -282,7 +287,7 @@ pub async fn run_sync_from_server(
     check_version_match(&client, pool).await?;
 
     let candidates = {
-        let conn = pool.lock().unwrap();
+        let conn = pool.lock().unwrap_or_else(|e| e.into_inner());
         next_uuid4_candidates(&conn)?
     };
     let diff_uuid4 = client
