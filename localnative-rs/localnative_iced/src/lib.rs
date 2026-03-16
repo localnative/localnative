@@ -349,7 +349,7 @@ impl Data {
     fn handle_load_font_message(&self, res: Result<(), iced::font::Error>) -> Task<Message> {
         match res {
             Ok(_) => println!("Font loaded successfully!"),
-            Err(e) => eprintln!("Failed to load font: {:?}", e),
+            Err(e) => tracing::error!(?e, "failed to load font"),
         }
         Task::none()
     }
@@ -617,5 +617,5 @@ pub fn none_flags_settings() -> iced::Settings {
 
 #[inline(always)]
 pub fn error_handle(error: impl std::error::Error) {
-    eprintln!("{:?}", error);
+    tracing::error!("{:?}", error);
 }

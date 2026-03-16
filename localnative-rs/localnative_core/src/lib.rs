@@ -210,7 +210,7 @@ struct ClientStopServerResponse {
 }
 
 async fn process(cmd: Cmd) -> Result<String, ProcessError> {
-    eprintln!("process cmd {:?}", cmd);
+    tracing::debug!(?cmd, "processing command");
     let conn = db::init_db()?;
 
     let result = match cmd {

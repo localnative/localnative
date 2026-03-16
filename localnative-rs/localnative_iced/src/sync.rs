@@ -371,7 +371,7 @@ pub async fn sync_via_file(path: PathBuf, pool: Arc<Mutex<Connection>>) -> Optio
         if let Some(uri) = path.to_str() {
             let conn = pool.lock().unwrap_or_else(|e| e.into_inner());
             if let Err(e) = queries::sync_via_attach(&conn, uri) {
-                eprintln!("sync via file failed: {e}");
+                tracing::error!(%e, "sync via file failed");
             };
         }
     })
