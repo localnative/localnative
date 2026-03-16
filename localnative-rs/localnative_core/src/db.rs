@@ -5,7 +5,7 @@ use rusqlite::Connection;
 
 pub fn init_db() -> DbResult<Connection> {
     let db_path = utils::sqlite3_db_location()?;
-    eprintln!("db_path: {db_path}");
+    tracing::info!(db_path, "opening database");
     let conn = Connection::open(&db_path)?;
 
     #[cfg(target_os = "android")]
@@ -207,7 +207,7 @@ mod utils {
                 )))?,
             dir_name
         );
-        eprintln!("db dir location: {}", dir);
+        tracing::debug!(dir, "database directory location");
         std::fs::create_dir_all(&dir)?;
         Ok(format!("{}/localnative.sqlite3", dir))
     }
@@ -321,7 +321,7 @@ pub mod queries {
         let date_str: String = row.get("date")?;
         Ok(Day {
             date: NaiveDate::parse_from_str(&date_str, "%Y-%m-%d").unwrap_or_else(|e| {
-                eprintln!("Warning: failed to parse date '{}': {}", date_str, e);
+                tracing::warn!(date_str, %e, "failed to parse date from database");
                 NaiveDate::default()
             }),
             count: row.get("count")?,
@@ -475,7 +475,7 @@ pub mod queries {
 
     fn select_count(conn: &Connection) -> DbResult<u32> {
         let count: i64 = conn.query_row("SELECT COUNT(1) FROM note", [], |row| row.get(0))?;
-        Ok(count as u32)
+        Ok(u32::try_from(count).unwrap_or(u32::MAX))
     }
 
     fn select(conn: &Connection, limit: u32, offset: u32) -> DbResult<Vec<Note>> {
@@ -543,7 +543,7 @@ pub mod queries {
             rusqlite::params_from_iter(params.iter()),
             |row| row.get(0),
         )?;
-        Ok(count as u32)
+        Ok(u32::try_from(count).unwrap_or(u32::MAX))
     }
 
     fn search(
@@ -666,7 +666,7 @@ pub mod queries {
             params.iter().map(|p| p.as_ref()).collect();
 
         let count: i64 = conn.query_row(&sql, params_refs.as_slice(), |row| row.get(0))?;
-        Ok(count as u32)
+        Ok(u32::try_from(count).unwrap_or(u32::MAX))
     }
 
     fn filter(
@@ -760,7 +760,7 @@ pub mod queries {
         Ok(tags)
     }
 
-    fn make_words(query: &str) -> Vec<String> {
+    pub(crate) fn make_words(query: &str) -> Vec<String> {
         static WHITESPACE_RE: OnceLock<Regex> = OnceLock::new();
         let re = WHITESPACE_RE.get_or_init(|| Regex::new(r"\s+").expect("static regex"));
         re.replace_all(query.trim(), " ")
@@ -769,7 +769,7 @@ pub mod queries {
             .collect()
     }
 
-    fn where_clause(words: &[String], start: usize) -> String {
+    pub(crate) fn where_clause(words: &[String], start: usize) -> String {
         words
             .iter()
             .enumerate()
@@ -1091,7 +1091,7 @@ pub mod sync {
 
     pub fn insert(conn: &Connection, note: &Note) -> DbResult<()> {
         let annotations_blob = hex::decode(&note.annotations).unwrap_or_else(|e| {
-            eprintln!("Warning: failed to decode hex annotations for note '{}': {}", note.uuid4, e);
+            tracing::warn!(uuid4 = note.uuid4, %e, "failed to decode hex annotations");
             Vec::new()
         });
         conn.execute(
@@ -1110,5 +1110,367 @@ pub mod sync {
             ],
         )?;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod db_tests {
+    use super::*;
+    use models::Note;
+    use rusqlite::Connection;
+
+    fn setup_test_db() -> Connection {
+        let conn = Connection::open_in_memory().expect("in-memory db");
+        conn.execute_batch(
+            "CREATE TABLE note (
+                 rowid INTEGER PRIMARY KEY AUTOINCREMENT,
+                 uuid4 TEXT NOT NULL UNIQUE,
+                 title TEXT NOT NULL,
+                 url TEXT NOT NULL,
+                 tags TEXT NOT NULL,
+                 description TEXT NOT NULL,
+                 comments TEXT NOT NULL,
+                 annotations TEXT NOT NULL,
+                 created_at TEXT NOT NULL,
+                 is_public BOOLEAN NOT NULL DEFAULT 0
+             );
+             CREATE TABLE IF NOT EXISTS meta (
+                 meta_key TEXT PRIMARY KEY,
+                 meta_value TEXT NOT NULL
+             );
+             INSERT INTO meta (meta_key, meta_value) VALUES ('version', '0.6.0');",
+        )
+        .expect("schema init");
+        conn
+    }
+
+    #[test]
+    fn test_insert_and_select() {
+        let conn = setup_test_db();
+        let note = queries::insert_note(
+            &conn,
+            "Test Title",
+            "https://example.com",
+            "rust,test",
+            "A test note",
+            "no comments",
+            b"hello",
+            false,
+        )
+        .expect("insert should succeed");
+
+        assert_eq!(note.title, "Test Title");
+        assert_eq!(note.url, "https://example.com");
+        assert_eq!(note.tags, "rust,test");
+        assert!(!note.uuid4.is_empty());
+
+        let result = queries::do_select(&conn, 10, 0).expect("select should succeed");
+        assert_eq!(result.count, 1);
+        assert_eq!(result.notes.len(), 1);
+        assert_eq!(result.notes[0].title, "Test Title");
+    }
+
+    #[test]
+    fn test_search() {
+        let conn = setup_test_db();
+        queries::insert_note(&conn, "Rust Programming", "https://rust-lang.org", "rust,lang", "Learn Rust", "", b"", true).unwrap();
+        queries::insert_note(&conn, "Python Guide", "https://python.org", "python", "Learn Python", "", b"", false).unwrap();
+
+        let result = queries::do_search(&conn, "rust", 10, 0).expect("search should succeed");
+        assert_eq!(result.count, 1);
+        assert_eq!(result.notes[0].title, "Rust Programming");
+
+        let result = queries::do_search(&conn, "learn", 10, 0).expect("search should succeed");
+        assert_eq!(result.count, 2);
+
+        let result = queries::do_search(&conn, "", 10, 0).expect("empty search returns all");
+        assert_eq!(result.count, 2);
+    }
+
+    #[test]
+    fn test_delete() {
+        let conn = setup_test_db();
+        let note = queries::insert_note(&conn, "To Delete", "https://example.com", "tmp", "", "", b"", false).unwrap();
+
+        let result = queries::do_select(&conn, 10, 0).unwrap();
+        assert_eq!(result.count, 1);
+
+        queries::delete_note(&conn, note.rowid).expect("delete should succeed");
+
+        let result = queries::do_select(&conn, 10, 0).unwrap();
+        assert_eq!(result.count, 0);
+    }
+
+    #[test]
+    fn test_search_multiple_words() {
+        let conn = setup_test_db();
+        queries::insert_note(&conn, "Rust Web Framework", "https://actix.rs", "rust,web", "Fast web framework", "", b"", false).unwrap();
+        queries::insert_note(&conn, "Rust CLI Tools", "https://clap.rs", "rust,cli", "CLI framework", "", b"", false).unwrap();
+        queries::insert_note(&conn, "Python Web", "https://django.com", "python,web", "Django framework", "", b"", false).unwrap();
+
+        let result = queries::do_search(&conn, "rust web", 10, 0).unwrap();
+        assert_eq!(result.count, 1);
+        assert_eq!(result.notes[0].title, "Rust Web Framework");
+    }
+
+    #[test]
+    fn test_tags_aggregation() {
+        let conn = setup_test_db();
+        queries::insert_note(&conn, "Note 1", "https://a.com", "rust,web", "", "", b"", false).unwrap();
+        queries::insert_note(&conn, "Note 2", "https://b.com", "rust,cli", "", "", b"", false).unwrap();
+        queries::insert_note(&conn, "Note 3", "https://c.com", "python,web", "", "", b"", false).unwrap();
+
+        let result = queries::do_select(&conn, 10, 0).unwrap();
+        let tag_map: std::collections::HashMap<_, _> = result.tags.into_iter().map(|t| (t.tag, t.count)).collect();
+        assert_eq!(*tag_map.get("rust").unwrap(), 2);
+        assert_eq!(*tag_map.get("web").unwrap(), 2);
+        assert_eq!(*tag_map.get("cli").unwrap(), 1);
+        assert_eq!(*tag_map.get("python").unwrap(), 1);
+    }
+
+    #[test]
+    fn test_pagination() {
+        let conn = setup_test_db();
+        for i in 0..5 {
+            queries::insert_note(&conn, &format!("Note {}", i), "https://example.com", "tag", "", "", b"", false).unwrap();
+        }
+
+        let result = queries::do_select(&conn, 2, 0).unwrap();
+        assert_eq!(result.count, 5);
+        assert_eq!(result.notes.len(), 2);
+
+        let result = queries::do_select(&conn, 2, 2).unwrap();
+        assert_eq!(result.notes.len(), 2);
+
+        let result = queries::do_select(&conn, 2, 4).unwrap();
+        assert_eq!(result.notes.len(), 1);
+    }
+
+    #[test]
+    fn test_days_aggregation() {
+        let conn = setup_test_db();
+        conn.execute(
+            "INSERT INTO note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public)
+             VALUES ('aaa-111', 'A', '', '', '', '', '', '2024-01-15 10:00:00', 0)",
+            [],
+        ).unwrap();
+        conn.execute(
+            "INSERT INTO note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public)
+             VALUES ('bbb-222', 'B', '', '', '', '', '', '2024-01-15 11:00:00', 0)",
+            [],
+        ).unwrap();
+        conn.execute(
+            "INSERT INTO note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public)
+             VALUES ('ccc-333', 'C', '', '', '', '', '', '2024-01-16 09:00:00', 0)",
+            [],
+        ).unwrap();
+
+        let result = queries::do_select(&conn, 10, 0).unwrap();
+        assert_eq!(result.days.len(), 2);
+        let day_map: std::collections::HashMap<_, _> = result.days.into_iter().map(|d| (d.date.to_string(), d.count)).collect();
+        assert_eq!(*day_map.get("2024-01-15").unwrap(), 2);
+        assert_eq!(*day_map.get("2024-01-16").unwrap(), 1);
+    }
+
+    #[test]
+    fn test_filter_by_date_range() {
+        let conn = setup_test_db();
+        conn.execute(
+            "INSERT INTO note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public)
+             VALUES ('d1', 'Old', '', 'tag', '', '', '', '2024-01-01 10:00:00', 0)",
+            [],
+        ).unwrap();
+        conn.execute(
+            "INSERT INTO note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public)
+             VALUES ('d2', 'Mid', '', 'tag', '', '', '', '2024-06-15 10:00:00', 0)",
+            [],
+        ).unwrap();
+        conn.execute(
+            "INSERT INTO note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public)
+             VALUES ('d3', 'New', '', 'tag', '', '', '', '2024-12-01 10:00:00', 0)",
+            [],
+        ).unwrap();
+
+        let result = queries::do_filter(&conn, "tag", 10, 0, "2024-05-01", "2024-07-01").unwrap();
+        assert_eq!(result.count, 1);
+        assert_eq!(result.notes[0].title, "Mid");
+    }
+
+    #[test]
+    fn test_make_words() {
+        let words = queries::make_words("hello   world");
+        assert_eq!(words, vec!["%hello%", "%world%"]);
+
+        let words = queries::make_words("  single  ");
+        assert_eq!(words, vec!["%single%"]);
+    }
+
+    #[test]
+    fn test_where_clause() {
+        let words = vec!["%a%".to_string(), "%b%".to_string()];
+        let clause = queries::where_clause(&words, 1);
+        assert!(clause.contains("?1"));
+        assert!(clause.contains("?2"));
+        assert!(clause.contains("AND"));
+    }
+
+    #[test]
+    fn test_sync_insert_with_valid_hex() {
+        let conn = setup_test_db();
+        let note = Note {
+            rowid: 0,
+            uuid4: "550e8400-e29b-41d4-a716-446655440000".to_string(),
+            title: "Sync Note".to_string(),
+            url: "https://example.com".to_string(),
+            tags: "sync".to_string(),
+            description: "synced".to_string(),
+            comments: "".to_string(),
+            annotations: "48656c6c6f".to_string(), // "Hello" in hex
+            created_at: "2024-01-01 00:00:00".to_string(),
+            is_public: false,
+        };
+        sync::insert(&conn, &note).expect("sync insert should succeed");
+
+        let result = queries::do_select(&conn, 10, 0).unwrap();
+        assert_eq!(result.count, 1);
+        assert_eq!(result.notes[0].title, "Sync Note");
+    }
+
+    #[test]
+    fn test_sync_insert_with_invalid_hex_still_succeeds() {
+        let conn = setup_test_db();
+        let note = Note {
+            rowid: 0,
+            uuid4: "550e8400-e29b-41d4-a716-446655440001".to_string(),
+            title: "Bad Hex Note".to_string(),
+            url: "".to_string(),
+            tags: "".to_string(),
+            description: "".to_string(),
+            comments: "".to_string(),
+            annotations: "not-valid-hex!!!".to_string(),
+            created_at: "2024-01-01 00:00:00".to_string(),
+            is_public: false,
+        };
+        // Should succeed but with empty annotations (logged warning)
+        sync::insert(&conn, &note).expect("insert with bad hex should not fail");
+    }
+
+    #[test]
+    fn test_process_cmd_insert() {
+        let conn = setup_test_db();
+        let cmd = models::Cmd::Insert(models::CmdInsert {
+            title: "Cmd Insert".to_string(),
+            url: "https://cmd.test".to_string(),
+            tags: "cmd".to_string(),
+            description: "via cmd".to_string(),
+            comments: "".to_string(),
+            annotations: "".to_string(),
+            limit: 10,
+            offset: 0,
+            is_public: false,
+        });
+        let result = process_cmd(cmd, &conn).expect("process_cmd insert");
+        let parsed: models::QueryResult = serde_json::from_str(&result).expect("valid json");
+        assert_eq!(parsed.count, 1);
+    }
+
+    #[test]
+    fn test_process_cmd_search() {
+        let conn = setup_test_db();
+        // Insert first
+        let insert = models::Cmd::Insert(models::CmdInsert {
+            title: "Searchable".to_string(),
+            url: "https://search.test".to_string(),
+            tags: "findme".to_string(),
+            description: "".to_string(),
+            comments: "".to_string(),
+            annotations: "".to_string(),
+            limit: 10,
+            offset: 0,
+            is_public: false,
+        });
+        process_cmd(insert, &conn).unwrap();
+
+        let search = models::Cmd::Search(models::CmdSearch {
+            query: "findme".to_string(),
+            limit: 10,
+            offset: 0,
+        });
+        let result = process_cmd(search, &conn).expect("process_cmd search");
+        let parsed: models::QueryResult = serde_json::from_str(&result).expect("valid json");
+        assert_eq!(parsed.count, 1);
+    }
+
+    #[test]
+    fn test_process_cmd_delete() {
+        let conn = setup_test_db();
+        let insert = models::Cmd::Insert(models::CmdInsert {
+            title: "To Delete".to_string(),
+            url: "".to_string(),
+            tags: "".to_string(),
+            description: "".to_string(),
+            comments: "".to_string(),
+            annotations: "".to_string(),
+            limit: 10,
+            offset: 0,
+            is_public: false,
+        });
+        let result = process_cmd(insert, &conn).unwrap();
+        let parsed: models::QueryResult = serde_json::from_str(&result).unwrap();
+        let rowid = parsed.notes[0].rowid;
+
+        let delete = models::Cmd::Delete(models::CmdDelete {
+            query: "".to_string(),
+            rowid,
+            limit: 10,
+            offset: 0,
+        });
+        let result = process_cmd(delete, &conn).expect("process_cmd delete");
+        let parsed: models::QueryResult = serde_json::from_str(&result).unwrap();
+        assert_eq!(parsed.count, 0);
+    }
+
+    #[test]
+    fn test_migration_upgrade_on_fresh_db() {
+        let conn = Connection::open_in_memory().expect("in-memory db");
+        migrations::upgrade(&conn).expect("upgrade on fresh db");
+
+        // Should have created tables and set version
+        let version = migrations::get_meta_version(&conn).unwrap();
+        assert_eq!(version, "0.6.0");
+    }
+
+    #[test]
+    fn test_migration_upgrade_is_idempotent() {
+        let conn = Connection::open_in_memory().expect("in-memory db");
+        migrations::upgrade(&conn).expect("first upgrade");
+        migrations::upgrade(&conn).expect("second upgrade should be idempotent");
+    }
+
+    #[test]
+    fn test_sync_uuid4_operations() {
+        let conn = setup_test_db();
+        queries::insert_note(&conn, "Note A", "", "", "", "", b"", false).unwrap();
+        queries::insert_note(&conn, "Note B", "", "", "", "", b"", false).unwrap();
+
+        let candidates = sync::next_uuid4_candidates(&conn).unwrap();
+        assert_eq!(candidates.len(), 2);
+
+        // diff_uuid4_to_server: given candidates, return those NOT in our db
+        let unknown = vec!["unknown-uuid".to_string()];
+        let diff = sync::diff_uuid4_to_server(&conn, unknown).unwrap();
+        assert_eq!(diff.len(), 1);
+        assert_eq!(diff[0], "unknown-uuid");
+
+        // Known uuids should not appear in diff
+        let diff = sync::diff_uuid4_to_server(&conn, candidates.clone()).unwrap();
+        assert!(diff.is_empty());
+
+        // diff_uuid4_from_server: return our uuids NOT in candidates
+        let diff = sync::diff_uuid4_from_server(&conn, vec![]).unwrap();
+        assert_eq!(diff.len(), 2);
+
+        let diff = sync::diff_uuid4_from_server(&conn, candidates).unwrap();
+        assert!(diff.is_empty());
     }
 }

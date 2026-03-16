@@ -185,7 +185,7 @@ impl WebKind {
                     }
 
                     if let Err(e) = tokio::fs::copy(from, to).await {
-                        eprintln!("Failed to copy web-ext-host binary: {}", e);
+                        tracing::error!(%e, "failed to copy web-ext-host binary");
                     }
                 }
             }
@@ -249,7 +249,7 @@ async fn try_init_file(kind: WebKind, allowed_origins: Option<Vec<String>>) {
         registr(kind);
         let raw_file = kind.host(allowed_origins).raw_data();
         if let Err(e) = init_file(&dir_path, &raw_file).await {
-            eprintln!("Failed to init {:?} host file: {}", kind, e);
+            tracing::error!(?kind, %e, "failed to init host file");
         }
     }
 }

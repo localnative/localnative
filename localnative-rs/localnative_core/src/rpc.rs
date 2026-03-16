@@ -224,7 +224,7 @@ fn validate_server_addr(addr: &SocketAddr) -> Result<(), RpcError> {
         ));
     }
     if addr.ip().is_unspecified() {
-        eprintln!("Warning: Server binding to all interfaces ({}). Ensure this is intentional.", addr);
+        tracing::warn!(%addr, "server binding to all interfaces — ensure this is intentional");
     }
     Ok(())
 }
@@ -240,7 +240,7 @@ async fn check_version_match(
     let is_version_match = client
         .is_version_match(context::current(), version)
         .await??;
-    eprintln!("is_version_match: {}", is_version_match);
+    tracing::debug!(is_version_match, "version check result");
     if !is_version_match {
         return Err(RpcError::VersionMismatch);
     }
@@ -263,7 +263,7 @@ pub async fn run_sync_to_server(
     let diff_uuid4 = client
         .diff_uuid4_to_server(context::current(), candidates)
         .await??;
-    eprintln!("diff_uuid4_to_server len: {:?}", diff_uuid4.len());
+    tracing::info!(count = diff_uuid4.len(), "notes to send to server");
 
     for u in diff_uuid4 {
         let note = {
@@ -272,7 +272,7 @@ pub async fn run_sync_to_server(
         };
         client.send_note(context::current(), note).await??;
     }
-    eprintln!("send_note done");
+    tracing::info!("sync to server complete");
 
     Ok(())
 }
@@ -293,12 +293,12 @@ pub async fn run_sync_from_server(
     let diff_uuid4 = client
         .diff_uuid4_from_server(context::current(), candidates)
         .await??;
-    eprintln!("diff_uuid4_from_server len: {:?}", diff_uuid4.len());
+    tracing::info!(count = diff_uuid4.len(), "notes to receive from server");
 
     for u in diff_uuid4 {
         client.receive_note(context::current(), u).await??;
     }
-    eprintln!("receive_note done");
+    tracing::info!("sync from server complete");
 
     Ok(())
 }

@@ -19,7 +19,7 @@ pub async fn delete(
             offset,
         };
         if let Err(e) = delete_cmd.process(&conn) {
-            eprintln!("Error deleting note: {}", e);
+            tracing::error!(%e, "failed to delete note");
             return None;
         }
         select_inner(&conn, query, limit, offset)
@@ -37,7 +37,7 @@ pub async fn upgrade(
     tokio::task::spawn_blocking(move || {
         let conn = pool.lock().unwrap_or_else(|e| e.into_inner());
         if let Err(e) = migrations::upgrade(&conn) {
-            eprintln!("Error upgrading database: {}", e);
+            tracing::error!(%e, "failed to upgrade database");
             return None;
         }
         select_inner(&conn, query, limit, offset)
@@ -56,7 +56,7 @@ pub async fn insert(
     tokio::task::spawn_blocking(move || {
         let conn = pool.lock().unwrap_or_else(|e| e.into_inner());
         if let Err(e) = sync::insert(&conn, &note) {
-            eprintln!("Error inserting note: {}", e);
+            tracing::error!(%e, "failed to insert note");
             return None;
         }
         select_inner(&conn, query, limit, offset)
@@ -126,7 +126,7 @@ fn select_inner(
     match queries::do_search(conn, &query, limit, offset) {
         Ok(search_result) => Some(search_result),
         Err(e) => {
-            eprintln!("Error searching notes: {}", e);
+            tracing::error!(%e, "failed to search notes");
             None
         }
     }
@@ -143,7 +143,7 @@ fn filter_inner(
     match queries::do_filter(conn, query, limit, offset, from, to) {
         Ok(filter_result) => Some(filter_result),
         Err(e) => {
-            eprintln!("Error filtering notes: {}", e);
+            tracing::error!(%e, "failed to filter notes");
             None
         }
     }
