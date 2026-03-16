@@ -1,0 +1,86 @@
+# TODO — Remaining Improvement Items
+
+Items identified during code review that require larger effort or separate planning.
+
+## High Effort
+
+### Electron Native Module Rebuild
+- `localnative-neon` uses neon-cli v0.3.1 (current is v1.0+)
+- `electron-build-env` v0.2.0 is extremely outdated
+- Neon API changed significantly — native module may need rewrite for modern neon
+- Verify N-API compatibility with Electron 28+
+
+### Test Coverage Expansion
+- Only 34 tests total (18 DB, 10 RPC validation, 6 other)
+- No integration tests for RPC sync (client ↔ server round-trip)
+- No tests for GUI state management (`localnative_iced/src/lib.rs`)
+- No tests for Electron renderer logic
+- No tests for browser extension / WASM app
+- Consider adding `tokio::test` integration tests for `rpc::sync()` with an in-memory server
+
+### Electron Dependency Updates
+- `@zxing/library` v0.18.6 → v1.3+ (major API changes)
+- `crossfilter2` pinned at v1.5.4 — evaluate if upgrade is safe
+- `d3` v6.7.0 → v7+ (minor breaking changes in imports)
+- `dc` v4.2.7 → v5+ (check compatibility with crossfilter2)
+- `roddeh-i18n` v1.2.0 — verify UMD build works correctly with script tag loading
+- `glob` v7.2.3 → v10+ (ESM-only in v9+, may need alternative)
+
+## Medium Effort
+
+### Structured Logging Setup in Binaries
+- `tracing-subscriber` is a workspace dependency but not initialized in CLI binaries
+- Add `tracing_subscriber::fmt().with_env_filter()` setup to:
+  - `localnative_cli/src/bin/localnative-rpc-server.rs`
+  - `localnative_cli/src/bin/localnative-rpc-client-sync.rs`
+  - `localnative_cli/src/bin/localnative-rpc-client-stop-server.rs`
+  - `localnative_cli/src/bin/localnative-upgrade.rs`
+  - `localnative_cli/src/bin/localnative-web-ext-host.rs`
+- The iced binary (`localnative_iced/src/bin.rs`) should also initialize tracing
+
+### Reduce Excessive `.clone()` in GUI Layer
+- `localnative_iced/src/chart.rs`: `raw.clone()` at lines 107, 126, 136 — change `fold_map` to accept `&Vec<Day>`
+- `localnative_iced/src/chart.rs`: `data.clone().into_iter()` at line 232 — use `data.iter()` or `data.into_iter()`
+- `localnative_iced/src/chart.rs`: `will_draw.days.clone()` at lines 441, 450, 459 — pass by reference
+- `localnative_iced/src/tags.rs`: `self.tag.tag.clone()` at line 24 — consider `Arc<String>` for tag strings
+- These require profiling to confirm they're actual bottlenecks
+
+### RPC Rate Limiting Enhancements
+- Current implementation uses server-wide limiters; consider per-IP keyed rate limiting with `governor::RateLimiter<IpAddr, ...>`
+- Add configurable rate limit values (currently hardcoded 100/20 req/s)
+- Add rate limit headers or error details in `RpcError::RateLimited` response
+- Log rate-limited requests with client IP for monitoring
+
+### Type Cast Safety Audit
+- `localnative_core/src/db.rs`: Remaining `as` casts should be audited
+- Search for `as u32`, `as i64`, `as usize` across the codebase
+- Replace with `try_from()` where overflow is possible
+
+## Low Effort
+
+### Clippy Lint Fixes
+- 17 `mismatched_lifetime_syntaxes` warnings in `localnative_iced` — add explicit `'_` lifetime annotations
+- 2 `dead_code` warnings: `db_operations::insert` and `db_operations::someday` are unused
+
+### Electron Post-Migration Verification
+- After running `npm install`, verify all UMD script paths resolve:
+  - `node_modules/underscore/underscore-umd.js`
+  - `node_modules/d3/dist/d3.js`
+  - `node_modules/crossfilter2/crossfilter.js`
+  - `node_modules/dc/dist/dc.js`
+  - `node_modules/@zxing/library/umd/index.min.js`
+  - `node_modules/roddeh-i18n/i18n.js`
+- Test that `contextBridge` APIs work end-to-end (neon-run, file dialog, screenshots)
+- Verify CSP headers don't block any legitimate functionality
+
+### CI Pipeline
+- `.gitlab-ci.yml` lint/fmt commands were fixed but pipeline hasn't been validated
+- Consider adding `cargo test` step if not already present
+- Consider adding Electron build/test step
+
+## Out of Scope (Major Architecture)
+
+- **Full Electron → Tauri migration**: The Tauri frontend already exists at `localnative-tauri/` — consider deprecating Electron
+- **Database migration to async SQLx**: Currently uses synchronous `rusqlite` with `spawn_blocking`; async SQLx would remove mutex contention
+- **RPC protocol upgrade**: tarpc is functional but consider gRPC or QUIC for better cross-platform sync
+- **Browser extension modernization**: Manifest V3 migration for Chrome extension
