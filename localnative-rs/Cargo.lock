@@ -3496,10 +3496,11 @@ checksum = "6373607a59f0be73a39b6fe456b8192fcc3585f602af20751600e974dd455e77"
 
 [[package]]
 name = "localnative_cli"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "clap",
  "localnative_core",
+ "serde_json",
 ]
 
 [[package]]
@@ -8370,7 +8371,7 @@ checksum = "32ac00cd3f8ec9c1d33fb3e7958a82df6989c42d747bd326c822b1d625283547"
 
 [[package]]
 name = "xtask"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "anyhow",
  "tauri-bundler",

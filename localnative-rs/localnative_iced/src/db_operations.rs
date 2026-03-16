@@ -11,7 +11,7 @@ pub async fn delete(
     rowid: i64,
 ) -> Option<QueryResult> {
     tokio::task::spawn_blocking(move || {
-        let conn = pool.lock().unwrap();
+        let conn = pool.lock().unwrap_or_else(|e| e.into_inner());
         let delete_cmd = CmdDelete {
             query: query.clone(),
             rowid,
@@ -35,7 +35,7 @@ pub async fn upgrade(
     offset: u32,
 ) -> Option<QueryResult> {
     tokio::task::spawn_blocking(move || {
-        let conn = pool.lock().unwrap();
+        let conn = pool.lock().unwrap_or_else(|e| e.into_inner());
         if let Err(e) = migrations::upgrade(&conn) {
             eprintln!("Error upgrading database: {}", e);
             return None;
@@ -54,7 +54,7 @@ pub async fn insert(
     note: Note,
 ) -> Option<QueryResult> {
     tokio::task::spawn_blocking(move || {
-        let conn = pool.lock().unwrap();
+        let conn = pool.lock().unwrap_or_else(|e| e.into_inner());
         if let Err(e) = sync::insert(&conn, &note) {
             eprintln!("Error inserting note: {}", e);
             return None;
@@ -72,7 +72,7 @@ pub async fn select(
     offset: u32,
 ) -> Option<QueryResult> {
     tokio::task::spawn_blocking(move || {
-        let conn = pool.lock().unwrap();
+        let conn = pool.lock().unwrap_or_else(|e| e.into_inner());
         select_inner(&conn, query, limit, offset)
     })
     .await
@@ -88,7 +88,7 @@ pub async fn filter(
     to: chrono::NaiveDate,
 ) -> Option<QueryResult> {
     tokio::task::spawn_blocking(move || {
-        let conn = pool.lock().unwrap();
+        let conn = pool.lock().unwrap_or_else(|e| e.into_inner());
         filter_inner(
             &conn,
             &query,
@@ -110,7 +110,7 @@ pub async fn someday(
     day: String,
 ) -> Option<QueryResult> {
     tokio::task::spawn_blocking(move || {
-        let conn = pool.lock().unwrap();
+        let conn = pool.lock().unwrap_or_else(|e| e.into_inner());
         filter_inner(&conn, &query, limit, offset, &day, &day)
     })
     .await
