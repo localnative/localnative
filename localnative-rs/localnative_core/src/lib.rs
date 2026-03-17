@@ -46,9 +46,12 @@ pub mod android {
     ) -> jstring {
         let json = match env.get_string(json_input) {
             Ok(s) => s.to_string_lossy().into_owned(),
-            Err(_) => return env.new_string(r#"{"error": "Invalid json input string"}"#)
-                .map(|s| s.into_raw())
-                .unwrap_or(std::ptr::null_mut()),
+            Err(_) => {
+                return env
+                    .new_string(r#"{"error": "Invalid json input string"}"#)
+                    .map(|s| s.into_raw())
+                    .unwrap_or(std::ptr::null_mut())
+            }
         };
 
         let result = run_async(&json);

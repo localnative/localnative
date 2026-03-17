@@ -28,8 +28,8 @@ use iced::{
 };
 use localnative_core::db::{init_db, models::QueryResult, DbError};
 pub use note::NoteView;
-pub use search_page::SearchPage;
 use rusqlite::Connection;
+pub use search_page::SearchPage;
 use sidebar::Sidebar;
 use std::sync::{Arc, Mutex};
 pub use tags::TagView;
@@ -282,10 +282,7 @@ impl Data {
                     if let Some(cmd) = self.sync_view.with_stop_mut(|ref_mut_stop| {
                         if let Some(old_stop) = ref_mut_stop.take() {
                             Some(Task::batch([
-                                Task::perform(
-                                    sync::stop_server(old_stop),
-                                    Message::ServerOption,
-                                ),
+                                Task::perform(sync::stop_server(old_stop), Message::ServerOption),
                                 Task::perform(sync::stop_server(stop), Message::ServerOption),
                             ]))
                         } else {

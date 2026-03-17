@@ -17,7 +17,7 @@ impl From<Tags> for TagView {
     }
 }
 impl TagView {
-    pub fn view(&self) -> Element<Message> {
+    pub fn view(&self) -> Element<'_, Message> {
         row![
             button(text(&self.tag.tag).size(16))
                 .style(crate::style::tag_style)

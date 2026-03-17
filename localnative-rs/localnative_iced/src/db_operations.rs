@@ -46,6 +46,7 @@ pub async fn upgrade(
     .unwrap_or(None)
 }
 
+#[allow(dead_code)]
 pub async fn insert(
     pool: Arc<Mutex<Connection>>,
     query: String,
@@ -102,6 +103,7 @@ pub async fn filter(
     .unwrap_or(None)
 }
 
+#[allow(dead_code)]
 pub async fn someday(
     pool: Arc<Mutex<Connection>>,
     query: String,
@@ -117,12 +119,7 @@ pub async fn someday(
     .unwrap_or(None)
 }
 
-fn select_inner(
-    conn: &Connection,
-    query: &str,
-    limit: u32,
-    offset: u32,
-) -> Option<QueryResult> {
+fn select_inner(conn: &Connection, query: &str, limit: u32, offset: u32) -> Option<QueryResult> {
     match queries::do_search(conn, query, limit, offset) {
         Ok(search_result) => Some(search_result),
         Err(e) => {

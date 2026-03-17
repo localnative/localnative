@@ -25,6 +25,12 @@ const MAX_LOG_SIZE: u64 = 1 * 1024 * 1024; // 1MB
 const MAX_MESSAGE_SIZE: usize = 10 * 1024 * 1024; // 10MB
 
 fn main() -> io::Result<()> {
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::from_default_env()
+                .add_directive(tracing::Level::INFO.into()),
+        )
+        .init();
     // Read the message length (first 4 bytes).
     let mut text_length_bytes = [0u8; 4];
     let stdin = io::stdin();
@@ -37,7 +43,10 @@ fn main() -> io::Result<()> {
     log_to_file(format!("text_length {:?}", text_length))?;
 
     if text_length > MAX_MESSAGE_SIZE {
-        let err_msg = format!("Message too large: {} bytes (max {})", text_length, MAX_MESSAGE_SIZE);
+        let err_msg = format!(
+            "Message too large: {} bytes (max {})",
+            text_length, MAX_MESSAGE_SIZE
+        );
         eprintln!("{}", err_msg);
         log_to_file(err_msg)?;
         let error_response = r#"{"error": "Message exceeds maximum allowed size"}"#;
@@ -76,7 +85,7 @@ fn main() -> io::Result<()> {
 // Sends message to the browser extension.
 fn send_message(message: &str) -> io::Result<()> {
     let buf = message.as_bytes();
-    let size = buf.len() as u32;
+    let size: u32 = u32::try_from(buf.len()).expect("response message exceeds u32::MAX bytes");
 
     let bytes: [u8; 4] = size.to_ne_bytes();
 

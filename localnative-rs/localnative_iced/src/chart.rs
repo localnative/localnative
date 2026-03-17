@@ -29,17 +29,18 @@ mod constants {
 mod utils {
     use super::*;
 
-    pub fn fold_map<K, F>(days: impl IntoIterator<Item = Day>, key_func: F) -> BTreeMap<K, i64>
+    pub fn fold_map<K, F>(days: &[Day], key_func: F) -> BTreeMap<K, i64>
     where
         F: Fn(NaiveDate) -> K,
         K: Ord,
     {
-        days.into_iter()
-            .map(|day| (key_func(day.date), day.count))
-            .fold(BTreeMap::new(), |mut init, (k, v)| {
+        days.iter().map(|day| (key_func(day.date), day.count)).fold(
+            BTreeMap::new(),
+            |mut init, (k, v)| {
                 init.entry(k).and_modify(|vv| *vv += v).or_insert(v);
                 init
-            })
+            },
+        )
     }
 
     pub fn max_count<K>(days: &BTreeMap<K, i64>) -> i64 {
@@ -104,7 +105,7 @@ impl ChartView {
     }
 
     pub fn from_days(raw: Vec<Day>) -> Self {
-        let days = utils::fold_map(raw.clone(), |k| k);
+        let days = utils::fold_map(&raw, |k| k);
 
         let now = Utc::now().date_naive();
         let mut min_date = days.first_key_value().map(|(d, _)| *d).unwrap_or(now);
@@ -123,7 +124,7 @@ impl ChartView {
                 max_count,
             )
         } else if date_diff.num_days() <= constants::MONTHLY {
-            let map = utils::fold_map(raw.clone(), |d| MonthMapKey(d.year(), d.month()));
+            let map = utils::fold_map(&raw, |d| MonthMapKey(d.year(), d.month()));
             let max_count = utils::max_count(&map);
             (
                 ChartState::Monthly(InnerState {
@@ -133,7 +134,7 @@ impl ChartView {
                 max_count,
             )
         } else {
-            let map = utils::fold_map(raw.clone(), |d| d.year());
+            let map = utils::fold_map(&raw, |d| d.year());
             let max_count = utils::max_count(&map);
             (
                 ChartState::Yearly(InnerState {
@@ -182,11 +183,11 @@ impl ChartView {
         Self::from_days(test_days)
     }
 
-    fn process_chart<DB, X, Data>(
+    fn process_chart<DB, X>(
         &self,
         mut builder: plotters_iced::ChartBuilder<DB>,
         state: &State,
-        data: Data,
+        data: &[Day],
         x_spec: X,
         style: ThemeType,
     ) -> Cartesian2d<X, RangedCoordi64>
@@ -194,7 +195,6 @@ impl ChartView {
         DB: DrawingBackend,
         X: Ranged<ValueType = NaiveDate> + ValueFormatter<NaiveDate> + DiscreteRanged + Clone,
         Cartesian2d<X, RangedCoordi64>: CoordTranslate<From = (NaiveDate, i64)>,
-        Data: IntoIterator<Item = Day> + Clone,
         (NaiveDate, i64): Clone,
     {
         let mut chart = builder
@@ -229,7 +229,7 @@ impl ChartView {
         chart
             .draw_series(
                 plotters::series::Histogram::vertical(&chart)
-                    .data(data.clone().into_iter().map(|day| (day.date, day.count)))
+                    .data(data.iter().map(|day| (day.date, day.count)))
                     .style(style.fill_color().mix(0.95).filled())
                     .margin(0),
             )
@@ -438,7 +438,7 @@ impl Chart<Message> for DayChart {
                 spec.borrow_mut().replace(will_draw.process_chart(
                     builder,
                     state,
-                    will_draw.days.clone(),
+                    &will_draw.days,
                     RangedDate::from(range),
                     self.style,
                 ));
@@ -447,7 +447,7 @@ impl Chart<Message> for DayChart {
                 spec.borrow_mut().replace(will_draw.process_chart(
                     builder,
                     state,
-                    will_draw.days.clone(),
+                    &will_draw.days,
                     range.monthly(),
                     self.style,
                 ));
@@ -456,7 +456,7 @@ impl Chart<Message> for DayChart {
                 spec.borrow_mut().replace(will_draw.process_chart(
                     builder,
                     state,
-                    will_draw.days.clone(),
+                    &will_draw.days,
                     range.yearly(),
                     self.style,
                 ));

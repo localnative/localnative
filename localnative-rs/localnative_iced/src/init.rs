@@ -109,14 +109,16 @@ fn registr(kind: WebKind) {
         .ok();
     if let Some(v) = value {
         if v != json_path {
-            if let Err(e) = key.open_subkey_with_flags(&write_path, KEY_WRITE)
+            if let Err(e) = key
+                .open_subkey_with_flags(&write_path, KEY_WRITE)
                 .and_then(|writer| writer.set_value("", &json_path))
             {
                 error_handle(e);
             }
         }
     } else {
-        if let Err(e) = key.create_subkey_with_flags(&write_path, KEY_WRITE)
+        if let Err(e) = key
+            .create_subkey_with_flags(&write_path, KEY_WRITE)
             .and_then(|(writer, _)| writer.set_value("", &json_path))
         {
             error_handle(e);

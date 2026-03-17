@@ -2,8 +2,8 @@ use iced::widget::Text;
 use iced::widget::{
     button, column, horizontal_space, qr_code, row, text, text_input, tooltip, QRCode,
 };
-use iced::Task;
 use iced::Element;
+use iced::Task;
 use iced_aw::NumberInput;
 
 use localnative_core::db::queries;
@@ -113,7 +113,7 @@ impl SyncView {
         .build()
     }
 
-    pub fn view(&self) -> Element<Message> {
+    pub fn view(&self) -> Element<'_, Message> {
         let ip_input = text_input("xxx.xxx.xxx.xxx", self.borrow_ip())
             .on_input(Message::IpInput)
             .padding(0)
@@ -218,7 +218,11 @@ impl SyncView {
         res.into()
     }
 
-    pub fn update(&mut self, message: Message, pool: Arc<Mutex<Connection>>) -> Task<crate::Message> {
+    pub fn update(
+        &mut self,
+        message: Message,
+        pool: Arc<Mutex<Connection>>,
+    ) -> Task<crate::Message> {
         match message {
             Message::IpInput(input) => {
                 let ip_regex = IP_REGEX_SET.get_or_init(||{
@@ -342,12 +346,18 @@ impl Default for SyncView {
 
 pub static IP_REGEX_SET: OnceCell<RegexSet> = OnceCell::new();
 
-pub async fn client_sync_from_server(addr: SocketAddr, pool: Arc<Mutex<Connection>>) -> anyhow::Result<()> {
+pub async fn client_sync_from_server(
+    addr: SocketAddr,
+    pool: Arc<Mutex<Connection>>,
+) -> anyhow::Result<()> {
     localnative_core::rpc::run_sync_from_server(&addr, &pool).await?;
     Ok(())
 }
 
-pub async fn client_sync_to_server(addr: SocketAddr, pool: Arc<Mutex<Connection>>) -> anyhow::Result<()> {
+pub async fn client_sync_to_server(
+    addr: SocketAddr,
+    pool: Arc<Mutex<Connection>>,
+) -> anyhow::Result<()> {
     localnative_core::rpc::run_sync_to_server(&addr, &pool).await?;
     Ok(())
 }
@@ -389,7 +399,10 @@ pub fn get_ip() -> Option<String> {
         .ok()
 }
 
-pub async fn start_server(port: u16, pool: Arc<Mutex<Connection>>) -> anyhow::Result<CancellationToken> {
+pub async fn start_server(
+    port: u16,
+    pool: Arc<Mutex<Connection>>,
+) -> anyhow::Result<CancellationToken> {
     let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), port);
     let stop_token = CancellationToken::new();
     localnative_core::rpc::setup_server(addr, pool, Some(stop_token.clone())).await?;

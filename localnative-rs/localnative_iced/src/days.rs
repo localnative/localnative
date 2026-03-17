@@ -1,6 +1,6 @@
 use iced::widget::{button, container, horizontal_space, Column, Row};
-use iced::Length;
 use iced::Element;
+use iced::Length;
 
 use crate::chart::{ChartView, DayChart};
 use crate::icons::IconItem;
@@ -44,7 +44,7 @@ impl DateView {
         }
     }
 
-    pub fn view(&self) -> Element<Message> {
+    pub fn view(&self) -> Element<'_, Message> {
         let minimize_or_maximize_button = self.create_minimize_or_maximize_button();
         let ctrl_row = self.create_control_row(minimize_or_maximize_button);
         let content = self.create_content(ctrl_row);
@@ -55,7 +55,7 @@ impl DateView {
             .into()
     }
 
-    fn create_minimize_or_maximize_button(&self) -> button::Button<Message> {
+    fn create_minimize_or_maximize_button(&self) -> button::Button<'_, Message> {
         button(if self.is_show {
             IconItem::FilterOff
         } else {

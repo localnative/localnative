@@ -60,7 +60,7 @@ impl From<Note> for NoteView {
 }
 
 impl NoteView {
-    pub fn view(&self) -> Element<Message> {
+    pub fn view(&self) -> Element<'_, Message> {
         let qrcode_widget = self.qrcode.as_ref().map(|d| QRCode::new(&d.0));
         let url_button = self.create_url_button();
         let delete_button = self.create_delete_button();
@@ -112,20 +112,20 @@ impl NoteView {
             .into()
     }
 
-    fn create_url_button(&self) -> button::Button<Message> {
+    fn create_url_button(&self) -> button::Button<'_, Message> {
         button(text(&self.note.url))
             .style(crate::style::url_style)
             .padding(0)
             .on_press(Message::OpenUrl)
     }
 
-    fn create_delete_button(&self) -> button::Button<Message> {
+    fn create_delete_button(&self) -> button::Button<'_, Message> {
         button(IconItem::Delete)
             .style(button::text)
             .on_press(Message::Delete(self.note.rowid))
     }
 
-    fn create_qrcode_button(&self) -> button::Button<Message> {
+    fn create_qrcode_button(&self) -> button::Button<'_, Message> {
         button(IconItem::QRCode)
             .style(button::text)
             .padding(0)
@@ -149,12 +149,14 @@ impl NoteView {
 
     fn toggle_qrcode(&mut self) {
         match self.qrcode {
-            Some(_) => { self.qrcode.take(); },
+            Some(_) => {
+                self.qrcode.take();
+            }
             None => {
                 if let Ok(data) = iced::widget::qr_code::Data::new(self.note.url.as_bytes()) {
                     self.qrcode.replace(SendableQrData(data));
                 }
-            },
+            }
         };
     }
 }

@@ -1,6 +1,6 @@
 use iced::{
     widget::{button, column, text, vertical_space},
-    Task, Element,
+    Element, Task,
 };
 
 use crate::{
@@ -39,7 +39,7 @@ pub enum Message {
 impl Sidebar {
     pub const SIDEBAR_ICON_SIZE: u16 = 32;
 
-    pub fn view(&self, theme: &ThemeKind) -> Element<Message> {
+    pub fn view(&self, theme: &ThemeKind) -> Element<'_, Message> {
         let search_page = self.create_button(IconItem::Note, tr!("notes"), Message::TurnSearchPage);
 
         let settings = self.create_icon_button(IconItem::Settings, Message::TurnSettings);
@@ -64,24 +64,27 @@ impl Sidebar {
         icon: IconItem,
         label: impl ToString,
         message: Message,
-    ) -> button::Button<Message> {
+    ) -> button::Button<'_, Message> {
         button(
-            column![icon.to_text().size(Self::SIDEBAR_ICON_SIZE), text(label.to_string())]
-                .align_x(iced::Alignment::Center),
+            column![
+                icon.to_text().size(Self::SIDEBAR_ICON_SIZE),
+                text(label.to_string())
+            ]
+            .align_x(iced::Alignment::Center),
         )
         .style(button::text)
         .padding(0)
         .on_press(message)
     }
 
-    fn create_icon_button(&self, icon: IconItem, message: Message) -> button::Button<Message> {
+    fn create_icon_button(&self, icon: IconItem, message: Message) -> button::Button<'_, Message> {
         button(icon.to_text().size(Self::SIDEBAR_ICON_SIZE))
             .style(button::text)
             .padding(0)
             .on_press(message)
     }
 
-    fn create_theme_button(&self, theme: &ThemeKind) -> button::Button<Message> {
+    fn create_theme_button(&self, theme: &ThemeKind) -> button::Button<'_, Message> {
         let icon = match theme {
             ThemeKind::Dark => IconItem::Dark,
             ThemeKind::Light => IconItem::Light,

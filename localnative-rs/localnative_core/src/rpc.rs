@@ -56,22 +56,34 @@ fn validate_uuid4(uuid4: &str) -> Result<(), RpcError> {
 fn validate_note(note: &Note) -> Result<(), RpcError> {
     validate_uuid4(&note.uuid4)?;
     if note.title.len() > MAX_NOTE_FIELD_SIZE {
-        return Err(RpcError::InputValidation("Title exceeds maximum size".to_string()));
+        return Err(RpcError::InputValidation(
+            "Title exceeds maximum size".to_string(),
+        ));
     }
     if note.url.len() > MAX_NOTE_FIELD_SIZE {
-        return Err(RpcError::InputValidation("URL exceeds maximum size".to_string()));
+        return Err(RpcError::InputValidation(
+            "URL exceeds maximum size".to_string(),
+        ));
     }
     if note.tags.len() > MAX_NOTE_FIELD_SIZE {
-        return Err(RpcError::InputValidation("Tags field exceeds maximum size".to_string()));
+        return Err(RpcError::InputValidation(
+            "Tags field exceeds maximum size".to_string(),
+        ));
     }
     if note.description.len() > MAX_NOTE_FIELD_SIZE {
-        return Err(RpcError::InputValidation("Description field exceeds maximum size".to_string()));
+        return Err(RpcError::InputValidation(
+            "Description field exceeds maximum size".to_string(),
+        ));
     }
     if note.comments.len() > MAX_NOTE_FIELD_SIZE {
-        return Err(RpcError::InputValidation("Comments field exceeds maximum size".to_string()));
+        return Err(RpcError::InputValidation(
+            "Comments field exceeds maximum size".to_string(),
+        ));
     }
     if note.annotations.len() > MAX_ANNOTATION_SIZE {
-        return Err(RpcError::InputValidation("Annotations field exceeds maximum size".to_string()));
+        return Err(RpcError::InputValidation(
+            "Annotations field exceeds maximum size".to_string(),
+        ));
     }
     Ok(())
 }
@@ -86,8 +98,13 @@ pub trait LocalNative {
     async fn stop() -> Result<(), RpcError>;
 }
 
-type SharedRateLimiter =
-    Arc<RateLimiter<governor::state::NotKeyed, governor::state::InMemoryState, governor::clock::DefaultClock>>;
+type SharedRateLimiter = Arc<
+    RateLimiter<
+        governor::state::NotKeyed,
+        governor::state::InMemoryState,
+        governor::clock::DefaultClock,
+    >,
+>;
 
 #[derive(Clone)]
 struct LocalNativeServer {
@@ -110,9 +127,7 @@ impl LocalNativeServer {
         self.general_limiter
             .check()
             .map_err(|_| RpcError::RateLimited)?;
-        self.data_limiter
-            .check()
-            .map_err(|_| RpcError::RateLimited)
+        self.data_limiter.check().map_err(|_| RpcError::RateLimited)
     }
 }
 
@@ -197,12 +212,12 @@ pub async fn setup_server(
     let stop_token_clone = stop_token.clone();
 
     // 100 requests/sec general limit, 20 requests/sec for data-intensive operations
-    let general_limiter: SharedRateLimiter = Arc::new(RateLimiter::direct(
-        Quota::per_second(NonZeroU32::new(100).unwrap()),
-    ));
-    let data_limiter: SharedRateLimiter = Arc::new(RateLimiter::direct(
-        Quota::per_second(NonZeroU32::new(20).unwrap()),
-    ));
+    let general_limiter: SharedRateLimiter = Arc::new(RateLimiter::direct(Quota::per_second(
+        NonZeroU32::new(100).unwrap(),
+    )));
+    let data_limiter: SharedRateLimiter = Arc::new(RateLimiter::direct(Quota::per_second(
+        NonZeroU32::new(20).unwrap(),
+    )));
 
     tokio::spawn(async move {
         tokio::select! {
@@ -254,9 +269,7 @@ fn validate_client_addr(addr: &SocketAddr) -> Result<(), RpcError> {
         ));
     }
     if addr.port() == 0 {
-        return Err(RpcError::InputValidation(
-            "Port must not be 0".to_string(),
-        ));
+        return Err(RpcError::InputValidation("Port must not be 0".to_string()));
     }
     Ok(())
 }
@@ -295,7 +308,9 @@ pub async fn run_sync_to_server(
     addr: &SocketAddr,
     pool: &Arc<Mutex<Connection>>,
 ) -> Result<(), RpcError> {
-    let transport = tarpc::serde_transport::tcp::connect(addr, tarpc::tokio_serde::formats::Bincode::default).await?;
+    let transport =
+        tarpc::serde_transport::tcp::connect(addr, tarpc::tokio_serde::formats::Bincode::default)
+            .await?;
     let client = LocalNativeClient::new(client::Config::default(), transport).spawn();
 
     check_version_match(&client, pool).await?;
@@ -325,7 +340,9 @@ pub async fn run_sync_from_server(
     addr: &SocketAddr,
     pool: &Arc<Mutex<Connection>>,
 ) -> Result<(), RpcError> {
-    let transport = tarpc::serde_transport::tcp::connect(addr, tarpc::tokio_serde::formats::Bincode::default).await?;
+    let transport =
+        tarpc::serde_transport::tcp::connect(addr, tarpc::tokio_serde::formats::Bincode::default)
+            .await?;
     let client = LocalNativeClient::new(client::Config::default(), transport).spawn();
 
     check_version_match(&client, pool).await?;
@@ -363,7 +380,9 @@ pub async fn run_stop_server(
     addr: &SocketAddr,
     pool: &Arc<Mutex<Connection>>,
 ) -> Result<(), RpcError> {
-    let transport = tarpc::serde_transport::tcp::connect(addr, tarpc::tokio_serde::formats::Bincode::default).await?;
+    let transport =
+        tarpc::serde_transport::tcp::connect(addr, tarpc::tokio_serde::formats::Bincode::default)
+            .await?;
     let client = LocalNativeClient::new(client::Config::default(), transport).spawn();
 
     check_version_match(&client, pool).await?;
@@ -372,20 +391,14 @@ pub async fn run_stop_server(
     Ok(())
 }
 
-pub async fn stop_server(
-    addr: &str,
-    pool: &Arc<Mutex<Connection>>,
-) -> Result<String, RpcError> {
+pub async fn stop_server(addr: &str, pool: &Arc<Mutex<Connection>>) -> Result<String, RpcError> {
     let server_addr: SocketAddr = addr.parse()?;
     validate_client_addr(&server_addr)?;
     run_stop_server(&server_addr, pool).await?;
     Ok("stop ok".to_string())
 }
 
-pub async fn start(
-    addr: &str,
-    pool: &Arc<Mutex<Connection>>,
-) -> Result<(), RpcError> {
+pub async fn start(addr: &str, pool: &Arc<Mutex<Connection>>) -> Result<(), RpcError> {
     let server_addr: SocketAddr = addr.parse()?;
     validate_server_addr(&server_addr)?;
 

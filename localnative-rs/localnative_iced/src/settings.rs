@@ -1,7 +1,11 @@
 use iced::{
-    widget::{button, center, checkbox, column, container, horizontal_space, mouse_area, opaque, row, stack, text, text_input, Space, Text},
-    Element, Task,
+    widget::{
+        button, center, checkbox, column, container, horizontal_space, mouse_area, opaque, row,
+        stack, text, text_input, Space, Text,
+    },
+    Element,
     Length::{self, Shrink},
+    Task,
 };
 use iced_aw::{Card, NumberInput};
 

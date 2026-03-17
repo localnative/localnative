@@ -54,7 +54,7 @@ impl SearchPage {
         }
     }
 
-    pub fn view(&self, limit: u32) -> Element<Message> {
+    pub fn view(&self, limit: u32) -> Element<'_, Message> {
         let tags = self.create_tags_container();
         let days = self.create_days_container();
 
@@ -69,7 +69,7 @@ impl SearchPage {
         container(row![note_page, tags]).into()
     }
 
-    fn create_search_bar(&self) -> Row<Message> {
+    fn create_search_bar(&self) -> Row<'_, Message> {
         let search_icon = iced::widget::text_input::Icon {
             font: crate::icons::ICONS,
             code_point: '\u{f0d1}',
@@ -102,7 +102,7 @@ impl SearchPage {
         search_bar
     }
 
-    fn create_tags_container(&self) -> container::Container<Message> {
+    fn create_tags_container(&self) -> container::Container<'_, Message> {
         container(scrollable(self.tags.iter().fold(
             iced_aw::Wrap::new().spacing(5.).push(text(tr!("tags"))),
             |tags, tag| tags.push(tag.view().map(Message::Tag)),
@@ -110,7 +110,7 @@ impl SearchPage {
         .width(iced::Length::FillPortion(2))
     }
 
-    fn create_days_container(&self) -> container::Container<Message> {
+    fn create_days_container(&self) -> container::Container<'_, Message> {
         container(self.days.view().map(Message::Day))
             .padding(2)
             .height({
@@ -122,7 +122,7 @@ impl SearchPage {
             })
     }
 
-    fn create_page_control(&self, limit: u32) -> Row<Message> {
+    fn create_page_control(&self, limit: u32) -> Row<'_, Message> {
         let next_button = button(IconItem::Next)
             .style(button::text)
             .padding(0)
@@ -246,7 +246,11 @@ impl SearchPage {
         )
     }
 
-    fn handle_next_page(&mut self, pool: &Arc<Mutex<Connection>>, limit: u32) -> Task<crate::Message> {
+    fn handle_next_page(
+        &mut self,
+        pool: &Arc<Mutex<Connection>>,
+        limit: u32,
+    ) -> Task<crate::Message> {
         let current_count = self.offset + limit;
         if current_count < self.count {
             self.offset = current_count;
@@ -256,7 +260,11 @@ impl SearchPage {
         }
     }
 
-    fn handle_pre_page(&mut self, pool: &Arc<Mutex<Connection>>, limit: u32) -> Task<crate::Message> {
+    fn handle_pre_page(
+        &mut self,
+        pool: &Arc<Mutex<Connection>>,
+        limit: u32,
+    ) -> Task<crate::Message> {
         if self.offset >= limit {
             self.offset -= limit;
             self.handle_search(pool, limit)

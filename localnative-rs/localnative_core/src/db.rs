@@ -218,8 +218,7 @@ mod commands {
     use base64::engine::general_purpose::STANDARD;
     use base64::Engine as _;
     use models::{
-        CmdDelete, CmdFilter, CmdInsert, CmdSearch, CmdSelect, CmdSyncViaAttach, Note,
-        QueryResult,
+        CmdDelete, CmdFilter, CmdInsert, CmdSearch, CmdSelect, CmdSyncViaAttach, Note, QueryResult,
     };
     use rusqlite::Connection;
 
@@ -357,7 +356,10 @@ pub mod queries {
     }
 
     pub fn delete_note(conn: &Connection, rowid: i64) -> DbResult<()> {
-        conn.execute("DELETE FROM note WHERE rowid = ?1", rusqlite::params![rowid])?;
+        conn.execute(
+            "DELETE FROM note WHERE rowid = ?1",
+            rusqlite::params![rowid],
+        )?;
         Ok(())
     }
 
@@ -393,10 +395,7 @@ pub mod queries {
 
     pub fn sync_via_attach(conn: &Connection, uri: &str) -> DbResult<()> {
         validate_sync_file_path(uri)?;
-        conn.execute(
-            "ATTACH ?1 AS other",
-            rusqlite::params![uri],
-        )?;
+        conn.execute("ATTACH ?1 AS other", rusqlite::params![uri])?;
         conn.execute_batch(
             "INSERT INTO main.note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public)
             SELECT uuid4, title, url, tags, description, comments, annotations, created_at, is_public
@@ -538,20 +537,14 @@ pub mod queries {
         );
 
         let params: Vec<String> = words;
-        let count: i64 = conn.query_row(
-            &sql,
-            rusqlite::params_from_iter(params.iter()),
-            |row| row.get(0),
-        )?;
+        let count: i64 =
+            conn.query_row(&sql, rusqlite::params_from_iter(params.iter()), |row| {
+                row.get(0)
+            })?;
         Ok(u32::try_from(count).unwrap_or(u32::MAX))
     }
 
-    fn search(
-        conn: &Connection,
-        query: &str,
-        limit: u32,
-        offset: u32,
-    ) -> DbResult<Vec<Note>> {
+    fn search(conn: &Connection, query: &str, limit: u32, offset: u32) -> DbResult<Vec<Note>> {
         if query.is_empty() {
             return select(conn, limit, offset);
         }
@@ -622,10 +615,9 @@ pub mod queries {
         let mut tag_count_map = HashMap::new();
         let params: Vec<String> = words;
         let mut stmt = conn.prepare(&sql)?;
-        let tags_iter = stmt.query_map(
-            rusqlite::params_from_iter(params.iter()),
-            |row| row.get::<_, String>(0),
-        )?;
+        let tags_iter = stmt.query_map(rusqlite::params_from_iter(params.iter()), |row| {
+            row.get::<_, String>(0)
+        })?;
 
         for tag_result in tags_iter {
             let tags_str = tag_result?;
@@ -712,12 +704,7 @@ pub mod queries {
         Ok(notes)
     }
 
-    fn filter_by_tag(
-        conn: &Connection,
-        query: &str,
-        from: &str,
-        to: &str,
-    ) -> DbResult<Vec<Tags>> {
+    fn filter_by_tag(conn: &Connection, query: &str, from: &str, to: &str) -> DbResult<Vec<Tags>> {
         let words = make_words(query);
 
         if words.len() == 1 && words[0].is_empty() {
@@ -975,9 +962,7 @@ pub mod migrations {
     }
 
     fn migrate_created_at(conn: &Connection) -> DbResult<()> {
-        let mut stmt = conn.prepare(
-            "SELECT rowid, created_at FROM note",
-        )?;
+        let mut stmt = conn.prepare("SELECT rowid, created_at FROM note")?;
         let rows: Vec<(i64, String)> = stmt
             .query_map([], |row| Ok((row.get(0)?, row.get(1)?)))?
             .collect::<Result<_, rusqlite::Error>>()?;
@@ -1058,12 +1043,11 @@ pub mod sync {
     ) -> DbResult<Vec<String>> {
         let mut r = Vec::new();
         for uuid4 in candidates {
-            let exists: bool = conn
-                .query_row(
-                    "SELECT EXISTS(SELECT 1 FROM note WHERE uuid4 = ?1)",
-                    rusqlite::params![uuid4],
-                    |row| row.get(0),
-                )?;
+            let exists: bool = conn.query_row(
+                "SELECT EXISTS(SELECT 1 FROM note WHERE uuid4 = ?1)",
+                rusqlite::params![uuid4],
+                |row| row.get(0),
+            )?;
             if !exists {
                 r.push(uuid4);
             }
@@ -1173,8 +1157,28 @@ mod db_tests {
     #[test]
     fn test_search() {
         let conn = setup_test_db();
-        queries::insert_note(&conn, "Rust Programming", "https://rust-lang.org", "rust,lang", "Learn Rust", "", b"", true).unwrap();
-        queries::insert_note(&conn, "Python Guide", "https://python.org", "python", "Learn Python", "", b"", false).unwrap();
+        queries::insert_note(
+            &conn,
+            "Rust Programming",
+            "https://rust-lang.org",
+            "rust,lang",
+            "Learn Rust",
+            "",
+            b"",
+            true,
+        )
+        .unwrap();
+        queries::insert_note(
+            &conn,
+            "Python Guide",
+            "https://python.org",
+            "python",
+            "Learn Python",
+            "",
+            b"",
+            false,
+        )
+        .unwrap();
 
         let result = queries::do_search(&conn, "rust", 10, 0).expect("search should succeed");
         assert_eq!(result.count, 1);
@@ -1190,7 +1194,17 @@ mod db_tests {
     #[test]
     fn test_delete() {
         let conn = setup_test_db();
-        let note = queries::insert_note(&conn, "To Delete", "https://example.com", "tmp", "", "", b"", false).unwrap();
+        let note = queries::insert_note(
+            &conn,
+            "To Delete",
+            "https://example.com",
+            "tmp",
+            "",
+            "",
+            b"",
+            false,
+        )
+        .unwrap();
 
         let result = queries::do_select(&conn, 10, 0).unwrap();
         assert_eq!(result.count, 1);
@@ -1204,9 +1218,39 @@ mod db_tests {
     #[test]
     fn test_search_multiple_words() {
         let conn = setup_test_db();
-        queries::insert_note(&conn, "Rust Web Framework", "https://actix.rs", "rust,web", "Fast web framework", "", b"", false).unwrap();
-        queries::insert_note(&conn, "Rust CLI Tools", "https://clap.rs", "rust,cli", "CLI framework", "", b"", false).unwrap();
-        queries::insert_note(&conn, "Python Web", "https://django.com", "python,web", "Django framework", "", b"", false).unwrap();
+        queries::insert_note(
+            &conn,
+            "Rust Web Framework",
+            "https://actix.rs",
+            "rust,web",
+            "Fast web framework",
+            "",
+            b"",
+            false,
+        )
+        .unwrap();
+        queries::insert_note(
+            &conn,
+            "Rust CLI Tools",
+            "https://clap.rs",
+            "rust,cli",
+            "CLI framework",
+            "",
+            b"",
+            false,
+        )
+        .unwrap();
+        queries::insert_note(
+            &conn,
+            "Python Web",
+            "https://django.com",
+            "python,web",
+            "Django framework",
+            "",
+            b"",
+            false,
+        )
+        .unwrap();
 
         let result = queries::do_search(&conn, "rust web", 10, 0).unwrap();
         assert_eq!(result.count, 1);
@@ -1216,12 +1260,43 @@ mod db_tests {
     #[test]
     fn test_tags_aggregation() {
         let conn = setup_test_db();
-        queries::insert_note(&conn, "Note 1", "https://a.com", "rust,web", "", "", b"", false).unwrap();
-        queries::insert_note(&conn, "Note 2", "https://b.com", "rust,cli", "", "", b"", false).unwrap();
-        queries::insert_note(&conn, "Note 3", "https://c.com", "python,web", "", "", b"", false).unwrap();
+        queries::insert_note(
+            &conn,
+            "Note 1",
+            "https://a.com",
+            "rust,web",
+            "",
+            "",
+            b"",
+            false,
+        )
+        .unwrap();
+        queries::insert_note(
+            &conn,
+            "Note 2",
+            "https://b.com",
+            "rust,cli",
+            "",
+            "",
+            b"",
+            false,
+        )
+        .unwrap();
+        queries::insert_note(
+            &conn,
+            "Note 3",
+            "https://c.com",
+            "python,web",
+            "",
+            "",
+            b"",
+            false,
+        )
+        .unwrap();
 
         let result = queries::do_select(&conn, 10, 0).unwrap();
-        let tag_map: std::collections::HashMap<_, _> = result.tags.into_iter().map(|t| (t.tag, t.count)).collect();
+        let tag_map: std::collections::HashMap<_, _> =
+            result.tags.into_iter().map(|t| (t.tag, t.count)).collect();
         assert_eq!(*tag_map.get("rust").unwrap(), 2);
         assert_eq!(*tag_map.get("web").unwrap(), 2);
         assert_eq!(*tag_map.get("cli").unwrap(), 1);
@@ -1232,7 +1307,17 @@ mod db_tests {
     fn test_pagination() {
         let conn = setup_test_db();
         for i in 0..5 {
-            queries::insert_note(&conn, &format!("Note {}", i), "https://example.com", "tag", "", "", b"", false).unwrap();
+            queries::insert_note(
+                &conn,
+                &format!("Note {}", i),
+                "https://example.com",
+                "tag",
+                "",
+                "",
+                b"",
+                false,
+            )
+            .unwrap();
         }
 
         let result = queries::do_select(&conn, 2, 0).unwrap();
@@ -1267,7 +1352,11 @@ mod db_tests {
 
         let result = queries::do_select(&conn, 10, 0).unwrap();
         assert_eq!(result.days.len(), 2);
-        let day_map: std::collections::HashMap<_, _> = result.days.into_iter().map(|d| (d.date.to_string(), d.count)).collect();
+        let day_map: std::collections::HashMap<_, _> = result
+            .days
+            .into_iter()
+            .map(|d| (d.date.to_string(), d.count))
+            .collect();
         assert_eq!(*day_map.get("2024-01-15").unwrap(), 2);
         assert_eq!(*day_map.get("2024-01-16").unwrap(), 1);
     }
