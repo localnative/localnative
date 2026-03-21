@@ -353,12 +353,6 @@ impl Ord for MonthMapKey {
     }
 }
 
-impl PartialOrd for MonthMapKey {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
 #[derive(Clone, Debug)]
 enum ChartState {
     Daily(InnerState<RangedDate<NaiveDate>, NaiveDate>),
