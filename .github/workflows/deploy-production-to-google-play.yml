@@ -5,6 +5,8 @@ on: workflow_dispatch
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - uses: actions/checkout@v4
@@ -13,11 +15,14 @@ jobs:
         with:
           java-version: "17"
           distribution: "temurin"
-
-      - name: Assemble Release Bundle
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Install Android SDK 36
         run: |
-          cd localnative-android
-          ./gradlew bundleRelease
+          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "platforms;android-36" "build-tools;36.0.0"
+      - name: Assemble Release Bundle
+        working-directory: localnative-android
+        run: ./gradlew bundleRelease --no-daemon
       - name: Sign Release
         uses: r0adkll/sign-android-release@v1
         with:
@@ -28,8 +33,9 @@ jobs:
           keyPassword: ${{ secrets.KEY_PASSWORD }}
 
       - name: Create service_account.json
-        run: |
-          echo '${{ secrets.GOOGLE_PLAY_ACCOUNT_JSON  }}' > service_account.json
+        env:
+          GOOGLE_PLAY_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_ACCOUNT_JSON }}
+        run: echo "$GOOGLE_PLAY_ACCOUNT_JSON" > service_account.json
 
       - name: Deploy to Alpha
         uses: r0adkll/upload-google-play@v1
