@@ -62,6 +62,11 @@ pub mod android {
     }
 }
 
+/// # Safety
+///
+/// `json_input` must be a valid, non-null pointer to a nul-terminated C string that remains
+/// valid for the duration of this call. The returned pointer must be freed with
+/// [`localnative_free`].
 #[no_mangle]
 pub unsafe extern "C" fn localnative_run(json_input: *const c_char) -> *mut c_char {
     let c_str = CStr::from_ptr(json_input);
@@ -78,6 +83,10 @@ pub unsafe extern "C" fn localnative_run(json_input: *const c_char) -> *mut c_ch
     }
 }
 
+/// # Safety
+///
+/// `s` must be a pointer previously returned by [`localnative_run`], or null. After this call
+/// the pointer is invalid and must not be used again.
 #[no_mangle]
 pub unsafe extern "C" fn localnative_free(s: *mut c_char) {
     if !s.is_null() {
@@ -155,16 +164,20 @@ pub enum ProcessError {
     SerializedErr(String),
 }
 
+/// Parse `text` as a JSON [`Cmd`], execute it, and return the result as a JSON string.
+/// Errors are serialized into the returned string rather than propagated.
 pub async fn run(text: &str) -> String {
     match serde_json::from_str::<Cmd>(text) {
         Ok(cmd) => match process(cmd).await {
             Ok(rs) => rs,
-            Err(err) => serialize_error(ProcessError::from(err), text),
+            Err(err) => serialize_error(err, text),
         },
         Err(e) => serialize_error(ProcessError::SerdeError(e), text),
     }
 }
 
+/// Synchronous wrapper around [`run`] — blocks the current thread on the shared Tokio runtime.
+/// Intended for use from C FFI and other non-async callers.
 pub fn run_sync(text: &str) -> String {
     global_runtime().block_on(run(text))
 }

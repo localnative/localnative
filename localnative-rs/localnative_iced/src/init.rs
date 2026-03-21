@@ -211,6 +211,8 @@ impl WebKind {
         }
     }
 
+    // On Windows the map body returns browser_path unchanged; other platforms transform it.
+    #[allow(clippy::map_identity)]
     fn path(&self) -> Option<PathBuf> {
         match self {
             WebKind::FireFox => firefox_path(),

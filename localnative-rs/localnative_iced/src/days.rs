@@ -89,11 +89,8 @@ impl DateView {
     }
 
     pub fn update(&mut self, message: Message) {
-        match message {
-            Message::MaxOrMin => {
-                self.is_show = !self.is_show;
-            }
-            _ => {}
+        if let Message::MaxOrMin = message {
+            self.is_show = !self.is_show;
         }
     }
 }

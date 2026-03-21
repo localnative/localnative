@@ -28,16 +28,6 @@ Items identified during code review that require larger effort or separate plann
 
 ## Medium Effort
 
-### Structured Logging Setup in Binaries
-- `tracing-subscriber` is a workspace dependency but not initialized in CLI binaries
-- Add `tracing_subscriber::fmt().with_env_filter()` setup to:
-  - `localnative_cli/src/bin/localnative-rpc-server.rs`
-  - `localnative_cli/src/bin/localnative-rpc-client-sync.rs`
-  - `localnative_cli/src/bin/localnative-rpc-client-stop-server.rs`
-  - `localnative_cli/src/bin/localnative-upgrade.rs`
-  - `localnative_cli/src/bin/localnative-web-ext-host.rs`
-- The iced binary (`localnative_iced/src/bin.rs`) should also initialize tracing
-
 ### Reduce Excessive `.clone()` in GUI Layer
 - `localnative_iced/src/chart.rs`: `raw.clone()` at lines 107, 126, 136 — change `fold_map` to accept `&Vec<Day>`
 - `localnative_iced/src/chart.rs`: `data.clone().into_iter()` at line 232 — use `data.iter()` or `data.into_iter()`
@@ -59,8 +49,7 @@ Items identified during code review that require larger effort or separate plann
 ## Low Effort
 
 ### Clippy Lint Fixes
-- 17 `mismatched_lifetime_syntaxes` warnings in `localnative_iced` — add explicit `'_` lifetime annotations
-- 2 `dead_code` warnings: `db_operations::insert` and `db_operations::someday` are unused
+- 2 `too_many_arguments` warnings from `ouroboros` `#[self_referencing]` macro in `sync.rs` — these are macro-generated and cannot be suppressed without a file-level allow
 
 ### Electron Post-Migration Verification
 - After running `npm install`, verify all UMD script paths resolve:

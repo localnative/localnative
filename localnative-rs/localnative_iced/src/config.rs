@@ -1,4 +1,5 @@
 use core::ops::Not;
+use std::fmt;
 use std::path::PathBuf;
 
 use crate::{error_handle, translate::Language};
@@ -30,31 +31,32 @@ pub enum ThemeType {
     Oxocarbon,
 }
 
-impl ToString for ThemeType {
-    fn to_string(&self) -> String {
-        match self {
-            ThemeType::Light => "Light".to_string(),
-            ThemeType::Dark => "Dark".to_string(),
-            ThemeType::Dracula => "Dracula".to_string(),
-            ThemeType::Nord => "Nord".to_string(),
-            ThemeType::SolarizedLight => "SolarizedLight".to_string(),
-            ThemeType::SolarizedDark => "SolarizedDark".to_string(),
-            ThemeType::GruvboxLight => "GruvboxLight".to_string(),
-            ThemeType::GruvboxDark => "GruvboxDark".to_string(),
-            ThemeType::CatppuccinLatte => "CatppuccinLatte".to_string(),
-            ThemeType::CatppuccinFrappe => "CatppuccinFrappe".to_string(),
-            ThemeType::CatppuccinMacchiato => "CatppuccinMacchiato".to_string(),
-            ThemeType::CatppuccinMocha => "CatppuccinMocha".to_string(),
-            ThemeType::TokyoNight => "TokyoNight".to_string(),
-            ThemeType::TokyoNightStorm => "TokyoNightStorm".to_string(),
-            ThemeType::TokyoNightLight => "TokyoNightLight".to_string(),
-            ThemeType::KanagawaWave => "KanagawaWave".to_string(),
-            ThemeType::KanagawaDragon => "KanagawaDragon".to_string(),
-            ThemeType::KanagawaLotus => "KanagawaLotus".to_string(),
-            ThemeType::Moonfly => "Moonfly".to_string(),
-            ThemeType::Nightfly => "Nightfly".to_string(),
-            ThemeType::Oxocarbon => "Oxocarbon".to_string(),
-        }
+impl fmt::Display for ThemeType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let name = match self {
+            ThemeType::Light => "Light",
+            ThemeType::Dark => "Dark",
+            ThemeType::Dracula => "Dracula",
+            ThemeType::Nord => "Nord",
+            ThemeType::SolarizedLight => "SolarizedLight",
+            ThemeType::SolarizedDark => "SolarizedDark",
+            ThemeType::GruvboxLight => "GruvboxLight",
+            ThemeType::GruvboxDark => "GruvboxDark",
+            ThemeType::CatppuccinLatte => "CatppuccinLatte",
+            ThemeType::CatppuccinFrappe => "CatppuccinFrappe",
+            ThemeType::CatppuccinMacchiato => "CatppuccinMacchiato",
+            ThemeType::CatppuccinMocha => "CatppuccinMocha",
+            ThemeType::TokyoNight => "TokyoNight",
+            ThemeType::TokyoNightStorm => "TokyoNightStorm",
+            ThemeType::TokyoNightLight => "TokyoNightLight",
+            ThemeType::KanagawaWave => "KanagawaWave",
+            ThemeType::KanagawaDragon => "KanagawaDragon",
+            ThemeType::KanagawaLotus => "KanagawaLotus",
+            ThemeType::Moonfly => "Moonfly",
+            ThemeType::Nightfly => "Nightfly",
+            ThemeType::Oxocarbon => "Oxocarbon",
+        };
+        f.write_str(name)
     }
 }
 

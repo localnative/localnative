@@ -16,16 +16,11 @@ pub struct Sidebar {
     pub state: State,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, Default, PartialEq, Eq)]
 pub enum State {
+    #[default]
     SearchPage,
     SyncView,
-}
-
-impl Default for State {
-    fn default() -> Self {
-        Self::SearchPage
-    }
 }
 
 #[derive(Debug, Clone, Copy)]

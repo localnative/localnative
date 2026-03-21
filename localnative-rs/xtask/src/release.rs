@@ -52,13 +52,13 @@ impl Release {
         let host_dst = dst.join(format!("localnative-web-ext-host{}", suffix));
 
         let readme = Path::new("README.md");
-        sh.copy_file(&readme, &dst)?;
+        sh.copy_file(readme, &dst)?;
         sh.copy_file(&iced_src, &iced_dst)?;
         sh.copy_file(&host_src, &host_dst)?;
 
         copy_dir_all(
-            &Path::new("../localnative-electron/build"),
-            &dst.join("build"),
+            Path::new("../localnative-electron/build"),
+            dst.join("build"),
         )?;
         let package_types = vec![
             #[cfg(target_os = "macos")]

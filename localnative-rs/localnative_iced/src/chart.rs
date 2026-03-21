@@ -59,10 +59,9 @@ mod utils {
     ) -> chrono::Duration {
         let date_diff = *max_date - *min_date;
         if date_diff.num_days() < constants::MINIMUM {
-            *min_date =
-                *min_date - chrono::Duration::days((constants::MINIMUM - date_diff.num_days()) / 2);
-            *max_date = *max_date
-                + chrono::Duration::days((constants::MINIMUM - date_diff.num_days() + 1) / 2);
+            *min_date -= chrono::Duration::days((constants::MINIMUM - date_diff.num_days()) / 2);
+            *max_date +=
+                chrono::Duration::days((constants::MINIMUM - date_diff.num_days() + 1) / 2);
         }
         *max_date - *min_date
     }
@@ -336,8 +335,14 @@ impl ChartView {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 struct MonthMapKey(i32, u32);
+
+impl PartialOrd for MonthMapKey {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
 
 impl Ord for MonthMapKey {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
@@ -345,6 +350,12 @@ impl Ord for MonthMapKey {
             std::cmp::Ordering::Equal => self.1.cmp(&other.1),
             ordering => ordering,
         }
+    }
+}
+
+impl PartialOrd for MonthMapKey {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
     }
 }
 

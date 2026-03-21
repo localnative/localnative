@@ -31,13 +31,13 @@ impl Ndkbd {
         let mode = if self.debug { "debug" } else { "release" };
 
         let name = "liblocalnative_core.so";
-        let to_paths = vec![
+        let to_paths = [
             to.join("armeabi-v7a"),
             to.join("arm64-v8a"),
             to.join("x86"),
             to.join("x86_64"),
         ];
-        let from_paths = vec![
+        let from_paths = [
             from.join("armv7-linux-androideabi"),
             from.join("aarch64-linux-android"),
             from.join("i686-linux-android"),

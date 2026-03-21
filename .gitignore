@@ -6,6 +6,7 @@ external-libs/*
 !.cargo
 !.github
 !.gitignore
+!.gitattributes
 !.gitkeep
 !.gitlab-ci.yml
 !.mrconfig-template

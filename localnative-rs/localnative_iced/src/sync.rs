@@ -33,6 +33,7 @@ use crate::{error_handle, icons::IconItem};
 
 use self::ouroboros_impl_sync_view::Heads;
 
+#[allow(clippy::too_many_arguments)] // fields required by self_referencing macro
 #[self_referencing]
 pub struct SyncView {
     ip: String,
@@ -225,14 +226,15 @@ impl SyncView {
     ) -> Task<crate::Message> {
         match message {
             Message::IpInput(input) => {
-                let ip_regex = IP_REGEX_SET.get_or_init(||{
-                    RegexSet::new(&[
+                let ip_regex = IP_REGEX_SET.get_or_init(|| {
+                    RegexSet::new([
                         r"^$",
                         r"^(25[0-5]|2[0-4]\d|[0-1]?\d?\d)\.?$",
                         r"^(25[0-5]|2[0-4]\d|[0-1]?\d?\d)\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)\.?$",
                         r"^(25[0-5]|2[0-4]\d|[0-1]?\d?\d)\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)\.?$",
                         r"^(25[0-5]|2[0-4]\d|[0-1]?\d?\d)\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)\.(25[0-5]|[0-4]\d|[0-1]?\d?\d)$",
-                    ]).unwrap()
+                    ])
+                    .unwrap()
                 });
                 if ip_regex.is_match(&input) || Ipv6Addr::from_str(&input).is_ok() {
                     self.with_ip_mut(|ip| *ip = input);
@@ -272,7 +274,7 @@ impl SyncView {
                 }
             }
             Message::IpAddrVerify => {
-                if IpAddr::from_str(&self.borrow_ip()).is_err() {
+                if IpAddr::from_str(self.borrow_ip()).is_err() {
                     self.with_sync_state_mut(|state| *state = SyncState::IpAddrParseError);
                 } else {
                     self.with_sync_state_mut(|state| *state = SyncState::IpAddrParsePass);
@@ -307,14 +309,8 @@ impl SyncView {
             Message::CloseServer => {
                 self.with_server_state_mut(|state| *state = ServerState::Closing);
                 if let Some(cmd) = self.with_stop_mut(|stop| {
-                    if let Some(stop) = stop.take() {
-                        Some(Task::perform(
-                            stop_server(stop),
-                            crate::Message::ServerOption,
-                        ))
-                    } else {
-                        None
-                    }
+                    stop.take()
+                        .map(|stop| Task::perform(stop_server(stop), crate::Message::ServerOption))
                 }) {
                     return cmd;
                 } else {
@@ -332,7 +328,7 @@ impl Default for SyncView {
             ip: String::new(),
             port: 2345,
             server_addr: String::new(),
-            ip_qr_code: qr_code::Data::new(&[0]).unwrap(),
+            ip_qr_code: qr_code::Data::new([0]).unwrap(),
             sync_state: SyncState::Waiting,
             server_state: ServerState::Closed,
             stop: None,

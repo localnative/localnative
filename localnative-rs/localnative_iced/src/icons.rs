@@ -3,6 +3,7 @@ use iced::{widget::Text, Element};
 
 pub const ICONS: Font = Font::with_name("remixicon");
 
+#[derive(Copy, Clone)]
 pub enum IconItem {
     Search,
     Clear,
@@ -31,7 +32,7 @@ pub enum IconItem {
 }
 
 impl IconItem {
-    fn to_char(&self) -> char {
+    fn to_char(self) -> char {
         match self {
             IconItem::Search => '\u{f0d1}',
             IconItem::Clear => '\u{eb99}',

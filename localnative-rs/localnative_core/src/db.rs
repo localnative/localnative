@@ -3,6 +3,8 @@ pub use error::{DbError, DbResult};
 use models::Cmd;
 use rusqlite::Connection;
 
+/// Open (or create) the SQLite database at the platform-appropriate location and run any
+/// pending schema migrations.
 pub fn init_db() -> DbResult<Connection> {
     let db_path = utils::sqlite3_db_location()?;
     tracing::info!(db_path, "opening database");
@@ -16,6 +18,7 @@ pub fn init_db() -> DbResult<Connection> {
     Ok(conn)
 }
 
+/// Dispatch a [`Cmd`] against an open database connection and return the result serialized as JSON.
 pub fn process_cmd(cmd: Cmd, conn: &Connection) -> DbResult<String> {
     match cmd {
         Cmd::Insert(ref insert) => {
@@ -327,6 +330,7 @@ pub mod queries {
         })
     }
 
+    #[allow(clippy::too_many_arguments)] // note fields are all distinct; grouping into a struct would require a separate type
     pub fn insert_note(
         conn: &Connection,
         title: &str,
@@ -686,11 +690,12 @@ pub mod queries {
             where_clause(&words, 5)
         );
 
-        let mut params: Vec<Box<dyn rusqlite::types::ToSql>> = Vec::new();
-        params.push(Box::new(from.to_string()));
-        params.push(Box::new(to.to_string()));
-        params.push(Box::new(limit));
-        params.push(Box::new(offset));
+        let mut params: Vec<Box<dyn rusqlite::types::ToSql>> = vec![
+            Box::new(from.to_string()),
+            Box::new(to.to_string()),
+            Box::new(limit),
+            Box::new(offset),
+        ];
         for word in words {
             params.push(Box::new(word));
         }
@@ -721,9 +726,8 @@ pub mod queries {
         );
 
         let mut tag_count_map = HashMap::new();
-        let mut params: Vec<Box<dyn rusqlite::types::ToSql>> = Vec::new();
-        params.push(Box::new(from.to_string()));
-        params.push(Box::new(to.to_string()));
+        let mut params: Vec<Box<dyn rusqlite::types::ToSql>> =
+            vec![Box::new(from.to_string()), Box::new(to.to_string())];
         for word in words {
             params.push(Box::new(word));
         }
@@ -811,7 +815,9 @@ pub mod migrations {
     use semver::Version;
     use uuid::Uuid;
 
-    const MIGRATIONS: &[(Version, fn(&Connection) -> DbResult<()>)] = &[
+    type MigrationFn = fn(&Connection) -> DbResult<()>;
+
+    const MIGRATIONS: &[(Version, MigrationFn)] = &[
         (Version::new(0, 4, 0), migrate_schema),
         (Version::new(0, 4, 1), migrate_note),
         (Version::new(0, 5, 0), drop_ssb_table),

@@ -21,7 +21,7 @@ use std::io::{self, Read, Seek, SeekFrom, Write};
 use std::str;
 
 const LOG_FILE: &str = "debug.log";
-const MAX_LOG_SIZE: u64 = 1 * 1024 * 1024; // 1MB
+const MAX_LOG_SIZE: u64 = 1024 * 1024; // 1MB
 const MAX_MESSAGE_SIZE: usize = 10 * 1024 * 1024; // 10MB
 
 fn main() -> io::Result<()> {

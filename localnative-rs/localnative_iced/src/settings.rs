@@ -88,14 +88,14 @@ impl Settings {
         .padding(3)
         .width(Shrink);
         let light_theme_selector = iced::widget::pick_list(
-            &ThemeType::ALL_LIGHT[..],
+            ThemeType::ALL_LIGHT,
             Some(config.light_theme),
             Message::LightThemeChanged,
         )
         .padding(3)
         .width(Shrink);
         let dark_theme_selector = iced::widget::pick_list(
-            &ThemeType::ALL_DARK[..],
+            ThemeType::ALL_DARK,
             Some(config.dark_theme),
             Message::DarkThemeChanged,
         )

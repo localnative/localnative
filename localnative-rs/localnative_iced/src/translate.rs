@@ -118,8 +118,9 @@ pub fn tr<'a>(key: &'a str) -> Cow<'a, str> {
     }
 }
 
-#[derive(Copy, Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq, Hash)]
 pub enum Language {
+    #[default]
     English,
     Chinese,
 }
@@ -138,11 +139,6 @@ impl Language {
             Language::English => include_str!("../../locales/en-US/tr.ftl"),
             Language::Chinese => include_str!("../../locales/zh-CN/tr.ftl"),
         }
-    }
-}
-impl Default for Language {
-    fn default() -> Self {
-        Language::English
     }
 }
 impl Display for Language {

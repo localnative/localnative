@@ -10,6 +10,8 @@ mod search_page;
 mod settings;
 mod sidebar;
 mod style;
+// The ouroboros #[self_referencing] macro generates builder fns with many parameters.
+#[allow(clippy::too_many_arguments)]
 mod sync;
 mod tags;
 mod translate;
@@ -42,9 +44,10 @@ pub struct LocalNative {
     state: State,
 }
 
+#[allow(clippy::large_enum_variant)] // Data is stack-allocated by design; boxing would complicate match ergonomics
 pub enum State {
     Loading(String),
-    Loaded(Data),
+    Loaded(Box<Data>),
 }
 
 pub struct Data {
@@ -280,14 +283,12 @@ impl Data {
                     self.sync_view
                         .with_server_state_mut(|state| *state = sync::ServerState::Closed);
                     if let Some(cmd) = self.sync_view.with_stop_mut(|ref_mut_stop| {
-                        if let Some(old_stop) = ref_mut_stop.take() {
-                            Some(Task::batch([
+                        ref_mut_stop.take().map(|old_stop| {
+                            Task::batch([
                                 Task::perform(sync::stop_server(old_stop), Message::ServerOption),
                                 Task::perform(sync::stop_server(stop), Message::ServerOption),
-                            ]))
-                        } else {
-                            None
-                        }
+                            ])
+                        })
                     }) {
                         return cmd;
                     }
@@ -440,10 +441,10 @@ pub fn run_app() -> iced::Result {
                         async {
                             match tokio::task::spawn_blocking(init_db).await {
                                 Ok(result) => result,
-                                Err(e) => Err(DbError::IoError(std::io::Error::new(
-                                    std::io::ErrorKind::Other,
-                                    format!("Task join error: {}", e),
-                                ))),
+                                Err(e) => Err(DbError::IoError(std::io::Error::other(format!(
+                                    "Task join error: {}",
+                                    e
+                                )))),
                             }
                         },
                         Message::InitDatabase,
@@ -504,7 +505,7 @@ impl LocalNative {
             }
             Message::Loading(pool) => {
                 let data = Data::new(&self.config, pool);
-                self.state = State::Loaded(data);
+                self.state = State::Loaded(Box::new(data));
                 if let State::Loaded(ref mut data) = self.state {
                     let search_page = &data.search_page;
                     let pool = data.pool.clone();

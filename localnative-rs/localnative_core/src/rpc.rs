@@ -203,6 +203,8 @@ impl LocalNative for LocalNativeServer {
     }
 }
 
+/// Bind a TCP listener on `addr` and spawn the RPC server task in the background.
+/// Cancel the returned future by triggering the `stop_token` (if provided).
 pub async fn setup_server(
     addr: SocketAddr,
     pool: Arc<Mutex<Connection>>,
@@ -253,6 +255,8 @@ pub async fn setup_server(
     Ok(())
 }
 
+/// Return the preferred non-loopback IP address of this host formatted as `"ip:3456"`,
+/// or an empty string if no suitable interface is found.
 pub fn get_server_addr() -> String {
     get_if_addrs::get_if_addrs()
         .unwrap_or_default()
@@ -304,6 +308,7 @@ async fn check_version_match(
     Ok(is_version_match)
 }
 
+/// Push local notes that the server does not yet have.
 pub async fn run_sync_to_server(
     addr: &SocketAddr,
     pool: &Arc<Mutex<Connection>>,
@@ -336,6 +341,7 @@ pub async fn run_sync_to_server(
     Ok(())
 }
 
+/// Pull notes from the server that this client does not yet have.
 pub async fn run_sync_from_server(
     addr: &SocketAddr,
     pool: &Arc<Mutex<Connection>>,
@@ -364,6 +370,8 @@ pub async fn run_sync_from_server(
     Ok(())
 }
 
+/// Bidirectional sync with the server at `addr`: push local-only notes and pull server-only notes
+/// concurrently. Returns `"sync ok"` on success.
 pub async fn sync(addr: &str, pool: &Arc<Mutex<Connection>>) -> Result<String, RpcError> {
     let server_addr: SocketAddr = addr.parse()?;
     validate_client_addr(&server_addr)?;
@@ -391,6 +399,7 @@ pub async fn run_stop_server(
     Ok(())
 }
 
+/// Send a stop signal to the server at `addr`. Returns `"stop ok"` on success.
 pub async fn stop_server(addr: &str, pool: &Arc<Mutex<Connection>>) -> Result<String, RpcError> {
     let server_addr: SocketAddr = addr.parse()?;
     validate_client_addr(&server_addr)?;
@@ -398,6 +407,7 @@ pub async fn stop_server(addr: &str, pool: &Arc<Mutex<Connection>>) -> Result<St
     Ok("stop ok".to_string())
 }
 
+/// Start the RPC server bound to `addr` with a fresh cancellation token.
 pub async fn start(addr: &str, pool: &Arc<Mutex<Connection>>) -> Result<(), RpcError> {
     let server_addr: SocketAddr = addr.parse()?;
     validate_server_addr(&server_addr)?;
