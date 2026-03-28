@@ -89,6 +89,7 @@ pub mod models {
         pub annotations: String,
         pub created_at: String,
         pub is_public: bool,
+        pub metadata: String,
     }
 
     #[derive(Serialize, Deserialize, Debug)]
@@ -295,6 +296,7 @@ pub mod queries {
             annotations: row.get("annotations")?,
             created_at: row.get("created_at")?,
             is_public: row.get("is_public")?,
+            metadata: row.get("metadata")?,
         })
     }
 
@@ -324,13 +326,13 @@ pub mod queries {
         let created_at = chrono::Utc::now().format("%Y-%m-%d %H:%M:%S").to_string();
 
         conn.execute(
-            "INSERT INTO note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public)
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+            "INSERT INTO note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public, metadata)
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, '{}')",
             rusqlite::params![uuid4, title, url, tags, description, comments, annotations, created_at, is_public],
         )?;
 
         let note = conn.query_row(
-            "SELECT rowid, uuid4, title, url, tags, description, comments, hex(annotations) as annotations, created_at, is_public FROM note WHERE uuid4 = ?1",
+            "SELECT rowid, uuid4, title, url, tags, description, comments, hex(annotations) as annotations, created_at, is_public, metadata FROM note WHERE uuid4 = ?1",
             rusqlite::params![uuid4],
             map_note,
         )?;
@@ -352,13 +354,13 @@ pub mod queries {
         let uuid4 = Uuid::new_v4().to_string();
 
         conn.execute(
-            "INSERT INTO note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public)
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+            "INSERT INTO note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public, metadata)
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, '{}')",
             rusqlite::params![uuid4, title, url, tags, description, comments, annotations, created_at, is_public],
         )?;
 
         let note = conn.query_row(
-            "SELECT rowid, uuid4, title, url, tags, description, comments, hex(annotations) as annotations, created_at, is_public FROM note WHERE uuid4 = ?1",
+            "SELECT rowid, uuid4, title, url, tags, description, comments, hex(annotations) as annotations, created_at, is_public, metadata FROM note WHERE uuid4 = ?1",
             rusqlite::params![uuid4],
             map_note,
         )?;
@@ -411,16 +413,16 @@ pub mod queries {
         validate_sync_file_path(uri)?;
         conn.execute("ATTACH ?1 AS other", rusqlite::params![uri])?;
         conn.execute_batch(
-            "INSERT INTO main.note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public)
-            SELECT uuid4, title, url, tags, description, comments, annotations, created_at, is_public
+            "INSERT INTO main.note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public, metadata)
+            SELECT uuid4, title, url, tags, description, comments, annotations, created_at, is_public, metadata
             FROM other.note
             WHERE NOT EXISTS (
                 SELECT 1 FROM main.note
                 WHERE main.note.uuid4 = other.note.uuid4
             ) ORDER BY created_at;
 
-            INSERT INTO other.note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public)
-            SELECT uuid4, title, url, tags, description, comments, annotations, created_at, is_public
+            INSERT INTO other.note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public, metadata)
+            SELECT uuid4, title, url, tags, description, comments, annotations, created_at, is_public, metadata
             FROM main.note
             WHERE NOT EXISTS (
                 SELECT 1 FROM other.note
@@ -494,7 +496,7 @@ pub mod queries {
     fn select(conn: &Connection, limit: u32, offset: u32) -> DbResult<Vec<Note>> {
         let mut stmt = conn.prepare(
             "SELECT rowid, uuid4, title, url, tags, description, comments,
-             hex(annotations) as annotations, created_at, is_public
+             hex(annotations) as annotations, created_at, is_public, metadata
              FROM note
              ORDER BY created_at DESC
              LIMIT ?1 OFFSET ?2",
@@ -561,17 +563,17 @@ pub mod queries {
         }
 
         let fts_query = make_fts_query(query);
-        let sql = format!(
-            "SELECT rowid, uuid4, title, url, tags, description, comments,
-             hex(annotations) as annotations, created_at, is_public
+        let sql =
+            "SELECT note.rowid, note.uuid4, note.title, note.url, note.tags,
+             note.description, note.comments,
+             hex(note.annotations) as annotations, note.created_at, note.is_public, note.metadata
              FROM note
-             WHERE {}
-             ORDER BY created_at DESC
-             LIMIT ?1 OFFSET ?2",
-            fts_where_clause(3),
-        );
+             JOIN note_fts ON note.rowid = note_fts.rowid
+             WHERE note_fts MATCH ?3
+             ORDER BY bm25(note_fts, 10.0, 5.0, 3.0, 1.0)
+             LIMIT ?1 OFFSET ?2";
 
-        let mut stmt = conn.prepare(&sql)?;
+        let mut stmt = conn.prepare(sql)?;
         let notes = stmt
             .query_map(rusqlite::params![limit, offset, fts_query], map_note)?
             .collect::<Result<Vec<_>, rusqlite::Error>>()?;
@@ -669,19 +671,19 @@ pub mod queries {
             return select(conn, limit, offset);
         }
 
-        let sql = format!(
-            "SELECT rowid, uuid4, title, url, tags, description, comments,
-             hex(annotations) as annotations, created_at, is_public
+        let sql =
+            "SELECT note.rowid, note.uuid4, note.title, note.url, note.tags,
+             note.description, note.comments,
+             hex(note.annotations) as annotations, note.created_at, note.is_public, note.metadata
              FROM note
-             WHERE substr(created_at, 1, 10) >= ?1
-             AND substr(created_at, 1, 10) <= ?2
-             AND {}
-             ORDER BY created_at DESC
-             LIMIT ?3 OFFSET ?4",
-            fts_where_clause(5)
-        );
+             JOIN note_fts ON note.rowid = note_fts.rowid
+             WHERE substr(note.created_at, 1, 10) >= ?1
+             AND substr(note.created_at, 1, 10) <= ?2
+             AND note_fts MATCH ?5
+             ORDER BY bm25(note_fts, 10.0, 5.0, 3.0, 1.0)
+             LIMIT ?3 OFFSET ?4";
 
-        let mut stmt = conn.prepare(&sql)?;
+        let mut stmt = conn.prepare(sql)?;
         let notes = stmt
             .query_map(rusqlite::params![from, to, limit, offset, fts_query], map_note)?
             .collect::<Result<Vec<_>, rusqlite::Error>>()?;
@@ -729,7 +731,7 @@ pub mod queries {
     pub fn select_all(conn: &Connection) -> DbResult<Vec<Note>> {
         let mut stmt = conn.prepare(
             "SELECT rowid, uuid4, title, url, tags, description, comments,
-             hex(annotations) as annotations, created_at, is_public
+             hex(annotations) as annotations, created_at, is_public, metadata
              FROM note
              ORDER BY created_at DESC",
         )?;
@@ -746,16 +748,16 @@ pub mod queries {
         }
 
         let fts_query = make_fts_query(query);
-        let sql = format!(
-            "SELECT rowid, uuid4, title, url, tags, description, comments,
-             hex(annotations) as annotations, created_at, is_public
+        let sql =
+            "SELECT note.rowid, note.uuid4, note.title, note.url, note.tags,
+             note.description, note.comments,
+             hex(note.annotations) as annotations, note.created_at, note.is_public, note.metadata
              FROM note
-             WHERE {}
-             ORDER BY created_at DESC",
-            fts_where_clause(1),
-        );
+             JOIN note_fts ON note.rowid = note_fts.rowid
+             WHERE note_fts MATCH ?1
+             ORDER BY bm25(note_fts, 10.0, 5.0, 3.0, 1.0)";
 
-        let mut stmt = conn.prepare(&sql)?;
+        let mut stmt = conn.prepare(sql)?;
         let notes = stmt
             .query_map(rusqlite::params![fts_query], map_note)?
             .collect::<Result<Vec<_>, rusqlite::Error>>()?;
@@ -792,6 +794,46 @@ pub mod queries {
         format!(
             "rowid IN (SELECT rowid FROM note_fts WHERE note_fts MATCH ?{fts_param})"
         )
+    }
+
+    // ── Metadata helpers ───────────────────────────────────────────────
+
+    /// Extract a single value from the JSON metadata column of a note.
+    ///
+    /// Uses SQLite's `json_extract()` function. Returns `None` when the key
+    /// does not exist or the value is JSON null.
+    pub fn get_metadata_value(
+        conn: &Connection,
+        rowid: i64,
+        key: &str,
+    ) -> DbResult<Option<String>> {
+        let path = format!("$.{key}");
+        let value: Option<String> = conn
+            .query_row(
+                "SELECT json_extract(metadata, ?1) FROM note WHERE rowid = ?2",
+                rusqlite::params![path, rowid],
+                |row| row.get(0),
+            )
+            .map_err(DbError::from)?;
+        Ok(value)
+    }
+
+    /// Set (or overwrite) a single key in the JSON metadata column of a note.
+    ///
+    /// Uses SQLite's `json_set()` function so the rest of the object is
+    /// preserved.
+    pub fn set_metadata_value(
+        conn: &Connection,
+        rowid: i64,
+        key: &str,
+        value: &str,
+    ) -> DbResult<()> {
+        let path = format!("$.{key}");
+        conn.execute(
+            "UPDATE note SET metadata = json_set(metadata, ?1, ?2) WHERE rowid = ?3",
+            rusqlite::params![path, value, rowid],
+        )?;
+        Ok(())
     }
 
     #[cfg(test)]
@@ -843,6 +885,7 @@ pub mod migrations {
         (Version::new(0, 5, 0), drop_ssb_table),
         (Version::new(0, 6, 0), migrate_created_at),
         (Version::new(0, 7, 0), migrate_fts5),
+        (Version::new(0, 8, 0), migrate_metadata),
     ];
 
     pub fn upgrade(conn: &Connection) -> DbResult<()> {
@@ -902,7 +945,8 @@ pub mod migrations {
                  comments TEXT NOT NULL,
                  annotations TEXT NOT NULL,
                  created_at TEXT NOT NULL,
-                 is_public BOOLEAN NOT NULL DEFAULT 0
+                 is_public BOOLEAN NOT NULL DEFAULT 0,
+                 metadata TEXT NOT NULL DEFAULT '{}'
              );
              CREATE TABLE IF NOT EXISTS meta (
                  meta_key TEXT PRIMARY KEY,
@@ -926,7 +970,7 @@ pub mod migrations {
                  INSERT INTO note_fts(rowid, title, url, tags, description)
                  VALUES (new.rowid, new.title, new.url, new.tags, new.description);
              END;
-             INSERT INTO meta (meta_key, meta_value) VALUES ('version', '0.7.0');",
+             INSERT INTO meta (meta_key, meta_value) VALUES ('version', '0.8.0');",
         )?;
         Ok(())
     }
@@ -972,6 +1016,7 @@ pub mod migrations {
                     annotations: row.get(6)?,
                     created_at: row.get(7)?,
                     is_public: row.get(8)?,
+                    metadata: String::new(),
                 })
             })?
             .collect::<Result<_, rusqlite::Error>>()?;
@@ -1049,6 +1094,13 @@ pub mod migrations {
         Ok(())
     }
 
+    fn migrate_metadata(conn: &Connection) -> DbResult<()> {
+        conn.execute_batch(
+            "ALTER TABLE note ADD COLUMN metadata TEXT NOT NULL DEFAULT '{}';",
+        )?;
+        Ok(())
+    }
+
     fn parse_old_created_at(created_at: &str) -> DbResult<String> {
         let created_at = created_at.trim_end_matches(" UTC");
         let parts: Vec<&str> = created_at.split(':').collect();
@@ -1080,7 +1132,7 @@ pub mod sync {
 
     pub fn get_note_by_uuid4(conn: &Connection, uuid4: &str) -> DbResult<Note> {
         conn.query_row(
-            "SELECT rowid, uuid4, title, url, tags, description, comments, hex(annotations) as annotations, created_at, is_public FROM note WHERE uuid4 = ?1",
+            "SELECT rowid, uuid4, title, url, tags, description, comments, hex(annotations) as annotations, created_at, is_public, metadata FROM note WHERE uuid4 = ?1",
             rusqlite::params![uuid4],
             |row| {
                 Ok(Note {
@@ -1094,6 +1146,7 @@ pub mod sync {
                     annotations: row.get("annotations")?,
                     created_at: row.get("created_at")?,
                     is_public: row.get("is_public")?,
+                    metadata: row.get("metadata")?,
                 })
             },
         )
@@ -1149,9 +1202,14 @@ pub mod sync {
             tracing::warn!(uuid4 = note.uuid4, %e, "failed to decode hex annotations");
             Vec::new()
         });
+        let metadata = if note.metadata.is_empty() {
+            "{}".to_string()
+        } else {
+            note.metadata.clone()
+        };
         conn.execute(
-            "INSERT INTO note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public)
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+            "INSERT INTO note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public, metadata)
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
             rusqlite::params![
                 note.uuid4,
                 note.title,
@@ -1161,7 +1219,8 @@ pub mod sync {
                 note.comments,
                 annotations_blob,
                 note.created_at,
-                note.is_public
+                note.is_public,
+                metadata
             ],
         )?;
         Ok(())
@@ -1187,7 +1246,8 @@ mod db_tests {
                  comments TEXT NOT NULL,
                  annotations TEXT NOT NULL,
                  created_at TEXT NOT NULL,
-                 is_public BOOLEAN NOT NULL DEFAULT 0
+                 is_public BOOLEAN NOT NULL DEFAULT 0,
+                 metadata TEXT NOT NULL DEFAULT '{}'
              );
              CREATE TABLE IF NOT EXISTS meta (
                  meta_key TEXT PRIMARY KEY,
@@ -1211,7 +1271,7 @@ mod db_tests {
                  INSERT INTO note_fts(rowid, title, url, tags, description)
                  VALUES (new.rowid, new.title, new.url, new.tags, new.description);
              END;
-             INSERT INTO meta (meta_key, meta_value) VALUES ('version', '0.7.0');",
+             INSERT INTO meta (meta_key, meta_value) VALUES ('version', '0.8.0');",
         )
         .expect("schema init");
         conn
@@ -1513,6 +1573,7 @@ mod db_tests {
             annotations: "48656c6c6f".to_string(), // "Hello" in hex
             created_at: "2024-01-01 00:00:00".to_string(),
             is_public: false,
+            metadata: String::new(),
         };
         sync::insert(&conn, &note).expect("sync insert should succeed");
 
@@ -1535,6 +1596,7 @@ mod db_tests {
             annotations: "not-valid-hex!!!".to_string(),
             created_at: "2024-01-01 00:00:00".to_string(),
             is_public: false,
+            metadata: String::new(),
         };
         // Should succeed but with empty annotations (logged warning)
         sync::insert(&conn, &note).expect("insert with bad hex should not fail");
@@ -1622,7 +1684,7 @@ mod db_tests {
 
         // Should have created tables and set version
         let version = migrations::get_meta_version(&conn).unwrap();
-        assert_eq!(version, "0.7.0");
+        assert_eq!(version, "0.8.0");
     }
 
     #[test]

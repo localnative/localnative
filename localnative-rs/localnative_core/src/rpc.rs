@@ -428,6 +428,7 @@ mod tests {
             annotations: "abcd".to_string(),
             created_at: "2024-01-01 00:00:00".to_string(),
             is_public: false,
+            metadata: String::new(),
         };
         assert!(validate_note(&note).is_ok());
     }
@@ -445,6 +446,7 @@ mod tests {
             annotations: "".to_string(),
             created_at: "2024-01-01 00:00:00".to_string(),
             is_public: false,
+            metadata: String::new(),
         };
         assert!(validate_note(&note).is_err());
     }
@@ -463,6 +465,7 @@ mod tests {
             annotations: "".to_string(),
             created_at: "2024-01-01 00:00:00".to_string(),
             is_public: false,
+            metadata: String::new(),
         };
         assert!(validate_note(&note).is_err());
     }

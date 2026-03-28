@@ -203,6 +203,107 @@ pub fn parse_omnivore_json(content: &str) -> Result<Vec<ImportedNote>, serde_jso
 }
 
 // ---------------------------------------------------------------------------
+// Raindrop.io CSV export parser
+// ---------------------------------------------------------------------------
+
+/// Parse a single CSV line respecting quoted fields.
+///
+/// Fields may be enclosed in double quotes. A doubled quote `""` inside a
+/// quoted field represents a literal `"`. Commas inside quoted fields are not
+/// treated as separators.
+fn parse_csv_line(line: &str) -> Vec<String> {
+    let mut fields = Vec::new();
+    let mut current = String::new();
+    let mut in_quotes = false;
+    let mut chars = line.chars().peekable();
+
+    while let Some(ch) = chars.next() {
+        if in_quotes {
+            if ch == '"' {
+                if chars.peek() == Some(&'"') {
+                    // Escaped quote
+                    current.push('"');
+                    chars.next();
+                } else {
+                    in_quotes = false;
+                }
+            } else {
+                current.push(ch);
+            }
+        } else if ch == '"' {
+            in_quotes = true;
+        } else if ch == ',' {
+            fields.push(current.trim().to_string());
+            current = String::new();
+        } else {
+            current.push(ch);
+        }
+    }
+    fields.push(current.trim().to_string());
+    fields
+}
+
+/// Parse a Raindrop.io CSV export file into a list of imported notes.
+///
+/// Raindrop CSV columns (in order):
+/// `id, title, note, excerpt, url, folder, tags, created, cover, highlights, favorite`
+///
+/// Field mapping:
+/// - `title` -> title
+/// - `url` -> url
+/// - `tags` -> tags (already comma-separated, wrapped in extra quotes)
+/// - `excerpt` -> description
+/// - `created` -> created_at (ISO 8601)
+pub fn parse_raindrop_csv(content: &str) -> Vec<ImportedNote> {
+    let mut notes = Vec::new();
+
+    let mut lines = content.lines();
+
+    // Skip the header line
+    if lines.next().is_none() {
+        return notes;
+    }
+
+    for line in lines {
+        if line.trim().is_empty() {
+            continue;
+        }
+
+        let fields = parse_csv_line(line);
+
+        // We need at least 8 columns (up to `created` at index 7)
+        if fields.len() < 8 {
+            continue;
+        }
+
+        let title = fields[1].clone();
+        let excerpt = fields[3].clone();
+        let url = fields[4].clone();
+        let tags = fields[6].clone();
+        let created_raw = &fields[7];
+
+        if url.is_empty() {
+            continue;
+        }
+
+        // Parse ISO 8601 created timestamp
+        let created_at = chrono::DateTime::parse_from_rfc3339(created_raw)
+            .ok()
+            .map(|dt| dt.format("%Y-%m-%d %H:%M:%S").to_string());
+
+        notes.push(ImportedNote {
+            title,
+            url,
+            tags,
+            description: excerpt,
+            created_at,
+        });
+    }
+
+    notes
+}
+
+// ---------------------------------------------------------------------------
 // Import into database
 // ---------------------------------------------------------------------------
 
@@ -369,6 +470,64 @@ mod tests {
     }
 
     #[test]
+    fn test_parse_raindrop_csv() {
+        let csv = r#"id,title,note,excerpt,url,folder,tags,created,cover,highlights,favorite
+1001,"Rust by Example","","Learn Rust with examples","https://doc.rust-lang.org/rust-by-example/","tutorials","rust, programming","2024-03-15T09:30:00Z","","",false
+1002,"Hacker News","my note","Tech news aggregator","https://news.ycombinator.com/","news","","2024-04-01T12:00:00Z","","",true
+1003,"Quoted ""Title""","","An excerpt with, commas","https://example.com/quoted","misc","tag1, ""tag2""","2024-05-10T08:00:00Z","","",false"#;
+
+        let notes = parse_raindrop_csv(csv);
+        assert_eq!(notes.len(), 3);
+
+        assert_eq!(notes[0].title, "Rust by Example");
+        assert_eq!(notes[0].url, "https://doc.rust-lang.org/rust-by-example/");
+        assert_eq!(notes[0].tags, "rust, programming");
+        assert_eq!(notes[0].description, "Learn Rust with examples");
+        assert_eq!(
+            notes[0].created_at.as_deref(),
+            Some("2024-03-15 09:30:00")
+        );
+
+        assert_eq!(notes[1].title, "Hacker News");
+        assert_eq!(notes[1].url, "https://news.ycombinator.com/");
+        assert_eq!(notes[1].tags, "");
+        assert_eq!(notes[1].description, "Tech news aggregator");
+
+        assert_eq!(notes[2].title, "Quoted \"Title\"");
+        assert_eq!(notes[2].description, "An excerpt with, commas");
+    }
+
+    #[test]
+    fn test_parse_raindrop_csv_empty() {
+        let csv = "id,title,note,excerpt,url,folder,tags,created,cover,highlights,favorite\n";
+        let notes = parse_raindrop_csv(csv);
+        assert!(notes.is_empty());
+    }
+
+    #[test]
+    fn test_parse_raindrop_csv_header_only() {
+        let csv = "id,title,note,excerpt,url,folder,tags,created,cover,highlights,favorite";
+        let notes = parse_raindrop_csv(csv);
+        assert!(notes.is_empty());
+    }
+
+    #[test]
+    fn test_parse_raindrop_csv_skip_empty_url() {
+        let csv = "id,title,note,excerpt,url,folder,tags,created,cover,highlights,favorite\n1001,\"Title\",\"\",\"desc\",\"\",\"folder\",\"tag\",\"2024-01-01T00:00:00Z\",\"\",\"\",false";
+        let notes = parse_raindrop_csv(csv);
+        assert!(notes.is_empty());
+    }
+
+    #[test]
+    fn test_parse_csv_line() {
+        let fields = parse_csv_line(r#"1,"hello, world","",test"#);
+        assert_eq!(fields, vec!["1", "hello, world", "", "test"]);
+
+        let fields = parse_csv_line(r#""a ""b"" c",simple"#);
+        assert_eq!(fields, vec!["a \"b\" c", "simple"]);
+    }
+
+    #[test]
     fn test_import_to_db() {
         let conn = Connection::open_in_memory().unwrap();
         conn.execute_batch(
@@ -381,7 +540,8 @@ mod tests {
                 comments TEXT NOT NULL DEFAULT '',
                 annotations BLOB NOT NULL DEFAULT x'',
                 created_at TEXT NOT NULL DEFAULT '',
-                is_public BOOLEAN NOT NULL DEFAULT 1
+                is_public BOOLEAN NOT NULL DEFAULT 1,
+                metadata TEXT NOT NULL DEFAULT ''
             );
             CREATE TABLE meta (meta_key TEXT PRIMARY KEY, meta_value TEXT);
             INSERT INTO meta VALUES ('version', '0.7.0');",

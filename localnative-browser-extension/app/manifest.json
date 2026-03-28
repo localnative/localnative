@@ -15,6 +15,9 @@
     "activeTab",
     "tabs"
   ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; connect-src 'none'; object-src 'none'"
+  },
   "applications": {
     "gecko": {
       "id": "localnative@example.org",

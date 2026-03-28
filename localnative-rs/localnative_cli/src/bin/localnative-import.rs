@@ -31,7 +31,7 @@ fn main() {
     let matches = Command::new("localnative-import")
         .about("Import notes from external services")
         .arg(
-            arg!(-f --format <FORMAT> "Import format: pocket or omnivore")
+            arg!(-f --format <FORMAT> "Import format: pocket, omnivore, or raindrop")
                 .required(true),
         )
         .arg(
@@ -60,9 +60,10 @@ fn main() {
                 std::process::exit(1);
             }
         },
+        "raindrop" => import::parse_raindrop_csv(&content),
         _ => {
             eprintln!(
-                "Unknown format '{}'. Supported formats: pocket, omnivore",
+                "Unknown format '{}'. Supported formats: pocket, omnivore, raindrop",
                 format
             );
             std::process::exit(1);

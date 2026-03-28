@@ -1,6 +1,6 @@
 use iced::widget::Text;
 use iced::widget::{
-    button, column, horizontal_space, qr_code, row, text, text_input, tooltip, QRCode,
+    button, column, qr_code, row, text, text_input, tooltip, QRCode, Space,
 };
 use iced::Element;
 use iced::Task;
@@ -143,22 +143,21 @@ impl SyncView {
             iced::widget::tooltip::Position::Bottom,
         );
 
-        let port_input = NumberInput::new(*self.borrow_port(), 0..=u16::MAX, Message::PortInput)
-            .padding(0.)
-            .on_submit(Message::IpAddrVerify);
+        let port_input = NumberInput::new(self.borrow_port(), 0..=u16::MAX, Message::PortInput)
+            .padding(0.);
 
         let clear_button = button(IconItem::Clear)
             .padding(0)
             .on_press(Message::ClearAddrInput);
 
         let ip_input_row = row![
-            horizontal_space(),
+            Space::new().width(iced::Length::Fill),
             text(tr!("input-ip")),
             ip_tip,
             text(":"),
             port_input,
             clear_button,
-            horizontal_space()
+            Space::new().width(iced::Length::Fill)
         ];
 
         // --- Peer discovery section ---

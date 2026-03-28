@@ -37,12 +37,13 @@ tinyfiledialogs = "3"
 ouroboros = "0.18"
 palette = "0.7"
 chrono = { version = "0.4", default-features = false, features = ["clock"] }
-plotters-iced = "0.11"
+# plotters-iced removed: incompatible with iced 0.14 (last release 0.11 targets iced 0.13)
+# Chart rendering reimplemented locally in localnative_iced/src/plotters_bridge.rs
 plotters = { version = "0.3", features = ["histogram"] }
 rand = "0.9"
-iced_aw = { version = "0.11", default-features = false, features = ["wrap", "number_input", "card"] }
-iced = { version = "0.13", features = ["canvas", "qr_code", "tokio"] }
-iced_runtime = { version = "0.13" }
+iced_aw = { version = "0.13", default-features = false, features = ["wrap", "number_input", "card"] }
+iced = { version = "0.14", features = ["canvas", "qr_code", "tokio"] }
+iced_runtime = { version = "0.14" }
 winreg = "0.55"
 jni = { version = "0.21", default-features = false }
 hex = "0.4"

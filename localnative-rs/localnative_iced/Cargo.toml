@@ -27,9 +27,10 @@ anyhow = { workspace = true }
 ouroboros = { workspace = true }
 palette = { workspace = true }
 chrono = { workspace = true, default-features = false }
-plotters-iced = { workspace = true }
+# plotters-iced removed: incompatible with iced 0.14; replaced by local plotters_bridge module
 plotters = { workspace = true, features = ["histogram"] }
-iced_runtime = { workspace = true }
+plotters-backend = "0.3"
+# iced_runtime not directly used in source; iced re-exports what's needed
 rusqlite = { workspace = true }
 rand = { workspace = true, optional = true }
 iced_aw = { workspace = true, default-features = false, features = [

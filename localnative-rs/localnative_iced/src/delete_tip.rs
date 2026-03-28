@@ -1,5 +1,5 @@
 use iced::{
-    widget::{button, center, container, horizontal_space, mouse_area, opaque, row, stack, text},
+    widget::{button, center, container, mouse_area, opaque, row, stack, text, Space},
     Element,
 };
 use iced_aw::Card;
@@ -66,10 +66,10 @@ impl DeleteTip {
         )
         .foot(
             row!(
-                horizontal_space(),
+                Space::new().width(iced::Length::Fill),
                 ok_button,
                 cancel_button,
-                horizontal_space(),
+                Space::new().width(iced::Length::Fill),
             )
             .spacing(10),
         )

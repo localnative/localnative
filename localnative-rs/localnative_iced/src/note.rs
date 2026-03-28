@@ -1,5 +1,5 @@
 use iced::{
-    widget::{button, column, container, horizontal_space, row, text, QRCode, Space},
+    widget::{button, column, container, row, text, QRCode, Space},
     Element,
     Length::FillPortion,
 };
@@ -74,7 +74,7 @@ impl NoteView {
         .spacing(5);
 
         let wrap = self.tags.iter().fold(
-            iced_aw::Wrap::new().spacing(5.).push(info_row),
+            iced_aw::Wrap::new().spacing(5.).push(Element::from(info_row)),
             |wrap, tag| {
                 let tag_button = button(text(&tag.name))
                     .style(crate::style::tag_style)
@@ -86,7 +86,7 @@ impl NoteView {
 
         let mut col = column![wrap];
         if let Some(qrcode) = qrcode_widget {
-            col = col.push(row![horizontal_space(), qrcode, horizontal_space()]);
+            col = col.push(row![Space::new().width(iced::Length::Fill), qrcode, Space::new().width(iced::Length::Fill)]);
         }
         if !self.note.title.is_empty() {
             col = col.push(text(&self.note.title));
@@ -101,9 +101,9 @@ impl NoteView {
             col = col.push(text(&self.note.comments));
         }
         col = col.push(row![
-            Space::with_width(FillPortion(12)),
+            Space::new().width(FillPortion(12)),
             delete_button,
-            Space::with_width(FillPortion(1))
+            Space::new().width(FillPortion(1))
         ]);
 
         container(col)

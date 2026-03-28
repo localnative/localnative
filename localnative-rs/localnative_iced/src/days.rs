@@ -1,4 +1,4 @@
-use iced::widget::{button, container, horizontal_space, Column, Row};
+use iced::widget::{button, container, Column, Row, Space};
 use iced::Element;
 use iced::Length;
 
@@ -71,7 +71,7 @@ impl DateView {
         button: button::Button<'button_lifetime, Message>,
     ) -> Row<'self_lifetime, Message> {
         let mut ctrl_row = Row::new();
-        ctrl_row = ctrl_row.push(horizontal_space());
+        ctrl_row = ctrl_row.push(Space::new().width(iced::Length::Fill));
         ctrl_row = ctrl_row.push(button);
         ctrl_row
     }
@@ -83,7 +83,7 @@ impl DateView {
         let mut content = Column::new();
         content = content.push(ctrl_row);
         if self.is_show {
-            content = content.push(plotters_iced::ChartWidget::new(&self.chart));
+            content = content.push(iced::Element::from(crate::plotters_bridge::ChartWidget::new(&self.chart)));
         }
         content
     }

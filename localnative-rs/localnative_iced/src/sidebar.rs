@@ -1,5 +1,5 @@
 use iced::{
-    widget::{button, column, text, vertical_space},
+    widget::{button, column, text, Space},
     Element, Task,
 };
 
@@ -32,7 +32,7 @@ pub enum Message {
 }
 
 impl Sidebar {
-    pub const SIDEBAR_ICON_SIZE: u16 = 32;
+    pub const SIDEBAR_ICON_SIZE: f32 = 32.0;
 
     pub fn view(&self, theme: &ThemeKind) -> Element<'_, Message> {
         let search_page = self.create_button(IconItem::Note, tr!("notes"), Message::TurnSearchPage);
@@ -46,7 +46,7 @@ impl Sidebar {
         column![
             search_page,
             sync_view,
-            vertical_space(),
+            Space::new().height(iced::Length::Fill),
             theme_button,
             settings
         ]

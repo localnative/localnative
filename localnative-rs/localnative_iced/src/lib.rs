@@ -1,6 +1,7 @@
 mod chart;
 mod config;
 mod days;
+mod plotters_bridge;
 mod db_operations;
 mod delete_tip;
 mod icons;
@@ -25,7 +26,7 @@ use delete_tip::DeleteTip;
 use iced::{event, window, Font, Size};
 use iced::{widget::container, Task};
 use iced::{
-    widget::{column, horizontal_space, row, text, vertical_space},
+    widget::{column, row, text, Space},
     Theme,
 };
 use localnative_core::db::{init_db, models::QueryResult, DbError};
@@ -442,20 +443,11 @@ pub fn run_app() -> iced::Result {
         Font::with_name("Arial Unicode MS")
     };
 
-    iced::application("Local Native", LocalNative::update, LocalNative::view)
-        .subscription(LocalNative::subscription)
-        .theme(LocalNative::theme)
-        .window(iced::window::Settings {
-            size: Size::new(1080., 720.),
-            icon: logo(),
-            exit_on_close_request: false,
-            ..Default::default()
-        })
-        .default_font(default_font)
-        .run_with(move || {
+    iced::application(
+        move || {
             (
                 LocalNative {
-                    config,
+                    config: config.clone(),
                     state: State::Loading(String::new()),
                 },
                 Task::batch([
@@ -480,7 +472,21 @@ pub fn run_app() -> iced::Result {
                     },
                 ]),
             )
-        })
+        },
+        LocalNative::update,
+        LocalNative::view,
+    )
+    .title("Local Native")
+    .subscription(LocalNative::subscription)
+    .theme(LocalNative::theme)
+    .window(iced::window::Settings {
+        size: Size::new(1080., 720.),
+        icon: logo(),
+        exit_on_close_request: false,
+        ..Default::default()
+    })
+    .default_font(default_font)
+    .run()
 }
 
 impl LocalNative {
@@ -552,18 +558,18 @@ impl LocalNative {
 
     fn loading_view<'a>(&'a self, info: &'a String) -> iced::Element<'a, Message> {
         column![
-            vertical_space(),
+            Space::new().height(iced::Length::Fill),
             row![
-                horizontal_space(),
+                Space::new().width(iced::Length::Fill),
                 if info.is_empty() {
                     text("Loading...")
                 } else {
                     text(info)
                 }
                 .size(50),
-                horizontal_space()
+                Space::new().width(iced::Length::Fill)
             ],
-            vertical_space(),
+            Space::new().height(iced::Length::Fill),
         ]
         .into()
     }

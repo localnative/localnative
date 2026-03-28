@@ -1,8 +1,8 @@
-use iced::widget::{scrollable, Column, Row};
+use iced::widget::{Column, Row};
 use iced::{
     widget::{
-        button, column, container, horizontal_space, row, scrollable::Scrollbar, text, text_input,
-        vertical_space,
+        button, column, container, row, scrollable, text, text_input,
+        Space,
     },
     Element, Pixels, Task,
 };
@@ -104,7 +104,7 @@ impl SearchPage {
 
     fn create_tags_container(&self) -> container::Container<'_, Message> {
         container(scrollable(self.tags.iter().fold(
-            iced_aw::Wrap::new().spacing(5.).push(text(tr!("tags"))),
+            iced_aw::Wrap::new().spacing(5.).push(Element::from(text(tr!("tags")))),
             |tags, tag| tags.push(tag.view().map(Message::Tag)),
         )))
         .width(iced::Length::FillPortion(2))
@@ -139,11 +139,11 @@ impl SearchPage {
         ));
 
         row![
-            horizontal_space(),
+            Space::new().width(iced::Length::Fill),
             pre_button,
             page_info,
             next_button,
-            horizontal_space()
+            Space::new().width(iced::Length::Fill)
         ]
     }
 
@@ -170,7 +170,7 @@ impl SearchPage {
                     .padding(12.),
             )
             .direction(scrollable::Direction::Vertical(
-                Scrollbar::default().width(10).scroller_width(10),
+                scrollable::Scrollbar::default().width(10).scroller_width(10),
             )),
         )
         .height(iced::Length::FillPortion(8));
@@ -192,9 +192,9 @@ impl SearchPage {
             tr!("not-found")
         };
         let tip = container(column![
-            vertical_space(),
-            row![horizontal_space(), text(tip).size(50), horizontal_space()],
-            vertical_space()
+            Space::new().height(iced::Length::Fill),
+            row![Space::new().width(iced::Length::Fill), text(tip).size(50), Space::new().width(iced::Length::Fill)],
+            Space::new().height(iced::Length::Fill)
         ])
         .height(iced::Length::FillPortion(8));
 

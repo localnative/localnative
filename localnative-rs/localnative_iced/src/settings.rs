@@ -1,6 +1,6 @@
 use iced::{
     widget::{
-        button, center, checkbox, column, container, horizontal_space, mouse_area, opaque, row,
+        button, center, checkbox, column, container, mouse_area, opaque, row,
         stack, text, text_input, Space, Text,
     },
     Element,
@@ -76,7 +76,7 @@ impl Settings {
 
         let ok_button = button(text(tr!("ok"))).on_press(Message::Save);
         let cancel_button = button(text(tr!("cancel"))).on_press(Message::Cancel);
-        let disable_delete_tip = checkbox("", config.disable_delete_tip)
+        let disable_delete_tip = checkbox(config.disable_delete_tip)
             .spacing(0)
             .on_toggle(Message::DisableTip);
         let try_fix_host = button(text(tr!("try-fix-host"))).on_press(Message::TryFixHost);
@@ -102,7 +102,7 @@ impl Settings {
         .padding(3)
         .width(Shrink);
 
-        let limit_input = NumberInput::new(config.limit, 5..=1000, Message::LimitChanged)
+        let limit_input = NumberInput::new(&config.limit, 5..=1000, Message::LimitChanged)
             .step(1)
             .padding(0.);
 
@@ -117,25 +117,25 @@ impl Settings {
         let body = column![
             row![
                 text(tr!("disable-delete-tip")),
-                horizontal_space(),
+                Space::new().width(iced::Length::Fill),
                 disable_delete_tip
             ],
             column![
                 text(tr!("lanuage")),
-                Space::with_width(Shrink),
+                Space::new().width(Shrink),
                 language_selector
             ],
             column![
                 text(tr!("light-theme")),
-                Space::with_width(Shrink),
+                Space::new().width(Shrink),
                 light_theme_selector
             ],
             column![
                 text(tr!("dark-theme")),
-                Space::with_width(Shrink),
+                Space::new().width(Shrink),
                 dark_theme_selector
             ],
-            row![text(tr!("limit")), horizontal_space(), limit_input],
+            row![text(tr!("limit")), Space::new().width(iced::Length::Fill), limit_input],
             row![text(tr!("allowed-origins")), allowed_origins_input],
             try_fix_host
         ]
@@ -147,10 +147,10 @@ impl Settings {
             Card::new(Text::new(tr!("settings")), body)
                 .foot(
                     row![
-                        horizontal_space(),
+                        Space::new().width(iced::Length::Fill),
                         ok_button,
                         cancel_button,
-                        horizontal_space(),
+                        Space::new().width(iced::Length::Fill),
                     ]
                     .spacing(10)
                     .align_y(iced::Alignment::Center),

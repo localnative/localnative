@@ -2,7 +2,7 @@ use std::{cell::RefCell, collections::BTreeMap, fmt::Debug, iter::once, ops::Der
 
 use chrono::{Datelike, NaiveDate, Utc};
 use iced::Point;
-use iced::{mouse::Cursor, widget::canvas};
+use iced::mouse::Cursor;
 use localnative_core::db::models::Day;
 use plotters::{
     coord::{
@@ -15,7 +15,7 @@ use plotters::{
     },
     style::{Color, FontTransform, IntoFont, ShapeStyle, TextStyle},
 };
-use plotters_iced::{Chart, DrawingBackend};
+use crate::plotters_bridge::{Chart, ChartBuilder, PlottersDrawingBackend as DrawingBackend};
 
 use crate::{config::ThemeType, days::Message, tr};
 
@@ -184,7 +184,7 @@ impl ChartView {
 
     fn process_chart<DB, X>(
         &self,
-        mut builder: plotters_iced::ChartBuilder<DB>,
+        mut builder: ChartBuilder<DB>,
         state: &State,
         data: &[Day],
         x_spec: X,
@@ -431,10 +431,10 @@ impl State {
 impl Chart<Message> for DayChart {
     type State = State;
 
-    fn build_chart<DB: plotters_iced::DrawingBackend>(
+    fn build_chart<DB: DrawingBackend>(
         &self,
         state: &Self::State,
-        builder: plotters_iced::ChartBuilder<DB>,
+        builder: ChartBuilder<DB>,
     ) {
         let will_draw = self.will_draw(state);
         let range = will_draw.min_date..will_draw.max_date;
@@ -472,7 +472,7 @@ impl Chart<Message> for DayChart {
     fn update(
         &self,
         state: &mut Self::State,
-        event: iced::widget::canvas::Event,
+        event: &iced::Event,
         bounds: iced::Rectangle,
         cursor: Cursor,
     ) -> (iced::event::Status, Option<Message>) {
@@ -480,7 +480,7 @@ impl Chart<Message> for DayChart {
             state.cursor_position = cursor.position_in(bounds);
 
             match event {
-                canvas::Event::Mouse(mouse) if bounds.contains(point) => match mouse {
+                iced::Event::Mouse(mouse) if bounds.contains(point) => match mouse {
                     iced::mouse::Event::ButtonPressed(iced::mouse::Button::Left) => {
                         state.pending = state.cursor_position;
                     }
