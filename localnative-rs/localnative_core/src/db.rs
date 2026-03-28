@@ -1,7 +1,7 @@
 // db.rs
 pub use crate::error::{DatabaseError, DbError, DbResult, ValidationError};
 use models::Cmd;
-pub use models::Note;
+pub use models::{Note, SearchResult};
 use rusqlite::Connection;
 
 /// Type alias for the r2d2 connection pool backed by SQLite.
@@ -129,6 +129,14 @@ pub mod models {
         pub created_at: String,
         pub is_public: bool,
         pub metadata: String,
+    }
+
+    /// A search result wrapping a [`Note`] with optional FTS5 snippet highlights.
+    #[derive(Serialize, Deserialize, Debug, Default, Clone)]
+    pub struct SearchResult {
+        pub note: Note,
+        pub title_snippet: Option<String>,
+        pub description_snippet: Option<String>,
     }
 
     #[derive(Serialize, Deserialize, Debug)]
@@ -796,6 +804,57 @@ pub mod queries {
             .query_map(rusqlite::params![fts_query], map_note)?
             .collect::<Result<Vec<_>, rusqlite::Error>>()?;
         Ok(notes)
+    }
+
+    /// Search with FTS5 snippet highlights for matched terms.
+    ///
+    /// Returns [`SearchResult`] with `<b>`/`</b>` markers around matched
+    /// terms in title and description snippets. Falls back to plain select
+    /// with `None` snippets when the query is empty.
+    pub fn search_with_snippets(
+        conn: &Connection,
+        query: &str,
+        limit: u32,
+        offset: u32,
+    ) -> DbResult<Vec<models::SearchResult>> {
+        if query.is_empty() {
+            let notes = select(conn, limit, offset)?;
+            return Ok(notes
+                .into_iter()
+                .map(|note| models::SearchResult {
+                    note,
+                    title_snippet: None,
+                    description_snippet: None,
+                })
+                .collect());
+        }
+
+        let fts_query = make_fts_query(query);
+        let sql = "SELECT note.rowid, note.uuid4, note.title, note.url, note.tags,
+             note.description, note.comments,
+             hex(note.annotations) as annotations, note.created_at, note.is_public, note.metadata,
+             snippet(note_fts, 0, '<b>', '</b>', '...', 32) as title_snippet,
+             snippet(note_fts, 3, '<b>', '</b>', '...', 32) as description_snippet
+             FROM note
+             JOIN note_fts ON note.rowid = note_fts.rowid
+             WHERE note_fts MATCH ?1
+             ORDER BY bm25(note_fts, 10.0, 5.0, 3.0, 1.0)
+             LIMIT ?2 OFFSET ?3";
+
+        let mut stmt = conn.prepare(sql)?;
+        let results = stmt
+            .query_map(rusqlite::params![fts_query, limit, offset], |row| {
+                let note = map_note(row)?;
+                let title_snippet: Option<String> = row.get("title_snippet")?;
+                let description_snippet: Option<String> = row.get("description_snippet")?;
+                Ok(models::SearchResult {
+                    note,
+                    title_snippet: title_snippet.filter(|s| !s.is_empty()),
+                    description_snippet: description_snippet.filter(|s| !s.is_empty()),
+                })
+            })?
+            .collect::<Result<Vec<_>, rusqlite::Error>>()?;
+        Ok(results)
     }
 
     /// Build an FTS5 match expression from a user query string.
