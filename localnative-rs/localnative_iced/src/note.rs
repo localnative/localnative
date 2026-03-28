@@ -1,7 +1,7 @@
 use iced::{
-    widget::{button, column, container, row, text, QRCode, Space},
     Element,
     Length::FillPortion,
+    widget::{QRCode, Space, button, column, container, row, text},
 };
 use localnative_core::db::models::Note;
 
@@ -74,7 +74,9 @@ impl NoteView {
         .spacing(5);
 
         let wrap = self.tags.iter().fold(
-            iced_aw::Wrap::new().spacing(5.).push(Element::from(info_row)),
+            iced_aw::Wrap::new()
+                .spacing(5.)
+                .push(Element::from(info_row)),
             |wrap, tag| {
                 let tag_button = button(text(&tag.name))
                     .style(crate::style::tag_style)
@@ -86,7 +88,11 @@ impl NoteView {
 
         let mut col = column![wrap];
         if let Some(qrcode) = qrcode_widget {
-            col = col.push(row![Space::new().width(iced::Length::Fill), qrcode, Space::new().width(iced::Length::Fill)]);
+            col = col.push(row![
+                Space::new().width(iced::Length::Fill),
+                qrcode,
+                Space::new().width(iced::Length::Fill)
+            ]);
         }
         if !self.note.title.is_empty() {
             col = col.push(text(&self.note.title));

@@ -9,8 +9,7 @@ use iced::widget::canvas;
 use iced::{Element, Length, Rectangle, Size, Theme};
 use plotters::drawing::IntoDrawingArea;
 use plotters_backend::{
-    BackendColor, BackendCoord, BackendStyle, BackendTextStyle, DrawingBackend,
-    DrawingErrorKind,
+    BackendColor, BackendCoord, BackendStyle, BackendTextStyle, DrawingBackend, DrawingErrorKind,
 };
 
 pub use plotters::chart::ChartBuilder;
@@ -143,11 +142,7 @@ impl DrawingBackend for IcedBackend<'_> {
         Ok(())
     }
 
-    fn draw_pixel(
-        &mut self,
-        point: BackendCoord,
-        color: BackendColor,
-    ) -> BackendResult {
+    fn draw_pixel(&mut self, point: BackendCoord, color: BackendColor) -> BackendResult {
         if color.alpha == 0.0 {
             return Ok(());
         }

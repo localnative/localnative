@@ -1,21 +1,21 @@
 use std::{cell::RefCell, collections::BTreeMap, fmt::Debug, iter::once, ops::Deref};
 
+use crate::plotters_bridge::{Chart, ChartBuilder, PlottersDrawingBackend as DrawingBackend};
 use chrono::{Datelike, NaiveDate, Utc};
 use iced::Point;
 use iced::mouse::Cursor;
 use localnative_core::db::models::Day;
 use plotters::{
     coord::{
+        ReverseCoordTranslate,
         ranged1d::{ReversibleRanged, ValueFormatter},
         types::{Monthly, RangedCoordi64, Yearly},
-        ReverseCoordTranslate,
     },
     prelude::{
         Cartesian2d, CoordTranslate, DiscreteRanged, IntoMonthly, IntoYearly, Ranged, RangedDate,
     },
     style::{Color, FontTransform, IntoFont, ShapeStyle, TextStyle},
 };
-use crate::plotters_bridge::{Chart, ChartBuilder, PlottersDrawingBackend as DrawingBackend};
 
 use crate::{config::ThemeType, days::Message, tr};
 
@@ -431,11 +431,7 @@ impl State {
 impl Chart<Message> for DayChart {
     type State = State;
 
-    fn build_chart<DB: DrawingBackend>(
-        &self,
-        state: &Self::State,
-        builder: ChartBuilder<DB>,
-    ) {
+    fn build_chart<DB: DrawingBackend>(&self, state: &Self::State, builder: ChartBuilder<DB>) {
         let will_draw = self.will_draw(state);
         let range = will_draw.min_date..will_draw.max_date;
         match &will_draw.state {

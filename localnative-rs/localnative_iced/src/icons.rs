@@ -1,5 +1,5 @@
 use iced::Font;
-use iced::{widget::Text, Element};
+use iced::{Element, widget::Text};
 
 pub const ICONS: Font = Font::with_name("remixicon");
 

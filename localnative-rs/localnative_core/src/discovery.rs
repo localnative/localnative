@@ -58,11 +58,14 @@ pub fn start_advertising(port: u16) -> Result<ServiceDaemon, mdns_sd::Error> {
 
 /// Stop advertising and shut down the mDNS daemon gracefully.
 pub fn stop_advertising(daemon: ServiceDaemon) {
-    match daemon.shutdown() { Err(e) => {
-        tracing::warn!("mDNS: error during shutdown: {}", e);
-    } _ => {
-        tracing::info!("mDNS: stopped advertising");
-    }}
+    match daemon.shutdown() {
+        Err(e) => {
+            tracing::warn!("mDNS: error during shutdown: {}", e);
+        }
+        _ => {
+            tracing::info!("mDNS: stopped advertising");
+        }
+    }
 }
 
 /// Scan the LAN for other Local Native instances.
@@ -85,10 +88,13 @@ pub async fn discover_peers(
             break;
         }
 
-        match tokio::time::timeout(remaining, tokio::task::spawn_blocking({
-            let receiver = receiver.clone();
-            move || receiver.recv_timeout(std::time::Duration::from_millis(500))
-        }))
+        match tokio::time::timeout(
+            remaining,
+            tokio::task::spawn_blocking({
+                let receiver = receiver.clone();
+                move || receiver.recv_timeout(std::time::Duration::from_millis(500))
+            }),
+        )
         .await
         {
             Ok(Ok(Ok(event))) => match event {
@@ -99,8 +105,7 @@ pub async fn discover_peers(
                         .map(|v| v.val_str().to_string())
                         .unwrap_or_default();
 
-                    let addresses: Vec<IpAddr> =
-                        info.get_addresses().iter().copied().collect();
+                    let addresses: Vec<IpAddr> = info.get_addresses().iter().copied().collect();
 
                     if !addresses.is_empty() {
                         let peer = PeerInfo {

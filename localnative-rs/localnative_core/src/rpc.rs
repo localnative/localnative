@@ -1,4 +1,5 @@
 use crate::db::{
+    Pool,
     models::Note,
     sync::{
         diff_uuid4_from_server, diff_uuid4_to_server, get_meta_version, get_note_by_uuid4, insert,
@@ -6,15 +7,14 @@ use crate::db::{
     },
 };
 use crate::error::{RpcError, ValidationError};
-use futures::{future, FutureExt, StreamExt};
+use futures::{FutureExt, StreamExt, future};
 use governor::{Quota, RateLimiter};
-use rusqlite::Connection;
 use std::net::SocketAddr;
 use std::num::NonZeroU32;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use tarpc::client;
-use tarpc::server::incoming::Incoming as _;
 use tarpc::server::Channel as _;
+use tarpc::server::incoming::Incoming as _;
 use tarpc::{context, serde_transport::tcp, server::BaseChannel};
 use tokio_util::sync::CancellationToken;
 use uuid::Uuid;
@@ -41,7 +41,10 @@ fn validate_note(note: &Note) -> Result<(), RpcError> {
         return Err(ValidationError::FieldTooLarge { field: "tags" }.into());
     }
     if note.description.len() > MAX_NOTE_FIELD_SIZE {
-        return Err(ValidationError::FieldTooLarge { field: "description" }.into());
+        return Err(ValidationError::FieldTooLarge {
+            field: "description",
+        }
+        .into());
     }
     if note.comments.len() > MAX_NOTE_FIELD_SIZE {
         return Err(ValidationError::FieldTooLarge { field: "comments" }.into());
@@ -75,7 +78,7 @@ type SharedRateLimiter = Arc<
 
 #[derive(Clone)]
 struct LocalNativeServer {
-    pool: Arc<Mutex<Connection>>,
+    pool: Pool,
     stop_token: Option<CancellationToken>,
     /// General rate limiter: 100 requests per second across all methods.
     general_limiter: SharedRateLimiter,
@@ -106,7 +109,10 @@ impl LocalNative for LocalNativeServer {
     ) -> Result<bool, RpcError> {
         self.check_general_limit()?;
         let meta_version = {
-            let conn = self.pool.lock().unwrap_or_else(|e| e.into_inner());
+            let conn = self
+                .pool
+                .get()
+                .map_err(|e| RpcError::PoolError(e.to_string()))?;
             get_meta_version(&conn)?
         };
         Ok(version == meta_version)
@@ -119,7 +125,10 @@ impl LocalNative for LocalNativeServer {
     ) -> Result<Vec<String>, RpcError> {
         self.check_general_limit()?;
         let diff_uuid4 = {
-            let conn = self.pool.lock().unwrap_or_else(|e| e.into_inner());
+            let conn = self
+                .pool
+                .get()
+                .map_err(|e| RpcError::PoolError(e.to_string()))?;
             diff_uuid4_to_server(&conn, candidates)?
         };
         Ok(diff_uuid4)
@@ -132,7 +141,10 @@ impl LocalNative for LocalNativeServer {
     ) -> Result<Vec<String>, RpcError> {
         self.check_general_limit()?;
         let diff_uuid4 = {
-            let conn = self.pool.lock().unwrap_or_else(|e| e.into_inner());
+            let conn = self
+                .pool
+                .get()
+                .map_err(|e| RpcError::PoolError(e.to_string()))?;
             diff_uuid4_from_server(&conn, candidates)?
         };
         Ok(diff_uuid4)
@@ -141,7 +153,10 @@ impl LocalNative for LocalNativeServer {
     async fn send_note(self, _: context::Context, note: Note) -> Result<bool, RpcError> {
         self.check_data_limit()?;
         validate_note(&note)?;
-        let conn = self.pool.lock().unwrap_or_else(|e| e.into_inner());
+        let conn = self
+            .pool
+            .get()
+            .map_err(|e| RpcError::PoolError(e.to_string()))?;
         insert(&conn, &note)?;
         Ok(true)
     }
@@ -150,7 +165,10 @@ impl LocalNative for LocalNativeServer {
         self.check_data_limit()?;
         validate_uuid4(&uuid4)?;
         let note = {
-            let conn = self.pool.lock().unwrap_or_else(|e| e.into_inner());
+            let conn = self
+                .pool
+                .get()
+                .map_err(|e| RpcError::PoolError(e.to_string()))?;
             get_note_by_uuid4(&conn, &uuid4)?
         };
         Ok(note)
@@ -174,7 +192,7 @@ impl LocalNative for LocalNativeServer {
 /// Cancel the returned future by triggering the `stop_token` (if provided).
 pub async fn setup_server(
     addr: SocketAddr,
-    pool: Arc<Mutex<Connection>>,
+    pool: Pool,
     stop_token: Option<CancellationToken>,
 ) -> Result<(), RpcError> {
     let listener = tcp::listen(addr, tarpc::tokio_serde::formats::Bincode::default).await?;
@@ -262,22 +280,17 @@ fn validate_client_addr(addr: &SocketAddr) -> Result<(), RpcError> {
 
 fn validate_server_addr(addr: &SocketAddr) -> Result<(), RpcError> {
     if addr.port() == 0 {
-        return Err(
-            ValidationError::Other("Server port must not be 0".to_string()).into(),
-        );
+        return Err(ValidationError::Other("Server port must not be 0".to_string()).into());
     }
     if addr.ip().is_unspecified() {
-        tracing::warn!(%addr, "server binding to all interfaces — ensure this is intentional");
+        tracing::warn!(%addr, "server binding to all interfaces -- ensure this is intentional");
     }
     Ok(())
 }
 
-async fn check_version_match(
-    client: &LocalNativeClient,
-    pool: &Arc<Mutex<Connection>>,
-) -> Result<bool, RpcError> {
+async fn check_version_match(client: &LocalNativeClient, pool: &Pool) -> Result<bool, RpcError> {
     let version = {
-        let conn = pool.lock().unwrap_or_else(|e| e.into_inner());
+        let conn = pool.get().map_err(|e| RpcError::PoolError(e.to_string()))?;
         get_meta_version(&conn)?
     };
     let is_version_match = client
@@ -291,10 +304,8 @@ async fn check_version_match(
 }
 
 /// Push local notes that the server does not yet have.
-pub async fn run_sync_to_server(
-    addr: &SocketAddr,
-    pool: &Arc<Mutex<Connection>>,
-) -> Result<(), RpcError> {
+/// Returns the number of notes sent.
+pub async fn run_sync_to_server(addr: &SocketAddr, pool: &Pool) -> Result<usize, RpcError> {
     let transport =
         tarpc::serde_transport::tcp::connect(addr, tarpc::tokio_serde::formats::Bincode::default)
             .await?;
@@ -303,31 +314,30 @@ pub async fn run_sync_to_server(
     check_version_match(&client, pool).await?;
 
     let candidates = {
-        let conn = pool.lock().unwrap_or_else(|e| e.into_inner());
+        let conn = pool.get().map_err(|e| RpcError::PoolError(e.to_string()))?;
         next_uuid4_candidates(&conn)?
     };
     let diff_uuid4 = client
         .diff_uuid4_to_server(context::current(), candidates)
         .await??;
-    tracing::info!(count = diff_uuid4.len(), "notes to send to server");
+    let count = diff_uuid4.len();
+    tracing::info!(count, "notes to send to server");
 
     for u in diff_uuid4 {
         let note = {
-            let conn = pool.lock().unwrap_or_else(|e| e.into_inner());
+            let conn = pool.get().map_err(|e| RpcError::PoolError(e.to_string()))?;
             get_note_by_uuid4(&conn, &u)?
         };
         client.send_note(context::current(), note).await??;
     }
     tracing::info!("sync to server complete");
 
-    Ok(())
+    Ok(count)
 }
 
 /// Pull notes from the server that this client does not yet have.
-pub async fn run_sync_from_server(
-    addr: &SocketAddr,
-    pool: &Arc<Mutex<Connection>>,
-) -> Result<(), RpcError> {
+/// Returns the number of notes received.
+pub async fn run_sync_from_server(addr: &SocketAddr, pool: &Pool) -> Result<usize, RpcError> {
     let transport =
         tarpc::serde_transport::tcp::connect(addr, tarpc::tokio_serde::formats::Bincode::default)
             .await?;
@@ -336,40 +346,57 @@ pub async fn run_sync_from_server(
     check_version_match(&client, pool).await?;
 
     let candidates = {
-        let conn = pool.lock().unwrap_or_else(|e| e.into_inner());
+        let conn = pool.get().map_err(|e| RpcError::PoolError(e.to_string()))?;
         next_uuid4_candidates(&conn)?
     };
     let diff_uuid4 = client
         .diff_uuid4_from_server(context::current(), candidates)
         .await??;
-    tracing::info!(count = diff_uuid4.len(), "notes to receive from server");
+    let count = diff_uuid4.len();
+    tracing::info!(count, "notes to receive from server");
 
     for u in diff_uuid4 {
         client.receive_note(context::current(), u).await??;
     }
     tracing::info!("sync from server complete");
 
-    Ok(())
+    Ok(count)
 }
 
 /// Bidirectional sync with the server at `addr`: push local-only notes and pull server-only notes
 /// concurrently. Returns `"sync ok"` on success.
-pub async fn sync(addr: &str, pool: &Arc<Mutex<Connection>>) -> Result<String, RpcError> {
+pub async fn sync(addr: &str, pool: &Pool) -> Result<String, RpcError> {
     let server_addr: SocketAddr = addr.parse()?;
     validate_client_addr(&server_addr)?;
 
-    tokio::try_join!(
+    match tokio::try_join!(
         run_sync_to_server(&server_addr, pool),
         run_sync_from_server(&server_addr, pool)
-    )?;
-
-    Ok("sync ok".to_string())
+    ) {
+        Ok((sent, received)) => {
+            let total = sent + received;
+            notify_rust::Notification::new()
+                .summary("Local Native Sync Complete")
+                .body(&format!(
+                    "Synced {} notes ({} sent, {} received)",
+                    total, sent, received
+                ))
+                .show()
+                .ok();
+            Ok("sync ok".to_string())
+        }
+        Err(e) => {
+            notify_rust::Notification::new()
+                .summary("Local Native Sync Failed")
+                .body(&format!("Sync error: {}", e))
+                .show()
+                .ok();
+            Err(e)
+        }
+    }
 }
 
-pub async fn run_stop_server(
-    addr: &SocketAddr,
-    pool: &Arc<Mutex<Connection>>,
-) -> Result<(), RpcError> {
+pub async fn run_stop_server(addr: &SocketAddr, pool: &Pool) -> Result<(), RpcError> {
     let transport =
         tarpc::serde_transport::tcp::connect(addr, tarpc::tokio_serde::formats::Bincode::default)
             .await?;
@@ -382,7 +409,7 @@ pub async fn run_stop_server(
 }
 
 /// Send a stop signal to the server at `addr`. Returns `"stop ok"` on success.
-pub async fn stop_server(addr: &str, pool: &Arc<Mutex<Connection>>) -> Result<String, RpcError> {
+pub async fn stop_server(addr: &str, pool: &Pool) -> Result<String, RpcError> {
     let server_addr: SocketAddr = addr.parse()?;
     validate_client_addr(&server_addr)?;
     run_stop_server(&server_addr, pool).await?;
@@ -390,7 +417,7 @@ pub async fn stop_server(addr: &str, pool: &Arc<Mutex<Connection>>) -> Result<St
 }
 
 /// Start the RPC server bound to `addr` with a fresh cancellation token.
-pub async fn start(addr: &str, pool: &Arc<Mutex<Connection>>) -> Result<(), RpcError> {
+pub async fn start(addr: &str, pool: &Pool) -> Result<(), RpcError> {
     let server_addr: SocketAddr = addr.parse()?;
     validate_server_addr(&server_addr)?;
 

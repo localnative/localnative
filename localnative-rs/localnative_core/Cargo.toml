@@ -30,11 +30,14 @@ tokio-util = { workspace = true }
 thiserror = { workspace = true }
 hex = { workspace = true }
 rusqlite = { workspace = true }
+r2d2 = { workspace = true }
+r2d2_sqlite = { workspace = true }
 chrono = { workspace = true, default-features = false, features = ["serde"] }
 tracing = { workspace = true }
 governor = { workspace = true }
 mdns-sd = { workspace = true }
 hostname = { workspace = true }
+notify-rust = { workspace = true }
 
 [lib]
 name = "localnative_core"
@@ -43,3 +46,4 @@ crate-type = ["rlib", "cdylib", "staticlib"]
 
 [features]
 default = []
+encryption = []

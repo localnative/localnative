@@ -18,7 +18,7 @@
 use serde::{Deserialize, Serialize};
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
-use std::sync::{Arc, Mutex, OnceLock};
+use std::sync::OnceLock;
 use tokio::runtime::Runtime;
 
 fn global_runtime() -> &'static Runtime {
@@ -39,9 +39,9 @@ pub use error::{DatabaseError, Error, ProcessError, SyncError, ValidationError};
 #[cfg(target_os = "android")]
 pub mod android {
     use super::*;
+    use jni::JNIEnv;
     use jni::objects::{JClass, JString};
     use jni::sys::jstring;
-    use jni::JNIEnv;
 
     #[no_mangle]
     pub unsafe extern "C" fn Java_app_localnative_android_RustBridge_localnativeRun(
@@ -55,7 +55,7 @@ pub mod android {
                 return env
                     .new_string(r#"{"error": "Invalid json input string"}"#)
                     .map(|s| s.into_raw())
-                    .unwrap_or(std::ptr::null_mut())
+                    .unwrap_or(std::ptr::null_mut());
             }
         };
 
@@ -73,31 +73,35 @@ pub mod android {
 /// valid for the duration of this call. The returned pointer must be freed with
 /// [`localnative_free`].
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn localnative_run(json_input: *const c_char) -> *mut c_char { unsafe {
-    let c_str = CStr::from_ptr(json_input);
-    let json = match c_str.to_str() {
-        Ok(s) => run_async(s),
-        Err(_) => r#"{"error": "Invalid UTF-8 in input"}"#.to_string(),
-    };
+pub unsafe extern "C" fn localnative_run(json_input: *const c_char) -> *mut c_char {
+    unsafe {
+        let c_str = CStr::from_ptr(json_input);
+        let json = match c_str.to_str() {
+            Ok(s) => run_async(s),
+            Err(_) => r#"{"error": "Invalid UTF-8 in input"}"#.to_string(),
+        };
 
-    match CString::new(json) {
-        Ok(c_str) => c_str.into_raw(),
-        Err(_) => CString::new(r#"{"error": "Response contained null byte"}"#)
-            .unwrap_or_default()
-            .into_raw(),
+        match CString::new(json) {
+            Ok(c_str) => c_str.into_raw(),
+            Err(_) => CString::new(r#"{"error": "Response contained null byte"}"#)
+                .unwrap_or_default()
+                .into_raw(),
+        }
     }
-}}
+}
 
 /// # Safety
 ///
 /// `s` must be a pointer previously returned by [`localnative_run`], or null. After this call
 /// the pointer is invalid and must not be used again.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn localnative_free(s: *mut c_char) { unsafe {
-    if !s.is_null() {
-        drop(CString::from_raw(s));
+pub unsafe extern "C" fn localnative_free(s: *mut c_char) {
+    unsafe {
+        if !s.is_null() {
+            drop(CString::from_raw(s));
+        }
     }
-}}
+}
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "action", rename_all = "kebab-case")]
@@ -214,31 +218,33 @@ struct ClientStopServerResponse {
 
 async fn process(cmd: Cmd) -> Result<String, ProcessError> {
     tracing::debug!(?cmd, "processing command");
-    let conn = db::init_db()?;
 
     let result = match cmd {
         Cmd::Server(s) => {
-            let pool = Arc::new(Mutex::new(conn));
+            let pool = db::init_pool()?;
             crate::rpc::start(&s.addr, &pool).await?;
             Ok(serde_json::to_string(&ServerResponse {
                 server: "started".to_string(),
             })?)
         }
         Cmd::ClientSync(s) => {
-            let pool = Arc::new(Mutex::new(conn));
+            let pool = db::init_pool()?;
             let resp = crate::rpc::sync(&s.addr, &pool).await?;
             Ok(serde_json::to_string(&ClientSyncResponse {
                 client_sync: resp,
             })?)
         }
         Cmd::ClientStopServer(s) => {
-            let pool = Arc::new(Mutex::new(conn));
+            let pool = db::init_pool()?;
             let resp = crate::rpc::stop_server(&s.addr, &pool).await?;
             Ok(serde_json::to_string(&ClientStopServerResponse {
                 client_stop_server: resp,
             })?)
         }
-        Cmd::DbCmd(db_cmd) => Ok(db::process_cmd(db_cmd, &conn)?),
+        Cmd::DbCmd(db_cmd) => {
+            let conn = db::init_db()?;
+            Ok(db::process_cmd(db_cmd, &conn)?)
+        }
     };
 
     result

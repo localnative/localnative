@@ -80,7 +80,7 @@ impl AppHost {
             None,
             allowed_origins.or_else(|| {
                 Some(vec![
-                    "chrome-extension://oclkmkeameccmgnajgogjlhdjeaconnb/".to_owned()
+                    "chrome-extension://oclkmkeameccmgnajgogjlhdjeaconnb/".to_owned(),
                 ])
             }),
         )

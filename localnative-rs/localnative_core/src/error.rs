@@ -1,4 +1,4 @@
-use serde::{de, ser, Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de, ser};
 use thiserror::Error;
 
 // ---------------------------------------------------------------------------
@@ -67,6 +67,8 @@ pub enum SyncError {
     ServerConfigError(String),
     #[error("Rate limited: too many requests")]
     RateLimited,
+    #[error("Connection pool error: {0}")]
+    PoolError(String),
 }
 
 /// Backward-compatible alias so `rpc.rs` keeps compiling with `RpcError`.

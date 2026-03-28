@@ -2,12 +2,12 @@ use std::{borrow::Cow, fmt::Display, sync::Arc};
 
 use elsa::sync::FrozenMap;
 use fluent_bundle::FluentResource;
-use fluent_bundle::{bundle::FluentBundle, FluentArgs};
+use fluent_bundle::{FluentArgs, bundle::FluentBundle};
 use intl_memoizer::concurrent::IntlLangMemoizer;
 use serde::{Deserialize, Serialize};
 use tokio::sync::{OnceCell, RwLock};
-use unic_langid::langid;
 use unic_langid::LanguageIdentifier;
+use unic_langid::langid;
 
 use crate::error_handle;
 

@@ -4,7 +4,7 @@ use tauri_bundler::{
     AppCategory, BundleBinary, BundleSettings, DebianSettings, MacOsSettings, PackageSettings,
     PackageType, SettingsBuilder, WindowsSettings, WixSettings,
 };
-use xshell::{cmd, Shell};
+use xshell::{Shell, cmd};
 
 use crate::flags::Release;
 // Release

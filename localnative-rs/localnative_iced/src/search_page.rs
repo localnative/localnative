@@ -1,16 +1,12 @@
 use iced::widget::{Column, Row};
 use iced::{
-    widget::{
-        button, column, container, row, scrollable, text, text_input,
-        Space,
-    },
     Element, Pixels, Task,
+    widget::{Space, button, column, container, row, scrollable, text, text_input},
 };
-use rusqlite::Connection;
-use std::sync::{Arc, Mutex};
+use localnative_core::db::Pool;
 
 use crate::db_operations;
-use crate::{config::ThemeType, icons::IconItem, tr, DateView, NoteView, TagView};
+use crate::{DateView, NoteView, TagView, config::ThemeType, icons::IconItem, tr};
 
 #[derive(Default)]
 pub struct SearchPage {
@@ -78,10 +74,12 @@ impl SearchPage {
             size: Some(Pixels(22.0)),
         };
 
-        let mut search_bar = row![text_input(&tr!("search"), &self.search_value)
-            .icon(search_icon)
-            .on_input(Message::SearchInput)
-            .on_submit(Message::Search)];
+        let mut search_bar = row![
+            text_input(&tr!("search"), &self.search_value)
+                .icon(search_icon)
+                .on_input(Message::SearchInput)
+                .on_submit(Message::Search)
+        ];
 
         if !self.search_value.is_empty() {
             search_bar = search_bar.push(
@@ -103,10 +101,14 @@ impl SearchPage {
     }
 
     fn create_tags_container(&self) -> container::Container<'_, Message> {
-        container(scrollable(self.tags.iter().fold(
-            iced_aw::Wrap::new().spacing(5.).push(Element::from(text(tr!("tags")))),
-            |tags, tag| tags.push(tag.view().map(Message::Tag)),
-        )))
+        container(scrollable(
+            self.tags.iter().fold(
+                iced_aw::Wrap::new()
+                    .spacing(5.)
+                    .push(Element::from(text(tr!("tags")))),
+                |tags, tag| tags.push(tag.view().map(Message::Tag)),
+            ),
+        ))
         .width(iced::Length::FillPortion(2))
     }
 
@@ -170,7 +172,9 @@ impl SearchPage {
                     .padding(12.),
             )
             .direction(scrollable::Direction::Vertical(
-                scrollable::Scrollbar::default().width(10).scroller_width(10),
+                scrollable::Scrollbar::default()
+                    .width(10)
+                    .scroller_width(10),
             )),
         )
         .height(iced::Length::FillPortion(8));
@@ -193,7 +197,11 @@ impl SearchPage {
         };
         let tip = container(column![
             Space::new().height(iced::Length::Fill),
-            row![Space::new().width(iced::Length::Fill), text(tip).size(50), Space::new().width(iced::Length::Fill)],
+            row![
+                Space::new().width(iced::Length::Fill),
+                text(tip).size(50),
+                Space::new().width(iced::Length::Fill)
+            ],
             Space::new().height(iced::Length::Fill)
         ])
         .height(iced::Length::FillPortion(8));
@@ -211,7 +219,7 @@ impl SearchPage {
         &mut self,
         message: Message,
         limit: u32,
-        pool: &Arc<Mutex<Connection>>,
+        pool: &Pool,
         disabel_delete_tip: bool,
         delete_tip: &mut crate::DeleteTip,
     ) -> Task<crate::Message> {
@@ -236,7 +244,7 @@ impl SearchPage {
         }
     }
 
-    fn handle_search(&self, pool: &Arc<Mutex<Connection>>, limit: u32) -> Task<crate::Message> {
+    fn handle_search(&self, pool: &Pool, limit: u32) -> Task<crate::Message> {
         search(
             pool,
             self.search_value.to_owned(),
@@ -246,11 +254,7 @@ impl SearchPage {
         )
     }
 
-    fn handle_next_page(
-        &mut self,
-        pool: &Arc<Mutex<Connection>>,
-        limit: u32,
-    ) -> Task<crate::Message> {
+    fn handle_next_page(&mut self, pool: &Pool, limit: u32) -> Task<crate::Message> {
         let current_count = self.offset + limit;
         if current_count < self.count {
             self.offset = current_count;
@@ -260,11 +264,7 @@ impl SearchPage {
         }
     }
 
-    fn handle_pre_page(
-        &mut self,
-        pool: &Arc<Mutex<Connection>>,
-        limit: u32,
-    ) -> Task<crate::Message> {
+    fn handle_pre_page(&mut self, pool: &Pool, limit: u32) -> Task<crate::Message> {
         if self.offset >= limit {
             self.offset -= limit;
             self.handle_search(pool, limit)
@@ -280,7 +280,7 @@ impl SearchPage {
         &mut self,
         msg: crate::note::Message,
         idx: usize,
-        pool: &Arc<Mutex<Connection>>,
+        pool: &Pool,
         limit: u32,
         disabel_delete_tip: bool,
         delete_tip: &mut crate::DeleteTip,
@@ -320,7 +320,7 @@ impl SearchPage {
     fn handle_tag_message(
         &mut self,
         tag_msg: crate::tags::Message,
-        pool: &Arc<Mutex<Connection>>,
+        pool: &Pool,
         limit: u32,
     ) -> Task<crate::Message> {
         match tag_msg {
@@ -332,7 +332,7 @@ impl SearchPage {
     fn handle_day_message(
         &mut self,
         dm: crate::days::Message,
-        pool: &Arc<Mutex<Connection>>,
+        pool: &Pool,
         limit: u32,
     ) -> Task<crate::Message> {
         match dm {
@@ -350,7 +350,7 @@ impl SearchPage {
 }
 
 pub fn search(
-    pool: &Arc<Mutex<Connection>>,
+    pool: &Pool,
     query: String,
     limit: u32,
     offset: u32,

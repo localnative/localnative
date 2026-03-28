@@ -16,7 +16,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use clap::{arg, Command};
+use clap::{Command, arg};
 use localnative_core::db;
 use localnative_core::import;
 
@@ -31,13 +31,10 @@ fn main() {
     let matches = Command::new("localnative-import")
         .about("Import notes from external services")
         .arg(
-            arg!(-f --format <FORMAT> "Import format: pocket, omnivore, or raindrop")
+            arg!(-f --format <FORMAT> "Import format: pocket, omnivore, raindrop, or plinky")
                 .required(true),
         )
-        .arg(
-            arg!(<FILE> "Path to the export file")
-                .required(true),
-        )
+        .arg(arg!(<FILE> "Path to the export file").required(true))
         .get_matches();
 
     let format = matches.get_one::<String>("format").unwrap();
@@ -61,9 +58,16 @@ fn main() {
             }
         },
         "raindrop" => import::parse_raindrop_csv(&content),
+        "plinky" => match import::parse_plinky_json(&content) {
+            Ok(notes) => notes,
+            Err(e) => {
+                eprintln!("Error parsing Plinky JSON: {}", e);
+                std::process::exit(1);
+            }
+        },
         _ => {
             eprintln!(
-                "Unknown format '{}'. Supported formats: pocket, omnivore, raindrop",
+                "Unknown format '{}'. Supported formats: pocket, omnivore, raindrop, plinky",
                 format
             );
             std::process::exit(1);

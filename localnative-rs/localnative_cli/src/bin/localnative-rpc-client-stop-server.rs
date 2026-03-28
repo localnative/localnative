@@ -16,7 +16,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use clap::{arg, Command};
+use clap::{Command, arg};
 use localnative_core::run_sync as run;
 fn main() {
     tracing_subscriber::fmt()

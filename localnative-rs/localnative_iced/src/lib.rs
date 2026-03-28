@@ -1,12 +1,12 @@
 mod chart;
 mod config;
 mod days;
-mod plotters_bridge;
 mod db_operations;
 mod delete_tip;
 mod icons;
 mod init;
 mod note;
+mod plotters_bridge;
 mod search_page;
 mod settings;
 mod sidebar;
@@ -23,18 +23,16 @@ use chart::ChartView;
 use config::Config;
 pub use days::DateView;
 use delete_tip::DeleteTip;
-use iced::{event, window, Font, Size};
-use iced::{widget::container, Task};
+use iced::{Font, Size, event, window};
+use iced::{Task, widget::container};
 use iced::{
-    widget::{column, row, text, Space},
     Theme,
+    widget::{Space, column, row, text},
 };
-use localnative_core::db::{init_db, models::QueryResult, DbError};
+use localnative_core::db::{DbError, Pool, init_pool, models::QueryResult};
 pub use note::NoteView;
-use rusqlite::Connection;
 pub use search_page::SearchPage;
 use sidebar::Sidebar;
-use std::sync::{Arc, Mutex};
 pub use tags::TagView;
 use tokio_util::sync::CancellationToken;
 
@@ -57,11 +55,11 @@ pub struct Data {
     delete_tip: DeleteTip,
     settings: settings::Settings,
     sync_view: SyncView,
-    pool: Arc<Mutex<Connection>>,
+    pool: Pool,
 }
 
 impl Data {
-    fn new(config: &Config, pool: Arc<Mutex<Connection>>) -> Self {
+    fn new(config: &Config, pool: Pool) -> Self {
         Self {
             search_page: SearchPage::default_with_theme(config.theme()),
             sidebar: Sidebar::default(),
@@ -295,17 +293,19 @@ impl Data {
                     }
                 } else {
                     if self.sync_view.borrow_stop().is_some() {
-                        if let Some(cmd) = self.sync_view.with_stop_mut(|ref_mut_stop| {
-                            match ref_mut_stop.take() { Some(old_stop) => {
-                                ref_mut_stop.replace(stop);
-                                Some(Task::perform(
-                                    sync::stop_server(old_stop),
-                                    Message::ServerOption,
-                                ))
-                            } _ => {
-                                None
-                            }}
-                        }) {
+                        if let Some(cmd) =
+                            self.sync_view
+                                .with_stop_mut(|ref_mut_stop| match ref_mut_stop.take() {
+                                    Some(old_stop) => {
+                                        ref_mut_stop.replace(stop);
+                                        Some(Task::perform(
+                                            sync::stop_server(old_stop),
+                                            Message::ServerOption,
+                                        ))
+                                    }
+                                    _ => None,
+                                })
+                        {
                             return cmd;
                         }
                     } else {
@@ -343,14 +343,11 @@ impl Data {
             Ok(peers) => {
                 self.sync_view
                     .with_discovery_state_mut(|state| *state = sync::DiscoveryState::Done);
-                self.sync_view
-                    .with_discovered_peers_mut(|p| *p = peers);
+                self.sync_view.with_discovered_peers_mut(|p| *p = peers);
             }
             Err(err) => {
                 self.sync_view
-                    .with_discovery_state_mut(|state| {
-                        *state = sync::DiscoveryState::Error(err)
-                    });
+                    .with_discovery_state_mut(|state| *state = sync::DiscoveryState::Error(err));
             }
         }
         Task::none()
@@ -404,8 +401,8 @@ impl Data {
 
 #[derive(Debug)]
 pub enum Message {
-    Loading(Arc<Mutex<Connection>>),
-    InitDatabase(Result<Connection, DbError>),
+    Loading(Pool),
+    InitDatabase(Result<Pool, DbError>),
     SearchPageMessage(search_page::Message),
     SidebarMessage(sidebar::Message),
     DeleteTipMessage(delete_tip::Message),
@@ -454,7 +451,7 @@ pub fn run_app() -> iced::Result {
                     iced::font::load(include_bytes!("../fonts/icons.ttf")).map(Message::LoadFont),
                     Task::perform(
                         async {
-                            match tokio::task::spawn_blocking(init_db).await {
+                            match tokio::task::spawn_blocking(init_pool).await {
                                 Ok(result) => result,
                                 Err(e) => Err(DbError::IoError(std::io::Error::other(format!(
                                     "Task join error: {}",
@@ -524,8 +521,7 @@ impl LocalNative {
             return Task::none();
         };
         match message {
-            Message::InitDatabase(Ok(conn)) => {
-                let pool = Arc::new(Mutex::new(conn));
+            Message::InitDatabase(Ok(pool)) => {
                 Task::perform(async {}, move |_| Message::Loading(pool.clone()))
             }
             Message::InitDatabase(Err(err)) => {

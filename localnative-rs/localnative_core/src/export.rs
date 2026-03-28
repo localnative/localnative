@@ -127,7 +127,11 @@ pub fn note_to_markdown(note: &Note) -> String {
 ///
 /// If `query` is `Some`, only notes matching the query are exported.
 /// Returns the number of notes exported.
-pub fn export_notes(conn: &Connection, output_dir: &Path, query: Option<&str>) -> Result<usize, ExportError> {
+pub fn export_notes(
+    conn: &Connection,
+    output_dir: &Path,
+    query: Option<&str>,
+) -> Result<usize, ExportError> {
     // Create output directory if it doesn't exist
     fs::create_dir_all(output_dir)?;
 
@@ -206,10 +210,7 @@ mod tests {
         assert_eq!(sanitize_filename("foo--bar"), "foo-bar");
         assert_eq!(sanitize_filename("  spaces  "), "spaces");
         assert_eq!(sanitize_filename(""), "");
-        assert_eq!(
-            sanitize_filename("My Note: A Title"),
-            "my-note-a-title"
-        );
+        assert_eq!(sanitize_filename("My Note: A Title"), "my-note-a-title");
         assert_eq!(sanitize_filename("---leading---"), "leading");
     }
 

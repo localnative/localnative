@@ -1,17 +1,16 @@
 use localnative_core::db::models::{CmdDelete, Note, QueryResult};
-use localnative_core::db::{migrations, queries, sync};
+use localnative_core::db::{Pool, migrations, queries, sync};
 use rusqlite::Connection;
-use std::sync::{Arc, Mutex};
 
 pub async fn delete(
-    pool: Arc<Mutex<Connection>>,
+    pool: Pool,
     query: String,
     limit: u32,
     offset: u32,
     rowid: i64,
 ) -> Option<QueryResult> {
     tokio::task::spawn_blocking(move || {
-        let conn = pool.lock().unwrap_or_else(|e| e.into_inner());
+        let conn = pool.get().ok()?;
         let delete_cmd = CmdDelete {
             query,
             rowid,
@@ -28,14 +27,9 @@ pub async fn delete(
     .unwrap_or(None)
 }
 
-pub async fn upgrade(
-    pool: Arc<Mutex<Connection>>,
-    query: String,
-    limit: u32,
-    offset: u32,
-) -> Option<QueryResult> {
+pub async fn upgrade(pool: Pool, query: String, limit: u32, offset: u32) -> Option<QueryResult> {
     tokio::task::spawn_blocking(move || {
-        let conn = pool.lock().unwrap_or_else(|e| e.into_inner());
+        let conn = pool.get().ok()?;
         if let Err(e) = migrations::upgrade(&conn) {
             tracing::error!(%e, "failed to upgrade database");
             return None;
@@ -48,14 +42,14 @@ pub async fn upgrade(
 
 #[allow(dead_code)]
 pub async fn insert(
-    pool: Arc<Mutex<Connection>>,
+    pool: Pool,
     query: String,
     limit: u32,
     offset: u32,
     note: Note,
 ) -> Option<QueryResult> {
     tokio::task::spawn_blocking(move || {
-        let conn = pool.lock().unwrap_or_else(|e| e.into_inner());
+        let conn = pool.get().ok()?;
         if let Err(e) = sync::insert(&conn, &note) {
             tracing::error!(%e, "failed to insert note");
             return None;
@@ -66,14 +60,9 @@ pub async fn insert(
     .unwrap_or(None)
 }
 
-pub async fn select(
-    pool: Arc<Mutex<Connection>>,
-    query: String,
-    limit: u32,
-    offset: u32,
-) -> Option<QueryResult> {
+pub async fn select(pool: Pool, query: String, limit: u32, offset: u32) -> Option<QueryResult> {
     tokio::task::spawn_blocking(move || {
-        let conn = pool.lock().unwrap_or_else(|e| e.into_inner());
+        let conn = pool.get().ok()?;
         select_inner(&conn, &query, limit, offset)
     })
     .await
@@ -81,7 +70,7 @@ pub async fn select(
 }
 
 pub async fn filter(
-    pool: Arc<Mutex<Connection>>,
+    pool: Pool,
     query: String,
     limit: u32,
     offset: u32,
@@ -89,7 +78,7 @@ pub async fn filter(
     to: chrono::NaiveDate,
 ) -> Option<QueryResult> {
     tokio::task::spawn_blocking(move || {
-        let conn = pool.lock().unwrap_or_else(|e| e.into_inner());
+        let conn = pool.get().ok()?;
         filter_inner(
             &conn,
             &query,
@@ -105,14 +94,14 @@ pub async fn filter(
 
 #[allow(dead_code)]
 pub async fn someday(
-    pool: Arc<Mutex<Connection>>,
+    pool: Pool,
     query: String,
     limit: u32,
     offset: u32,
     day: String,
 ) -> Option<QueryResult> {
     tokio::task::spawn_blocking(move || {
-        let conn = pool.lock().unwrap_or_else(|e| e.into_inner());
+        let conn = pool.get().ok()?;
         filter_inner(&conn, &query, limit, offset, &day, &day)
     })
     .await

@@ -1,15 +1,21 @@
 // db.rs
 pub use crate::error::{DatabaseError, DbError, DbResult, ValidationError};
-pub use models::Note;
 use models::Cmd;
+pub use models::Note;
 use rusqlite::Connection;
 
+/// Type alias for the r2d2 connection pool backed by SQLite.
+pub type Pool = r2d2::Pool<r2d2_sqlite::SqliteConnectionManager>;
+
 /// Open (or create) the SQLite database at the platform-appropriate location and run any
-/// pending schema migrations.
+/// pending schema migrations.  Enables WAL mode and sets a busy timeout for
+/// better concurrent-read performance.
 pub fn init_db() -> DbResult<Connection> {
     let db_path = utils::sqlite3_db_location()?;
     tracing::info!(db_path, "opening database");
     let conn = Connection::open(&db_path)?;
+
+    conn.execute_batch("PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000;")?;
 
     #[cfg(target_os = "android")]
     conn.execute_batch("PRAGMA temp_store_directory = '/data/data/app.localnative/cache'")?;
@@ -17,6 +23,39 @@ pub fn init_db() -> DbResult<Connection> {
     migrations::upgrade(&conn)?;
 
     Ok(conn)
+}
+
+/// Create an r2d2 connection pool for the SQLite database.  Every connection
+/// obtained from the pool automatically enables WAL mode and a 5-second busy
+/// timeout.  Schema migrations are run once on a temporary connection before
+/// the pool is returned.
+pub fn init_pool() -> DbResult<Pool> {
+    let db_path = utils::sqlite3_db_location()?;
+    tracing::info!(db_path, "opening database pool");
+
+    let manager = r2d2_sqlite::SqliteConnectionManager::file(&db_path).with_init(|c| {
+        c.execute_batch("PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000;")?;
+
+        #[cfg(target_os = "android")]
+        c.execute_batch("PRAGMA temp_store_directory = '/data/data/app.localnative/cache'")?;
+
+        Ok(())
+    });
+
+    let pool = r2d2::Pool::builder()
+        .max_size(4)
+        .build(manager)
+        .map_err(|e| DatabaseError::IoError(std::io::Error::other(e.to_string())))?;
+
+    // Run migrations once on a fresh connection.
+    {
+        let conn = pool
+            .get()
+            .map_err(|e| DatabaseError::IoError(std::io::Error::other(e.to_string())))?;
+        migrations::upgrade(&conn)?;
+    }
+
+    Ok(pool)
 }
 
 /// Dispatch a [`Cmd`] against an open database connection and return the result serialized as JSON.
@@ -198,8 +237,8 @@ mod utils {
 
 mod commands {
     use super::*;
-    use base64::engine::general_purpose::STANDARD;
     use base64::Engine as _;
+    use base64::engine::general_purpose::STANDARD;
     use models::{
         CmdDelete, CmdFilter, CmdInsert, CmdSearch, CmdSelect, CmdSyncViaAttach, Note, QueryResult,
     };
@@ -552,8 +591,7 @@ pub mod queries {
             fts_where_clause(1)
         );
 
-        let count: i64 =
-            conn.query_row(&sql, rusqlite::params![fts_query], |row| row.get(0))?;
+        let count: i64 = conn.query_row(&sql, rusqlite::params![fts_query], |row| row.get(0))?;
         Ok(u32::try_from(count).unwrap_or(u32::MAX))
     }
 
@@ -563,8 +601,7 @@ pub mod queries {
         }
 
         let fts_query = make_fts_query(query);
-        let sql =
-            "SELECT note.rowid, note.uuid4, note.title, note.url, note.tags,
+        let sql = "SELECT note.rowid, note.uuid4, note.title, note.url, note.tags,
              note.description, note.comments,
              hex(note.annotations) as annotations, note.created_at, note.is_public, note.metadata
              FROM note
@@ -617,9 +654,8 @@ pub mod queries {
 
         let mut tag_count_map = HashMap::new();
         let mut stmt = conn.prepare(&sql)?;
-        let tags_iter = stmt.query_map(rusqlite::params![fts_query], |row| {
-            row.get::<_, String>(0)
-        })?;
+        let tags_iter =
+            stmt.query_map(rusqlite::params![fts_query], |row| row.get::<_, String>(0))?;
 
         for tag_result in tags_iter {
             let tags_str = tag_result?;
@@ -650,11 +686,9 @@ pub mod queries {
             fts_where_clause(3)
         );
 
-        let count: i64 = conn.query_row(
-            &sql,
-            rusqlite::params![from, to, fts_query],
-            |row| row.get(0),
-        )?;
+        let count: i64 = conn.query_row(&sql, rusqlite::params![from, to, fts_query], |row| {
+            row.get(0)
+        })?;
         Ok(u32::try_from(count).unwrap_or(u32::MAX))
     }
 
@@ -671,8 +705,7 @@ pub mod queries {
             return select(conn, limit, offset);
         }
 
-        let sql =
-            "SELECT note.rowid, note.uuid4, note.title, note.url, note.tags,
+        let sql = "SELECT note.rowid, note.uuid4, note.title, note.url, note.tags,
              note.description, note.comments,
              hex(note.annotations) as annotations, note.created_at, note.is_public, note.metadata
              FROM note
@@ -685,7 +718,10 @@ pub mod queries {
 
         let mut stmt = conn.prepare(sql)?;
         let notes = stmt
-            .query_map(rusqlite::params![from, to, limit, offset, fts_query], map_note)?
+            .query_map(
+                rusqlite::params![from, to, limit, offset, fts_query],
+                map_note,
+            )?
             .collect::<Result<Vec<_>, rusqlite::Error>>()?;
         Ok(notes)
     }
@@ -708,10 +744,9 @@ pub mod queries {
 
         let mut tag_count_map = HashMap::new();
         let mut stmt = conn.prepare(&sql)?;
-        let tags_iter = stmt.query_map(
-            rusqlite::params![from, to, fts_query],
-            |row| row.get::<_, String>(0),
-        )?;
+        let tags_iter = stmt.query_map(rusqlite::params![from, to, fts_query], |row| {
+            row.get::<_, String>(0)
+        })?;
 
         for tag_result in tags_iter {
             let tags_str = tag_result?;
@@ -748,8 +783,7 @@ pub mod queries {
         }
 
         let fts_query = make_fts_query(query);
-        let sql =
-            "SELECT note.rowid, note.uuid4, note.title, note.url, note.tags,
+        let sql = "SELECT note.rowid, note.uuid4, note.title, note.url, note.tags,
              note.description, note.comments,
              hex(note.annotations) as annotations, note.created_at, note.is_public, note.metadata
              FROM note
@@ -791,9 +825,7 @@ pub mod queries {
     /// `fts_param` is the SQL parameter index (1-based) that will hold the
     /// FTS5 match expression.
     pub(crate) fn fts_where_clause(fts_param: usize) -> String {
-        format!(
-            "rowid IN (SELECT rowid FROM note_fts WHERE note_fts MATCH ?{fts_param})"
-        )
+        format!("rowid IN (SELECT rowid FROM note_fts WHERE note_fts MATCH ?{fts_param})")
     }
 
     // ── Metadata helpers ───────────────────────────────────────────────
@@ -886,6 +918,7 @@ pub mod migrations {
         (Version::new(0, 6, 0), migrate_created_at),
         (Version::new(0, 7, 0), migrate_fts5),
         (Version::new(0, 8, 0), migrate_metadata),
+        (Version::new(0, 9, 0), migrate_fts5_trigram),
     ];
 
     pub fn upgrade(conn: &Connection) -> DbResult<()> {
@@ -1095,8 +1128,33 @@ pub mod migrations {
     }
 
     fn migrate_metadata(conn: &Connection) -> DbResult<()> {
+        conn.execute_batch("ALTER TABLE note ADD COLUMN metadata TEXT NOT NULL DEFAULT '{}';")?;
+        Ok(())
+    }
+
+    fn migrate_fts5_trigram(conn: &Connection) -> DbResult<()> {
         conn.execute_batch(
-            "ALTER TABLE note ADD COLUMN metadata TEXT NOT NULL DEFAULT '{}';",
+            "CREATE VIRTUAL TABLE IF NOT EXISTS note_fts_trigram USING fts5(
+                 title, url, tags, description,
+                 content=note, content_rowid=rowid,
+                 tokenize='trigram'
+             );
+             INSERT INTO note_fts_trigram(rowid, title, url, tags, description)
+                 SELECT rowid, title, url, tags, description FROM note;
+             CREATE TRIGGER IF NOT EXISTS note_fts_trigram_insert AFTER INSERT ON note BEGIN
+                 INSERT INTO note_fts_trigram(rowid, title, url, tags, description)
+                 VALUES (new.rowid, new.title, new.url, new.tags, new.description);
+             END;
+             CREATE TRIGGER IF NOT EXISTS note_fts_trigram_delete AFTER DELETE ON note BEGIN
+                 INSERT INTO note_fts_trigram(note_fts_trigram, rowid, title, url, tags, description)
+                 VALUES ('delete', old.rowid, old.title, old.url, old.tags, old.description);
+             END;
+             CREATE TRIGGER IF NOT EXISTS note_fts_trigram_update AFTER UPDATE ON note BEGIN
+                 INSERT INTO note_fts_trigram(note_fts_trigram, rowid, title, url, tags, description)
+                 VALUES ('delete', old.rowid, old.title, old.url, old.tags, old.description);
+                 INSERT INTO note_fts_trigram(rowid, title, url, tags, description)
+                 VALUES (new.rowid, new.title, new.url, new.tags, new.description);
+             END;",
         )?;
         Ok(())
     }
@@ -1223,6 +1281,96 @@ pub mod sync {
                 metadata
             ],
         )?;
+        Ok(())
+    }
+}
+
+// ── SQLCipher encryption support ──────────────────────────────────────────
+//
+// All functions in this module require the `encryption` feature flag *and*
+// the workspace-level `bundled-sqlcipher` rusqlite feature (which replaces
+// `bundled`).  When neither feature is active the default build is entirely
+// unchanged.
+
+#[cfg(feature = "encryption")]
+pub mod encryption {
+    use super::*;
+    use rusqlite::Connection;
+    use std::path::Path;
+
+    /// Apply the encryption key to an already-opened SQLCipher connection.
+    ///
+    /// This **must** be the first statement executed on the connection
+    /// (before any other SQL), otherwise SQLCipher will treat the file as
+    /// plain-text and subsequent operations will fail.
+    pub fn set_encryption_key(conn: &Connection, key: &str) -> DbResult<()> {
+        // Use PRAGMA key with single-quote escaping to avoid injection.
+        conn.execute_batch(&format!("PRAGMA key = '{}';", key.replace('\'', "''")))
+            .map_err(DatabaseError::from)
+    }
+
+    /// Re-key (change the passphrase of) an already-unlocked database.
+    ///
+    /// The connection must have been opened and unlocked with
+    /// [`set_encryption_key`] first.  After this call succeeds the database
+    /// file on disk is re-encrypted with `new_key`.
+    pub fn change_encryption_key(conn: &Connection, new_key: &str) -> DbResult<()> {
+        conn.execute_batch(&format!(
+            "PRAGMA rekey = '{}';",
+            new_key.replace('\'', "''")
+        ))
+        .map_err(DatabaseError::from)
+    }
+
+    /// Open (or create) the database at the default platform location and
+    /// unlock it with the given encryption key, then run migrations.
+    ///
+    /// This is the encrypted counterpart of [`init_db`](super::init_db).
+    pub fn init_db_encrypted(key: &str) -> DbResult<Connection> {
+        let db_path = utils::sqlite3_db_location()?;
+        tracing::info!(db_path, "opening encrypted database");
+        let conn = Connection::open(&db_path)?;
+
+        #[cfg(target_os = "android")]
+        conn.execute_batch("PRAGMA temp_store_directory = '/data/data/app.localnative/cache'")?;
+
+        set_encryption_key(&conn, key)?;
+        migrations::upgrade(&conn)?;
+
+        Ok(conn)
+    }
+
+    /// Migrate an existing *unencrypted* database to a new *encrypted* copy.
+    ///
+    /// 1. Opens `source_path` as a plain-text SQLite database.
+    /// 2. Creates a new encrypted database at `dest_path`.
+    /// 3. Copies all data using `ATTACH` + `sqlcipher_export()`.
+    ///
+    /// `dest_path` must not already exist.  On success the caller can swap
+    /// the files and start using the encrypted database.
+    pub fn encrypt_existing_db(source_path: &str, dest_path: &str, key: &str) -> DbResult<()> {
+        // Safety: dest must not exist yet.
+        if Path::new(dest_path).exists() {
+            return Err(DatabaseError::IoError(std::io::Error::new(
+                std::io::ErrorKind::AlreadyExists,
+                format!("destination already exists: {dest_path}"),
+            )));
+        }
+
+        let source_conn = Connection::open(source_path)?;
+
+        // Attach the (not-yet-existing) destination as an encrypted database.
+        source_conn.execute_batch(&format!(
+            "ATTACH DATABASE '{}' AS encrypted KEY '{}';",
+            dest_path.replace('\'', "''"),
+            key.replace('\'', "''"),
+        ))?;
+
+        // Copy all schema and data from main to the encrypted database.
+        source_conn.execute_batch("SELECT sqlcipher_export('encrypted');")?;
+
+        source_conn.execute_batch("DETACH DATABASE encrypted;")?;
+
         Ok(())
     }
 }
@@ -1719,5 +1867,88 @@ mod db_tests {
 
         let diff = sync::diff_uuid4_from_server(&conn, candidates).unwrap();
         assert!(diff.is_empty());
+    }
+}
+
+#[cfg(all(test, feature = "encryption"))]
+mod encryption_tests {
+    use super::encryption::*;
+    use super::*;
+    use rusqlite::Connection;
+
+    /// Helper: open an in-memory encrypted database and run migrations.
+    fn setup_encrypted_test_db(key: &str) -> Connection {
+        let conn = Connection::open_in_memory().expect("in-memory db");
+        set_encryption_key(&conn, key).expect("set key");
+        migrations::upgrade(&conn).expect("upgrade");
+        conn
+    }
+
+    #[test]
+    fn test_set_encryption_key_and_use_db() {
+        let conn = setup_encrypted_test_db("test-secret-key");
+
+        // Should be able to insert and query after keying.
+        queries::insert_note(
+            &conn,
+            "Encrypted Note",
+            "https://example.com",
+            "encrypted",
+            "secret data",
+            "",
+            b"",
+            false,
+        )
+        .expect("insert into encrypted db");
+
+        let result = queries::do_select(&conn, 10, 0).expect("select");
+        assert_eq!(result.count, 1);
+        assert_eq!(result.notes[0].title, "Encrypted Note");
+    }
+
+    #[test]
+    fn test_change_encryption_key() {
+        let conn = setup_encrypted_test_db("old-key");
+
+        queries::insert_note(&conn, "Before rekey", "", "", "", "", b"", false)
+            .expect("insert before rekey");
+
+        // Re-key the in-memory database (no-op on disk, but exercises the code path).
+        change_encryption_key(&conn, "new-key").expect("rekey");
+
+        // Data should still be accessible.
+        let result = queries::do_select(&conn, 10, 0).expect("select after rekey");
+        assert_eq!(result.count, 1);
+    }
+
+    #[test]
+    fn test_encrypt_existing_db_dest_already_exists() {
+        let dir = std::env::temp_dir();
+        let source = dir.join("enc_test_source.sqlite3");
+        let dest = dir.join("enc_test_dest_exists.sqlite3");
+
+        // Create both files.
+        std::fs::write(&source, "fake").unwrap();
+        std::fs::write(&dest, "fake").unwrap();
+
+        let result = encrypt_existing_db(source.to_str().unwrap(), dest.to_str().unwrap(), "key");
+
+        // Clean up.
+        std::fs::remove_file(&source).ok();
+        std::fs::remove_file(&dest).ok();
+
+        assert!(result.is_err(), "should fail when dest already exists");
+    }
+
+    #[test]
+    fn test_key_with_special_characters() {
+        // Single quotes in the key must be properly escaped.
+        let conn = setup_encrypted_test_db("it's a \"key\" with 'quotes'");
+
+        queries::insert_note(&conn, "Special", "", "", "", "", b"", false)
+            .expect("insert with special-char key");
+
+        let result = queries::do_select(&conn, 10, 0).expect("select");
+        assert_eq!(result.count, 1);
     }
 }

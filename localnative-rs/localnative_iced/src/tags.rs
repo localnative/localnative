@@ -1,5 +1,5 @@
-use iced::widget::{button, row, text};
 use iced::Element;
+use iced::widget::{button, row, text};
 use localnative_core::db::models::Tags;
 
 #[derive(Debug, Clone)]

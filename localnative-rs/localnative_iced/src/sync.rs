@@ -1,21 +1,17 @@
-use iced::widget::Text;
-use iced::widget::{
-    button, column, qr_code, row, text, text_input, tooltip, QRCode, Space,
-};
 use iced::Element;
 use iced::Task;
+use iced::widget::Text;
+use iced::widget::{QRCode, Space, button, column, qr_code, row, text, text_input, tooltip};
 use iced_aw::NumberInput;
 
-use localnative_core::db::queries;
+use localnative_core::db::{Pool, queries};
 use localnative_core::discovery::PeerInfo;
 use once_cell::sync::OnceCell;
 use ouroboros::self_referencing;
 use regex::RegexSet;
-use rusqlite::Connection;
 use std::borrow::Cow;
 use std::net::{IpAddr, Ipv4Addr};
 use std::str::FromStr;
-use std::sync::{Arc, Mutex};
 use tokio_util::sync::CancellationToken;
 
 use std::{
@@ -143,8 +139,8 @@ impl SyncView {
             iced::widget::tooltip::Position::Bottom,
         );
 
-        let port_input = NumberInput::new(self.borrow_port(), 0..=u16::MAX, Message::PortInput)
-            .padding(0.);
+        let port_input =
+            NumberInput::new(self.borrow_port(), 0..=u16::MAX, Message::PortInput).padding(0.);
 
         let clear_button = button(IconItem::Clear)
             .padding(0)
@@ -276,11 +272,7 @@ impl SyncView {
         res.into()
     }
 
-    pub fn update(
-        &mut self,
-        message: Message,
-        pool: Arc<Mutex<Connection>>,
-    ) -> Task<crate::Message> {
+    pub fn update(&mut self, message: Message, pool: Pool) -> Task<crate::Message> {
         match message {
             Message::IpInput(input) => {
                 let ip_regex = IP_REGEX_SET.get_or_init(|| {
@@ -368,11 +360,14 @@ impl SyncView {
                 match self.with_stop_mut(|stop| {
                     stop.take()
                         .map(|stop| Task::perform(stop_server(stop), crate::Message::ServerOption))
-                }) { Some(cmd) => {
-                    return cmd;
-                } _ => {
-                    self.with_server_state_mut(|state| *state = ServerState::Closed);
-                }}
+                }) {
+                    Some(cmd) => {
+                        return cmd;
+                    }
+                    _ => {
+                        self.with_server_state_mut(|state| *state = ServerState::Closed);
+                    }
+                }
             }
             Message::DiscoverPeers => {
                 self.with_discovery_state_mut(|state| *state = DiscoveryState::Scanning);
@@ -381,14 +376,11 @@ impl SyncView {
             }
             Message::SelectPeer(idx) => {
                 // Extract data before mutating to satisfy the borrow checker.
-                let selected = self
-                    .borrow_discovered_peers()
-                    .get(idx)
-                    .and_then(|peer| {
-                        peer.addresses
-                            .first()
-                            .map(|addr| (addr.to_string(), peer.port))
-                    });
+                let selected = self.borrow_discovered_peers().get(idx).and_then(|peer| {
+                    peer.addresses
+                        .first()
+                        .map(|addr| (addr.to_string(), peer.port))
+                });
                 if let Some((ip_str, peer_port)) = selected {
                     self.with_ip_mut(|ip| *ip = ip_str);
                     self.with_port_mut(|port| *port = peer_port);
@@ -422,18 +414,12 @@ impl Default for SyncView {
 
 pub static IP_REGEX_SET: OnceCell<RegexSet> = OnceCell::new();
 
-pub async fn client_sync_from_server(
-    addr: SocketAddr,
-    pool: Arc<Mutex<Connection>>,
-) -> anyhow::Result<()> {
+pub async fn client_sync_from_server(addr: SocketAddr, pool: Pool) -> anyhow::Result<()> {
     localnative_core::rpc::run_sync_from_server(&addr, &pool).await?;
     Ok(())
 }
 
-pub async fn client_sync_to_server(
-    addr: SocketAddr,
-    pool: Arc<Mutex<Connection>>,
-) -> anyhow::Result<()> {
+pub async fn client_sync_to_server(addr: SocketAddr, pool: Pool) -> anyhow::Result<()> {
     localnative_core::rpc::run_sync_to_server(&addr, &pool).await?;
     Ok(())
 }
@@ -452,18 +438,19 @@ pub fn get_sync_file_path() -> Option<PathBuf> {
         .map(PathBuf::from)
 }
 
-pub async fn sync_via_file(path: PathBuf, pool: Arc<Mutex<Connection>>) -> Option<()> {
+pub async fn sync_via_file(path: PathBuf, pool: Pool) -> Option<()> {
     tokio::task::spawn_blocking(move || {
         if let Some(uri) = path.to_str() {
-            let conn = pool.lock().unwrap_or_else(|e| e.into_inner());
+            let conn = pool.get().map_err(error_handle).ok()?;
             if let Err(e) = queries::sync_via_attach(&conn, uri) {
                 tracing::error!(%e, "sync via file failed");
             };
         }
+        Some(())
     })
     .await
     .map_err(error_handle)
-    .ok()
+    .ok()?
 }
 
 pub fn get_ip() -> Option<String> {
@@ -475,10 +462,7 @@ pub fn get_ip() -> Option<String> {
         .ok()
 }
 
-pub async fn start_server(
-    port: u16,
-    pool: Arc<Mutex<Connection>>,
-) -> anyhow::Result<CancellationToken> {
+pub async fn start_server(port: u16, pool: Pool) -> anyhow::Result<CancellationToken> {
     let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), port);
     let stop_token = CancellationToken::new();
     localnative_core::rpc::setup_server(addr, pool, Some(stop_token.clone())).await?;

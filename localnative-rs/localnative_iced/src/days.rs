@@ -1,6 +1,6 @@
-use iced::widget::{button, container, Column, Row, Space};
 use iced::Element;
 use iced::Length;
+use iced::widget::{Column, Row, Space, button, container};
 
 use crate::chart::{ChartView, DayChart};
 use crate::icons::IconItem;
@@ -83,7 +83,9 @@ impl DateView {
         let mut content = Column::new();
         content = content.push(ctrl_row);
         if self.is_show {
-            content = content.push(iced::Element::from(crate::plotters_bridge::ChartWidget::new(&self.chart)));
+            content = content.push(iced::Element::from(
+                crate::plotters_bridge::ChartWidget::new(&self.chart),
+            ));
         }
         content
     }

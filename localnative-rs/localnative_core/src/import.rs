@@ -304,6 +304,154 @@ pub fn parse_raindrop_csv(content: &str) -> Vec<ImportedNote> {
 }
 
 // ---------------------------------------------------------------------------
+// Plinky JSON export parser
+// ---------------------------------------------------------------------------
+
+/// Parse a Plinky JSON export file into a list of imported notes.
+///
+/// Plinky's export format may vary, so this parser is flexible:
+/// - Accepts both a top-level JSON array and an object with a nested array
+///   (common wrapper keys: `bookmarks`, `links`, `items`, `data`).
+/// - For each entry, tries several common field names:
+///   - URL: `url`, `link`, `href`
+///   - Title: `title`, `name`
+///   - Description: `description`, `note`, `excerpt`, `notes`
+///   - Tags: `tags`, `labels`, `categories` (array of strings or
+///     array of objects with a `name` field)
+///   - Created: `created`, `createdAt`, `created_at`, `savedAt`, `saved_at`,
+///     `dateAdded`, `date_added`
+pub fn parse_plinky_json(content: &str) -> Result<Vec<ImportedNote>, serde_json::Error> {
+    let raw: serde_json::Value = serde_json::from_str(content)?;
+
+    let entries: Vec<&serde_json::Value> = match &raw {
+        serde_json::Value::Array(arr) => arr.iter().collect(),
+        serde_json::Value::Object(map) => {
+            // Look for a nested array under common wrapper keys.
+            ["bookmarks", "links", "items", "data"]
+                .iter()
+                .find_map(|key| map.get(*key).and_then(|v| v.as_array()))
+                .map(|arr| arr.iter().collect())
+                .unwrap_or_default()
+        }
+        _ => Vec::new(),
+    };
+
+    let notes = entries
+        .into_iter()
+        .filter_map(|entry| {
+            let url = plinky_str(entry, &["url", "link", "href"]);
+            if url.is_empty() {
+                return None;
+            }
+
+            let title = plinky_str(entry, &["title", "name"]);
+            let description = plinky_str(entry, &["description", "note", "excerpt", "notes"]);
+            let tags = plinky_tags(entry);
+            let created_at = plinky_timestamp(entry);
+
+            Some(ImportedNote {
+                title,
+                url,
+                tags,
+                description,
+                created_at,
+            })
+        })
+        .collect();
+
+    Ok(notes)
+}
+
+/// Extract the first non-empty string value from `obj` trying each key in order.
+fn plinky_str(obj: &serde_json::Value, keys: &[&str]) -> String {
+    for key in keys {
+        if let Some(s) = obj.get(*key).and_then(|v| v.as_str()) {
+            if !s.is_empty() {
+                return s.to_string();
+            }
+        }
+    }
+    String::new()
+}
+
+/// Extract tags from a Plinky entry.
+///
+/// Handles:
+/// - `["tag1", "tag2"]` (array of strings)
+/// - `[{"name": "tag1"}, {"name": "tag2"}]` (array of objects with `name`)
+/// - `"tag1,tag2"` (comma-separated string)
+fn plinky_tags(obj: &serde_json::Value) -> String {
+    for key in &["tags", "labels", "categories"] {
+        if let Some(val) = obj.get(*key) {
+            match val {
+                serde_json::Value::Array(arr) => {
+                    let items: Vec<String> = arr
+                        .iter()
+                        .filter_map(|item| match item {
+                            serde_json::Value::String(s) if !s.is_empty() => Some(s.clone()),
+                            serde_json::Value::Object(m) => {
+                                m.get("name").and_then(|n| n.as_str()).map(String::from)
+                            }
+                            _ => None,
+                        })
+                        .collect();
+                    if !items.is_empty() {
+                        return items.join(",");
+                    }
+                }
+                serde_json::Value::String(s) if !s.is_empty() => {
+                    return s.clone();
+                }
+                _ => {}
+            }
+        }
+    }
+    String::new()
+}
+
+/// Extract a created-at timestamp from a Plinky entry.
+///
+/// Tries common date field names and parses RFC 3339, then falls back to
+/// a Unix timestamp (integer or numeric string).
+fn plinky_timestamp(obj: &serde_json::Value) -> Option<String> {
+    let date_keys = [
+        "created",
+        "createdAt",
+        "created_at",
+        "savedAt",
+        "saved_at",
+        "dateAdded",
+        "date_added",
+    ];
+
+    for key in &date_keys {
+        if let Some(val) = obj.get(*key) {
+            // Try as an ISO 8601 / RFC 3339 string
+            if let Some(s) = val.as_str() {
+                if let Ok(dt) = chrono::DateTime::parse_from_rfc3339(s) {
+                    return Some(dt.format("%Y-%m-%d %H:%M:%S").to_string());
+                }
+            }
+            // Try as a Unix timestamp (integer)
+            if let Some(ts) = val.as_i64() {
+                if let Some(dt) = chrono::DateTime::from_timestamp(ts, 0) {
+                    return Some(dt.format("%Y-%m-%d %H:%M:%S").to_string());
+                }
+            }
+            // Try as a numeric string representing a Unix timestamp
+            if let Some(s) = val.as_str() {
+                if let Ok(ts) = s.parse::<i64>() {
+                    if let Some(dt) = chrono::DateTime::from_timestamp(ts, 0) {
+                        return Some(dt.format("%Y-%m-%d %H:%M:%S").to_string());
+                    }
+                }
+            }
+        }
+    }
+    None
+}
+
+// ---------------------------------------------------------------------------
 // Import into database
 // ---------------------------------------------------------------------------
 
@@ -483,10 +631,7 @@ mod tests {
         assert_eq!(notes[0].url, "https://doc.rust-lang.org/rust-by-example/");
         assert_eq!(notes[0].tags, "rust, programming");
         assert_eq!(notes[0].description, "Learn Rust with examples");
-        assert_eq!(
-            notes[0].created_at.as_deref(),
-            Some("2024-03-15 09:30:00")
-        );
+        assert_eq!(notes[0].created_at.as_deref(), Some("2024-03-15 09:30:00"));
 
         assert_eq!(notes[1].title, "Hacker News");
         assert_eq!(notes[1].url, "https://news.ycombinator.com/");
@@ -516,6 +661,107 @@ mod tests {
         let csv = "id,title,note,excerpt,url,folder,tags,created,cover,highlights,favorite\n1001,\"Title\",\"\",\"desc\",\"\",\"folder\",\"tag\",\"2024-01-01T00:00:00Z\",\"\",\"\",false";
         let notes = parse_raindrop_csv(csv);
         assert!(notes.is_empty());
+    }
+
+    #[test]
+    fn test_parse_plinky_json_basic() {
+        let json = r#"[
+            {
+                "title": "Plinky Bookmark",
+                "url": "https://example.com/plinky",
+                "description": "A saved bookmark",
+                "tags": ["rust", "dev"],
+                "createdAt": "2024-06-01T12:00:00Z"
+            },
+            {
+                "name": "Alt Title",
+                "link": "https://example.com/alt",
+                "note": "Some notes",
+                "labels": [{"name": "reading"}],
+                "saved_at": "2024-07-15T08:30:00Z"
+            }
+        ]"#;
+
+        let notes = parse_plinky_json(json).unwrap();
+        assert_eq!(notes.len(), 2);
+
+        assert_eq!(notes[0].title, "Plinky Bookmark");
+        assert_eq!(notes[0].url, "https://example.com/plinky");
+        assert_eq!(notes[0].description, "A saved bookmark");
+        assert_eq!(notes[0].tags, "rust,dev");
+        assert_eq!(notes[0].created_at.as_deref(), Some("2024-06-01 12:00:00"));
+
+        assert_eq!(notes[1].title, "Alt Title");
+        assert_eq!(notes[1].url, "https://example.com/alt");
+        assert_eq!(notes[1].description, "Some notes");
+        assert_eq!(notes[1].tags, "reading");
+        assert_eq!(notes[1].created_at.as_deref(), Some("2024-07-15 08:30:00"));
+    }
+
+    #[test]
+    fn test_parse_plinky_json_wrapped() {
+        let json = r#"{
+            "bookmarks": [
+                {
+                    "title": "Wrapped Entry",
+                    "url": "https://example.com/wrapped",
+                    "tags": "tag1,tag2"
+                }
+            ]
+        }"#;
+
+        let notes = parse_plinky_json(json).unwrap();
+        assert_eq!(notes.len(), 1);
+        assert_eq!(notes[0].title, "Wrapped Entry");
+        assert_eq!(notes[0].tags, "tag1,tag2");
+    }
+
+    #[test]
+    fn test_parse_plinky_json_unix_timestamp() {
+        let json = r#"[
+            {
+                "title": "Unix TS",
+                "url": "https://example.com/unix",
+                "created": 1700000000
+            }
+        ]"#;
+
+        let notes = parse_plinky_json(json).unwrap();
+        assert_eq!(notes.len(), 1);
+        assert!(notes[0].created_at.is_some());
+    }
+
+    #[test]
+    fn test_parse_plinky_json_skips_empty_url() {
+        let json = r#"[
+            {"title": "No URL", "url": ""},
+            {"title": "No URL field"},
+            {"title": "Has URL", "url": "https://example.com/ok"}
+        ]"#;
+
+        let notes = parse_plinky_json(json).unwrap();
+        assert_eq!(notes.len(), 1);
+        assert_eq!(notes[0].url, "https://example.com/ok");
+    }
+
+    #[test]
+    fn test_parse_plinky_json_empty() {
+        let notes = parse_plinky_json("[]").unwrap();
+        assert!(notes.is_empty());
+    }
+
+    #[test]
+    fn test_parse_plinky_json_invalid() {
+        assert!(parse_plinky_json("not json").is_err());
+    }
+
+    #[test]
+    fn test_parse_plinky_json_href_field() {
+        let json = r#"[{"href": "https://example.com/href", "name": "Via Href"}]"#;
+        let notes = parse_plinky_json(json).unwrap();
+        assert_eq!(notes.len(), 1);
+        assert_eq!(notes[0].url, "https://example.com/href");
+        assert_eq!(notes[0].title, "Via Href");
     }
 
     #[test]

@@ -16,7 +16,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use clap::{arg, Command};
+use clap::{Command, arg};
 use std::path::Path;
 use std::process;
 
@@ -30,14 +30,8 @@ fn main() {
 
     let matches = Command::new("localnative-export")
         .about("Export Local Native notes as Markdown files with YAML frontmatter")
-        .arg(
-            arg!(-o --output <DIR> "Output directory for exported .md files")
-                .required(true),
-        )
-        .arg(
-            arg!(-q --query <QUERY> "Optional search query to filter notes")
-                .required(false),
-        )
+        .arg(arg!(-o --output <DIR> "Output directory for exported .md files").required(true))
+        .arg(arg!(-q --query <QUERY> "Optional search query to filter notes").required(false))
         .get_matches();
 
     let output_dir = matches.get_one::<String>("output").unwrap();

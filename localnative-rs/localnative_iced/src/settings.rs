@@ -1,11 +1,11 @@
 use iced::{
-    widget::{
-        button, center, checkbox, column, container, mouse_area, opaque, row,
-        stack, text, text_input, Space, Text,
-    },
     Element,
     Length::{self, Shrink},
     Task,
+    widget::{
+        Space, Text, button, center, checkbox, column, container, mouse_area, opaque, row, stack,
+        text, text_input,
+    },
 };
 use iced_aw::{Card, NumberInput};
 
@@ -44,8 +44,8 @@ impl Settings {
         underlay: Element<'underlay, Message>,
         config: &'underlay Config,
     ) -> Element<'settings, Message> {
-        match self.create_modal_content(config) { Some(modal_content) => {
-            stack![
+        match self.create_modal_content(config) {
+            Some(modal_content) => stack![
                 underlay,
                 opaque(
                     mouse_area(center(opaque(modal_content)).style(|_theme| {
@@ -63,10 +63,9 @@ impl Settings {
                     .on_press(Message::Cancel)
                 )
             ]
-            .into()
-        } _ => {
-            underlay
-        }}
+            .into(),
+            _ => underlay,
+        }
     }
 
     fn create_modal_content(&self, config: &Config) -> Option<Element<'_, Message>> {
@@ -135,7 +134,11 @@ impl Settings {
                 Space::new().width(Shrink),
                 dark_theme_selector
             ],
-            row![text(tr!("limit")), Space::new().width(iced::Length::Fill), limit_input],
+            row![
+                text(tr!("limit")),
+                Space::new().width(iced::Length::Fill),
+                limit_input
+            ],
             row![text(tr!("allowed-origins")), allowed_origins_input],
             try_fix_host
         ]
@@ -201,7 +204,7 @@ impl Settings {
                         self.allowed_origins_temp.take().map(|s| vec![s]),
                     ),
                     crate::Message::InitHost,
-                )
+                );
             }
             Message::Other => {}
             Message::LightThemeChanged(t) => {

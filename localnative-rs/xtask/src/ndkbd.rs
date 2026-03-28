@@ -1,6 +1,6 @@
 use std::{path::PathBuf, str::FromStr};
 
-use xshell::{cmd, Shell};
+use xshell::{Shell, cmd};
 
 use crate::flags::Ndkbd;
 
