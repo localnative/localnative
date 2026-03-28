@@ -1,5 +1,6 @@
 // db.rs
-pub use error::{DbError, DbResult};
+pub use crate::error::{DatabaseError, DbError, DbResult, ValidationError};
+pub use models::Note;
 use models::Cmd;
 use rusqlite::Connection;
 
@@ -160,29 +161,7 @@ pub mod models {
     }
 }
 
-mod error {
-    use thiserror::Error;
-
-    #[derive(Error, Debug)]
-    pub enum DbError {
-        #[error("Rusqlite error: {0}")]
-        RusqliteError(#[from] rusqlite::Error),
-        #[error("Serialization error: {0}")]
-        SerdeError(#[from] serde_json::Error),
-        #[error("Base64 decoding error: {0}")]
-        Base64Error(#[from] base64::DecodeError),
-        #[error("Semver parsing error: {0}")]
-        SemverError(#[from] semver::Error),
-        #[error("Invalid created_at format")]
-        InvalidFormat,
-        #[error("IO error: {0}")]
-        IoError(#[from] std::io::Error),
-        #[error("Validation error: {0}")]
-        ValidationError(String),
-    }
-
-    pub type DbResult<T> = Result<T, DbError>;
-}
+// Error types are now defined in crate::error and re-exported above.
 
 mod utils {
     use super::*;
@@ -196,7 +175,7 @@ mod utils {
             "LocalNative"
         };
 
-        let home_dir = dirs::home_dir().ok_or(DbError::IoError(std::io::Error::new(
+        let home_dir = dirs::home_dir().ok_or(DatabaseError::IoError(std::io::Error::new(
             std::io::ErrorKind::NotFound,
             "Failed to get home directory",
         )))?;
@@ -204,7 +183,7 @@ mod utils {
             "{}/{}",
             home_dir
                 .to_str()
-                .ok_or(DbError::IoError(std::io::Error::new(
+                .ok_or(DatabaseError::IoError(std::io::Error::new(
                     std::io::ErrorKind::InvalidData,
                     "Invalid home directory path",
                 )))?,
@@ -359,6 +338,34 @@ pub mod queries {
         Ok(note)
     }
 
+    pub fn insert_note_with_timestamp(
+        conn: &Connection,
+        title: &str,
+        url: &str,
+        tags: &str,
+        description: &str,
+        comments: &str,
+        annotations: &[u8],
+        is_public: bool,
+        created_at: &str,
+    ) -> DbResult<Note> {
+        let uuid4 = Uuid::new_v4().to_string();
+
+        conn.execute(
+            "INSERT INTO note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public)
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+            rusqlite::params![uuid4, title, url, tags, description, comments, annotations, created_at, is_public],
+        )?;
+
+        let note = conn.query_row(
+            "SELECT rowid, uuid4, title, url, tags, description, comments, hex(annotations) as annotations, created_at, is_public FROM note WHERE uuid4 = ?1",
+            rusqlite::params![uuid4],
+            map_note,
+        )?;
+
+        Ok(note)
+    }
+
     pub fn delete_note(conn: &Connection, rowid: i64) -> DbResult<()> {
         conn.execute(
             "DELETE FROM note WHERE rowid = ?1",
@@ -372,25 +379,28 @@ pub mod queries {
 
         // Ensure the path is absolute to prevent relative path traversal
         if !path.is_absolute() {
-            return Err(DbError::ValidationError(
+            return Err(ValidationError::InvalidPath(
                 "Sync file path must be absolute".to_string(),
-            ));
+            )
+            .into());
         }
 
         // Verify the file exists and is a regular file
         if !path.is_file() {
-            return Err(DbError::ValidationError(
+            return Err(ValidationError::InvalidPath(
                 "Sync file does not exist or is not a regular file".to_string(),
-            ));
+            )
+            .into());
         }
 
         // Validate file extension
         match path.extension().and_then(|e| e.to_str()) {
             Some("sqlite3") | Some("db") | Some("sqlite") => {}
             _ => {
-                return Err(DbError::ValidationError(
+                return Err(ValidationError::InvalidPath(
                     "Sync file must have a .sqlite3, .sqlite, or .db extension".to_string(),
-                ));
+                )
+                .into());
             }
         }
 
@@ -532,19 +542,16 @@ pub mod queries {
             return select_count(conn);
         }
 
-        let words = make_words(query);
+        let fts_query = make_fts_query(query);
         let sql = format!(
             "SELECT COUNT(1)
             FROM note
             WHERE {}",
-            where_clause(&words, 1)
+            fts_where_clause(1)
         );
 
-        let params: Vec<String> = words;
         let count: i64 =
-            conn.query_row(&sql, rusqlite::params_from_iter(params.iter()), |row| {
-                row.get(0)
-            })?;
+            conn.query_row(&sql, rusqlite::params![fts_query], |row| row.get(0))?;
         Ok(u32::try_from(count).unwrap_or(u32::MAX))
     }
 
@@ -553,7 +560,7 @@ pub mod queries {
             return select(conn, limit, offset);
         }
 
-        let words = make_words(query);
+        let fts_query = make_fts_query(query);
         let sql = format!(
             "SELECT rowid, uuid4, title, url, tags, description, comments,
              hex(annotations) as annotations, created_at, is_public
@@ -561,21 +568,12 @@ pub mod queries {
              WHERE {}
              ORDER BY created_at DESC
              LIMIT ?1 OFFSET ?2",
-            where_clause(&words, 3),
+            fts_where_clause(3),
         );
-
-        let mut params: Vec<Box<dyn rusqlite::types::ToSql>> = Vec::new();
-        params.push(Box::new(limit));
-        params.push(Box::new(offset));
-        for word in words {
-            params.push(Box::new(word));
-        }
-        let params_refs: Vec<&dyn rusqlite::types::ToSql> =
-            params.iter().map(|p| p.as_ref()).collect();
 
         let mut stmt = conn.prepare(&sql)?;
         let notes = stmt
-            .query_map(params_refs.as_slice(), map_note)?
+            .query_map(rusqlite::params![limit, offset, fts_query], map_note)?
             .collect::<Result<Vec<_>, rusqlite::Error>>()?;
         Ok(notes)
     }
@@ -585,20 +583,19 @@ pub mod queries {
             return select_by_day(conn);
         }
 
-        let words = make_words(query);
+        let fts_query = make_fts_query(query);
         let sql = format!(
             "SELECT DATE(substr(created_at, 1, 10)) as date, COUNT(1) as count
             FROM note
             WHERE {}
             GROUP BY date
             ORDER BY date",
-            where_clause(&words, 1)
+            fts_where_clause(1)
         );
 
-        let params: Vec<String> = words;
         let mut stmt = conn.prepare(&sql)?;
         let days = stmt
-            .query_map(rusqlite::params_from_iter(params.iter()), map_day)?
+            .query_map(rusqlite::params![fts_query], map_day)?
             .collect::<Result<Vec<_>, rusqlite::Error>>()?;
         Ok(days)
     }
@@ -608,18 +605,17 @@ pub mod queries {
             return select_by_tag(conn);
         }
 
-        let words = make_words(query);
+        let fts_query = make_fts_query(query);
         let sql = format!(
             "SELECT tags
             FROM note
             WHERE {}",
-            where_clause(&words, 1)
+            fts_where_clause(1)
         );
 
         let mut tag_count_map = HashMap::new();
-        let params: Vec<String> = words;
         let mut stmt = conn.prepare(&sql)?;
-        let tags_iter = stmt.query_map(rusqlite::params_from_iter(params.iter()), |row| {
+        let tags_iter = stmt.query_map(rusqlite::params![fts_query], |row| {
             row.get::<_, String>(0)
         })?;
 
@@ -638,8 +634,8 @@ pub mod queries {
     }
 
     fn filter_count(conn: &Connection, query: &str, from: &str, to: &str) -> DbResult<u32> {
-        let words = make_words(query);
-        if words.len() == 1 && words[0].is_empty() {
+        let fts_query = make_fts_query(query);
+        if fts_query.is_empty() {
             return select_count(conn);
         }
 
@@ -649,19 +645,14 @@ pub mod queries {
             WHERE substr(created_at, 1, 10) >= ?1
             AND substr(created_at, 1, 10) <= ?2
             AND {}",
-            where_clause(&words, 3)
+            fts_where_clause(3)
         );
 
-        let mut params: Vec<Box<dyn rusqlite::types::ToSql>> = Vec::new();
-        params.push(Box::new(from.to_string()));
-        params.push(Box::new(to.to_string()));
-        for word in words {
-            params.push(Box::new(word));
-        }
-        let params_refs: Vec<&dyn rusqlite::types::ToSql> =
-            params.iter().map(|p| p.as_ref()).collect();
-
-        let count: i64 = conn.query_row(&sql, params_refs.as_slice(), |row| row.get(0))?;
+        let count: i64 = conn.query_row(
+            &sql,
+            rusqlite::params![from, to, fts_query],
+            |row| row.get(0),
+        )?;
         Ok(u32::try_from(count).unwrap_or(u32::MAX))
     }
 
@@ -673,8 +664,8 @@ pub mod queries {
         limit: u32,
         offset: u32,
     ) -> DbResult<Vec<Note>> {
-        let words = make_words(query);
-        if words.len() == 1 && words[0].is_empty() {
+        let fts_query = make_fts_query(query);
+        if fts_query.is_empty() {
             return select(conn, limit, offset);
         }
 
@@ -687,32 +678,20 @@ pub mod queries {
              AND {}
              ORDER BY created_at DESC
              LIMIT ?3 OFFSET ?4",
-            where_clause(&words, 5)
+            fts_where_clause(5)
         );
-
-        let mut params: Vec<Box<dyn rusqlite::types::ToSql>> = vec![
-            Box::new(from.to_string()),
-            Box::new(to.to_string()),
-            Box::new(limit),
-            Box::new(offset),
-        ];
-        for word in words {
-            params.push(Box::new(word));
-        }
-        let params_refs: Vec<&dyn rusqlite::types::ToSql> =
-            params.iter().map(|p| p.as_ref()).collect();
 
         let mut stmt = conn.prepare(&sql)?;
         let notes = stmt
-            .query_map(params_refs.as_slice(), map_note)?
+            .query_map(rusqlite::params![from, to, limit, offset, fts_query], map_note)?
             .collect::<Result<Vec<_>, rusqlite::Error>>()?;
         Ok(notes)
     }
 
     fn filter_by_tag(conn: &Connection, query: &str, from: &str, to: &str) -> DbResult<Vec<Tags>> {
-        let words = make_words(query);
+        let fts_query = make_fts_query(query);
 
-        if words.len() == 1 && words[0].is_empty() {
+        if fts_query.is_empty() {
             return select_by_tag(conn);
         }
 
@@ -722,20 +701,15 @@ pub mod queries {
             WHERE substr(created_at, 1, 10) >= ?1
             AND substr(created_at, 1, 10) <= ?2
             AND {}",
-            where_clause(&words, 3)
+            fts_where_clause(3)
         );
 
         let mut tag_count_map = HashMap::new();
-        let mut params: Vec<Box<dyn rusqlite::types::ToSql>> =
-            vec![Box::new(from.to_string()), Box::new(to.to_string())];
-        for word in words {
-            params.push(Box::new(word));
-        }
-        let params_refs: Vec<&dyn rusqlite::types::ToSql> =
-            params.iter().map(|p| p.as_ref()).collect();
-
         let mut stmt = conn.prepare(&sql)?;
-        let tags_iter = stmt.query_map(params_refs.as_slice(), |row| row.get::<_, String>(0))?;
+        let tags_iter = stmt.query_map(
+            rusqlite::params![from, to, fts_query],
+            |row| row.get::<_, String>(0),
+        )?;
 
         for tag_result in tags_iter {
             let tags_str = tag_result?;
@@ -751,27 +725,73 @@ pub mod queries {
         Ok(tags)
     }
 
-    pub(crate) fn make_words(query: &str) -> Vec<String> {
+    /// Fetch all notes from the database (no pagination).
+    pub fn select_all(conn: &Connection) -> DbResult<Vec<Note>> {
+        let mut stmt = conn.prepare(
+            "SELECT rowid, uuid4, title, url, tags, description, comments,
+             hex(annotations) as annotations, created_at, is_public
+             FROM note
+             ORDER BY created_at DESC",
+        )?;
+        let notes = stmt
+            .query_map([], map_note)?
+            .collect::<Result<Vec<_>, rusqlite::Error>>()?;
+        Ok(notes)
+    }
+
+    /// Fetch notes matching a search query (no pagination).
+    pub fn search_all(conn: &Connection, query: &str) -> DbResult<Vec<Note>> {
+        if query.is_empty() {
+            return select_all(conn);
+        }
+
+        let fts_query = make_fts_query(query);
+        let sql = format!(
+            "SELECT rowid, uuid4, title, url, tags, description, comments,
+             hex(annotations) as annotations, created_at, is_public
+             FROM note
+             WHERE {}
+             ORDER BY created_at DESC",
+            fts_where_clause(1),
+        );
+
+        let mut stmt = conn.prepare(&sql)?;
+        let notes = stmt
+            .query_map(rusqlite::params![fts_query], map_note)?
+            .collect::<Result<Vec<_>, rusqlite::Error>>()?;
+        Ok(notes)
+    }
+
+    /// Build an FTS5 match expression from a user query string.
+    ///
+    /// Each whitespace-separated word is quoted (to escape FTS5 operators)
+    /// and combined with AND so all terms must appear. A trailing `*` is
+    /// added for prefix matching, giving behaviour similar to the old
+    /// LIKE `%word%` approach.
+    pub(crate) fn make_fts_query(query: &str) -> String {
         static WHITESPACE_RE: OnceLock<Regex> = OnceLock::new();
         let re = WHITESPACE_RE.get_or_init(|| Regex::new(r"\s+").expect("static regex"));
         re.replace_all(query.trim(), " ")
             .split(' ')
-            .map(|w| format!("%{}%", w))
-            .collect()
-    }
-
-    pub(crate) fn where_clause(words: &[String], start: usize) -> String {
-        words
-            .iter()
-            .enumerate()
-            .map(|(i, _)| {
-                format!(
-                    "(title LIKE ?{0} OR url LIKE ?{0} OR tags LIKE ?{0} OR description LIKE ?{0})",
-                    i + start
-                )
+            .filter(|w| !w.is_empty())
+            .map(|w| {
+                // Escape double-quotes inside the term, then wrap in quotes
+                // and add prefix wildcard for substring-like matching.
+                let escaped = w.replace('"', "\"\"");
+                format!("\"{escaped}\" *")
             })
             .collect::<Vec<_>>()
             .join(" AND ")
+    }
+
+    /// Return a WHERE clause that joins the note table with the FTS index.
+    ///
+    /// `fts_param` is the SQL parameter index (1-based) that will hold the
+    /// FTS5 match expression.
+    pub(crate) fn fts_where_clause(fts_param: usize) -> String {
+        format!(
+            "rowid IN (SELECT rowid FROM note_fts WHERE note_fts MATCH ?{fts_param})"
+        )
     }
 
     #[cfg(test)]
@@ -822,6 +842,7 @@ pub mod migrations {
         (Version::new(0, 4, 1), migrate_note),
         (Version::new(0, 5, 0), drop_ssb_table),
         (Version::new(0, 6, 0), migrate_created_at),
+        (Version::new(0, 7, 0), migrate_fts5),
     ];
 
     pub fn upgrade(conn: &Connection) -> DbResult<()> {
@@ -887,7 +908,25 @@ pub mod migrations {
                  meta_key TEXT PRIMARY KEY,
                  meta_value TEXT NOT NULL
              );
-             INSERT INTO meta (meta_key, meta_value) VALUES ('version', '0.6.0');",
+             CREATE VIRTUAL TABLE IF NOT EXISTS note_fts USING fts5(
+                 title, url, tags, description,
+                 content=note, content_rowid=rowid
+             );
+             CREATE TRIGGER IF NOT EXISTS note_fts_insert AFTER INSERT ON note BEGIN
+                 INSERT INTO note_fts(rowid, title, url, tags, description)
+                 VALUES (new.rowid, new.title, new.url, new.tags, new.description);
+             END;
+             CREATE TRIGGER IF NOT EXISTS note_fts_delete AFTER DELETE ON note BEGIN
+                 INSERT INTO note_fts(note_fts, rowid, title, url, tags, description)
+                 VALUES ('delete', old.rowid, old.title, old.url, old.tags, old.description);
+             END;
+             CREATE TRIGGER IF NOT EXISTS note_fts_update AFTER UPDATE ON note BEGIN
+                 INSERT INTO note_fts(note_fts, rowid, title, url, tags, description)
+                 VALUES ('delete', old.rowid, old.title, old.url, old.tags, old.description);
+                 INSERT INTO note_fts(rowid, title, url, tags, description)
+                 VALUES (new.rowid, new.title, new.url, new.tags, new.description);
+             END;
+             INSERT INTO meta (meta_key, meta_value) VALUES ('version', '0.7.0');",
         )?;
         Ok(())
     }
@@ -984,11 +1023,37 @@ pub mod migrations {
         Ok(())
     }
 
+    fn migrate_fts5(conn: &Connection) -> DbResult<()> {
+        conn.execute_batch(
+            "CREATE VIRTUAL TABLE IF NOT EXISTS note_fts USING fts5(
+                 title, url, tags, description,
+                 content=note, content_rowid=rowid
+             );
+             INSERT INTO note_fts(rowid, title, url, tags, description)
+                 SELECT rowid, title, url, tags, description FROM note;
+             CREATE TRIGGER IF NOT EXISTS note_fts_insert AFTER INSERT ON note BEGIN
+                 INSERT INTO note_fts(rowid, title, url, tags, description)
+                 VALUES (new.rowid, new.title, new.url, new.tags, new.description);
+             END;
+             CREATE TRIGGER IF NOT EXISTS note_fts_delete AFTER DELETE ON note BEGIN
+                 INSERT INTO note_fts(note_fts, rowid, title, url, tags, description)
+                 VALUES ('delete', old.rowid, old.title, old.url, old.tags, old.description);
+             END;
+             CREATE TRIGGER IF NOT EXISTS note_fts_update AFTER UPDATE ON note BEGIN
+                 INSERT INTO note_fts(note_fts, rowid, title, url, tags, description)
+                 VALUES ('delete', old.rowid, old.title, old.url, old.tags, old.description);
+                 INSERT INTO note_fts(rowid, title, url, tags, description)
+                 VALUES (new.rowid, new.title, new.url, new.tags, new.description);
+             END;",
+        )?;
+        Ok(())
+    }
+
     fn parse_old_created_at(created_at: &str) -> DbResult<String> {
         let created_at = created_at.trim_end_matches(" UTC");
         let parts: Vec<&str> = created_at.split(':').collect();
         if parts.len() != 4 {
-            return Err(DbError::InvalidFormat);
+            return Err(DatabaseError::InvalidFormat);
         }
         // "YYYY-MM-DD HH:MM:SS" (drop the nanoseconds part)
         Ok(format!("{}:{}:{}", parts[0], parts[1], parts[2]))
@@ -997,7 +1062,7 @@ pub mod migrations {
 
 pub mod sync {
     use super::*;
-    use error::{DbError, DbResult};
+    use crate::error::{DbError, DbResult};
     use models::Note;
     use rusqlite::Connection;
     use std::collections::HashSet;
@@ -1128,7 +1193,25 @@ mod db_tests {
                  meta_key TEXT PRIMARY KEY,
                  meta_value TEXT NOT NULL
              );
-             INSERT INTO meta (meta_key, meta_value) VALUES ('version', '0.6.0');",
+             CREATE VIRTUAL TABLE IF NOT EXISTS note_fts USING fts5(
+                 title, url, tags, description,
+                 content=note, content_rowid=rowid
+             );
+             CREATE TRIGGER note_fts_insert AFTER INSERT ON note BEGIN
+                 INSERT INTO note_fts(rowid, title, url, tags, description)
+                 VALUES (new.rowid, new.title, new.url, new.tags, new.description);
+             END;
+             CREATE TRIGGER note_fts_delete AFTER DELETE ON note BEGIN
+                 INSERT INTO note_fts(note_fts, rowid, title, url, tags, description)
+                 VALUES ('delete', old.rowid, old.title, old.url, old.tags, old.description);
+             END;
+             CREATE TRIGGER note_fts_update AFTER UPDATE ON note BEGIN
+                 INSERT INTO note_fts(note_fts, rowid, title, url, tags, description)
+                 VALUES ('delete', old.rowid, old.title, old.url, old.tags, old.description);
+                 INSERT INTO note_fts(rowid, title, url, tags, description)
+                 VALUES (new.rowid, new.title, new.url, new.tags, new.description);
+             END;
+             INSERT INTO meta (meta_key, meta_value) VALUES ('version', '0.7.0');",
         )
         .expect("schema init");
         conn
@@ -1392,21 +1475,28 @@ mod db_tests {
     }
 
     #[test]
-    fn test_make_words() {
-        let words = queries::make_words("hello   world");
-        assert_eq!(words, vec!["%hello%", "%world%"]);
+    fn test_make_fts_query() {
+        let q = queries::make_fts_query("hello   world");
+        // Each word should be quoted and joined with AND
+        assert!(q.contains("\"hello\""));
+        assert!(q.contains("\"world\""));
+        assert!(q.contains("AND"));
 
-        let words = queries::make_words("  single  ");
-        assert_eq!(words, vec!["%single%"]);
+        let q = queries::make_fts_query("  single  ");
+        assert!(q.contains("\"single\""));
+        assert!(!q.contains("AND"));
+
+        // Empty query should produce empty string
+        let q = queries::make_fts_query("   ");
+        assert!(q.is_empty());
     }
 
     #[test]
-    fn test_where_clause() {
-        let words = vec!["%a%".to_string(), "%b%".to_string()];
-        let clause = queries::where_clause(&words, 1);
-        assert!(clause.contains("?1"));
-        assert!(clause.contains("?2"));
-        assert!(clause.contains("AND"));
+    fn test_fts_where_clause() {
+        let clause = queries::fts_where_clause(3);
+        assert!(clause.contains("?3"));
+        assert!(clause.contains("note_fts"));
+        assert!(clause.contains("MATCH"));
     }
 
     #[test]
@@ -1532,7 +1622,7 @@ mod db_tests {
 
         // Should have created tables and set version
         let version = migrations::get_meta_version(&conn).unwrap();
-        assert_eq!(version, "0.6.0");
+        assert_eq!(version, "0.7.0");
     }
 
     #[test]

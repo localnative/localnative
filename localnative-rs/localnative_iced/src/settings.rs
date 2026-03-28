@@ -44,7 +44,7 @@ impl Settings {
         underlay: Element<'underlay, Message>,
         config: &'underlay Config,
     ) -> Element<'settings, Message> {
-        if let Some(modal_content) = self.create_modal_content(config) {
+        match self.create_modal_content(config) { Some(modal_content) => {
             stack![
                 underlay,
                 opaque(
@@ -64,9 +64,9 @@ impl Settings {
                 )
             ]
             .into()
-        } else {
+        } _ => {
             underlay
-        }
+        }}
     }
 
     fn create_modal_content(&self, config: &Config) -> Option<Element<'_, Message>> {

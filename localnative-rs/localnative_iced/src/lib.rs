@@ -295,15 +295,15 @@ impl Data {
                 } else {
                     if self.sync_view.borrow_stop().is_some() {
                         if let Some(cmd) = self.sync_view.with_stop_mut(|ref_mut_stop| {
-                            if let Some(old_stop) = ref_mut_stop.take() {
+                            match ref_mut_stop.take() { Some(old_stop) => {
                                 ref_mut_stop.replace(stop);
                                 Some(Task::perform(
                                     sync::stop_server(old_stop),
                                     Message::ServerOption,
                                 ))
-                            } else {
+                            } _ => {
                                 None
-                            }
+                            }}
                         }) {
                             return cmd;
                         }
@@ -330,6 +330,27 @@ impl Data {
         } else {
             self.sync_view
                 .with_server_state_mut(|state| *state = sync::ServerState::Error);
+        }
+        Task::none()
+    }
+
+    fn handle_discovery_result(
+        &mut self,
+        result: Result<Vec<localnative_core::discovery::PeerInfo>, String>,
+    ) -> Task<Message> {
+        match result {
+            Ok(peers) => {
+                self.sync_view
+                    .with_discovery_state_mut(|state| *state = sync::DiscoveryState::Done);
+                self.sync_view
+                    .with_discovered_peers_mut(|p| *p = peers);
+            }
+            Err(err) => {
+                self.sync_view
+                    .with_discovery_state_mut(|state| {
+                        *state = sync::DiscoveryState::Error(err)
+                    });
+            }
         }
         Task::none()
     }
@@ -370,6 +391,7 @@ impl Data {
             Message::SyncOption(opt) => self.handle_sync_option_message(opt, &*config),
             Message::StartServerResult(res) => self.handle_start_server_result_message(res),
             Message::ServerOption(opt) => self.handle_server_option_message(opt),
+            Message::DiscoveryResult(result) => self.handle_discovery_result(result),
             Message::SettingsMessage(msg) => self.handle_settings_message(msg, config),
             Message::InitHost(..) => Task::none(),
             Message::Receiver(None) => Task::none(),
@@ -398,6 +420,7 @@ pub enum Message {
     SyncOption(Option<()>),
     StartServerResult(anyhow::Result<CancellationToken>),
     ServerOption(Option<()>),
+    DiscoveryResult(Result<Vec<localnative_core::discovery::PeerInfo>, String>),
     InitHost(()),
     Receiver(Option<QueryResult>),
     LoadFont(Result<(), iced::font::Error>),

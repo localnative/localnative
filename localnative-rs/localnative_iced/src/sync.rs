@@ -7,6 +7,7 @@ use iced::Task;
 use iced_aw::NumberInput;
 
 use localnative_core::db::queries;
+use localnative_core::discovery::PeerInfo;
 use once_cell::sync::OnceCell;
 use ouroboros::self_referencing;
 use regex::RegexSet;
@@ -33,6 +34,14 @@ use crate::{error_handle, icons::IconItem};
 
 use self::ouroboros_impl_sync_view::Heads;
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum DiscoveryState {
+    Idle,
+    Scanning,
+    Done,
+    Error(String),
+}
+
 #[allow(clippy::too_many_arguments)] // fields required by self_referencing macro
 #[self_referencing]
 pub struct SyncView {
@@ -43,6 +52,8 @@ pub struct SyncView {
     pub sync_state: SyncState,
     pub server_state: ServerState,
     pub stop: Option<tokio_util::sync::CancellationToken>,
+    pub discovered_peers: Vec<PeerInfo>,
+    pub discovery_state: DiscoveryState,
     #[borrows(server_addr)]
     #[covariant]
     pub translate: TranslateWithArgs<'this>,
@@ -80,6 +91,8 @@ pub enum Message {
     OpenServer,
     Waiting,
     CloseServer,
+    DiscoverPeers,
+    SelectPeer(usize),
 }
 
 impl SyncView {
@@ -96,6 +109,8 @@ impl SyncView {
             ip_qr_code,
             port,
             ip,
+            discovered_peers,
+            discovery_state,
             ..
         } = self.into_heads();
 
@@ -107,6 +122,8 @@ impl SyncView {
             server_addr,
             port,
             ip,
+            discovered_peers,
+            discovery_state,
             translate_builder: |server_addr: &String| {
                 translate::TranslateWithArgs::new("ip-qr", translate::args("ip", server_addr))
             },
@@ -143,6 +160,46 @@ impl SyncView {
             clear_button,
             horizontal_space()
         ];
+
+        // --- Peer discovery section ---
+        let discover_button_label = match self.borrow_discovery_state() {
+            DiscoveryState::Idle | DiscoveryState::Done | DiscoveryState::Error(_) => {
+                text("Discover Peers")
+            }
+            DiscoveryState::Scanning => text("Scanning..."),
+        };
+
+        let mut discover_button = button(row![IconItem::Sync, discover_button_label]).padding(0);
+        if *self.borrow_discovery_state() != DiscoveryState::Scanning {
+            discover_button = discover_button.on_press(Message::DiscoverPeers);
+        }
+
+        let mut discovery_col = column![discover_button].spacing(4);
+
+        if let DiscoveryState::Error(err) = self.borrow_discovery_state() {
+            discovery_col = discovery_col.push(text(format!("Discovery error: {}", err)));
+        }
+
+        let peers = self.borrow_discovered_peers();
+        if !peers.is_empty() {
+            for (idx, peer) in peers.iter().enumerate() {
+                let ip_str = peer
+                    .addresses
+                    .first()
+                    .map(|a| a.to_string())
+                    .unwrap_or_default();
+                let label = format!(
+                    "{} - {}:{} (v{})",
+                    peer.hostname, ip_str, peer.port, peer.version
+                );
+                let peer_button = button(text(label))
+                    .padding(2)
+                    .on_press(Message::SelectPeer(idx));
+                discovery_col = discovery_col.push(peer_button);
+            }
+        } else if *self.borrow_discovery_state() == DiscoveryState::Done {
+            discovery_col = discovery_col.push(text("No peers found on LAN"));
+        }
 
         let sync_from_server_button = button(row![
             IconItem::SyncFromServer,
@@ -197,6 +254,7 @@ impl SyncView {
             text(tr!("sync-client-tip")),
             text(tr!("input-ip-tip")),
             ip_input_row,
+            discovery_col,
             row![
                 sync_from_server_button,
                 sync_to_server_button,
@@ -308,13 +366,34 @@ impl SyncView {
             }
             Message::CloseServer => {
                 self.with_server_state_mut(|state| *state = ServerState::Closing);
-                if let Some(cmd) = self.with_stop_mut(|stop| {
+                match self.with_stop_mut(|stop| {
                     stop.take()
                         .map(|stop| Task::perform(stop_server(stop), crate::Message::ServerOption))
-                }) {
+                }) { Some(cmd) => {
                     return cmd;
-                } else {
+                } _ => {
                     self.with_server_state_mut(|state| *state = ServerState::Closed);
+                }}
+            }
+            Message::DiscoverPeers => {
+                self.with_discovery_state_mut(|state| *state = DiscoveryState::Scanning);
+                self.with_discovered_peers_mut(|peers| peers.clear());
+                return Task::perform(discover_lan_peers(), crate::Message::DiscoveryResult);
+            }
+            Message::SelectPeer(idx) => {
+                // Extract data before mutating to satisfy the borrow checker.
+                let selected = self
+                    .borrow_discovered_peers()
+                    .get(idx)
+                    .and_then(|peer| {
+                        peer.addresses
+                            .first()
+                            .map(|addr| (addr.to_string(), peer.port))
+                    });
+                if let Some((ip_str, peer_port)) = selected {
+                    self.with_ip_mut(|ip| *ip = ip_str);
+                    self.with_port_mut(|port| *port = peer_port);
+                    self.with_sync_state_mut(|state| *state = SyncState::IpAddrParsePass);
                 }
             }
         }
@@ -332,6 +411,8 @@ impl Default for SyncView {
             sync_state: SyncState::Waiting,
             server_state: ServerState::Closed,
             stop: None,
+            discovered_peers: Vec::new(),
+            discovery_state: DiscoveryState::Idle,
             translate_builder: |server_addr: &String| {
                 translate::TranslateWithArgs::new("ip-qr", translate::args("ip", server_addr))
             },
@@ -408,4 +489,11 @@ pub async fn start_server(
 pub async fn stop_server(stop: CancellationToken) -> Option<()> {
     stop.cancelled().await;
     Some(())
+}
+
+/// Scan the LAN for Local Native peers via mDNS (3-second timeout).
+pub async fn discover_lan_peers() -> Result<Vec<PeerInfo>, String> {
+    localnative_core::discovery::discover_peers(std::time::Duration::from_secs(3))
+        .await
+        .map_err(|e| e.to_string())
 }

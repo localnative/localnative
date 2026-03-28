@@ -2,7 +2,7 @@
 name = "localnative_iced"
 version = "0.7.0"
 authors = ["Cupnfish <cupnfish@icloud.com>"]
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 localnative_core = { path = "../localnative_core" }

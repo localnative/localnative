@@ -152,14 +152,14 @@ impl Display for Language {
 
 #[macro_export]
 macro_rules! tr {
-    ($msg:expr) => {
+    ($msg:expr_2021) => {
         $crate::translate::tr($msg)
     };
 }
 
 #[macro_export]
 macro_rules! args {
-    ($($key:expr => $value:expr),+ ) => {
+    ($($key:expr_2021 => $value:expr_2021),+ ) => {
         {
             let mut args: fluent_bundle::FluentArgs = fluent_bundle::FluentArgs::new();
             $(

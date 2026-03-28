@@ -19,7 +19,6 @@ use serde::{Deserialize, Serialize};
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 use std::sync::{Arc, Mutex, OnceLock};
-use thiserror::Error;
 use tokio::runtime::Runtime;
 
 fn global_runtime() -> &'static Runtime {
@@ -28,8 +27,14 @@ fn global_runtime() -> &'static Runtime {
 }
 
 pub mod db;
-mod error;
+pub mod discovery;
+pub mod error;
+pub mod export;
+pub mod import;
 pub mod rpc;
+
+// Re-export error types at crate root for convenience.
+pub use error::{DatabaseError, Error, ProcessError, SyncError, ValidationError};
 
 #[cfg(target_os = "android")]
 pub mod android {
@@ -67,8 +72,8 @@ pub mod android {
 /// `json_input` must be a valid, non-null pointer to a nul-terminated C string that remains
 /// valid for the duration of this call. The returned pointer must be freed with
 /// [`localnative_free`].
-#[no_mangle]
-pub unsafe extern "C" fn localnative_run(json_input: *const c_char) -> *mut c_char {
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn localnative_run(json_input: *const c_char) -> *mut c_char { unsafe {
     let c_str = CStr::from_ptr(json_input);
     let json = match c_str.to_str() {
         Ok(s) => run_async(s),
@@ -81,18 +86,18 @@ pub unsafe extern "C" fn localnative_run(json_input: *const c_char) -> *mut c_ch
             .unwrap_or_default()
             .into_raw(),
     }
-}
+}}
 
 /// # Safety
 ///
 /// `s` must be a pointer previously returned by [`localnative_run`], or null. After this call
 /// the pointer is invalid and must not be used again.
-#[no_mangle]
-pub unsafe extern "C" fn localnative_free(s: *mut c_char) {
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn localnative_free(s: *mut c_char) { unsafe {
     if !s.is_null() {
         drop(CString::from_raw(s));
     }
-}
+}}
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "action", rename_all = "kebab-case")]
@@ -146,24 +151,6 @@ pub struct CmdRpcServer {
     pub addr: String,
 }
 
-#[derive(Debug, Error)]
-pub enum ProcessError {
-    #[error("database error: {0}")]
-    DbError(#[from] db::DbError),
-    #[error("io error: {0}")]
-    IoError(#[from] std::io::Error),
-    #[error("address parse error: {0}")]
-    AddrParseError(#[from] std::net::AddrParseError),
-    #[error("rpc error: {0}")]
-    RpcError(#[from] tarpc::client::RpcError),
-    #[error("rpc internal error: {0}")]
-    RpcInternalError(#[from] rpc::RpcError),
-    #[error("serialization error: {0}")]
-    SerdeError(#[from] serde_json::Error),
-    #[error("Process error (serialized): {0}")]
-    SerializedErr(String),
-}
-
 /// Parse `text` as a JSON [`Cmd`], execute it, and return the result as a JSON string.
 /// Errors are serialized into the returned string rather than propagated.
 pub async fn run(text: &str) -> String {
@@ -172,7 +159,7 @@ pub async fn run(text: &str) -> String {
             Ok(rs) => rs,
             Err(err) => serialize_error(err, text),
         },
-        Err(e) => serialize_error(ProcessError::SerdeError(e), text),
+        Err(e) => serialize_error(ProcessError::Serde(e), text),
     }
 }
 
@@ -191,7 +178,7 @@ struct SerializeError<'s> {
 #[test]
 fn test_serialize_error() {
     let err = SerializeError {
-        error: ProcessError::IoError(std::io::Error::new(
+        error: ProcessError::Io(std::io::Error::new(
             std::io::ErrorKind::AddrInUse,
             "addres in use.",
         )),

@@ -4,8 +4,8 @@ use crate::db::{
         diff_uuid4_from_server, diff_uuid4_to_server, get_meta_version, get_note_by_uuid4, insert,
         next_uuid4_candidates,
     },
-    DbError,
 };
+use crate::error::{RpcError, ValidationError};
 use futures::{future, FutureExt, StreamExt};
 use governor::{Quota, RateLimiter};
 use rusqlite::Connection;
@@ -16,31 +16,8 @@ use tarpc::client;
 use tarpc::server::incoming::Incoming as _;
 use tarpc::server::Channel as _;
 use tarpc::{context, serde_transport::tcp, server::BaseChannel};
-use thiserror::Error;
 use tokio_util::sync::CancellationToken;
 use uuid::Uuid;
-
-#[derive(Debug, Error)]
-pub enum RpcError {
-    #[error("Database error: {0}")]
-    DbError(#[from] DbError),
-    #[error("RPC error: {0}")]
-    RpcError(#[from] tarpc::client::RpcError),
-    #[error("IO error: {0}")]
-    IoError(#[from] std::io::Error),
-    #[error("Address parse error: {0}")]
-    AddrParseError(#[from] std::net::AddrParseError),
-    #[error("Version mismatch")]
-    VersionMismatch,
-    #[error("Rpc error (serialized): {0}")]
-    SerializedErr(String),
-    #[error("Input validation error: {0}")]
-    InputValidation(String),
-    #[error("Server configuration error: {0}")]
-    ServerConfigError(String),
-    #[error("Rate limited: too many requests")]
-    RateLimited,
-}
 
 /// Maximum allowed size for individual note text fields (1 MB).
 const MAX_NOTE_FIELD_SIZE: usize = 1_048_576;
@@ -48,42 +25,32 @@ const MAX_NOTE_FIELD_SIZE: usize = 1_048_576;
 const MAX_ANNOTATION_SIZE: usize = 10_485_760;
 
 fn validate_uuid4(uuid4: &str) -> Result<(), RpcError> {
-    Uuid::parse_str(uuid4)
-        .map_err(|_| RpcError::InputValidation("Invalid UUID4 format".to_string()))?;
+    Uuid::parse_str(uuid4).map_err(|_| ValidationError::InvalidUuid)?;
     Ok(())
 }
 
 fn validate_note(note: &Note) -> Result<(), RpcError> {
     validate_uuid4(&note.uuid4)?;
     if note.title.len() > MAX_NOTE_FIELD_SIZE {
-        return Err(RpcError::InputValidation(
-            "Title exceeds maximum size".to_string(),
-        ));
+        return Err(ValidationError::FieldTooLarge { field: "title" }.into());
     }
     if note.url.len() > MAX_NOTE_FIELD_SIZE {
-        return Err(RpcError::InputValidation(
-            "URL exceeds maximum size".to_string(),
-        ));
+        return Err(ValidationError::FieldTooLarge { field: "url" }.into());
     }
     if note.tags.len() > MAX_NOTE_FIELD_SIZE {
-        return Err(RpcError::InputValidation(
-            "Tags field exceeds maximum size".to_string(),
-        ));
+        return Err(ValidationError::FieldTooLarge { field: "tags" }.into());
     }
     if note.description.len() > MAX_NOTE_FIELD_SIZE {
-        return Err(RpcError::InputValidation(
-            "Description field exceeds maximum size".to_string(),
-        ));
+        return Err(ValidationError::FieldTooLarge { field: "description" }.into());
     }
     if note.comments.len() > MAX_NOTE_FIELD_SIZE {
-        return Err(RpcError::InputValidation(
-            "Comments field exceeds maximum size".to_string(),
-        ));
+        return Err(ValidationError::FieldTooLarge { field: "comments" }.into());
     }
     if note.annotations.len() > MAX_ANNOTATION_SIZE {
-        return Err(RpcError::InputValidation(
-            "Annotations field exceeds maximum size".to_string(),
-        ));
+        return Err(ValidationError::FieldTooLarge {
+            field: "annotations",
+        }
+        .into());
     }
     Ok(())
 }
@@ -213,6 +180,15 @@ pub async fn setup_server(
     let listener = tcp::listen(addr, tarpc::tokio_serde::formats::Bincode::default).await?;
     let stop_token_clone = stop_token.clone();
 
+    // Start mDNS advertising so other LAN peers can discover this server.
+    let mdns_daemon = match crate::discovery::start_advertising(addr.port()) {
+        Ok(d) => Some(d),
+        Err(e) => {
+            tracing::warn!("mDNS advertising failed to start (sync still works): {}", e);
+            None
+        }
+    };
+
     // 100 requests/sec general limit, 20 requests/sec for data-intensive operations
     let general_limiter: SharedRateLimiter = Arc::new(RateLimiter::direct(Quota::per_second(
         NonZeroU32::new(100).unwrap(),
@@ -250,6 +226,11 @@ pub async fn setup_server(
                 // Stop signal received
             }
         }
+
+        // Stop mDNS advertising when the server shuts down.
+        if let Some(daemon) = mdns_daemon {
+            crate::discovery::stop_advertising(daemon);
+        }
     });
 
     Ok(())
@@ -268,21 +249,22 @@ pub fn get_server_addr() -> String {
 
 fn validate_client_addr(addr: &SocketAddr) -> Result<(), RpcError> {
     if addr.ip().is_unspecified() {
-        return Err(RpcError::InputValidation(
+        return Err(ValidationError::Other(
             "Cannot connect to unspecified address (0.0.0.0)".to_string(),
-        ));
+        )
+        .into());
     }
     if addr.port() == 0 {
-        return Err(RpcError::InputValidation("Port must not be 0".to_string()));
+        return Err(ValidationError::Other("Port must not be 0".to_string()).into());
     }
     Ok(())
 }
 
 fn validate_server_addr(addr: &SocketAddr) -> Result<(), RpcError> {
     if addr.port() == 0 {
-        return Err(RpcError::InputValidation(
-            "Server port must not be 0".to_string(),
-        ));
+        return Err(
+            ValidationError::Other("Server port must not be 0".to_string()).into(),
+        );
     }
     if addr.ip().is_unspecified() {
         tracing::warn!(%addr, "server binding to all interfaces — ensure this is intentional");
