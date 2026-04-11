@@ -1,5 +1,4 @@
 // @ts-check
-const lightCodeTheme = require('prism-react-renderer').themes.github;
 const darkCodeTheme = require('prism-react-renderer').themes.dracula;
 
 /** @type {import('@docusaurus/types').Config} */
@@ -36,12 +35,22 @@ const config = {
       }),
     ],
   ],
+  themes: [
+    [
+      '@easyops-cn/docusaurus-search-local',
+      {
+        hashed: true,
+        indexBlog: true,
+      },
+    ],
+  ],
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       colorMode: {
-        disableSwitch: true,
         defaultMode: 'dark',
+        disableSwitch: true,
+        respectPrefersColorScheme: false,
       },
       navbar: {
         title: 'Local Native',
@@ -158,8 +167,9 @@ const config = {
         copyright: `Unless otherwise noted, contents on this website are copyleft with a CC-by-SA 4.0 license.`,
       },
       prism: {
-        theme: lightCodeTheme,
+        theme: darkCodeTheme,
         darkTheme: darkCodeTheme,
+        additionalLanguages: ['bash', 'toml', 'rust', 'json'],
       },
     }),
 };
