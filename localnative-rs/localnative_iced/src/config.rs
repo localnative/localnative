@@ -316,13 +316,13 @@ pub async fn save(json: String) -> Option<()> {
     let raw_data = json.as_bytes();
     let path = Config::config_path();
 
-    if let Some(dir) = path.parent() {
-        if !dir.exists() {
-            tokio::fs::create_dir_all(dir)
-                .await
-                .map_err(error_handle)
-                .ok()?;
-        }
+    if let Some(dir) = path.parent()
+        && !dir.exists()
+    {
+        tokio::fs::create_dir_all(dir)
+            .await
+            .map_err(error_handle)
+            .ok()?;
     }
 
     if path.is_dir() {

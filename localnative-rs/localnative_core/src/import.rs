@@ -365,10 +365,10 @@ pub fn parse_plinky_json(content: &str) -> Result<Vec<ImportedNote>, serde_json:
 /// Extract the first non-empty string value from `obj` trying each key in order.
 fn plinky_str(obj: &serde_json::Value, keys: &[&str]) -> String {
     for key in keys {
-        if let Some(s) = obj.get(*key).and_then(|v| v.as_str()) {
-            if !s.is_empty() {
-                return s.to_string();
-            }
+        if let Some(s) = obj.get(*key).and_then(|v| v.as_str())
+            && !s.is_empty()
+        {
+            return s.to_string();
         }
     }
     String::new()
@@ -427,24 +427,23 @@ fn plinky_timestamp(obj: &serde_json::Value) -> Option<String> {
     for key in &date_keys {
         if let Some(val) = obj.get(*key) {
             // Try as an ISO 8601 / RFC 3339 string
-            if let Some(s) = val.as_str() {
-                if let Ok(dt) = chrono::DateTime::parse_from_rfc3339(s) {
-                    return Some(dt.format("%Y-%m-%d %H:%M:%S").to_string());
-                }
+            if let Some(s) = val.as_str()
+                && let Ok(dt) = chrono::DateTime::parse_from_rfc3339(s)
+            {
+                return Some(dt.format("%Y-%m-%d %H:%M:%S").to_string());
             }
             // Try as a Unix timestamp (integer)
-            if let Some(ts) = val.as_i64() {
-                if let Some(dt) = chrono::DateTime::from_timestamp(ts, 0) {
-                    return Some(dt.format("%Y-%m-%d %H:%M:%S").to_string());
-                }
+            if let Some(ts) = val.as_i64()
+                && let Some(dt) = chrono::DateTime::from_timestamp(ts, 0)
+            {
+                return Some(dt.format("%Y-%m-%d %H:%M:%S").to_string());
             }
             // Try as a numeric string representing a Unix timestamp
-            if let Some(s) = val.as_str() {
-                if let Ok(ts) = s.parse::<i64>() {
-                    if let Some(dt) = chrono::DateTime::from_timestamp(ts, 0) {
-                        return Some(dt.format("%Y-%m-%d %H:%M:%S").to_string());
-                    }
-                }
+            if let Some(s) = val.as_str()
+                && let Ok(ts) = s.parse::<i64>()
+                && let Some(dt) = chrono::DateTime::from_timestamp(ts, 0)
+            {
+                return Some(dt.format("%Y-%m-%d %H:%M:%S").to_string());
             }
         }
     }

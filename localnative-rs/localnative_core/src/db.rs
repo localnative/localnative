@@ -387,6 +387,7 @@ pub mod queries {
         Ok(note)
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn insert_note_with_timestamp(
         conn: &Connection,
         title: &str,
