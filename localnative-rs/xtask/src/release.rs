@@ -83,7 +83,6 @@ impl Release {
                     "Hill Chen".into(),
                 ]),
                 default_run: Some("localnative_iced".into()),
-                license: None,
             })
             .project_out_directory(dst)
             .bundle_settings(BundleSettings {
@@ -113,7 +112,6 @@ impl Release {
                 updater: None,
                 windows: WindowsSettings {
                     wix: Some(WixSettings {
-                        skip_webview_install: true,
                         // TODO: zh-CN language wix file.
                         language: Default::default(),
                         ..Default::default()
@@ -124,6 +122,7 @@ impl Release {
                 resources_map: None,
                 rpm: Default::default(),
                 dmg: Default::default(),
+                ..Default::default()
             })
             .binaries(vec![
                 BundleBinary::new("localnative_iced".into(), true),
@@ -131,7 +130,7 @@ impl Release {
             ])
             .package_types(package_types)
             .build()?;
-        tauri_bundler::bundle_project(settings)?;
+        tauri_bundler::bundle_project(&settings)?;
         Ok(())
     }
 }
