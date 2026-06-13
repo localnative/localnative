@@ -219,7 +219,7 @@ struct ClientStopServerResponse {
 async fn process(cmd: Cmd) -> Result<String, ProcessError> {
     tracing::debug!(?cmd, "processing command");
 
-    let result = match cmd {
+    match cmd {
         Cmd::Server(s) => {
             let pool = db::init_pool()?;
             crate::rpc::start(&s.addr, &pool).await?;
@@ -245,9 +245,7 @@ async fn process(cmd: Cmd) -> Result<String, ProcessError> {
             let conn = db::init_db()?;
             Ok(db::process_cmd(db_cmd, &conn)?)
         }
-    };
-
-    result
+    }
 }
 
 fn run_async(text: &str) -> String {

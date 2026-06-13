@@ -70,8 +70,8 @@ cargo run -p xtask -- ndkbd [--debug]          # cargo-ndk build of localnative_
 # Electron
 cd localnative-electron && npm install && npm run dev      # (npm run build for native modules)
 
-# Tauri (Svelte frontend)
-cd localnative-tauri && npm install && npm run dev         # build / lint / format also available
+# Tauri (Svelte frontend) — uses yarn (yarn.lock is the committed lockfile)
+cd localnative-tauri && yarn install && yarn dev           # build / lint / format scripts also available
 
 # Flutter (flutter_rust_bridge 2.x; see localnative-flutter/SETUP.md)
 cd localnative-flutter && make                             # check the Makefile for codegen + run targets

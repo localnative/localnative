@@ -44,13 +44,11 @@ mod utils {
     }
 
     pub fn max_count<K>(days: &BTreeMap<K, i64>) -> i64 {
-        let max_count = days
-            .values()
+        days.values()
             .max()
             .filter(|s| s.cmp(&&constants::MINIMUM_COUNT).is_gt())
             .copied()
-            .unwrap_or(constants::MINIMUM_COUNT);
-        max_count
+            .unwrap_or(constants::MINIMUM_COUNT)
     }
 
     pub fn calculate_suitable_range(
@@ -245,65 +243,61 @@ impl ChartView {
                 .expect("failed to draw selected rect");
         }
 
-        if let Some(pos) = state.cursor_position {
-            if let Some((xx, yy)) = spec.reverse_translate((pos.x as i32, pos.y as i32)) {
-                let iter: Option<(NaiveDate, i64)> = match &self.state {
-                    ChartState::Daily(InnerState { map, .. }) => map.get(&xx).map(|c| (xx, *c)),
-                    ChartState::Monthly(InnerState { map, .. }) => map
-                        .get(&MonthMapKey(xx.year(), xx.month()))
-                        .map(|c| (xx, *c)),
-                    ChartState::Yearly(InnerState { map, .. }) => {
-                        map.get(&xx.year()).map(|c| (xx, *c))
-                    }
-                };
+        if let Some(pos) = state.cursor_position
+            && let Some((xx, yy)) = spec.reverse_translate((pos.x as i32, pos.y as i32))
+        {
+            let iter: Option<(NaiveDate, i64)> = match &self.state {
+                ChartState::Daily(InnerState { map, .. }) => map.get(&xx).map(|c| (xx, *c)),
+                ChartState::Monthly(InnerState { map, .. }) => map
+                    .get(&MonthMapKey(xx.year(), xx.month()))
+                    .map(|c| (xx, *c)),
+                ChartState::Yearly(InnerState { map, .. }) => map.get(&xx.year()).map(|c| (xx, *c)),
+            };
 
-                chart
-                    .draw_series(plotters::series::LineSeries::new(
-                        [(xx, 0), (xx, self.max_count)],
-                        style.line_color().mix(0.9).filled(),
-                    ))
-                    .expect("failed to draw x aim");
-                let line_y = iter.unzip().1.unwrap_or(yy);
-                chart
-                    .draw_series(plotters::series::LineSeries::new(
-                        [(self.min_date, line_y), (self.max_date, line_y)],
-                        style.line_color().mix(0.9).filled(),
-                    ))
-                    .expect("failed to draw y aim");
-                let text_color = style.text_color();
-                chart
-                    .draw_series(plotters::series::PointSeries::of_element(
-                        iter,
-                        5,
-                        ShapeStyle::from(&style.fill_color()).filled(),
-                        &|coord, _size, _style| {
-                            plotters::prelude::EmptyElement::at(coord)
-                                + plotters::prelude::Text::new(
-                                    self.state.date_text(coord.0),
-                                    (0, -30),
-                                    TextStyle::from(("sans-serif", 12).into_font())
-                                        .color(&text_color),
-                                )
-                                + plotters::prelude::Text::new(
-                                    format!("{}: {:?}", tr!("count"), coord.1),
-                                    (0, -15),
-                                    TextStyle::from(("sans-serif", 12).into_font())
-                                        .color(&text_color),
-                                )
-                        },
-                    ))
-                    .expect("failed to draw data and count text");
+            chart
+                .draw_series(plotters::series::LineSeries::new(
+                    [(xx, 0), (xx, self.max_count)],
+                    style.line_color().mix(0.9).filled(),
+                ))
+                .expect("failed to draw x aim");
+            let line_y = iter.unzip().1.unwrap_or(yy);
+            chart
+                .draw_series(plotters::series::LineSeries::new(
+                    [(self.min_date, line_y), (self.max_date, line_y)],
+                    style.line_color().mix(0.9).filled(),
+                ))
+                .expect("failed to draw y aim");
+            let text_color = style.text_color();
+            chart
+                .draw_series(plotters::series::PointSeries::of_element(
+                    iter,
+                    5,
+                    ShapeStyle::from(&style.fill_color()).filled(),
+                    &|coord, _size, _style| {
+                        plotters::prelude::EmptyElement::at(coord)
+                            + plotters::prelude::Text::new(
+                                self.state.date_text(coord.0),
+                                (0, -30),
+                                TextStyle::from(("sans-serif", 12).into_font()).color(&text_color),
+                            )
+                            + plotters::prelude::Text::new(
+                                format!("{}: {:?}", tr!("count"), coord.1),
+                                (0, -15),
+                                TextStyle::from(("sans-serif", 12).into_font()).color(&text_color),
+                            )
+                    },
+                ))
+                .expect("failed to draw data and count text");
 
-                if let Some(pending) = state.pending.and_then(|pending_pos| {
-                    spec.reverse_translate((pending_pos.x as i32, pending_pos.y as i32))
-                }) {
-                    chart
-                        .draw_series(once(plotters::prelude::Rectangle::new(
-                            [pending, (xx, yy)],
-                            style.selection_color().mix(0.5).filled(),
-                        )))
-                        .expect("failed to draw select rect");
-                }
+            if let Some(pending) = state.pending.and_then(|pending_pos| {
+                spec.reverse_translate((pending_pos.x as i32, pending_pos.y as i32))
+            }) {
+                chart
+                    .draw_series(once(plotters::prelude::Rectangle::new(
+                        [pending, (xx, yy)],
+                        style.selection_color().mix(0.5).filled(),
+                    )))
+                    .expect("failed to draw select rect");
             }
         }
         spec

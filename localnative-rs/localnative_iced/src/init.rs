@@ -177,18 +177,18 @@ impl WebKind {
     pub async fn init_all(allowed_origins: Option<Vec<String>>) {
         #[cfg(target_os = "linux")]
         {
-            if let (Ok(exe), Some(home)) = (std::env::current_exe(), dirs::home_dir()) {
-                if let Some(parent) = exe.parent() {
-                    let from = parent.join("localnative-web-ext-host");
-                    let to = home.join("LocalNative").join("localnative-web-ext-host");
+            if let (Ok(exe), Some(home)) = (std::env::current_exe(), dirs::home_dir())
+                && let Some(parent) = exe.parent()
+            {
+                let from = parent.join("localnative-web-ext-host");
+                let to = home.join("LocalNative").join("localnative-web-ext-host");
 
-                    if to.exists() && to.is_dir() {
-                        let _ = tokio::fs::remove_dir(&to).await;
-                    }
+                if to.exists() && to.is_dir() {
+                    let _ = tokio::fs::remove_dir(&to).await;
+                }
 
-                    if let Err(e) = tokio::fs::copy(from, to).await {
-                        tracing::error!(%e, "failed to copy web-ext-host binary");
-                    }
+                if let Err(e) = tokio::fs::copy(from, to).await {
+                    tracing::error!(%e, "failed to copy web-ext-host binary");
                 }
             }
         }

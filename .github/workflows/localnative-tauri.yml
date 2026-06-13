@@ -35,6 +35,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 18
+          cache: yarn
+          cache-dependency-path: localnative-tauri/yarn.lock
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
       - name: Install dependencies (Ubuntu)
@@ -53,10 +55,10 @@ jobs:
             ${{ runner.os }}-cargo-tauri-
       - name: Install frontend dependencies
         working-directory: localnative-tauri
-        run: npm ci
+        run: yarn install --frozen-lockfile
       - name: Build frontend
         working-directory: localnative-tauri
-        run: npm run build
+        run: yarn build
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
         env:
@@ -79,6 +81,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 18
+          cache: yarn
+          cache-dependency-path: localnative-tauri/yarn.lock
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
       - name: Install dependencies (Ubuntu)
@@ -88,10 +92,10 @@ jobs:
           sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf
       - name: Install frontend dependencies
         working-directory: localnative-tauri
-        run: npm ci
+        run: yarn install --frozen-lockfile
       - name: Build frontend
         working-directory: localnative-tauri
-        run: npm run build
+        run: yarn build
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
