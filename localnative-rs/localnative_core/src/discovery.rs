@@ -105,7 +105,11 @@ pub async fn discover_peers(
                         .map(|v| v.val_str().to_string())
                         .unwrap_or_default();
 
-                    let addresses: Vec<IpAddr> = info.get_addresses().iter().copied().collect();
+                    let addresses: Vec<IpAddr> = info
+                        .get_addresses()
+                        .iter()
+                        .map(|addr| addr.to_ip_addr())
+                        .collect();
 
                     if !addresses.is_empty() {
                         let peer = PeerInfo {

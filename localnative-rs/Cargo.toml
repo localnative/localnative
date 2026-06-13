@@ -6,13 +6,13 @@ resolver = "2"
 anyhow = "1.0"
 xshell = "0.2"
 xflags = "0.3"
-tauri-bundler = "1.1"
+tauri-bundler = "2.9"
 clap = { version = "4", features = ["cargo"] }
-rusqlite = { version = "0.38", features = ["bundled"] }
+rusqlite = { version = "0.39", features = ["bundled"] }
 # To enable SQLCipher encryption, replace "bundled" with "bundled-sqlcipher":
-# rusqlite = { version = "0.38", features = ["bundled-sqlcipher"] }
+# rusqlite = { version = "0.39", features = ["bundled-sqlcipher"] }
 r2d2 = "0.8"
-r2d2_sqlite = "0.32"
+r2d2_sqlite = "0.34"
 linked_hash_set = "0.1"
 regex = "1.12"
 time = { version = "0.3", features = ["formatting", "macros", "serde-human-readable"] }
@@ -44,17 +44,17 @@ chrono = { version = "0.4", default-features = false, features = ["clock"] }
 # plotters-iced removed: incompatible with iced 0.14 (last release 0.11 targets iced 0.13)
 # Chart rendering reimplemented locally in localnative_iced/src/plotters_bridge.rs
 plotters = { version = "0.3", features = ["histogram"] }
-rand = "0.9"
-iced_aw = { version = "0.13", default-features = false, features = ["wrap", "number_input", "card"] }
+rand = "0.10"
+iced_aw = { version = "0.14", default-features = false, features = ["wrap", "number_input", "card"] }
 iced = { version = "0.14", features = ["canvas", "qr_code", "tokio"] }
 iced_runtime = { version = "0.14" }
-winreg = "0.55"
-jni = { version = "0.21", default-features = false }
+winreg = "0.56"
+jni = { version = "0.22", default-features = false }
 hex = "0.4"
 tracing = "0.1"
 tokio-util = "0.7"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-governor = "0.8"
-mdns-sd = "0.12"
+governor = "0.10"
+mdns-sd = "0.20"
 hostname = "0.4"
 notify-rust = "4"
