@@ -86,6 +86,16 @@ You can use [DB Browser for SQLite](http://sqlitebrowser.org/) to explore the da
 #### Rust GUI using Iced
 see tutorial
 
+#### Tauri (Svelte frontend) — recommended desktop target
+```
+cd localnative-tauri
+yarn install
+yarn dev          # vite dev
+yarn build        # vite build (production)
+yarn check        # svelte-check type check
+```
+Tauri uses `yarn` (`yarn.lock` is the committed lockfile).
+
 #### Electron - only Mac and GNU/Linux - deprecated
 ```
 cd localnative-electron
@@ -98,6 +108,15 @@ npm run dev
 #### Android
 
 #### iOS
+
+#### Flutter (Android / iOS / macOS)
+```
+cd localnative-flutter
+make setup        # install Rust targets + flutter_rust_bridge_codegen
+make bridge       # regenerate Dart↔Rust bindings
+make run-android  # or run-ios / run-macos
+```
+See `localnative-flutter/SETUP.md` for prerequisites (Flutter SDK, NDK, Xcode).
 
 ## Script
 There are scripts to bump version and release

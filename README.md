@@ -13,13 +13,21 @@ A cross-platform tool to save and sync your notes in local SQLite database witho
 
 # Sub-directories
 
+external-libs: third-party dependencies vendored for the build
+
 localnative-android: android app
 
-localnative-browser-extension: browser extension app and host manifest template
+localnative-browser-extension: browser extension app and host manifest template (includes `wasm-app/`)
 
-localnative-electron: desktop app
+localnative-docker: container build/run scripts (`Dockerfile`, `build.sh`, `run.sh`)
+
+localnative-electron: desktop app (deprecated — superseded by localnative-tauri)
+
+localnative-flutter: cross-platform mobile/desktop app via Flutter + flutter_rust_bridge (see `SETUP.md`)
 
 localnative-ios: ios app
+
+localnative-mac: native macOS app
 
 localnative-neon: nodejs to rust bridge, used by localnative-electron
 
@@ -29,6 +37,10 @@ localnative-rs: rust code
 - and `localnative_iced`, the Rust GUI with iced framework
 
 localnative-sql: sql snippet
+
+localnative-tauri: next-generation desktop app (Tauri + Svelte frontend)
+
+script: release and version-bump scripts
 
 # Bounty
 [bountysource](https://www.bountysource.com/teams/localnative-bounty/issues)

@@ -4,6 +4,14 @@ title: Changelog
 ---
 [Updates](https://chuanyan.live/tags/localnative)
 
+## Unreleased (maintenance)
+- No schema or feature changes — dependency and CI upkeep only.
+- Bumped `localnative-rs` crate dependencies (incl. `rusqlite` 0.39, `tarpc` 0.37, `governor` 0.10, `mdns-sd` 0.20).
+- Bumped Tauri frontend deps (Svelte 5, Vite 8, SvelteKit 2); Tauri CI now runs on Node 20.
+- Bumped Electron lower-risk deps (e.g. `@zxing/library` → 0.23).
+- `flutter_rust_bridge` 2.11 → 2.12.
+- Website (Docusaurus) lockfile refreshed to latest compatible.
+
 ## v0.5.0
 - ios and android: upgrade localnative_core dependencies
 - dmg and appimage: may be the last release of electron build

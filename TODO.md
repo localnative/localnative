@@ -11,7 +11,7 @@ Items identified during code review that require larger effort or separate plann
 - Verify N-API compatibility with Electron 28+
 
 ### Test Coverage Expansion
-- Only 34 tests total (18 DB, 10 RPC validation, 6 other)
+- 93 tests in `localnative_core` (26 in `db.rs`, 10 in `rpc.rs`, rest spread across the crate) — up from 34 at the last review, but still concentrated in unit tests
 - No integration tests for RPC sync (client ↔ server round-trip)
 - No tests for GUI state management (`localnative_iced/src/lib.rs`)
 - No tests for Electron renderer logic
@@ -19,11 +19,11 @@ Items identified during code review that require larger effort or separate plann
 - Consider adding `tokio::test` integration tests for `rpc::sync()` with an in-memory server
 
 ### Electron Dependency Updates
-- `@zxing/library` v0.18.6 → v1.3+ (major API changes)
+- ~~`@zxing/library` v0.18.6 → v1.3+~~ — done, bumped to `^0.23.0` (2026-06)
 - `crossfilter2` pinned at v1.5.4 — evaluate if upgrade is safe
 - `d3` v6.7.0 → v7+ (minor breaking changes in imports)
 - `dc` v4.2.7 → v5+ (check compatibility with crossfilter2)
-- `roddeh-i18n` v1.2.0 — verify UMD build works correctly with script tag loading
+- `roddeh-i18n` v1.2.1 — verify UMD build works correctly with script tag loading
 - `glob` v7.2.3 → v10+ (ESM-only in v9+, may need alternative)
 
 ## Medium Effort
@@ -63,7 +63,7 @@ Items identified during code review that require larger effort or separate plann
 - Verify CSP headers don't block any legitimate functionality
 
 ### CI Pipeline
-- `.gitlab-ci.yml` lint/fmt commands were fixed but pipeline hasn't been validated
+- ~~`.gitlab-ci.yml` lint/fmt commands were fixed but pipeline hasn't been validated~~ — clippy/fmt gate is green; Tauri CI bumped to Node 20 and lockfile fixed (4ae9d58, 8efc68e)
 - Consider adding `cargo test` step if not already present
 - Consider adding Electron build/test step
 
