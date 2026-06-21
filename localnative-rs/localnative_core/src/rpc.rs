@@ -2,8 +2,8 @@ use crate::db::{
     Pool,
     models::Note,
     sync::{
-        diff_uuid4_from_server, diff_uuid4_to_server, get_meta_version, get_note_by_uuid4, insert,
-        next_uuid4_candidates,
+        diff_from_server, diff_to_server, get_meta_version, get_note_by_uuid4, insert,
+        note_versions,
     },
 };
 use crate::error::{RpcError, ValidationError};
@@ -61,8 +61,8 @@ fn validate_note(note: &Note) -> Result<(), RpcError> {
 #[tarpc::service]
 pub trait LocalNative {
     async fn is_version_match(version: String) -> Result<bool, RpcError>;
-    async fn diff_uuid4_to_server(candidates: Vec<String>) -> Result<Vec<String>, RpcError>;
-    async fn diff_uuid4_from_server(candidates: Vec<String>) -> Result<Vec<String>, RpcError>;
+    async fn diff_to_server(candidates: Vec<(String, String)>) -> Result<Vec<String>, RpcError>;
+    async fn diff_from_server(candidates: Vec<(String, String)>) -> Result<Vec<String>, RpcError>;
     async fn send_note(note: Note) -> Result<bool, RpcError>;
     async fn receive_note(uuid4: String) -> Result<Note, RpcError>;
     async fn stop() -> Result<(), RpcError>;
@@ -118,36 +118,36 @@ impl LocalNative for LocalNativeServer {
         Ok(version == meta_version)
     }
 
-    async fn diff_uuid4_to_server(
+    async fn diff_to_server(
         self,
         _: context::Context,
-        candidates: Vec<String>,
+        candidates: Vec<(String, String)>,
     ) -> Result<Vec<String>, RpcError> {
         self.check_general_limit()?;
-        let diff_uuid4 = {
+        let diff = {
             let conn = self
                 .pool
                 .get()
                 .map_err(|e| RpcError::PoolError(e.to_string()))?;
-            diff_uuid4_to_server(&conn, candidates)?
+            diff_to_server(&conn, candidates)?
         };
-        Ok(diff_uuid4)
+        Ok(diff)
     }
 
-    async fn diff_uuid4_from_server(
+    async fn diff_from_server(
         self,
         _: context::Context,
-        candidates: Vec<String>,
+        candidates: Vec<(String, String)>,
     ) -> Result<Vec<String>, RpcError> {
         self.check_general_limit()?;
-        let diff_uuid4 = {
+        let diff = {
             let conn = self
                 .pool
                 .get()
                 .map_err(|e| RpcError::PoolError(e.to_string()))?;
-            diff_uuid4_from_server(&conn, candidates)?
+            diff_from_server(&conn, candidates)?
         };
-        Ok(diff_uuid4)
+        Ok(diff)
     }
 
     async fn send_note(self, _: context::Context, note: Note) -> Result<bool, RpcError> {
@@ -315,10 +315,10 @@ pub async fn run_sync_to_server(addr: &SocketAddr, pool: &Pool) -> Result<usize,
 
     let candidates = {
         let conn = pool.get().map_err(|e| RpcError::PoolError(e.to_string()))?;
-        next_uuid4_candidates(&conn)?
+        note_versions(&conn)?
     };
     let diff_uuid4 = client
-        .diff_uuid4_to_server(context::current(), candidates)
+        .diff_to_server(context::current(), candidates)
         .await??;
     let count = diff_uuid4.len();
     tracing::info!(count, "notes to send to server");
@@ -347,10 +347,10 @@ pub async fn run_sync_from_server(addr: &SocketAddr, pool: &Pool) -> Result<usiz
 
     let candidates = {
         let conn = pool.get().map_err(|e| RpcError::PoolError(e.to_string()))?;
-        next_uuid4_candidates(&conn)?
+        note_versions(&conn)?
     };
     let diff_uuid4 = client
-        .diff_uuid4_from_server(context::current(), candidates)
+        .diff_from_server(context::current(), candidates)
         .await??;
     let count = diff_uuid4.len();
     tracing::info!(count, "notes to receive from server");
@@ -458,6 +458,8 @@ mod tests {
             created_at: "2024-01-01 00:00:00".to_string(),
             is_public: false,
             metadata: String::new(),
+            updated_at: String::new(),
+            deleted: false,
         };
         assert!(validate_note(&note).is_ok());
     }
@@ -476,6 +478,8 @@ mod tests {
             created_at: "2024-01-01 00:00:00".to_string(),
             is_public: false,
             metadata: String::new(),
+            updated_at: String::new(),
+            deleted: false,
         };
         assert!(validate_note(&note).is_err());
     }
@@ -495,6 +499,8 @@ mod tests {
             created_at: "2024-01-01 00:00:00".to_string(),
             is_public: false,
             metadata: String::new(),
+            updated_at: String::new(),
+            deleted: false,
         };
         assert!(validate_note(&note).is_err());
     }

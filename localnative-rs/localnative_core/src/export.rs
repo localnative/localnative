@@ -236,6 +236,8 @@ mod tests {
             created_at: "2024-01-15 10:30:00".to_string(),
             is_public: true,
             metadata: String::new(),
+            updated_at: String::new(),
+            deleted: false,
         };
 
         let md = note_to_markdown(&note);
@@ -266,6 +268,8 @@ mod tests {
             created_at: "2024-01-15 10:30:00".to_string(),
             is_public: false,
             metadata: String::new(),
+            updated_at: String::new(),
+            deleted: false,
         };
 
         let md = note_to_markdown(&note);
@@ -293,7 +297,9 @@ mod tests {
                 annotations BLOB NOT NULL,
                 created_at TEXT NOT NULL,
                 is_public INTEGER NOT NULL DEFAULT 0,
-                metadata TEXT NOT NULL DEFAULT ''
+                metadata TEXT NOT NULL DEFAULT '',
+                updated_at TEXT NOT NULL DEFAULT '',
+                deleted INTEGER NOT NULL DEFAULT 0
             );
             CREATE VIRTUAL TABLE note_fts USING fts5(
                 title, url, tags, description,
@@ -340,7 +346,9 @@ mod tests {
                 annotations BLOB NOT NULL,
                 created_at TEXT NOT NULL,
                 is_public INTEGER NOT NULL DEFAULT 0,
-                metadata TEXT NOT NULL DEFAULT ''
+                metadata TEXT NOT NULL DEFAULT '',
+                updated_at TEXT NOT NULL DEFAULT '',
+                deleted INTEGER NOT NULL DEFAULT 0
             );
             CREATE VIRTUAL TABLE note_fts USING fts5(
                 title, url, tags, description,

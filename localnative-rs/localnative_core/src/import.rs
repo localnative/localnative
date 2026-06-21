@@ -786,7 +786,9 @@ mod tests {
                 annotations BLOB NOT NULL DEFAULT x'',
                 created_at TEXT NOT NULL DEFAULT '',
                 is_public BOOLEAN NOT NULL DEFAULT 1,
-                metadata TEXT NOT NULL DEFAULT ''
+                metadata TEXT NOT NULL DEFAULT '',
+                updated_at TEXT NOT NULL DEFAULT '',
+                deleted INTEGER NOT NULL DEFAULT 0
             );
             CREATE TABLE meta (meta_key TEXT PRIMARY KEY, meta_value TEXT);
             INSERT INTO meta VALUES ('version', '0.7.0');",

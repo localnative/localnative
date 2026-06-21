@@ -7,6 +7,71 @@ use rusqlite::Connection;
 /// Type alias for the r2d2 connection pool backed by SQLite.
 pub type Pool = r2d2::Pool<r2d2_sqlite::SqliteConnectionManager>;
 
+// ── Last-write-wins sync helpers ───────────────────────────────────────────
+//
+// Sync uses a per-row logical timestamp (`updated_at`) to decide which version
+// of a note wins (last-write-wins). The token is a fixed-width, lexicographically
+// sortable string: zero-padded epoch-millis (kept monotonic within this process)
+// followed by the database's stable `node_id` as a deterministic tiebreaker.
+//
+// NOTE: this is a monotonic *physical* clock, which is adequate when peer clocks
+// are roughly in sync. A full Hybrid Logical Clock — which also advances the
+// local clock past timestamps observed from peers, hardening against clock skew
+// and tombstone resurrection — is the planned follow-up (see TODO.md).
+
+/// Return this database's stable node identifier, creating one if absent.
+fn node_id(conn: &Connection) -> DbResult<String> {
+    if let Ok(id) = conn.query_row(
+        "SELECT meta_value FROM meta WHERE meta_key = 'node_id'",
+        [],
+        |row| row.get::<_, String>(0),
+    ) {
+        return Ok(id);
+    }
+    let id = uuid::Uuid::new_v4().to_string();
+    conn.execute(
+        "INSERT OR IGNORE INTO meta (meta_key, meta_value) VALUES ('node_id', ?1)",
+        rusqlite::params![id],
+    )?;
+    // Re-read in case a concurrent writer won the INSERT OR IGNORE race.
+    let id = conn.query_row(
+        "SELECT meta_value FROM meta WHERE meta_key = 'node_id'",
+        [],
+        |row| row.get(0),
+    )?;
+    Ok(id)
+}
+
+/// Generate a sortable last-write-wins token for a local write to a note.
+fn next_update_token(conn: &Connection) -> DbResult<String> {
+    use std::sync::atomic::{AtomicU64, Ordering};
+    static LAST_MILLIS: AtomicU64 = AtomicU64::new(0);
+
+    let phys = chrono::Utc::now().timestamp_millis().max(0) as u64;
+    let mut stamp = phys;
+    LAST_MILLIS
+        .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |last| {
+            stamp = phys.max(last.saturating_add(1));
+            Some(stamp)
+        })
+        .ok();
+    Ok(format!("{:020}-{}", stamp, node_id(conn)?))
+}
+
+/// Whether `table` has a column named `column` (used to keep migrations
+/// idempotent against schemas already created by `init_db_schema`).
+fn column_exists(conn: &Connection, table: &str, column: &str) -> DbResult<bool> {
+    let mut stmt = conn.prepare(&format!("PRAGMA table_info({table})"))?;
+    let mut rows = stmt.query([])?;
+    while let Some(row) = rows.next()? {
+        let name: String = row.get(1)?;
+        if name == column {
+            return Ok(true);
+        }
+    }
+    Ok(false)
+}
+
 /// Open (or create) the SQLite database at the platform-appropriate location and run any
 /// pending schema migrations.  Enables WAL mode and sets a busy timeout for
 /// better concurrent-read performance.
@@ -129,6 +194,15 @@ pub mod models {
         pub created_at: String,
         pub is_public: bool,
         pub metadata: String,
+        /// Last-write-wins logical timestamp (sortable token). Used by sync to
+        /// decide which version of a note wins. Empty for legacy rows until the
+        /// 0.10.0 migration backfills it. See [`crate::db::sync`].
+        #[serde(default)]
+        pub updated_at: String,
+        /// Soft-delete tombstone flag. `true` means the note is deleted; the row
+        /// is retained so the deletion can propagate to peers during sync.
+        #[serde(default)]
+        pub deleted: bool,
     }
 
     /// A search result wrapping a [`Note`] with optional FTS5 snippet highlights.
@@ -344,6 +418,10 @@ pub mod queries {
             created_at: row.get("created_at")?,
             is_public: row.get("is_public")?,
             metadata: row.get("metadata")?,
+            // Tolerant of SELECTs that do not project these columns (UI read
+            // paths don't need them); the sync paths select them explicitly.
+            updated_at: row.get("updated_at").unwrap_or_default(),
+            deleted: row.get("deleted").unwrap_or(false),
         })
     }
 
@@ -371,11 +449,12 @@ pub mod queries {
     ) -> DbResult<Note> {
         let uuid4 = Uuid::new_v4().to_string();
         let created_at = chrono::Utc::now().format("%Y-%m-%d %H:%M:%S").to_string();
+        let updated_at = next_update_token(conn)?;
 
         conn.execute(
-            "INSERT INTO note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public, metadata)
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, '{}')",
-            rusqlite::params![uuid4, title, url, tags, description, comments, annotations, created_at, is_public],
+            "INSERT INTO note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public, metadata, updated_at)
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, '{}', ?10)",
+            rusqlite::params![uuid4, title, url, tags, description, comments, annotations, created_at, is_public, updated_at],
         )?;
 
         let note = conn.query_row(
@@ -400,11 +479,12 @@ pub mod queries {
         created_at: &str,
     ) -> DbResult<Note> {
         let uuid4 = Uuid::new_v4().to_string();
+        let updated_at = next_update_token(conn)?;
 
         conn.execute(
-            "INSERT INTO note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public, metadata)
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, '{}')",
-            rusqlite::params![uuid4, title, url, tags, description, comments, annotations, created_at, is_public],
+            "INSERT INTO note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public, metadata, updated_at)
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, '{}', ?10)",
+            rusqlite::params![uuid4, title, url, tags, description, comments, annotations, created_at, is_public, updated_at],
         )?;
 
         let note = conn.query_row(
@@ -416,10 +496,15 @@ pub mod queries {
         Ok(note)
     }
 
+    /// Soft-delete a note: mark it as a tombstone and bump its last-write-wins
+    /// timestamp so the deletion wins over the original insert and propagates to
+    /// peers during sync. The row is retained (not physically removed) so the
+    /// tombstone can be replicated; read queries filter out `deleted = 1` rows.
     pub fn delete_note(conn: &Connection, rowid: i64) -> DbResult<()> {
+        let updated_at = next_update_token(conn)?;
         conn.execute(
-            "DELETE FROM note WHERE rowid = ?1",
-            rusqlite::params![rowid],
+            "UPDATE note SET deleted = 1, updated_at = ?2 WHERE rowid = ?1",
+            rusqlite::params![rowid, updated_at],
         )?;
         Ok(())
     }
@@ -457,27 +542,81 @@ pub mod queries {
         Ok(())
     }
 
+    /// Whether `schema.note` (e.g. `main` or an attached `other`) has `column`.
+    /// `schema` is a fixed internal identifier, never user input.
+    fn schema_column_exists(conn: &Connection, schema: &str, column: &str) -> DbResult<bool> {
+        let mut stmt = conn.prepare(&format!("PRAGMA {schema}.table_info(note)"))?;
+        let mut rows = stmt.query([])?;
+        while let Some(row) = rows.next()? {
+            let name: String = row.get(1)?;
+            if name == column {
+                return Ok(true);
+            }
+        }
+        Ok(false)
+    }
+
+    /// Bring `schema.note` up to the last-write-wins schema, adding and
+    /// backfilling the columns when an attached peer database predates 0.10.0.
+    fn ensure_lww_columns(conn: &Connection, schema: &str) -> DbResult<()> {
+        if !schema_column_exists(conn, schema, "updated_at")? {
+            conn.execute_batch(&format!(
+                "ALTER TABLE {schema}.note ADD COLUMN updated_at TEXT NOT NULL DEFAULT '';"
+            ))?;
+        }
+        if !schema_column_exists(conn, schema, "deleted")? {
+            conn.execute_batch(&format!(
+                "ALTER TABLE {schema}.note ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0;"
+            ))?;
+        }
+        conn.execute_batch(&format!(
+            "UPDATE {schema}.note
+             SET updated_at = printf('%020d-legacy', CAST(strftime('%s', created_at) AS INTEGER) * 1000)
+             WHERE updated_at IS NULL OR updated_at = '';"
+        ))?;
+        Ok(())
+    }
+
+    /// Offline sync against an attached SQLite file. Bidirectional, conflict-
+    /// resolving via last-write-wins on `updated_at`, and tombstone-aware so
+    /// deletions replicate. Mirrors the live RPC merge so the two paths agree.
     pub fn sync_via_attach(conn: &Connection, uri: &str) -> DbResult<()> {
         validate_sync_file_path(uri)?;
         conn.execute("ATTACH ?1 AS other", rusqlite::params![uri])?;
+        let result = sync_attached(conn);
+        // Always detach, even on failure, so a later sync can re-attach.
+        let _ = conn.execute_batch("DETACH DATABASE other;");
+        result
+    }
+
+    fn sync_attached(conn: &Connection) -> DbResult<()> {
+        ensure_lww_columns(conn, "main")?;
+        ensure_lww_columns(conn, "other")?;
+        // `WHERE true` is required for SQLite to parse ON CONFLICT after a SELECT.
         conn.execute_batch(
-            "INSERT INTO main.note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public, metadata)
-            SELECT uuid4, title, url, tags, description, comments, annotations, created_at, is_public, metadata
-            FROM other.note
-            WHERE NOT EXISTS (
-                SELECT 1 FROM main.note
-                WHERE main.note.uuid4 = other.note.uuid4
-            ) ORDER BY created_at;
+            "INSERT INTO main.note AS m
+                 (uuid4, title, url, tags, description, comments, annotations, created_at, is_public, metadata, updated_at, deleted)
+             SELECT uuid4, title, url, tags, description, comments, annotations, created_at, is_public, metadata, updated_at, deleted
+             FROM other.note WHERE true
+             ON CONFLICT(uuid4) DO UPDATE SET
+                 title = excluded.title, url = excluded.url, tags = excluded.tags,
+                 description = excluded.description, comments = excluded.comments,
+                 annotations = excluded.annotations, created_at = excluded.created_at,
+                 is_public = excluded.is_public, metadata = excluded.metadata,
+                 updated_at = excluded.updated_at, deleted = excluded.deleted
+             WHERE excluded.updated_at > m.updated_at;
 
-            INSERT INTO other.note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public, metadata)
-            SELECT uuid4, title, url, tags, description, comments, annotations, created_at, is_public, metadata
-            FROM main.note
-            WHERE NOT EXISTS (
-                SELECT 1 FROM other.note
-                WHERE other.note.uuid4 = main.note.uuid4
-            ) ORDER BY created_at;
-
-            DETACH DATABASE other;",
+             INSERT INTO other.note AS o
+                 (uuid4, title, url, tags, description, comments, annotations, created_at, is_public, metadata, updated_at, deleted)
+             SELECT uuid4, title, url, tags, description, comments, annotations, created_at, is_public, metadata, updated_at, deleted
+             FROM main.note WHERE true
+             ON CONFLICT(uuid4) DO UPDATE SET
+                 title = excluded.title, url = excluded.url, tags = excluded.tags,
+                 description = excluded.description, comments = excluded.comments,
+                 annotations = excluded.annotations, created_at = excluded.created_at,
+                 is_public = excluded.is_public, metadata = excluded.metadata,
+                 updated_at = excluded.updated_at, deleted = excluded.deleted
+             WHERE excluded.updated_at > o.updated_at;",
         )?;
         Ok(())
     }
@@ -537,7 +676,10 @@ pub mod queries {
     }
 
     fn select_count(conn: &Connection) -> DbResult<u32> {
-        let count: i64 = conn.query_row("SELECT COUNT(1) FROM note", [], |row| row.get(0))?;
+        let count: i64 =
+            conn.query_row("SELECT COUNT(1) FROM note WHERE deleted = 0", [], |row| {
+                row.get(0)
+            })?;
         Ok(u32::try_from(count).unwrap_or(u32::MAX))
     }
 
@@ -546,6 +688,7 @@ pub mod queries {
             "SELECT rowid, uuid4, title, url, tags, description, comments,
              hex(annotations) as annotations, created_at, is_public, metadata
              FROM note
+             WHERE deleted = 0
              ORDER BY created_at DESC
              LIMIT ?1 OFFSET ?2",
         )?;
@@ -559,6 +702,7 @@ pub mod queries {
         let mut stmt = conn.prepare(
             "SELECT DATE(substr(created_at, 1, 10)) as date, COUNT(1) as count
             FROM note
+            WHERE deleted = 0
             GROUP BY date
             ORDER BY date",
         )?;
@@ -570,7 +714,7 @@ pub mod queries {
 
     fn select_by_tag(conn: &Connection) -> DbResult<Vec<Tags>> {
         let mut tag_count_map = HashMap::new();
-        let mut stmt = conn.prepare("SELECT tags FROM note")?;
+        let mut stmt = conn.prepare("SELECT tags FROM note WHERE deleted = 0")?;
         let tags_iter = stmt.query_map([], |row| row.get::<_, String>(0))?;
 
         for tag_result in tags_iter {
@@ -596,7 +740,7 @@ pub mod queries {
         let sql = format!(
             "SELECT COUNT(1)
             FROM note
-            WHERE {}",
+            WHERE deleted = 0 AND {}",
             fts_where_clause(1)
         );
 
@@ -616,6 +760,7 @@ pub mod queries {
              FROM note
              JOIN note_fts ON note.rowid = note_fts.rowid
              WHERE note_fts MATCH ?3
+             AND note.deleted = 0
              ORDER BY bm25(note_fts, 10.0, 5.0, 3.0, 1.0)
              LIMIT ?1 OFFSET ?2";
 
@@ -635,7 +780,7 @@ pub mod queries {
         let sql = format!(
             "SELECT DATE(substr(created_at, 1, 10)) as date, COUNT(1) as count
             FROM note
-            WHERE {}
+            WHERE deleted = 0 AND {}
             GROUP BY date
             ORDER BY date",
             fts_where_clause(1)
@@ -657,7 +802,7 @@ pub mod queries {
         let sql = format!(
             "SELECT tags
             FROM note
-            WHERE {}",
+            WHERE deleted = 0 AND {}",
             fts_where_clause(1)
         );
 
@@ -689,7 +834,8 @@ pub mod queries {
         let sql = format!(
             "SELECT COUNT(1)
             FROM note
-            WHERE substr(created_at, 1, 10) >= ?1
+            WHERE deleted = 0
+            AND substr(created_at, 1, 10) >= ?1
             AND substr(created_at, 1, 10) <= ?2
             AND {}",
             fts_where_clause(3)
@@ -722,6 +868,7 @@ pub mod queries {
              WHERE substr(note.created_at, 1, 10) >= ?1
              AND substr(note.created_at, 1, 10) <= ?2
              AND note_fts MATCH ?5
+             AND note.deleted = 0
              ORDER BY bm25(note_fts, 10.0, 5.0, 3.0, 1.0)
              LIMIT ?3 OFFSET ?4";
 
@@ -745,7 +892,8 @@ pub mod queries {
         let sql = format!(
             "SELECT tags
             FROM note
-            WHERE substr(created_at, 1, 10) >= ?1
+            WHERE deleted = 0
+            AND substr(created_at, 1, 10) >= ?1
             AND substr(created_at, 1, 10) <= ?2
             AND {}",
             fts_where_clause(3)
@@ -777,6 +925,7 @@ pub mod queries {
             "SELECT rowid, uuid4, title, url, tags, description, comments,
              hex(annotations) as annotations, created_at, is_public, metadata
              FROM note
+             WHERE deleted = 0
              ORDER BY created_at DESC",
         )?;
         let notes = stmt
@@ -798,6 +947,7 @@ pub mod queries {
              FROM note
              JOIN note_fts ON note.rowid = note_fts.rowid
              WHERE note_fts MATCH ?1
+             AND note.deleted = 0
              ORDER BY bm25(note_fts, 10.0, 5.0, 3.0, 1.0)";
 
         let mut stmt = conn.prepare(sql)?;
@@ -839,6 +989,7 @@ pub mod queries {
              FROM note
              JOIN note_fts ON note.rowid = note_fts.rowid
              WHERE note_fts MATCH ?1
+             AND note.deleted = 0
              ORDER BY bm25(note_fts, 10.0, 5.0, 3.0, 1.0)
              LIMIT ?2 OFFSET ?3";
 
@@ -979,6 +1130,7 @@ pub mod migrations {
         (Version::new(0, 7, 0), migrate_fts5),
         (Version::new(0, 8, 0), migrate_metadata),
         (Version::new(0, 9, 0), migrate_fts5_trigram),
+        (Version::new(0, 10, 0), migrate_lww),
     ];
 
     pub fn upgrade(conn: &Connection) -> DbResult<()> {
@@ -1039,7 +1191,9 @@ pub mod migrations {
                  annotations TEXT NOT NULL,
                  created_at TEXT NOT NULL,
                  is_public BOOLEAN NOT NULL DEFAULT 0,
-                 metadata TEXT NOT NULL DEFAULT '{}'
+                 metadata TEXT NOT NULL DEFAULT '{}',
+                 updated_at TEXT NOT NULL DEFAULT '',
+                 deleted INTEGER NOT NULL DEFAULT 0
              );
              CREATE TABLE IF NOT EXISTS meta (
                  meta_key TEXT PRIMARY KEY,
@@ -1064,6 +1218,11 @@ pub mod migrations {
                  VALUES (new.rowid, new.title, new.url, new.tags, new.description);
              END;
              INSERT INTO meta (meta_key, meta_value) VALUES ('version', '0.8.0');",
+        )?;
+        // Seed a stable node id used as the last-write-wins tiebreaker.
+        conn.execute(
+            "INSERT OR IGNORE INTO meta (meta_key, meta_value) VALUES ('node_id', ?1)",
+            rusqlite::params![Uuid::new_v4().to_string()],
         )?;
         Ok(())
     }
@@ -1110,6 +1269,8 @@ pub mod migrations {
                     created_at: row.get(7)?,
                     is_public: row.get(8)?,
                     metadata: String::new(),
+                    updated_at: String::new(),
+                    deleted: false,
                 })
             })?
             .collect::<Result<_, rusqlite::Error>>()?;
@@ -1219,6 +1380,39 @@ pub mod migrations {
         Ok(())
     }
 
+    /// Add last-write-wins / tombstone columns for conflict-resolving sync.
+    ///
+    /// Idempotent: `init_db_schema` already creates these columns on a freshly
+    /// initialised database (which starts at version 0.8.0 and then runs the
+    /// later migrations), so guard each `ALTER TABLE` with a column-existence
+    /// check to avoid a duplicate-column error.
+    fn migrate_lww(conn: &Connection) -> DbResult<()> {
+        if !column_exists(conn, "note", "updated_at")? {
+            conn.execute_batch("ALTER TABLE note ADD COLUMN updated_at TEXT NOT NULL DEFAULT '';")?;
+        }
+        if !column_exists(conn, "note", "deleted")? {
+            conn.execute_batch("ALTER TABLE note ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0;")?;
+        }
+        // Seed a stable node id (LWW tiebreaker) if absent.
+        conn.execute(
+            "INSERT OR IGNORE INTO meta (meta_key, meta_value) VALUES ('node_id', ?1)",
+            rusqlite::params![Uuid::new_v4().to_string()],
+        )?;
+        // Backfill updated_at for legacy rows so they order deterministically
+        // against later edits: derive epoch-millis from created_at + node id.
+        conn.execute(
+            "UPDATE note
+             SET updated_at = printf(
+                 '%020d-%s',
+                 CAST(strftime('%s', created_at) AS INTEGER) * 1000,
+                 (SELECT meta_value FROM meta WHERE meta_key = 'node_id')
+             )
+             WHERE updated_at IS NULL OR updated_at = ''",
+            [],
+        )?;
+        Ok(())
+    }
+
     fn parse_old_created_at(created_at: &str) -> DbResult<String> {
         let created_at = created_at.trim_end_matches(" UTC");
         let parts: Vec<&str> = created_at.split(':').collect();
@@ -1235,7 +1429,7 @@ pub mod sync {
     use crate::error::{DbError, DbResult};
     use models::Note;
     use rusqlite::Connection;
-    use std::collections::HashSet;
+    use std::collections::HashMap;
 
     pub fn get_meta_version(conn: &Connection) -> DbResult<String> {
         let row: Option<String> = conn
@@ -1250,7 +1444,7 @@ pub mod sync {
 
     pub fn get_note_by_uuid4(conn: &Connection, uuid4: &str) -> DbResult<Note> {
         conn.query_row(
-            "SELECT rowid, uuid4, title, url, tags, description, comments, hex(annotations) as annotations, created_at, is_public, metadata FROM note WHERE uuid4 = ?1",
+            "SELECT rowid, uuid4, title, url, tags, description, comments, hex(annotations) as annotations, created_at, is_public, metadata, updated_at, deleted FROM note WHERE uuid4 = ?1",
             rusqlite::params![uuid4],
             |row| {
                 Ok(Note {
@@ -1265,56 +1459,77 @@ pub mod sync {
                     created_at: row.get("created_at")?,
                     is_public: row.get("is_public")?,
                     metadata: row.get("metadata")?,
+                    updated_at: row.get("updated_at")?,
+                    deleted: row.get("deleted")?,
                 })
             },
         )
         .map_err(DbError::from)
     }
 
-    pub fn next_uuid4_candidates(conn: &Connection) -> DbResult<Vec<String>> {
-        let mut stmt = conn.prepare("SELECT uuid4 FROM note ORDER BY rowid")?;
-        let uuids = stmt
-            .query_map([], |row| row.get(0))?
-            .collect::<Result<Vec<String>, rusqlite::Error>>()?;
-        Ok(uuids)
+    /// `(uuid4, updated_at)` for every note, **including tombstones**, so that
+    /// both new notes and deletions are advertised to peers during sync.
+    pub fn note_versions(conn: &Connection) -> DbResult<Vec<(String, String)>> {
+        let mut stmt = conn.prepare("SELECT uuid4, updated_at FROM note ORDER BY rowid")?;
+        let rows = stmt
+            .query_map([], |row| Ok((row.get(0)?, row.get(1)?)))?
+            .collect::<Result<Vec<(String, String)>, rusqlite::Error>>()?;
+        Ok(rows)
     }
 
-    pub fn diff_uuid4_to_server(
+    /// Given the *client's* `(uuid4, updated_at)` versions, return the uuid4s the
+    /// client should PUSH to this server: notes the server lacks entirely, or for
+    /// which the client holds a strictly newer version (last-write-wins).
+    pub fn diff_to_server(
         conn: &Connection,
-        candidates: Vec<String>,
+        client_versions: Vec<(String, String)>,
     ) -> DbResult<Vec<String>> {
         let mut r = Vec::new();
-        for uuid4 in candidates {
-            let exists: bool = conn.query_row(
-                "SELECT EXISTS(SELECT 1 FROM note WHERE uuid4 = ?1)",
-                rusqlite::params![uuid4],
-                |row| row.get(0),
-            )?;
-            if !exists {
-                r.push(uuid4);
+        for (uuid4, client_updated_at) in client_versions {
+            let server_updated_at: Option<String> = conn
+                .query_row(
+                    "SELECT updated_at FROM note WHERE uuid4 = ?1",
+                    rusqlite::params![uuid4],
+                    |row| row.get(0),
+                )
+                .ok();
+            match server_updated_at {
+                None => r.push(uuid4),
+                Some(server) if client_updated_at > server => r.push(uuid4),
+                _ => {}
             }
         }
         Ok(r)
     }
 
-    pub fn diff_uuid4_from_server(
+    /// Given the *client's* `(uuid4, updated_at)` versions, return the uuid4s the
+    /// client should PULL from this server: notes the client lacks entirely, or
+    /// for which the server holds a strictly newer version (last-write-wins).
+    pub fn diff_from_server(
         conn: &Connection,
-        candidates: Vec<String>,
+        client_versions: Vec<(String, String)>,
     ) -> DbResult<Vec<String>> {
-        let candidates: HashSet<_> = candidates.iter().collect();
+        let client: HashMap<String, String> = client_versions.into_iter().collect();
         let mut r = Vec::new();
-        let mut stmt = conn.prepare("SELECT uuid4 FROM note")?;
-        let uuid4s: Vec<String> = stmt
-            .query_map([], |row| row.get(0))?
-            .collect::<Result<_, rusqlite::Error>>()?;
-        for uuid4 in uuid4s {
-            if !candidates.contains(&uuid4) {
-                r.push(uuid4);
+        let mut stmt = conn.prepare("SELECT uuid4, updated_at FROM note")?;
+        let server_versions = stmt
+            .query_map([], |row| {
+                Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+            })?
+            .collect::<Result<Vec<(String, String)>, rusqlite::Error>>()?;
+        for (uuid4, server_updated_at) in server_versions {
+            match client.get(&uuid4) {
+                None => r.push(uuid4),
+                Some(client_updated_at) if *client_updated_at < server_updated_at => r.push(uuid4),
+                _ => {}
             }
         }
         Ok(r)
     }
 
+    /// Apply a note received from a peer using last-write-wins: insert it when
+    /// new, or overwrite the local copy only when the incoming `updated_at` is
+    /// strictly newer. The tombstone flag is carried so deletions replicate.
     pub fn insert(conn: &Connection, note: &Note) -> DbResult<()> {
         let annotations_blob = hex::decode(&note.annotations).unwrap_or_else(|e| {
             tracing::warn!(uuid4 = note.uuid4, %e, "failed to decode hex annotations");
@@ -1325,9 +1540,29 @@ pub mod sync {
         } else {
             note.metadata.clone()
         };
+        // A peer on a pre-0.10 core may send an empty updated_at; mint a local
+        // token so the row still carries an ordering value.
+        let updated_at = if note.updated_at.is_empty() {
+            next_update_token(conn)?
+        } else {
+            note.updated_at.clone()
+        };
         conn.execute(
-            "INSERT INTO note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public, metadata)
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+            "INSERT INTO note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public, metadata, updated_at, deleted)
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)
+            ON CONFLICT(uuid4) DO UPDATE SET
+                title = excluded.title,
+                url = excluded.url,
+                tags = excluded.tags,
+                description = excluded.description,
+                comments = excluded.comments,
+                annotations = excluded.annotations,
+                created_at = excluded.created_at,
+                is_public = excluded.is_public,
+                metadata = excluded.metadata,
+                updated_at = excluded.updated_at,
+                deleted = excluded.deleted
+            WHERE excluded.updated_at > note.updated_at",
             rusqlite::params![
                 note.uuid4,
                 note.title,
@@ -1338,7 +1573,9 @@ pub mod sync {
                 annotations_blob,
                 note.created_at,
                 note.is_public,
-                metadata
+                metadata,
+                updated_at,
+                note.deleted
             ],
         )?;
         Ok(())
@@ -1455,7 +1692,9 @@ mod db_tests {
                  annotations TEXT NOT NULL,
                  created_at TEXT NOT NULL,
                  is_public BOOLEAN NOT NULL DEFAULT 0,
-                 metadata TEXT NOT NULL DEFAULT '{}'
+                 metadata TEXT NOT NULL DEFAULT '{}',
+                 updated_at TEXT NOT NULL DEFAULT '',
+                 deleted INTEGER NOT NULL DEFAULT 0
              );
              CREATE TABLE IF NOT EXISTS meta (
                  meta_key TEXT PRIMARY KEY,
@@ -1782,6 +2021,8 @@ mod db_tests {
             created_at: "2024-01-01 00:00:00".to_string(),
             is_public: false,
             metadata: String::new(),
+            updated_at: String::new(),
+            deleted: false,
         };
         sync::insert(&conn, &note).expect("sync insert should succeed");
 
@@ -1805,6 +2046,8 @@ mod db_tests {
             created_at: "2024-01-01 00:00:00".to_string(),
             is_public: false,
             metadata: String::new(),
+            updated_at: String::new(),
+            deleted: false,
         };
         // Should succeed but with empty annotations (logged warning)
         sync::insert(&conn, &note).expect("insert with bad hex should not fail");
@@ -1903,30 +2146,90 @@ mod db_tests {
     }
 
     #[test]
-    fn test_sync_uuid4_operations() {
+    fn test_sync_version_diff() {
         let conn = setup_test_db();
         queries::insert_note(&conn, "Note A", "", "", "", "", b"", false).unwrap();
         queries::insert_note(&conn, "Note B", "", "", "", "", b"", false).unwrap();
 
-        let candidates = sync::next_uuid4_candidates(&conn).unwrap();
-        assert_eq!(candidates.len(), 2);
+        let versions = sync::note_versions(&conn).unwrap();
+        assert_eq!(versions.len(), 2);
+        // Every note carries a non-empty last-write-wins token.
+        assert!(versions.iter().all(|(_, ts)| !ts.is_empty()));
 
-        // diff_uuid4_to_server: given candidates, return those NOT in our db
-        let unknown = vec!["unknown-uuid".to_string()];
-        let diff = sync::diff_uuid4_to_server(&conn, unknown).unwrap();
-        assert_eq!(diff.len(), 1);
-        assert_eq!(diff[0], "unknown-uuid");
+        // diff_to_server: a uuid the server lacks should be pushed by the client.
+        let unknown = vec![(
+            "unknown-uuid".to_string(),
+            "00000000000000000001-x".to_string(),
+        )];
+        let diff = sync::diff_to_server(&conn, unknown).unwrap();
+        assert_eq!(diff, vec!["unknown-uuid".to_string()]);
 
-        // Known uuids should not appear in diff
-        let diff = sync::diff_uuid4_to_server(&conn, candidates.clone()).unwrap();
+        // Notes the server already has at the same version are not requested.
+        let diff = sync::diff_to_server(&conn, versions.clone()).unwrap();
         assert!(diff.is_empty());
 
-        // diff_uuid4_from_server: return our uuids NOT in candidates
-        let diff = sync::diff_uuid4_from_server(&conn, vec![]).unwrap();
+        // diff_from_server: a client that knows nothing pulls everything ...
+        let diff = sync::diff_from_server(&conn, vec![]).unwrap();
         assert_eq!(diff.len(), 2);
 
-        let diff = sync::diff_uuid4_from_server(&conn, candidates).unwrap();
+        // ... and an up-to-date client pulls nothing.
+        let diff = sync::diff_from_server(&conn, versions).unwrap();
         assert!(diff.is_empty());
+    }
+
+    #[test]
+    fn test_sync_lww_newer_wins_older_ignored() {
+        let conn = setup_test_db();
+        let original = queries::insert_note(&conn, "Original", "", "", "", "", b"", false).unwrap();
+
+        // An incoming edit with a strictly newer token overwrites the local copy.
+        let mut newer = original.clone();
+        newer.title = "Edited".to_string();
+        newer.updated_at = "99999999999999999999-peer".to_string();
+        sync::insert(&conn, &newer).unwrap();
+        assert_eq!(
+            sync::get_note_by_uuid4(&conn, &original.uuid4)
+                .unwrap()
+                .title,
+            "Edited"
+        );
+
+        // An incoming edit with an older token is ignored (no clobber).
+        let mut older = original.clone();
+        older.title = "Stale".to_string();
+        older.updated_at = "00000000000000000001-peer".to_string();
+        sync::insert(&conn, &older).unwrap();
+        assert_eq!(
+            sync::get_note_by_uuid4(&conn, &original.uuid4)
+                .unwrap()
+                .title,
+            "Edited"
+        );
+    }
+
+    #[test]
+    fn test_delete_is_tombstoned_and_propagates() {
+        let conn = setup_test_db();
+        let note = queries::insert_note(&conn, "ToDelete", "", "", "", "", b"", false).unwrap();
+        assert_eq!(queries::do_select(&conn, 10, 0).unwrap().count, 1);
+
+        queries::delete_note(&conn, note.rowid).unwrap();
+        // Hidden from reads ...
+        assert_eq!(queries::do_select(&conn, 10, 0).unwrap().count, 0);
+        // ... but retained as a tombstone that sync still advertises.
+        assert_eq!(sync::note_versions(&conn).unwrap().len(), 1);
+        let tomb = sync::get_note_by_uuid4(&conn, &note.uuid4).unwrap();
+        assert!(tomb.deleted);
+
+        // A peer holding the live note, then receiving the newer tombstone, hides it.
+        let peer = setup_test_db();
+        let mut live = tomb.clone();
+        live.deleted = false;
+        live.updated_at = "00000000000000000001-old".to_string();
+        sync::insert(&peer, &live).unwrap();
+        assert_eq!(queries::do_select(&peer, 10, 0).unwrap().count, 1);
+        sync::insert(&peer, &tomb).unwrap();
+        assert_eq!(queries::do_select(&peer, 10, 0).unwrap().count, 0);
     }
 }
 
