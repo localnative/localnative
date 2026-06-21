@@ -18,7 +18,7 @@ web-ext run --verbose # firefox
 ```
 
 #### Setup browser extension host binary
-- Download and run the desktop applcation from [release archive](https://gitlab.com/localnative/localnative-release)
+- Download and run the desktop application from [release archive](https://gitlab.com/localnative/localnative-release)
 
     this will create `~/LocalNative/bin` directory containing the host binary
 - or use `cargo install localnative_cli`, and find the binary at `~/.cargo/bin/localnative-web-ext-host`
@@ -117,6 +117,29 @@ make bridge       # regenerate Dart↔Rust bindings
 make run-android  # or run-ios / run-macos
 ```
 See `localnative-flutter/SETUP.md` for prerequisites (Flutter SDK, NDK, Xcode).
+
+## Import / Export
+
+Local Native ships dedicated CLI binaries (in `localnative_cli`) for moving notes
+in and out of the local SQLite database. Both operate on the database at the
+default location (`~/.ssb/localnative.sqlite3`).
+
+#### Import from another service
+Supported formats: `pocket` (HTML export), `omnivore` (JSON), `raindrop` (CSV),
+`plinky` (JSON). Notes are de-duplicated by URL, so re-running an import is safe.
+```
+cd localnative-rs
+cargo run -p localnative_cli --bin localnative-import -- --format pocket path/to/export.html
+```
+
+#### Export to Markdown
+Exports each note as an individual `.md` file with YAML frontmatter. An optional
+search query filters which notes are exported.
+```
+cd localnative-rs
+cargo run -p localnative_cli --bin localnative-export -- --output ./exported-notes
+cargo run -p localnative_cli --bin localnative-export -- --output ./exported-notes --query rust
+```
 
 ## Script
 There are scripts to bump version and release

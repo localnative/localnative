@@ -27,9 +27,14 @@ This is **synchronous `rusqlite`** (bundled SQLite) with an **`r2d2` / `r2d2_sql
 - `queries` — the actual SQL/CRUD, search, filtering, tag aggregation.
 - `migrations` — version-keyed migration table (`MIGRATIONS: [(semver::Version, fn)]`) run automatically by `migrations::upgrade` on every `init_db`/`init_pool`. Schema history: 0.4.0 → 0.9.0, including the move to **FTS5** full-text search (`migrate_fts5`, later `migrate_fts5_trigram`). To change the schema, append a new `(Version, migrate_fn)` entry — do **not** hand-edit existing migrations.
 - `sync` — note diffing/merge logic used by RPC.
-- `encryption` — optional **SQLCipher** support. Disabled by default; enable by switching the `rusqlite` feature from `bundled` to `bundled-sqlcipher` in `localnative-rs/Cargo.toml`, then connections are unlocked via `init_db_encrypted(key)`.
+- `encryption` — optional **SQLCipher** support, gated behind `#[cfg(feature = "encryption")]`. Disabled by default; enabling it requires **both** the `localnative_core` `encryption` cargo feature **and** switching the `rusqlite` feature from `bundled` to `bundled-sqlcipher` in `localnative-rs/Cargo.toml`. The module exposes `init_db_encrypted(key)` (open + unlock + migrate), `set_encryption_key` (apply `PRAGMA key`, must run first on a connection), and `change_encryption_key` (`PRAGMA rekey`).
 
 Notes carry: title, URL, tags, description, comments, annotations (binary), timestamps, a UUID4, and a public/private flag.
+
+### Import / Export (`localnative_core/src/import.rs`, `export.rs`)
+Standalone core modules (not part of the JSON `Cmd` dispatch) driven by dedicated CLI binaries:
+- `import.rs` parses external sources into `ImportedNote`s and bulk-inserts them with URL-based de-duplication (`import_notes`): Pocket HTML (`parse_pocket_html`), Omnivore JSON (`parse_omnivore_json`), Raindrop CSV (`parse_raindrop_csv`), Plinky JSON (`parse_plinky_json`).
+- `export.rs` writes notes out as individual Markdown files with YAML frontmatter (`export_notes`), slugifying titles into filename-safe names.
 
 ### RPC / Sync (`localnative_core/src/rpc.rs`, `discovery.rs`)
 - **tarpc** peer-to-peer sync. Any client can `start` a server; others `sync` against it. Bi-directional, UUID-based conflict resolution; UUID lists are compared to decide what to transfer. Version compatibility is checked before transfer.
@@ -49,9 +54,15 @@ cd localnative-rs
 
 cargo build                      # build the workspace
 cargo run -p localnative_iced    # run the native GUI
-cargo run -p localnative_cli     # run the CLI
 cargo test                       # run all tests
 cargo test test_serde            # run a single test by name
+
+# localnative_cli ships several binaries (src/bin/), not one — select with --bin:
+cargo run -p localnative_cli --bin localnative-web-ext-host          # browser-extension native-messaging host
+cargo run -p localnative_cli --bin localnative-import -- <args>      # import Pocket/Omnivore/Raindrop/Plinky
+cargo run -p localnative_cli --bin localnative-export -- <args>      # export notes to Markdown
+# other bins: localnative-rpc-server, localnative-rpc-client-sync,
+#             localnative-rpc-client-stop-server, localnative-upgrade
 
 # CI-equivalent lint/format gate (matches .gitlab-ci.yml / xtask header):
 cargo fmt --all -- --check
