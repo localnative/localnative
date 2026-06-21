@@ -356,7 +356,9 @@ pub async fn run_sync_from_server(addr: &SocketAddr, pool: &Pool) -> Result<usiz
     tracing::info!(count, "notes to receive from server");
 
     for u in diff_uuid4 {
-        client.receive_note(context::current(), u).await??;
+        let note = client.receive_note(context::current(), u).await??;
+        let conn = pool.get().map_err(|e| RpcError::PoolError(e.to_string()))?;
+        insert(&conn, &note)?;
     }
     tracing::info!("sync from server complete");
 
