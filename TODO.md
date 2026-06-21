@@ -18,6 +18,29 @@ Items identified during code review that require larger effort or separate plann
 - No tests for browser extension / WASM app
 - Consider adding `tokio::test` integration tests for `rpc::sync()` with an in-memory server
 
+### Sync Hardening — follow-ups
+Conflict-resolving sync (per-row last-write-wins + tombstones, schema 0.10.0) has
+landed in `localnative_core`; edits and deletes now propagate. Remaining work:
+- **Hybrid Logical Clock**: `updated_at` is currently a monotonic *physical*
+  clock with a `node_id` tiebreak (`db::next_update_token`). This is adequate
+  only when peer clocks are roughly synced; a fast/skewed clock can always win
+  and could resurrect a tombstone. Replace the token source with an HLC (e.g.
+  `uhlc`) that advances the local clock past timestamps observed from peers.
+  Single seam to change: `next_update_token`. Verify the HLC builds and behaves
+  on `wasm32-unknown-unknown` (browser extension has no system clock).
+- **Encrypted + authenticated transport** (the other critical gap): RPC traffic
+  is still plaintext Bincode over TCP bound to `0.0.0.0:3456` with no pairing —
+  any LAN host can enumerate UUIDs and read note bodies. Wrap the tarpc
+  transport in Noise (`snow`, pairing-code-as-PSK) or rustls/TLS with pinned
+  per-device certs, plus a device-pairing UX and a trusted-key store. Must be
+  pure-Rust and build on wasm/Android/iOS (rules out iroh/libp2p for the
+  browser extension's no-relay LAN path).
+- **Scale**: replace the full `(uuid4, updated_at)` list exchange with a
+  merkle/range-hash diff once correctness and security are in place.
+- The exact-string `meta_version` gate in `rpc.rs` is intentionally strict: it
+  blocks sync between peers with incompatible `Note` wire formats (e.g. pre-0.10
+  vs 0.10). Only relax it alongside a real wire-compatibility scheme.
+
 ### Electron Dependency Updates
 - ~~`@zxing/library` v0.18.6 → v1.3+~~ — done, bumped to `^0.23.0` (2026-06)
 - `crossfilter2` pinned at v1.5.4 — evaluate if upgrade is safe
