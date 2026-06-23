@@ -25,6 +25,7 @@ CLI, Iced GUI, and browser-extension host.
 
 - Full-text search (FTS5) with an empty-query "show all" default, newest first
 - Tag sidebar — click a tag to filter
+- Day histogram sidebar — click a day to filter to that date (via `do_filter`)
 - Add note (title, URL, tags, description, comments, public/private)
 - Soft-delete (tombstone) a note
 - Pagination (20 notes per page)
@@ -32,7 +33,8 @@ CLI, Iced GUI, and browser-extension host.
 
 ## Not yet wired up
 
-- Date/day histogram and date-range filtering (`do_filter` exists in core)
+- Arbitrary date-range filtering / a date picker (single-day filtering is
+  wired; `do_filter` already supports ranges)
 - Hosting a sync server / mDNS peer discovery (core: `rpc::start`, `discovery`)
 - Editing an existing note (core currently inserts/deletes only)
 - Localization (the Iced front-end uses Fluent; not yet ported here)

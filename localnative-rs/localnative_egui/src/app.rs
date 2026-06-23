@@ -47,6 +47,10 @@ pub struct LocalNativeApp {
     query: String,
     result: QueryResult,
     offset: u32,
+    /// When set (an ISO `YYYY-MM-DD` string), results are filtered to that one
+    /// day via `do_filter`. The day comes straight from the histogram, so it is
+    /// always well-formed.
+    active_day: Option<String>,
     status: String,
 
     // Add-note form.
@@ -76,6 +80,7 @@ impl LocalNativeApp {
             query: String::new(),
             result: QueryResult::default(),
             offset: 0,
+            active_day: None,
             status,
             show_add: false,
             new_title: String::new(),
@@ -103,18 +108,30 @@ impl LocalNativeApp {
                 return;
             }
         };
-        match queries::do_search(&conn, &self.query, PAGE_SIZE, self.offset) {
+        let outcome = match self.active_day.as_deref() {
+            Some(day) => queries::do_filter(&conn, &self.query, PAGE_SIZE, self.offset, day, day),
+            None => queries::do_search(&conn, &self.query, PAGE_SIZE, self.offset),
+        };
+        match outcome {
             Ok(mut result) => {
                 result.tags.sort_by_key(|t| std::cmp::Reverse(t.count));
                 self.result = result;
-                self.status = if self.query.is_empty() {
-                    format!("{} note(s)", self.result.count)
-                } else {
-                    format!("{} note(s) matching \"{}\"", self.result.count, self.query)
-                };
+                self.status = self.describe_result();
             }
             Err(e) => self.status = format!("search error: {e}"),
         }
+    }
+
+    /// Human-readable summary of the current result for the status line.
+    fn describe_result(&self) -> String {
+        let mut s = format!("{} note(s)", self.result.count);
+        if !self.query.is_empty() {
+            s.push_str(&format!(" matching \"{}\"", self.query));
+        }
+        if let Some(day) = self.active_day.as_deref() {
+            s.push_str(&format!(" on {day}"));
+        }
+        s
     }
 
     /// Reset to the first page and re-run the query.
@@ -271,31 +288,64 @@ impl LocalNativeApp {
         });
     }
 
-    fn tags_panel(&mut self, ui: &mut egui::Ui) {
-        egui::Panel::left("tags")
+    fn sidebar(&mut self, ui: &mut egui::Ui) {
+        egui::Panel::left("sidebar")
             .resizable(true)
-            .default_size(180.0)
+            .default_size(200.0)
             .show_inside(ui, |ui| {
                 ui.add_space(4.0);
-                ui.heading("Tags");
-                ui.separator();
-                let mut clicked: Option<String> = None;
+                let mut tag_clicked: Option<String> = None;
+                let mut day_clicked: Option<String> = None;
+                let mut clear_day = false;
+
                 egui::ScrollArea::vertical().show(ui, |ui| {
-                    if self.result.tags.is_empty() {
-                        ui.label(egui::RichText::new("no tags").weak());
-                    }
-                    for tag in &self.result.tags {
-                        if tag.tag.trim().is_empty() {
-                            continue;
-                        }
-                        let label = format!("{}  ({})", tag.tag, tag.count);
-                        if ui.selectable_label(false, label).clicked() {
-                            clicked = Some(tag.tag.clone());
-                        }
-                    }
+                    egui::CollapsingHeader::new("Tags")
+                        .default_open(true)
+                        .show(ui, |ui| {
+                            if self.result.tags.is_empty() {
+                                ui.label(egui::RichText::new("no tags").weak());
+                            }
+                            for tag in &self.result.tags {
+                                if tag.tag.trim().is_empty() {
+                                    continue;
+                                }
+                                let label = format!("{}  ({})", tag.tag, tag.count);
+                                if ui.selectable_label(false, label).clicked() {
+                                    tag_clicked = Some(tag.tag.clone());
+                                }
+                            }
+                        });
+
+                    egui::CollapsingHeader::new("Days")
+                        .default_open(true)
+                        .show(ui, |ui| {
+                            if self.active_day.is_some() && ui.button("Show all days").clicked() {
+                                clear_day = true;
+                            }
+                            if self.result.days.is_empty() {
+                                ui.label(egui::RichText::new("no days").weak());
+                            }
+                            // Histogram comes back oldest-first; show newest first.
+                            for day in self.result.days.iter().rev() {
+                                let date = day.date.to_string();
+                                let selected = self.active_day.as_deref() == Some(date.as_str());
+                                let label = format!("{}  ({})", date, day.count);
+                                if ui.selectable_label(selected, label).clicked() {
+                                    day_clicked = Some(date);
+                                }
+                            }
+                        });
                 });
-                if let Some(tag) = clicked {
+
+                // Apply at most one navigation action once the borrows above end.
+                if let Some(tag) = tag_clicked {
                     self.query = tag;
+                    self.run_query();
+                } else if clear_day {
+                    self.active_day = None;
+                    self.run_query();
+                } else if let Some(date) = day_clicked {
+                    self.active_day = Some(date);
                     self.run_query();
                 }
             });
@@ -431,7 +481,7 @@ impl eframe::App for LocalNativeApp {
         if self.show_add {
             self.add_panel(ui);
         }
-        self.tags_panel(ui);
+        self.sidebar(ui);
         self.notes_panel(ui);
     }
 }
