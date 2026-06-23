@@ -1,5 +1,5 @@
 [workspace]
-members = ["localnative_iced", "localnative_core", "localnative_cli", "xtask"]
+members = ["localnative_iced", "localnative_egui", "localnative_core", "localnative_cli", "xtask"]
 resolver = "2"
 
 [workspace.dependencies]
@@ -48,6 +48,9 @@ rand = "0.10"
 iced_aw = { version = "0.14", default-features = false, features = ["wrap", "number_input", "card"] }
 iced = { version = "0.14", features = ["canvas", "qr_code", "tokio"] }
 iced_runtime = { version = "0.14" }
+# egui/eframe desktop front-end (localnative_egui). Targets 0.34 to reuse the
+# egui/epaint/glow/winit/wgpu builds already present in the local cargo cache.
+eframe = "0.34"
 winreg = "0.56"
 jni = { version = "0.22", default-features = false }
 hex = "0.4"

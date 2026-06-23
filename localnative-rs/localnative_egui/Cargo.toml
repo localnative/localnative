@@ -1,0 +1,21 @@
+[package]
+name = "localnative_egui"
+version = "0.1.0"
+authors = ["Yi Wang"]
+edition = "2024"
+license = "AGPL-3.0"
+description = "egui/eframe desktop front-end for Local Native"
+
+[dependencies]
+localnative_core = { path = "../localnative_core" }
+# egui is re-exported through eframe::egui, so we depend on eframe only to keep
+# the egui/epaint versions locked together.
+eframe = { workspace = true }
+open = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true, features = ["env-filter"] }
+
+[[bin]]
+name = "localnative_egui"
+path = "src/main.rs"
