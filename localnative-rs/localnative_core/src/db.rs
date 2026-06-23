@@ -828,7 +828,18 @@ pub mod queries {
     fn filter_count(conn: &Connection, query: &str, from: &str, to: &str) -> DbResult<u32> {
         let fts_query = make_fts_query(query);
         if fts_query.is_empty() {
-            return select_count(conn);
+            // No search term, but the date range must still apply (the FTS path
+            // below is skipped, so we cannot fall back to the unbounded count).
+            let count: i64 = conn.query_row(
+                "SELECT COUNT(1)
+                FROM note
+                WHERE deleted = 0
+                AND substr(created_at, 1, 10) >= ?1
+                AND substr(created_at, 1, 10) <= ?2",
+                rusqlite::params![from, to],
+                |row| row.get(0),
+            )?;
+            return Ok(u32::try_from(count).unwrap_or(u32::MAX));
         }
 
         let sql = format!(
@@ -857,7 +868,22 @@ pub mod queries {
     ) -> DbResult<Vec<Note>> {
         let fts_query = make_fts_query(query);
         if fts_query.is_empty() {
-            return select(conn, limit, offset);
+            // No search term: date-bounded select, newest first (mirrors the
+            // "empty query = show all" convention but keeps the date range).
+            let mut stmt = conn.prepare(
+                "SELECT rowid, uuid4, title, url, tags, description, comments,
+                 hex(annotations) as annotations, created_at, is_public, metadata
+                 FROM note
+                 WHERE deleted = 0
+                 AND substr(created_at, 1, 10) >= ?1
+                 AND substr(created_at, 1, 10) <= ?2
+                 ORDER BY created_at DESC
+                 LIMIT ?3 OFFSET ?4",
+            )?;
+            let notes = stmt
+                .query_map(rusqlite::params![from, to, limit, offset], map_note)?
+                .collect::<Result<Vec<_>, rusqlite::Error>>()?;
+            return Ok(notes);
         }
 
         let sql = "SELECT note.rowid, note.uuid4, note.title, note.url, note.tags,
@@ -886,7 +912,28 @@ pub mod queries {
         let fts_query = make_fts_query(query);
 
         if fts_query.is_empty() {
-            return select_by_tag(conn);
+            // No search term: aggregate tags over the date-bounded set only.
+            let mut tag_count_map = HashMap::new();
+            let mut stmt = conn.prepare(
+                "SELECT tags
+                FROM note
+                WHERE deleted = 0
+                AND substr(created_at, 1, 10) >= ?1
+                AND substr(created_at, 1, 10) <= ?2",
+            )?;
+            let tags_iter =
+                stmt.query_map(rusqlite::params![from, to], |row| row.get::<_, String>(0))?;
+            for tag_result in tags_iter {
+                let tags_str = tag_result?;
+                for tag in tags_str.split(',').map(|s| s.to_lowercase()) {
+                    *tag_count_map.entry(tag).or_insert(0i64) += 1;
+                }
+            }
+            let tags = tag_count_map
+                .into_iter()
+                .map(|(tag, count)| Tags { tag, count })
+                .collect();
+            return Ok(tags);
         }
 
         let sql = format!(
@@ -1748,6 +1795,71 @@ mod db_tests {
         assert_eq!(result.count, 1);
         assert_eq!(result.notes.len(), 1);
         assert_eq!(result.notes[0].title, "Test Title");
+    }
+
+    #[test]
+    fn test_filter_by_day_with_empty_query() {
+        // Regression: do_filter with an empty query must still honour the date
+        // range (e.g. clicking a day in a GUI with no active search). Previously
+        // the empty-FTS path fell back to an unbounded select and returned ALL
+        // notes, silently ignoring the from/to bounds.
+        let conn = setup_test_db();
+        queries::insert_note_with_timestamp(
+            &conn,
+            "Day One",
+            "https://one.example",
+            "a,b",
+            "",
+            "",
+            b"",
+            true,
+            "2026-06-20 09:00:00",
+        )
+        .unwrap();
+        queries::insert_note_with_timestamp(
+            &conn,
+            "Day Two",
+            "https://two.example",
+            "b,c",
+            "",
+            "",
+            b"",
+            true,
+            "2026-06-21 09:00:00",
+        )
+        .unwrap();
+        queries::insert_note_with_timestamp(
+            &conn,
+            "Day Two Again",
+            "https://three.example",
+            "c",
+            "",
+            "",
+            b"",
+            true,
+            "2026-06-21 18:30:00",
+        )
+        .unwrap();
+
+        // Empty query + single-day range must return only that day's notes.
+        let day = queries::do_filter(&conn, "", 10, 0, "2026-06-21", "2026-06-21")
+            .expect("filter should succeed");
+        assert_eq!(day.count, 2, "only the two 2026-06-21 notes should match");
+        assert_eq!(day.notes.len(), 2);
+        assert!(
+            day.notes
+                .iter()
+                .all(|n| n.created_at.starts_with("2026-06-21"))
+        );
+        // Tag aggregation is date-scoped too: 'a' (only on 2026-06-20) is absent.
+        assert!(day.tags.iter().all(|t| t.tag != "a"));
+        assert!(day.tags.iter().any(|t| t.tag == "c"));
+
+        // The other day still returns its single note.
+        let other = queries::do_filter(&conn, "", 10, 0, "2026-06-20", "2026-06-20")
+            .expect("filter should succeed");
+        assert_eq!(other.count, 1);
+        assert_eq!(other.notes[0].title, "Day One");
     }
 
     #[test]
