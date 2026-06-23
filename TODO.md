@@ -51,6 +51,20 @@ landed in `localnative_core`; edits and deletes now propagate. Remaining work:
 
 ## Medium Effort
 
+### egui Desktop Front-end (`localnative_egui/`)
+An egui/eframe (0.34) front-end was scaffolded as the first step of the desktop
+consolidation onto egui (retiring Iced, Electron, and the Mac stub). It wraps
+`localnative_core` directly: FTS search, tag filter, day-histogram filter
+(`do_filter`), add note, soft-delete, pagination, and peer sync (off the UI
+thread via `run_sync`). Remaining work to reach Iced parity:
+- Note editing — core only inserts/deletes; needs an update path (or delete + re-insert)
+- Arbitrary date-range filtering / a date-picker widget (single-day filtering is wired)
+- Localization via Fluent (Iced uses `translate.rs` + `locales/`)
+- Day-histogram chart visualization (Iced uses `plotters_bridge.rs`)
+- Hosting a sync server + mDNS peer discovery (core `rpc::start`, `discovery`)
+- Import/export entry points (core `import.rs`, `export.rs`)
+- Wire into `xtask release` packaging and CI once it reaches parity
+
 ### Reduce Excessive `.clone()` in GUI Layer
 - `localnative_iced/src/chart.rs`: `raw.clone()` at lines 107, 126, 136 — change `fold_map` to accept `&Vec<Day>`
 - `localnative_iced/src/chart.rs`: `data.clone().into_iter()` at line 232 — use `data.iter()` or `data.into_iter()`
