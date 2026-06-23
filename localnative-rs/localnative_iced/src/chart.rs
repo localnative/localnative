@@ -151,9 +151,13 @@ impl ChartView {
         }
     }
 
+    // Preview-only synthetic data helper; used by the `preview` binaries, so it
+    // reads as dead code from the library's own perspective.
     #[cfg(feature = "preview")]
+    #[allow(dead_code)]
     fn new_test() -> Self {
-        use rand::Rng;
+        // rand 0.10 moved `random_range` from `Rng` to the `RngExt` trait.
+        use rand::RngExt;
 
         use localnative_core::db::models::Day;
 
