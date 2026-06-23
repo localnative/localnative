@@ -7,6 +7,10 @@ use rusqlite::Connection;
 /// Type alias for the r2d2 connection pool backed by SQLite.
 pub type Pool = r2d2::Pool<r2d2_sqlite::SqliteConnectionManager>;
 
+/// A single connection checked out from a [`Pool`]. Re-exported so front-ends
+/// can name the pooled-connection type without depending on `r2d2` directly.
+pub type PooledConn = r2d2::PooledConnection<r2d2_sqlite::SqliteConnectionManager>;
+
 // ── Last-write-wins sync helpers ───────────────────────────────────────────
 //
 // Sync uses a per-row logical timestamp (`updated_at`) to decide which version

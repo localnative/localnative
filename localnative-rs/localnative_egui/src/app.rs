@@ -96,26 +96,41 @@ impl LocalNativeApp {
         app
     }
 
-    /// Re-run the current query at the current offset and replace `result`.
-    fn refresh(&mut self) {
-        let Some(pool) = self.pool.as_ref() else {
-            return;
-        };
-        let conn = match pool.get() {
-            Ok(conn) => conn,
+    /// Acquire a pooled connection, recording a status message on failure.
+    fn conn(&mut self) -> Option<db::PooledConn> {
+        let pool = self.pool.as_ref()?;
+        match pool.get() {
+            Ok(conn) => Some(conn),
             Err(e) => {
                 self.status = format!("database connection error: {e}");
-                return;
+                None
             }
+        }
+    }
+
+    /// Re-run the current query at the current offset and replace `result`.
+    fn refresh(&mut self) {
+        let Some(conn) = self.conn() else {
+            return;
         };
         let outcome = match self.active_day.as_deref() {
             Some(day) => queries::do_filter(&conn, &self.query, PAGE_SIZE, self.offset, day, day),
             None => queries::do_search(&conn, &self.query, PAGE_SIZE, self.offset),
         };
+        drop(conn);
         match outcome {
             Ok(mut result) => {
                 result.tags.sort_by_key(|t| std::cmp::Reverse(t.count));
                 self.result = result;
+                // If a delete or sync shrank the result below the current page,
+                // snap to the last populated page and re-query rather than
+                // stranding the view on an empty page past the end.
+                let max_offset = self.result.count.saturating_sub(1) / PAGE_SIZE * PAGE_SIZE;
+                if self.offset > max_offset {
+                    self.offset = max_offset;
+                    self.refresh();
+                    return;
+                }
                 self.status = self.describe_result();
             }
             Err(e) => self.status = format!("search error: {e}"),
@@ -141,21 +156,14 @@ impl LocalNativeApp {
     }
 
     fn add_note(&mut self) {
-        let Some(pool) = self.pool.as_ref() else {
-            return;
-        };
         if self.new_title.trim().is_empty() && self.new_url.trim().is_empty() {
             self.status = "a note needs at least a title or a URL".to_string();
             return;
         }
-        let conn = match pool.get() {
-            Ok(conn) => conn,
-            Err(e) => {
-                self.status = format!("database connection error: {e}");
-                return;
-            }
+        let Some(conn) = self.conn() else {
+            return;
         };
-        match queries::insert_note(
+        let result = queries::insert_note(
             &conn,
             self.new_title.trim(),
             self.new_url.trim(),
@@ -164,7 +172,9 @@ impl LocalNativeApp {
             self.new_comments.trim(),
             &[],
             self.new_is_public,
-        ) {
+        );
+        drop(conn);
+        match result {
             Ok(_) => {
                 self.new_title.clear();
                 self.new_url.clear();
@@ -179,17 +189,12 @@ impl LocalNativeApp {
     }
 
     fn delete_note(&mut self, rowid: i64) {
-        let Some(pool) = self.pool.as_ref() else {
+        let Some(conn) = self.conn() else {
             return;
         };
-        let conn = match pool.get() {
-            Ok(conn) => conn,
-            Err(e) => {
-                self.status = format!("database connection error: {e}");
-                return;
-            }
-        };
-        match queries::delete_note(&conn, rowid) {
+        let result = queries::delete_note(&conn, rowid);
+        drop(conn);
+        match result {
             Ok(()) => self.refresh(),
             Err(e) => self.status = format!("delete error: {e}"),
         }
@@ -227,8 +232,9 @@ impl LocalNativeApp {
                 self.refresh();
             }
             Err(mpsc::TryRecvError::Empty) => {
-                // Still running — keep repainting so completion is noticed promptly.
-                ctx.request_repaint();
+                // Still running — re-poll at a modest cadence (completion is still
+                // caught promptly) instead of spinning at the full frame rate.
+                ctx.request_repaint_after(std::time::Duration::from_millis(100));
             }
             Err(mpsc::TryRecvError::Disconnected) => {
                 self.sync_rx = None;
@@ -279,7 +285,10 @@ impl LocalNativeApp {
                     self.start_sync();
                 }
                 if syncing {
-                    ui.spinner();
+                    // A static label rather than ui.spinner(): the animated
+                    // spinner would itself force a full-rate repaint, defeating
+                    // the throttled poll cadence in poll_sync.
+                    ui.label("syncing…");
                 }
             });
             ui.add_space(2.0);
@@ -397,7 +406,14 @@ impl LocalNativeApp {
                     });
                 ui.horizontal(|ui| {
                     ui.checkbox(&mut self.new_is_public, "Public");
-                    if ui.button("Save").clicked() {
+                    // Disable writes during a sync: a UI-thread INSERT contending
+                    // with the sync thread's writes could block on the SQLite
+                    // busy timeout and stall the frame.
+                    let syncing = self.sync_rx.is_some();
+                    if ui
+                        .add_enabled(!syncing, egui::Button::new("Save"))
+                        .clicked()
+                    {
                         self.add_note();
                     }
                     if ui.button("Cancel").clicked() {
@@ -412,6 +428,9 @@ impl LocalNativeApp {
         let mut to_delete: Option<i64> = None;
         let mut to_open: Option<String> = None;
         let mut page = Page::None;
+        // Same rationale as the Save button: don't let a UI-thread delete
+        // contend with the sync thread's writes.
+        let writes_enabled = self.sync_rx.is_none();
 
         egui::CentralPanel::default().show_inside(ui, |ui| {
             ui.horizontal(|ui| {
@@ -442,7 +461,7 @@ impl LocalNativeApp {
                     });
                 }
                 for note in &self.result.notes {
-                    render_note(ui, note, &mut to_open, &mut to_delete);
+                    render_note(ui, note, writes_enabled, &mut to_open, &mut to_delete);
                     ui.separator();
                 }
             });
@@ -491,6 +510,7 @@ impl eframe::App for LocalNativeApp {
 fn render_note(
     ui: &mut egui::Ui,
     note: &Note,
+    writes_enabled: bool,
     to_open: &mut Option<String>,
     to_delete: &mut Option<i64>,
 ) {
@@ -532,7 +552,10 @@ fn render_note(
         if !note.url.is_empty() && ui.small_button("Open").clicked() {
             *to_open = Some(note.url.clone());
         }
-        if ui.small_button("Delete").clicked() {
+        if ui
+            .add_enabled(writes_enabled, egui::Button::new("Delete").small())
+            .clicked()
+        {
             *to_delete = Some(note.rowid);
         }
     });
