@@ -39,31 +39,27 @@ pub use error::{DatabaseError, Error, ProcessError, SyncError, ValidationError};
 #[cfg(target_os = "android")]
 pub mod android {
     use super::*;
-    use jni::JNIEnv;
+    use jni::EnvUnowned;
+    use jni::errors::ThrowRuntimeExAndDefault;
     use jni::objects::{JClass, JString};
-    use jni::sys::jstring;
 
-    #[no_mangle]
-    pub unsafe extern "C" fn Java_app_localnative_android_RustBridge_localnativeRun(
-        env: JNIEnv,
-        _: JClass,
-        json_input: JString,
-    ) -> jstring {
-        let json = match env.get_string(json_input) {
-            Ok(s) => s.to_string_lossy().into_owned(),
-            Err(_) => {
-                return env
-                    .new_string(r#"{"error": "Invalid json input string"}"#)
-                    .map(|s| s.into_raw())
-                    .unwrap_or(std::ptr::null_mut());
-            }
-        };
-
-        let result = run_async(&json);
-        match env.new_string(result) {
-            Ok(output) => output.into_raw(),
-            Err(_) => std::ptr::null_mut(),
-        }
+    // jni 0.22 split `JNIEnv` into `Env` (full API) and `EnvUnowned` (FFI-safe).
+    // Native methods receive `EnvUnowned`; `with_env` upgrades it to an `Env`,
+    // wraps the body in `catch_unwind` (so a panic can't unwind into the JVM),
+    // and `resolve` returns the value or throws a RuntimeException + the default
+    // (a null `JString`) on error/panic.
+    #[unsafe(no_mangle)]
+    pub extern "system" fn Java_app_localnative_android_RustBridge_localnativeRun<'local>(
+        mut env: EnvUnowned<'local>,
+        _class: JClass<'local>,
+        json_input: JString<'local>,
+    ) -> JString<'local> {
+        env.with_env(|env| -> jni::errors::Result<JString<'local>> {
+            let json = json_input.mutf8_chars(env)?.to_str().into_owned();
+            let result = run_async(&json);
+            env.new_string(result)
+        })
+        .resolve::<ThrowRuntimeExAndDefault>()
     }
 }
 
