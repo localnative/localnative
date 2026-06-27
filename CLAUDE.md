@@ -67,6 +67,8 @@ cargo test test_serde            # run a single test by name
 cargo run -p localnative_cli --bin localnative-web-ext-host          # browser-extension native-messaging host
 cargo run -p localnative_cli --bin localnative-import -- <args>      # import Pocket/Omnivore/Raindrop/Plinky
 cargo run -p localnative_cli --bin localnative-export -- <args>      # export notes to Markdown
+cargo run -p localnative_cli --bin localnative-export-db -- -o <file>  # VACUUM INTO single-file DB backup
+cargo run -p localnative_cli --bin localnative-import-db -- -i <file>  # one-way LWW merge a DB file into the local DB
 # other bins: localnative-rpc-server, localnative-rpc-client-sync,
 #             localnative-rpc-client-stop-server, localnative-upgrade
 
