@@ -140,6 +140,20 @@ fn test_serde() {
     println!("{:#?}", cmd);
 }
 
+#[test]
+fn test_export_db_command_parses() {
+    // The exact JSON the Android RustBridge (and any front-end) sends must
+    // dispatch to the db ExportDb command via the untagged DbCmd fallthrough.
+    let json = r#"{"action":"export-db","dest":"/storage/emulated/0/Android/data/app.localnative/files/localnative-export.sqlite3"}"#;
+    let cmd = serde_json::from_str::<Cmd>(json).expect("export-db command should parse");
+    match cmd {
+        Cmd::DbCmd(db::models::Cmd::ExportDb(export)) => {
+            assert!(export.dest.ends_with("localnative-export.sqlite3"));
+        }
+        other => panic!("expected DbCmd(ExportDb), got {other:?}"),
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CmdSyncViaAttach {
     pub uri: String,

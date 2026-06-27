@@ -166,6 +166,12 @@ pub fn process_cmd(cmd: Cmd, conn: &Connection) -> DbResult<String> {
             sync.process(conn)?;
             Ok(serde_json::to_string(&"Sync via attach completed")?)
         }
+        Cmd::ExportDb(ref export) => {
+            export.process(conn)?;
+            Ok(serde_json::to_string(
+                &serde_json::json!({ "export-db": export.dest }),
+            )?)
+        }
     }
 }
 
@@ -228,6 +234,7 @@ pub mod models {
         Filter(CmdFilter),
         Upgrade,
         SyncViaAttach(CmdSyncViaAttach),
+        ExportDb(CmdExportDb),
     }
 
     #[derive(Serialize, Deserialize, Debug)]
@@ -278,6 +285,12 @@ pub mod models {
         pub uri: String,
     }
 
+    /// Export a clean, single-file copy of the database to `dest`.
+    #[derive(Serialize, Deserialize, Debug)]
+    pub struct CmdExportDb {
+        pub dest: String,
+    }
+
     #[derive(Debug, Default, Deserialize, Serialize, Clone)]
     pub struct QueryResult {
         pub count: u32,
@@ -326,7 +339,8 @@ mod commands {
     use base64::Engine as _;
     use base64::engine::general_purpose::STANDARD;
     use models::{
-        CmdDelete, CmdFilter, CmdInsert, CmdSearch, CmdSelect, CmdSyncViaAttach, Note, QueryResult,
+        CmdDelete, CmdExportDb, CmdFilter, CmdInsert, CmdSearch, CmdSelect, CmdSyncViaAttach, Note,
+        QueryResult,
     };
     use rusqlite::Connection;
 
@@ -382,6 +396,12 @@ mod commands {
     impl CmdSyncViaAttach {
         pub fn process(&self, conn: &Connection) -> DbResult<()> {
             queries::sync_via_attach(conn, &self.uri)
+        }
+    }
+
+    impl CmdExportDb {
+        pub fn process(&self, conn: &Connection) -> DbResult<()> {
+            queries::export_db(conn, &self.dest)
         }
     }
 
@@ -591,6 +611,35 @@ pub mod queries {
         // Always detach, even on failure, so a later sync can re-attach.
         let _ = conn.execute_batch("DETACH DATABASE other;");
         result
+    }
+
+    /// Export a clean, single-file copy of the database to `dest` using
+    /// `VACUUM INTO`. The copy is compacted and contains all committed data —
+    /// including transactions still resident in the WAL — with no `-wal`/`-shm`
+    /// sidecars, so it is safe to read or share as a standalone file. Any
+    /// existing file at `dest` is replaced (VACUUM INTO refuses to overwrite).
+    ///
+    /// Note: with the optional SQLCipher `encryption` feature, the exported
+    /// copy is written **unencrypted** (VACUUM INTO does not carry the key);
+    /// the default build stores the database in plaintext, so the copy matches
+    /// the source.
+    pub fn export_db(conn: &Connection, dest: &str) -> DbResult<()> {
+        if dest.trim().is_empty() {
+            return Err(ValidationError::InvalidPath(
+                "Export destination path is empty".to_string(),
+            )
+            .into());
+        }
+        let dest_path = Path::new(dest);
+        // VACUUM INTO errors if the target exists; make re-export idempotent.
+        if dest_path.exists() {
+            std::fs::remove_file(dest_path)?;
+        }
+        if let Some(parent) = dest_path.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+        conn.execute("VACUUM INTO ?1", rusqlite::params![dest])?;
+        Ok(())
     }
 
     fn sync_attached(conn: &Connection) -> DbResult<()> {
@@ -1864,6 +1913,45 @@ mod db_tests {
             .expect("filter should succeed");
         assert_eq!(other.count, 1);
         assert_eq!(other.notes[0].title, "Day One");
+    }
+
+    #[test]
+    fn test_export_db() {
+        let conn = setup_test_db();
+        queries::insert_note(
+            &conn,
+            "Exported Note",
+            "https://export.example",
+            "x,y",
+            "",
+            "",
+            b"",
+            true,
+        )
+        .unwrap();
+
+        let dest = std::env::temp_dir().join(format!("ln_export_{}.sqlite3", std::process::id()));
+        let dest_str = dest.to_str().unwrap();
+
+        // Export, then export again to confirm an existing target is replaced.
+        queries::export_db(&conn, dest_str).expect("export should succeed");
+        queries::export_db(&conn, dest_str).expect("re-export should overwrite");
+
+        // The exported copy is a standalone file with the data present.
+        let exported = Connection::open(dest_str).expect("open exported db");
+        let count: i64 = exported
+            .query_row("SELECT COUNT(1) FROM note", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(count, 1);
+        let title: String = exported
+            .query_row("SELECT title FROM note LIMIT 1", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(title, "Exported Note");
+
+        std::fs::remove_file(&dest).ok();
+
+        // Empty destination is rejected.
+        assert!(queries::export_db(&conn, "  ").is_err());
     }
 
     #[test]
