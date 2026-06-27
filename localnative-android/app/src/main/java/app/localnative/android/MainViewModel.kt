@@ -20,12 +20,15 @@ package app.localnative.android
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import java.io.File
 
 data class NoteItem(
     val rowid: Int,
@@ -130,6 +133,39 @@ class MainViewModel : ViewModel() {
 
     fun clearError() {
         _uiState.update { it.copy(error = null) }
+    }
+
+    /**
+     * Export a standalone copy of the SQLite database into [exportDir] (typically
+     * the app's external files dir, which is reachable over USB/MTP). The Rust
+     * core runs `VACUUM INTO`, producing a single compacted file with no
+     * -wal/-shm sidecars. [onResult] is delivered on the main thread with the
+     * exported [File] on success.
+     */
+    fun exportDatabase(exportDir: File, onResult: (Result<File>) -> Unit) {
+        viewModelScope.launch {
+            val dest = File(exportDir, "localnative-export.sqlite3")
+            // Build via JSONObject so the path is escaped correctly.
+            val cmd = JSONObject()
+                .put("action", "export-db")
+                .put("dest", dest.absolutePath)
+                .toString()
+            Log.d("exportDatabase", cmd)
+            try {
+                val response = withContext(Dispatchers.IO) { RustBridge.run(cmd) }
+                Log.d("exportDatabaseResponse", response)
+                val json = JSONObject(response)
+                if (json.has("export-db")) {
+                    onResult(Result.success(dest))
+                } else {
+                    // The core serializes failures into the JSON response.
+                    onResult(Result.failure(Exception(response)))
+                }
+            } catch (e: Exception) {
+                Log.e("exportDatabase", "export failed", e)
+                onResult(Result.failure(e))
+            }
+        }
     }
 
     private suspend fun performSearch(query: String, offset: Long) {
