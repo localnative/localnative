@@ -154,6 +154,18 @@ fn test_export_db_command_parses() {
     }
 }
 
+#[test]
+fn test_import_db_command_parses() {
+    let json = r#"{"action":"import-db","src":"/tmp/localnative-backup.sqlite3"}"#;
+    let cmd = serde_json::from_str::<Cmd>(json).expect("import-db command should parse");
+    match cmd {
+        Cmd::DbCmd(db::models::Cmd::ImportDb(import)) => {
+            assert_eq!(import.src, "/tmp/localnative-backup.sqlite3");
+        }
+        other => panic!("expected DbCmd(ImportDb), got {other:?}"),
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CmdSyncViaAttach {
     pub uri: String,

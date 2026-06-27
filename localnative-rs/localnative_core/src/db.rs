@@ -172,6 +172,12 @@ pub fn process_cmd(cmd: Cmd, conn: &Connection) -> DbResult<String> {
                 &serde_json::json!({ "export-db": export.dest }),
             )?)
         }
+        Cmd::ImportDb(ref import) => {
+            let merged = import.process(conn)?;
+            Ok(serde_json::to_string(
+                &serde_json::json!({ "import-db": { "src": import.src, "merged": merged } }),
+            )?)
+        }
     }
 }
 
@@ -235,6 +241,7 @@ pub mod models {
         Upgrade,
         SyncViaAttach(CmdSyncViaAttach),
         ExportDb(CmdExportDb),
+        ImportDb(CmdImportDb),
     }
 
     #[derive(Serialize, Deserialize, Debug)]
@@ -291,6 +298,12 @@ pub mod models {
         pub dest: String,
     }
 
+    /// Import (one-way LWW merge) notes from another database file at `src`.
+    #[derive(Serialize, Deserialize, Debug)]
+    pub struct CmdImportDb {
+        pub src: String,
+    }
+
     #[derive(Debug, Default, Deserialize, Serialize, Clone)]
     pub struct QueryResult {
         pub count: u32,
@@ -339,8 +352,8 @@ mod commands {
     use base64::Engine as _;
     use base64::engine::general_purpose::STANDARD;
     use models::{
-        CmdDelete, CmdExportDb, CmdFilter, CmdInsert, CmdSearch, CmdSelect, CmdSyncViaAttach, Note,
-        QueryResult,
+        CmdDelete, CmdExportDb, CmdFilter, CmdImportDb, CmdInsert, CmdSearch, CmdSelect,
+        CmdSyncViaAttach, Note, QueryResult,
     };
     use rusqlite::Connection;
 
@@ -402,6 +415,12 @@ mod commands {
     impl CmdExportDb {
         pub fn process(&self, conn: &Connection) -> DbResult<()> {
             queries::export_db(conn, &self.dest)
+        }
+    }
+
+    impl CmdImportDb {
+        pub fn process(&self, conn: &Connection) -> DbResult<usize> {
+            queries::import_db(conn, &self.src)
         }
     }
 
@@ -640,6 +659,42 @@ pub mod queries {
         }
         conn.execute("VACUUM INTO ?1", rusqlite::params![dest])?;
         Ok(())
+    }
+
+    /// Import notes from another database file at `src` into the current
+    /// database with a **one-way** last-write-wins merge: rows from `src` are
+    /// applied to the local DB when their `updated_at` is newer, and tombstones
+    /// propagate. Unlike [`sync_via_attach`], the source file is **not**
+    /// modified, so it is safe to import from a read-only backup. Returns the
+    /// number of local rows inserted or updated.
+    pub fn import_db(conn: &Connection, src: &str) -> DbResult<usize> {
+        validate_sync_file_path(src)?;
+        conn.execute("ATTACH ?1 AS other", rusqlite::params![src])?;
+        let result = import_attached(conn);
+        // Always detach, even on failure, so a later import can re-attach.
+        let _ = conn.execute_batch("DETACH DATABASE other;");
+        result
+    }
+
+    fn import_attached(conn: &Connection) -> DbResult<usize> {
+        ensure_lww_columns(conn, "main")?;
+        ensure_lww_columns(conn, "other")?;
+        // `WHERE true` is required for SQLite to parse ON CONFLICT after a SELECT.
+        let merged = conn.execute(
+            "INSERT INTO main.note AS m
+                 (uuid4, title, url, tags, description, comments, annotations, created_at, is_public, metadata, updated_at, deleted)
+             SELECT uuid4, title, url, tags, description, comments, annotations, created_at, is_public, metadata, updated_at, deleted
+             FROM other.note WHERE true
+             ON CONFLICT(uuid4) DO UPDATE SET
+                 title = excluded.title, url = excluded.url, tags = excluded.tags,
+                 description = excluded.description, comments = excluded.comments,
+                 annotations = excluded.annotations, created_at = excluded.created_at,
+                 is_public = excluded.is_public, metadata = excluded.metadata,
+                 updated_at = excluded.updated_at, deleted = excluded.deleted
+             WHERE excluded.updated_at > m.updated_at",
+            [],
+        )?;
+        Ok(merged)
     }
 
     fn sync_attached(conn: &Connection) -> DbResult<()> {
@@ -1952,6 +2007,46 @@ mod db_tests {
 
         // Empty destination is rejected.
         assert!(queries::export_db(&conn, "  ").is_err());
+    }
+
+    #[test]
+    fn test_import_db_merges_lww() {
+        // Build a "backup" database file containing one note.
+        let backup =
+            std::env::temp_dir().join(format!("ln_import_src_{}.sqlite3", std::process::id()));
+        let backup_str = backup.to_str().unwrap();
+        {
+            let src = setup_test_db();
+            queries::insert_note(
+                &src,
+                "From Backup",
+                "https://backup.example",
+                "imported",
+                "",
+                "",
+                b"",
+                true,
+            )
+            .unwrap();
+            queries::export_db(&src, backup_str).expect("build backup file");
+        }
+
+        // Import into an empty target DB: the backup note is merged in.
+        let conn = setup_test_db();
+        let merged = queries::import_db(&conn, backup_str).expect("import should succeed");
+        assert_eq!(merged, 1);
+        let result = queries::do_select(&conn, 10, 0).unwrap();
+        assert_eq!(result.count, 1);
+        assert_eq!(result.notes[0].title, "From Backup");
+
+        // Re-importing the same (not-newer) backup is idempotent under LWW:
+        // still exactly one note, unchanged.
+        queries::import_db(&conn, backup_str).expect("re-import should succeed");
+        let after = queries::do_select(&conn, 10, 0).unwrap();
+        assert_eq!(after.count, 1);
+        assert_eq!(after.notes[0].title, "From Backup");
+
+        std::fs::remove_file(&backup).ok();
     }
 
     #[test]
