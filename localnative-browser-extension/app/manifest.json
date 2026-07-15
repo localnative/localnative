@@ -12,16 +12,17 @@
   },
   "permissions": [
     "nativeMessaging",
-    "activeTab",
-    "tabs"
+    "scripting",
+    "storage",
+    "activeTab"
   ],
   "content_security_policy": {
     "extension_pages": "script-src 'self'; connect-src 'none'; object-src 'none'"
   },
-  "applications": {
+  "browser_specific_settings": {
     "gecko": {
       "id": "localnative@example.org",
-      "strict_min_version": "50.0"
+      "strict_min_version": "128.0"
     }
   }
 }

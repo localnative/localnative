@@ -32,9 +32,13 @@ function i18nRefresh() {
   document.getElementById('ssb-sync-btn').innerHTML = Sanitizer.escapeHTML`${lc("ssb sync")}`;
 }
 
-document.addEventListener('DOMContentLoaded', function () {
+const langReady = chrome.storage.local.get(['lang']).catch(function () { return {}; });
+
+document.addEventListener('DOMContentLoaded', async function () {
   // i18n
-  let lang = localStorage.getItem('lang') || navigator.language;
+  const stored = await langReady;
+  // localStorage carries over the language chosen before the move to chrome.storage
+  let lang = stored.lang || localStorage.getItem('lang') || navigator.language;
   document.getElementById('select-language').value = locales[lang]? lang: 'en-US';
   lc = locales[lang] || locales['en-US'];
   i18nRefresh();
@@ -42,7 +46,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let lang = e.target.options[e.target.selectedIndex].value;
     lc=locales[lang];
     i18nRefresh();
-    localStorage.setItem('lang', lang);
+    chrome.storage.local.set({lang: lang});
   };
 })
 

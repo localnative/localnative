@@ -20,6 +20,10 @@ let LIMIT = 10;
 let offset = 0;
 let count = 0;
 
+// kicked off while <head> parses so prefs are resolved by DOMContentLoaded and
+// the popup does not paint the light theme before the stored one applies
+const prefsReady = chrome.storage.local.get(['darkTheme', 'ssbify']).catch(function () { return {}; });
+
 function requestMessage(text) {
   document.getElementById('response-text').innerHTML = '<< running or failed :-( run <a href="https://localnative.app" target="_blank">desktop app</a> to finish setup browser extension!';
   document.getElementById('request-text').innerHTML = Sanitizer.escapeHTML`${text}`;
@@ -92,16 +96,28 @@ function connect() {
   return port;
 }
 
-document.addEventListener('DOMContentLoaded', function () {
-  // setup content script
-  chrome.tabs.executeScript({
-    file: 'contentScript.js'
+function getPageContent(callback) {
+  chrome.tabs.query({active: true, currentWindow: true}, function (tabs) {
+    chrome.scripting.executeScript({
+      target: {tabId: tabs[0].id},
+      func: function () { return document.body.outerHTML; }
+    }, function (results) {
+      // annotations are optional: pages that disallow injection still save
+      if (chrome.runtime.lastError || !results || !results[0]) {
+        callback("");
+        return;
+      }
+      callback(results[0].result || "");
+    });
   });
+}
+
+document.addEventListener('DOMContentLoaded', async function () {
+  const prefs = await prefsReady;
 
   // theme toggle
   const themeToggle = document.getElementById('theme-toggle');
-  const isDarkTheme = localStorage.getItem('darkTheme') === 'true';
-  if (isDarkTheme) {
+  if (prefs.darkTheme) {
     document.body.classList.add('dark-theme');
     themeToggle.textContent = '☀️';
   }
@@ -109,17 +125,17 @@ document.addEventListener('DOMContentLoaded', function () {
     document.body.classList.toggle('dark-theme');
     const isDark = document.body.classList.contains('dark-theme');
     themeToggle.textContent = isDark ? '☀️' : '🌙';
-    localStorage.setItem('darkTheme', isDark);
+    chrome.storage.local.set({darkTheme: isDark});
   };
 
   // focus on tags
   document.getElementById('tags-text').focus();
 
   // ssbify
-  document.getElementById('ssbify').checked = JSON.parse(localStorage.getItem('ssbify'))
+  document.getElementById('ssbify').checked = !!prefs.ssbify;
 
   document.getElementById('ssbify').onchange = function (e) {
-    localStorage.setItem('ssbify', e.target.checked);
+    chrome.storage.local.set({ssbify: e.target.checked});
     console.log('ssbify is set to ' + e.target.checked);
   };
 
@@ -132,13 +148,9 @@ document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('save-input').addEventListener('keypress', function (e) {
     var key = e.which || e.keyCode;
     if (key === 13) { // 13 is enter
-      var annotations = "";
       if(document.getElementById('ssbify').checked && !document.getElementById('cb-public').checked){
-        chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-          chrome.tabs.sendMessage(tabs[0].id, "get_content", function(content){
-            annotations = content || "";
-            cmdInsert(annotations, false);
-          });
+        getPageContent(function(annotations){
+          cmdInsert(annotations, false);
         });
       }else if(document.getElementById('cb-public').checked){
         cmdInsert("", true);
