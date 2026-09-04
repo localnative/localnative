@@ -1,0 +1,39 @@
+#!/bin/bash
+#
+# Set the browser extension version. This is the only version the extension
+# carries, and it is independent of the Rust crates and every other platform.
+#
+# Chrome Web Store and addons.mozilla.org both require a strictly increasing
+# version per listing and never allow a value to be reused, so this number is
+# driven by extension releases alone -- not by the core library's release
+# cadence. See docs/VERSIONING.md.
+#
+# The popup header reads its version from the manifest at runtime via
+# chrome.runtime.getManifest(), so there is nothing else to keep in step.
+
+set -euo pipefail
+
+if [ $# -ne 1 ]; then
+  echo "usage: $(basename "$0") <version>    e.g. $(basename "$0") 0.5.3" >&2
+  exit 1
+fi
+
+cd "$(dirname "$0")/.."
+version=$1
+manifest=localnative-browser-extension/app/manifest.json
+
+count=$(grep -c '"version"' "$manifest" || true)
+if [ "$count" -ne 1 ]; then
+  echo "error: expected exactly one '\"version\"' line in $manifest, found $count" >&2
+  exit 1
+fi
+
+sed -i.bak -E "s/\"version\": \".*\"/\"version\": \"$version\"/" "$manifest"
+rm -f "$manifest.bak"
+
+# A malformed manifest fails the upload with an opaque store error, so verify
+# here where the cause is obvious.
+python3 -c "import json,sys; json.load(open('$manifest')); print('manifest.json is valid JSON')"
+
+echo "browser extension version set to $version"
+grep -n '"version"' "$manifest"

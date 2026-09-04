@@ -1,16 +1,38 @@
 #!/bin/bash
+#
+# Set the shared version for the Rust crates -- localnative_core,
+# localnative_cli, localnative_iced and xtask -- which ship together and so
+# carry one number. The version lives in [workspace.package] and the members
+# inherit it with `version.workspace = true`, so this edits exactly one line.
+#
+# This deliberately does NOT touch the browser extension, Android, iOS, Tauri,
+# Electron or macOS. Those version independently against their own stores'
+# rules; forcing one number across all of them is what froze the browser
+# extension at 0.5.1 until the Chrome Web Store removed it.
+# See docs/VERSIONING.md.
 
-set -e
+set -euo pipefail
 
-cd `dirname $0`/..
+if [ $# -ne 1 ]; then
+  echo "usage: $(basename "$0") <version>    e.g. $(basename "$0") 0.7.1" >&2
+  exit 1
+fi
 
-echo "set version to" $1
+cd "$(dirname "$0")/.."
+version=$1
+manifest=localnative-rs/Cargo.toml
 
+# Guard the anchor rather than trusting a line number: the previous version of
+# this script wrote by offset and silently overwrote unrelated lines as files
+# shifted underneath it.
+count=$(grep -c '^version = ' "$manifest" || true)
+if [ "$count" -ne 1 ]; then
+  echo "error: expected exactly one '^version = ' line in $manifest, found $count" >&2
+  exit 1
+fi
 
-# rs
-gsed -i "6s/.*/version = \"$1\"/" localnative-rs/localnative_core/Cargo.toml
-gsed -i "5s/.*/version = \"$1\"/" localnative-rs/localnative_cli/Cargo.toml
+sed -i.bak -E "s/^version = \".*\"$/version = \"$version\"/" "$manifest"
+rm -f "$manifest.bak"
 
-# web-ext
-gsed -i "60s/.*/v$1/" localnative-browser-extension/app/popup.html
-gsed -i "3s/.*/  \"version\": \"$1\",/" localnative-browser-extension/app/manifest.json
+echo "rust workspace version set to $version"
+grep -n '^version = ' "$manifest"
