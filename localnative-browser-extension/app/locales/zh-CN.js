@@ -19,7 +19,7 @@ let locales = {};
 
 locales['zh-CN'] = i18n.create({
   values: {
-    "ssbify": '保存内容到 ssb',
+    "save content": '保存内容',
     "public": '公开',
     "language": '语言',
     "description": "描述",

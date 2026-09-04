@@ -22,7 +22,7 @@ let count = 0;
 
 // kicked off while <head> parses so prefs are resolved by DOMContentLoaded and
 // the popup does not paint the light theme before the stored one applies
-const prefsReady = chrome.storage.local.get(['darkTheme', 'ssbify']).catch(function () { return {}; });
+const prefsReady = chrome.storage.local.get(['darkTheme', 'saveContent', 'ssbify']).catch(function () { return {}; });
 
 function requestMessage(text) {
   document.getElementById('response-text').innerHTML = '<< running or failed :-( run <a href="https://localnative.app" target="_blank">desktop app</a> to finish setup browser extension!';
@@ -143,24 +143,26 @@ document.addEventListener('DOMContentLoaded', async function () {
   // focus on tags
   document.getElementById('tags-text').focus();
 
-  // ssbify
-  document.getElementById('ssbify').checked = !!prefs.ssbify;
+  // save content -- stored as "ssbify" before the rename, so fall back to the
+  // old key once and drop it on the next write
+  const saveContent = prefs.saveContent !== undefined ? prefs.saveContent : !!prefs.ssbify;
+  document.getElementById('save-content').checked = saveContent;
 
-  document.getElementById('ssbify').onchange = function (e) {
-    chrome.storage.local.set({ssbify: e.target.checked});
-    console.log('ssbify is set to ' + e.target.checked);
+  document.getElementById('save-content').onchange = function (e) {
+    chrome.storage.local.set({saveContent: e.target.checked});
+    chrome.storage.local.remove('ssbify');
   };
 
   // cb-public
   document.getElementById('cb-public').onchange = function (e) {
-    document.getElementById('ssbify').disabled = e.target.checked;
+    document.getElementById('save-content').disabled = e.target.checked;
   };
 
   // register cmdInsert
   document.getElementById('save-input').addEventListener('keypress', function (e) {
     var key = e.which || e.keyCode;
     if (key === 13) { // 13 is enter
-      if(document.getElementById('ssbify').checked && !document.getElementById('cb-public').checked){
+      if(document.getElementById('save-content').checked && !document.getElementById('cb-public').checked){
         getPageContent(function(annotations){
           cmdInsert(annotations, false);
         });
