@@ -1,6 +1,6 @@
 {
   "name": "Local Native",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "manifest_version": 3,
   "description": "Local Native notes taking.",
   "icons": {
@@ -24,5 +24,6 @@
       "id": "localnative@example.org",
       "strict_min_version": "128.0"
     }
-  }
+  },
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAjFPXu42Dx9m2HI9h1GrBX0NJLBEUzHX8NsEmJbl0lTpXqFMtgtZRWhK2vz1zBhuAxmH84EyRxXj9U4MyRCz3bwcP+FhbzIGmZ3u3klIMo84m0h0a4nOCi/ZG21Npxn+vON6LU9qJNeoAmdgRQNRFVQLX1oyPFmfiImkN+A4CfMRhE/LfyEu9myPs4NdT8Rtcp1aQtC+wDO8gkKYIdrM8YlP0FRUuLbwuM2YLplu3Xb01rQ1tRZ8g29J+1gzX4kzy1W8yQTKfr3BIDu0utcBySQbm4uwSes4FV00X9vUz1zGTpXzZrKsgBge+NgSIb8I78M0EcarZHeWB65AQXRIwcQIDAQAB"
 }
