@@ -1,12 +1,40 @@
 #!/bin/bash
+#
+# Package the browser extension for upload to the Chrome Web Store and
+# addons.mozilla.org.
+#
+# This bumps ONLY the extension manifest. It used to call script/set-version,
+# which also rewrote the Rust crate versions -- so releasing the extension
+# would have walked localnative_core and localnative_cli backwards from 0.7.0.
+# See docs/VERSIONING.md.
 
-set -e
+set -euo pipefail
 
-cd `dirname $0`/..
+if [ $# -ne 1 ]; then
+  echo "usage: $(basename "$0") <version>    e.g. $(basename "$0") 0.5.3" >&2
+  exit 1
+fi
 
-script/set-version $1
-echo "release browser extension version" $1
+cd "$(dirname "$0")/.."
+version=$1
 
+script/set-version-extension "$version"
 
+out="$PWD/localnative-browser-extension/localnative-browser-extension-$version.zip"
+rm -f "$out"
+
+# web-ext-artifacts/ is gitignored but present on disk and holds previous
+# release zips; without excluding it every upload nests its predecessors.
 cd localnative-browser-extension/app
-zip -r -FS ../localnative-browser-extension-$1.zip * --exclude '*.git*'
+zip -r -FS "$out" . \
+  --exclude '*.git*' \
+  --exclude 'web-ext-artifacts/*' \
+  --exclude '*.DS_Store' > /dev/null
+
+echo
+echo "packaged $out"
+unzip -l "$out"
+
+# The store rejects an upload whose version is not strictly greater than the
+# published one, so surface what is actually inside the archive.
+echo "packaged manifest version: $(unzip -p "$out" manifest.json | python3 -c 'import json,sys; print(json.load(sys.stdin)["version"])')"
