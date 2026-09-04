@@ -192,11 +192,6 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
   };
 
-  // register ssb-sync
-  document.getElementById('ssb-sync-btn').onclick = function(){
-      cmdSsbSync();
-  };
-
   // register cmdSearch
   document.getElementById('search-text').addEventListener('keyup', function (e) {
       offset = 0;
@@ -293,13 +288,6 @@ function cmdDelete(rowid) {
     rowid: rowid,
     limit: LIMIT,
     offset: offset
-  };
-  cmd(message);
-}
-
-function cmdSsbSync() {
-  var message = {
-    action: "ssb-sync"
   };
   cmd(message);
 }

@@ -31,7 +31,6 @@ locales['zh-CN'] = i18n.create({
     "prev": '上页',
     "next": '下页',
     "page": '页',
-    "of": '共',
-    "ssb sync": 'ssb 同步'
+    "of": '共'
   }
 });
