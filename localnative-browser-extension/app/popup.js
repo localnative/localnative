@@ -85,7 +85,16 @@ function onNativeMessage(message) {
 }
 
 function onDisconnected() {
-  // console.log("Disconnected: " + chrome.runtime.lastError.message);
+  // lastError names the actual cause -- "Specified native messaging host not
+  // found." (host manifest missing), "Access to the specified native messaging
+  // host is forbidden." (extension ID not in allowed_origins), "Native host has
+  // exited." (binary crashed). Without surfacing it every failure collapses into
+  // the same generic setup hint and is undebuggable from the popup.
+  var err = chrome.runtime.lastError;
+  if (!err) return;
+  document.getElementById('response-text').innerHTML =
+    Sanitizer.escapeHTML`<< ${err.message}` +
+    ' &mdash; see <a href="https://localnative.app" target="_blank">localnative.app</a> to finish setup';
 }
 
 function connect() {
