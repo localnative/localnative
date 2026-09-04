@@ -122,6 +122,9 @@ function getPageContent(callback) {
 }
 
 document.addEventListener('DOMContentLoaded', async function () {
+  // single source of truth: the manifest, so the header cannot drift on release
+  document.getElementById('version').textContent = 'v' + chrome.runtime.getManifest().version;
+
   const prefs = await prefsReady;
 
   // theme toggle
