@@ -44,18 +44,24 @@ function onNativeMessage(message) {
   document.getElementById('notes').innerHTML = '';
   var notesHTML = message.notes.forEach(function(i){
     // render one item
+    // the row is two lines, so anything long is clamped in CSS and the full
+    // value kept in a title attribute rather than dropped
+    var urlText = String(i.url).replace(/^https?:\/\//, '');
+    var dateText = String(i.created_at).replace(/^\d{4}-/, '').replace(/:\d{2}$/, '');
     document.getElementById('notes').insertAdjacentHTML('beforeend', Sanitizer.escapeHTML`
     <div class="note">
-      <div class="note-meta">
-        <span>${i.created_at}</span>
-        <span>${i.uuid4.substring(0,5)}</span>
-        <span>rowid ${i.rowid}</span>
+      <div class="note-line">
+        <span class="note-title" title="${i.title}">${i.title}</span>
         <span class="note-tags" id="note-tags-rowid-${i.rowid}"></span>
-        <button class="btn-delete" id="btn-delete-rowid-${i.rowid}" title="Delete">Delete</button>
+        <button class="btn-delete" id="btn-delete-rowid-${i.rowid}" title="Delete">\u00d7</button>
       </div>
-      <div class="note-title">${i.title}</div>
-      <div class="note-url"><a target="_blank" href="${i.url}">${i.url}</a></div>
-      <div class="note-desc">${i.description}</div>
+      <div class="note-sub">
+        <span class="note-id" title="${i.created_at}">${dateText}</span>
+        <span class="note-id">rowid ${i.rowid}</span>
+        <span class="note-id">${i.uuid4.substring(0,5)}</span>
+        <span class="note-url"><a target="_blank" href="${i.url}" title="${i.url}">${urlText}</a></span>
+      </div>
+      <div class="note-desc" title="${i.description}">${i.description}</div>
     </div>
       `);
 

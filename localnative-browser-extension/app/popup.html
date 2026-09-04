@@ -77,7 +77,14 @@
         color: var(--text-primary);
         min-width: 700px;
         max-width: 700px;
-        padding: 16px;
+        /* Chrome caps popups at 600px tall. Fixing the height (border-box, so
+           padding is included) keeps the header and search bar pinned while
+           #notes scrolls, instead of the whole popup scrolling the search box
+           out of view. */
+        height: 580px;
+        display: flex;
+        flex-direction: column;
+        padding: 10px;
         line-height: 1.5;
       }
 
@@ -86,8 +93,8 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding-bottom: 12px;
-        margin-bottom: 16px;
+        padding-bottom: 6px;
+        margin-bottom: 8px;
         border-bottom: 1px solid var(--border);
       }
 
@@ -186,16 +193,27 @@
       .input-group {
         display: flex;
         flex-direction: column;
-        gap: 8px;
-        margin-bottom: 12px;
+        gap: 6px;
+        margin-bottom: 8px;
+      }
+
+      /* Description and Tags are both short; stacking them wastes a full row */
+      .input-row {
+        display: flex;
+        gap: 6px;
+      }
+
+      .input-row .save-input {
+        flex: 1 1 0;
+        min-width: 0;
       }
 
       .save-input {
         width: 100%;
-        padding: 10px 14px;
+        padding: 6px 10px;
         border: 1px solid var(--border);
         border-radius: var(--radius);
-        font-size: 14px;
+        font-size: 13px;
         background: var(--bg-card);
         color: var(--text-primary);
         transition: border-color 0.2s, box-shadow 0.2s;
@@ -233,12 +251,12 @@
         display: flex;
         align-items: center;
         gap: 8px;
-        margin-bottom: 16px;
+        margin-bottom: 8px;
       }
 
       #search-text {
         flex: 1;
-        padding: 10px 14px;
+        padding: 6px 10px;
         border: 1px solid var(--border);
         border-radius: var(--radius);
         font-size: 14px;
@@ -291,46 +309,61 @@
       #notes {
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: 0;
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        border-top: 1px solid var(--border);
       }
 
       .note {
-        background: var(--bg-card);
-        border-radius: var(--radius-lg);
-        padding: 14px 16px;
-        border: 1px solid var(--border);
-        transition: box-shadow 0.2s, border-color 0.2s;
+        background: transparent;
+        border: 0;
+        border-bottom: 1px solid var(--border);
+        border-radius: 0;
+        padding: 7px 8px;
+        transition: background 0.15s;
+      }
+
+      /* line 1: title, tags, delete -- line 2: ids, url, date, description */
+      .note-line {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+      }
+
+      .note-sub {
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+        margin-top: 2px;
+        font-size: 11px;
+        color: var(--text-muted);
+        white-space: nowrap;
+      }
+
+      .note-id {
+        flex: 0 0 auto;
+        font-variant-numeric: tabular-nums;
       }
 
       .note:hover {
-        box-shadow: var(--shadow-md);
-        border-color: #cbd5e1;
-      }
-
-      .note-meta {
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-bottom: 8px;
-        font-size: 12px;
-        color: var(--text-muted);
+        background: var(--bg-card);
       }
 
       .note-tags {
         display: flex;
-        flex-wrap: wrap;
         gap: 4px;
-        flex: 1;
+        flex: 0 0 auto;
       }
 
       .tag-btn {
-        padding: 2px 8px;
+        padding: 1px 6px;
         background: var(--tag-bg);
         color: var(--tag-text);
         border: none;
         border-radius: 4px;
-        font-size: 11px;
+        font-size: 10px;
         cursor: pointer;
         transition: background 0.2s;
       }
@@ -340,7 +373,9 @@
       }
 
       .btn-delete {
-        padding: 4px 10px;
+        padding: 1px 6px;
+        flex: 0 0 auto;
+        line-height: 1.4;
         background: transparent;
         color: var(--danger);
         border: 1px solid var(--danger);
@@ -357,18 +392,28 @@
 
       .note-title {
         font-weight: 600;
-        font-size: 14px;
+        font-size: 13px;
         color: var(--text-primary);
-        margin-bottom: 4px;
+        flex: 1 1 auto;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
       .note-url {
-        margin-bottom: 6px;
+        flex: 0 1 auto;
+        min-width: 0;
+        /* last on the row now that the description has its own line, so it can
+           use whatever the date and ids leave behind */
+        max-width: 60%;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
       .note-url a {
         color: var(--primary);
-        font-size: 12px;
+        font-size: 11px;
         text-decoration: none;
         word-break: break-all;
       }
@@ -378,9 +423,18 @@
       }
 
       .note-desc {
-        font-size: 13px;
+        font-size: 11px;
         color: var(--text-secondary);
-        white-space: pre-wrap;
+        margin-top: 2px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      /* notes without a description keep the two-line height; the element is
+         always emitted so this needs no branching in the render path */
+      .note-desc:empty {
+        display: none;
       }
 
       .note-sep {
@@ -437,8 +491,10 @@
         </div>
       </div>
       <div class="input-group">
-        <input class='save-input' id='title' type='text' placeholder='Title'/>
-        <input class='save-input' id='url' type='text' placeholder='URL'/>
+        <div class="input-row">
+          <input class='save-input' id='title' type='text' placeholder='Title'/>
+          <input class='save-input' id='url' type='text' placeholder='URL'/>
+        </div>
         <input class='save-input' id='desc-text' type='text' placeholder='Description'/>
         <input class='save-input' id='tags-text' type='text' placeholder='Tags (comma or space separated) — Press Enter to save'/>
       </div>
