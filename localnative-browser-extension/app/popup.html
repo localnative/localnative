@@ -230,22 +230,6 @@
         color: var(--text-muted);
       }
 
-      /* Debug info */
-      .debug-info {
-        max-width: 560px;
-        font-size: 11px;
-        color: var(--text-muted);
-        padding: 8px 12px;
-        background: var(--bg-card);
-        border-radius: var(--radius);
-        margin-bottom: 12px;
-        border: 1px solid var(--border);
-      }
-
-      .debug-info a {
-        color: var(--primary);
-      }
-
       /* Search bar */
       .search-bar {
         display: flex;
@@ -445,6 +429,46 @@
         display: none;
       }
 
+      /* Errors surface here instead of as a permanent line in the layout, so a
+         transient failure does not push the note list around. */
+      .toast {
+        position: fixed;
+        left: 50%;
+        bottom: 12px;
+        transform: translateX(-50%);
+        max-width: 92%;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        font-size: 12px;
+        color: #fff;
+        background: var(--danger);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-md);
+        z-index: 10;
+      }
+
+      .toast[hidden] {
+        display: none;
+      }
+
+      .toast a {
+        color: #fff;
+        text-decoration: underline;
+        white-space: nowrap;
+      }
+
+      .toast-close {
+        background: transparent;
+        border: 0;
+        color: #fff;
+        font-size: 14px;
+        line-height: 1;
+        cursor: pointer;
+        padding: 0 2px;
+      }
+
       /* Scrollbar */
       ::-webkit-scrollbar {
         width: 8px;
@@ -499,10 +523,6 @@
         <input class='save-input' id='tags-text' type='text' placeholder='Tags (comma or space separated) — Press Enter to save'/>
       </div>
     </div>
-    <div class="debug-info">
-      <div id='request-text'></div>
-      <div id='response-text'></div>
-    </div>
     <div class="search-bar">
       <input id='search-text' type='text' placeholder='Search notes...'/>
       <button class="btn btn-clear" id="search-clear-btn" title="Clear search">✕</button>
@@ -513,5 +533,6 @@
       <span id="indicator">0-0 / 0</span>
     </div>
     <div id='notes'></div>
+    <div id='toast' class="toast" hidden></div>
   </body>
 </html>

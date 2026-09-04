@@ -24,14 +24,37 @@ let count = 0;
 // the popup does not paint the light theme before the stored one applies
 const prefsReady = chrome.storage.local.get(['darkTheme', 'saveContent', 'ssbify']).catch(function () { return {}; });
 
-function requestMessage(text) {
-  document.getElementById('response-text').innerHTML = '<< running or failed :-( run <a href="https://localnative.app" target="_blank">desktop app</a> to finish setup browser extension!';
-  document.getElementById('request-text').innerHTML = Sanitizer.escapeHTML`${text}`;
+// Raw protocol traffic is developer-facing: the count it carried is already in
+// the pagination indicator and failures raise a toast, so it goes to the
+// console and to the indicator's tooltip rather than taking a row in the popup.
+function logTraffic(direction, payload) {
+  var line = direction + ' ' + JSON.stringify(payload);
+  if (direction === '<<') {
+    document.getElementById('indicator').title = line.substring(0, 500);
+  }
+  console.debug('[localnative]', direction, payload);
+}
+
+var toastTimer;
+
+function showToast(text) {
+  var el = document.getElementById('toast');
+  el.innerHTML = Sanitizer.escapeHTML`${text}` +
+    ' <a href="https://localnative.app" target="_blank">setup help</a>' +
+    '<button class="toast-close" title="Dismiss">\u00d7</button>';
+  el.querySelector('.toast-close').onclick = hideToast;
+  el.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(hideToast, 8000);
+}
+
+function hideToast() {
+  clearTimeout(toastTimer);
+  document.getElementById('toast').hidden = true;
 }
 
 function onNativeMessage(message) {
-  let resp = "<< " +  JSON.stringify(message).substring(0, 90) + " ...";
-  document.getElementById('response-text').innerHTML = Sanitizer.escapeHTML`${resp}`;
+  logTraffic('<<', message);
   // abort if no notes
   if (!message.notes) return;
 
@@ -90,25 +113,31 @@ function onNativeMessage(message) {
   });
 }
 
-function onDisconnected() {
-  // lastError names the actual cause -- "Specified native messaging host not
-  // found." (host manifest missing), "Access to the specified native messaging
-  // host is forbidden." (extension ID not in allowed_origins), "Native host has
-  // exited." (binary crashed). Without surfacing it every failure collapses into
-  // the same generic setup hint and is undebuggable from the popup.
-  var err = chrome.runtime.lastError;
-  if (!err) return;
-  document.getElementById('response-text').innerHTML =
-    Sanitizer.escapeHTML`<< ${err.message}` +
-    ' &mdash; see <a href="https://localnative.app" target="_blank">localnative.app</a> to finish setup';
-}
-
 function connect() {
   var hostName = "app.localnative";
-  port = chrome.runtime.connectNative(hostName);
-  port.onMessage.addListener(onNativeMessage);
-  port.onDisconnect.addListener(onDisconnected);
-  return port;
+  var p = chrome.runtime.connectNative(hostName);
+  var answered = false;
+
+  p.onMessage.addListener(function (message) {
+    answered = true;
+    hideToast();
+    onNativeMessage(message);
+  });
+
+  // localnative-web-ext-host is one-shot: it reads a single message, replies and
+  // exits, so Chrome reports "Native host has exited." after every command --
+  // including successful ones. Only a disconnect with no reply is a real
+  // failure. lastError then names the cause: "Specified native messaging host
+  // not found." (host manifest missing), "Access to the specified native
+  // messaging host is forbidden." (extension id not in allowed_origins), or
+  // "Native host has exited." (the binary died before answering).
+  p.onDisconnect.addListener(function () {
+    var err = chrome.runtime.lastError;
+    if (answered) return;
+    showToast(err ? err.message : 'The Local Native desktop app did not respond.');
+  });
+
+  return p;
 }
 
 function getPageContent(callback) {
@@ -305,7 +334,7 @@ function cmdDelete(rowid) {
 }
 
 function cmd(message){
-  var part = connect();
-  port.postMessage(message);
-  requestMessage(">> " + JSON.stringify(message).substring(0,180) + " ...");
+  var p = connect();
+  p.postMessage(message);
+  logTraffic('>>', message);
 }
