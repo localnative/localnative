@@ -128,8 +128,14 @@ function getPageContent(callback) {
 }
 
 document.addEventListener('DOMContentLoaded', async function () {
-  // single source of truth: the manifest, so the header cannot drift on release
-  document.getElementById('version').textContent = 'v' + chrome.runtime.getManifest().version;
+  // The manifest version is the extension's own. Platforms version
+  // independently (docs/VERSIONING.md) and the desktop app is on a different
+  // number, so label it rather than implying one app-wide version.
+  var extVersion = chrome.runtime.getManifest().version;
+  var versionEl = document.getElementById('version');
+  versionEl.textContent = 'ext v' + extVersion;
+  versionEl.title = 'Browser extension v' + extVersion +
+    ' \u2014 versioned independently of the desktop app';
 
   const prefs = await prefsReady;
 
