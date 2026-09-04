@@ -2,6 +2,13 @@
 members = ["localnative_iced", "localnative_egui", "localnative_core", "localnative_cli", "xtask"]
 resolver = "2"
 
+# Shared release version for the Rust crates. These ship together, so they
+# carry one number; every other platform versions independently -- see
+# docs/VERSIONING.md. localnative_egui is deliberately excluded until it
+# reaches parity with the Iced front-end.
+[workspace.package]
+version = "0.7.0"
+
 [workspace.dependencies]
 anyhow = "1.0"
 xshell = "0.2"

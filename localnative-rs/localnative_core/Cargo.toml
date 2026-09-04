@@ -3,7 +3,7 @@ name = "localnative_core"
 description = "localnative core lib"
 homepage = "https://localnative.app"
 authors = ["Yi Wang"]
-version = "0.7.0"
+version.workspace = true
 license = "AGPL-3.0"
 edition = "2024"
 
