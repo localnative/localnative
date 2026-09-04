@@ -165,9 +165,17 @@
         border: 1px solid var(--border);
         border-radius: var(--radius);
         background: var(--bg-card);
+        color: var(--text-primary);
         font-size: 13px;
         cursor: pointer;
         outline: none;
+      }
+
+      /* the popup list is drawn by the platform on Windows/Linux and does not
+         inherit the select's colours */
+      .lang-select select option {
+        background: var(--bg-card);
+        color: var(--text-primary);
       }
 
       .lang-select select:focus {
@@ -199,7 +207,8 @@
         box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
       }
 
-      .save-input::placeholder {
+      .save-input::placeholder,
+      #search-text::placeholder {
         color: var(--text-muted);
       }
 
@@ -234,6 +243,7 @@
         border-radius: var(--radius);
         font-size: 14px;
         background: var(--bg-card);
+        color: var(--text-primary);
         transition: border-color 0.2s, box-shadow 0.2s;
       }
 
