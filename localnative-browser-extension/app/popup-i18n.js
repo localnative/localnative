@@ -29,7 +29,6 @@ function i18nRefresh() {
 
   document.getElementById('prev-btn').innerHTML = Sanitizer.escapeHTML`${lc("prev")}`;
   document.getElementById('next-btn').innerHTML = Sanitizer.escapeHTML`${lc("next")}`;
-  document.getElementById('ssb-sync-btn').innerHTML = Sanitizer.escapeHTML`${lc("ssb sync")}`;
 }
 
 const langReady = chrome.storage.local.get(['lang']).catch(function () { return {}; });
