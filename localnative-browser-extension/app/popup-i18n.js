@@ -17,7 +17,7 @@
 */
 let lc;
 function i18nRefresh() {
-  document.getElementById('label-ssbify').innerHTML = Sanitizer.escapeHTML`${lc('ssbify')}`;
+  document.getElementById('label-save-content').innerHTML = Sanitizer.escapeHTML`${lc('save content')}`;
   document.getElementById('label-public').innerHTML = Sanitizer.escapeHTML`${lc('public')}`;
   document.getElementById('label-language').innerHTML = Sanitizer.escapeHTML`${lc('language')}`;
   document.getElementById('title').placeholder = lc('title');
