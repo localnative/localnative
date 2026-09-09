@@ -17,9 +17,9 @@
 */
 let lc;
 function i18nRefresh() {
-  document.getElementById('label-save-content').innerHTML = Sanitizer.escapeHTML`${lc('save content')}`;
-  document.getElementById('label-public').innerHTML = Sanitizer.escapeHTML`${lc('public')}`;
-  document.getElementById('label-language').innerHTML = Sanitizer.escapeHTML`${lc('language')}`;
+  document.getElementById('label-save-content').textContent = lc('save content');
+  document.getElementById('label-public').textContent = lc('public');
+  document.getElementById('label-language').textContent = lc('language');
   document.getElementById('title').placeholder = lc('title');
   document.getElementById('url').placeholder = lc('url');
   document.getElementById('tags-text').placeholder = lc("type to add tags, enter to save, comma or space as tag seperator");
@@ -27,8 +27,8 @@ function i18nRefresh() {
   document.getElementById('search-text').placeholder = lc('type to search');
   document.getElementById('search-clear-btn').title = lc("clear search term(s)");
 
-  document.getElementById('prev-btn').innerHTML = Sanitizer.escapeHTML`${lc("prev")}`;
-  document.getElementById('next-btn').innerHTML = Sanitizer.escapeHTML`${lc("next")}`;
+  document.getElementById('prev-btn').textContent = lc("prev");
+  document.getElementById('next-btn').textContent = lc("next");
 }
 
 const langReady = chrome.storage.local.get(['lang']).catch(function () { return {}; });
