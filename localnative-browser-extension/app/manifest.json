@@ -22,7 +22,12 @@
   "browser_specific_settings": {
     "gecko": {
       "id": "localnative@example.org",
-      "strict_min_version": "128.0"
+      "strict_min_version": "128.0",
+      "data_collection_permissions": {
+        "required": [
+          "none"
+        ]
+      }
     }
   },
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAjFPXu42Dx9m2HI9h1GrBX0NJLBEUzHX8NsEmJbl0lTpXqFMtgtZRWhK2vz1zBhuAxmH84EyRxXj9U4MyRCz3bwcP+FhbzIGmZ3u3klIMo84m0h0a4nOCi/ZG21Npxn+vON6LU9qJNeoAmdgRQNRFVQLX1oyPFmfiImkN+A4CfMRhE/LfyEu9myPs4NdT8Rtcp1aQtC+wDO8gkKYIdrM8YlP0FRUuLbwuM2YLplu3Xb01rQ1tRZ8g29J+1gzX4kzy1W8yQTKfr3BIDu0utcBySQbm4uwSes4FV00X9vUz1zGTpXzZrKsgBge+NgSIb8I78M0EcarZHeWB65AQXRIwcQIDAQAB"

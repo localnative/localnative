@@ -39,10 +39,23 @@ var toastTimer;
 
 function showToast(text) {
   var el = document.getElementById('toast');
-  el.innerHTML = Sanitizer.escapeHTML`${text}` +
-    ' <a href="https://localnative.app" target="_blank">setup help</a>' +
-    '<button class="toast-close" title="Dismiss">\u00d7</button>';
-  el.querySelector('.toast-close').onclick = hideToast;
+  // built as nodes rather than markup: the message comes from
+  // chrome.runtime.lastError, and this way there is no HTML string to escape
+  el.textContent = text + ' ';
+
+  var link = document.createElement('a');
+  link.href = 'https://localnative.app';
+  link.target = '_blank';
+  link.textContent = 'setup help';
+  el.appendChild(link);
+
+  var close = document.createElement('button');
+  close.className = 'toast-close';
+  close.title = 'Dismiss';
+  close.textContent = '\u00d7';
+  close.onclick = hideToast;
+  el.appendChild(close);
+
   el.hidden = false;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(hideToast, 8000);
@@ -61,55 +74,78 @@ function onNativeMessage(message) {
   // show count
   if (Number(message.count) >=0 ) {
     count = message.count;
-    document.getElementById('indicator').innerHTML = makePaginationText();
+    document.getElementById('indicator').textContent = makePaginationText();
   }
 
-  document.getElementById('notes').innerHTML = '';
-  var notesHTML = message.notes.forEach(function(i){
-    // render one item
-    // the row is two lines, so anything long is clamped in CSS and the full
-    // value kept in a title attribute rather than dropped
-    var urlText = String(i.url).replace(/^https?:\/\//, '');
-    var dateText = String(i.created_at).replace(/^\d{4}-/, '').replace(/:\d{2}$/, '');
-    document.getElementById('notes').insertAdjacentHTML('beforeend', Sanitizer.escapeHTML`
-    <div class="note">
-      <div class="note-line">
-        <span class="note-title" title="${i.title}">${i.title}</span>
-        <span class="note-tags" id="note-tags-rowid-${i.rowid}"></span>
-        <button class="btn-delete" id="btn-delete-rowid-${i.rowid}" title="Delete">\u00d7</button>
-      </div>
-      <div class="note-sub">
-        <span class="note-id" title="${i.created_at}">${dateText}</span>
-        <span class="note-id">rowid ${i.rowid}</span>
-        <span class="note-id">${i.uuid4.substring(0,5)}</span>
-        <span class="note-url"><a target="_blank" href="${i.url}" title="${i.url}">${urlText}</a></span>
-      </div>
-      <div class="note-desc" title="${i.description}">${i.description}</div>
-    </div>
-      `);
+  var notesEl = document.getElementById('notes');
+  notesEl.textContent = '';
 
-    // delete button
-    document.getElementById('btn-delete-rowid-' + i.rowid).onclick = function(){
-      cmdDelete(i.rowid);
-    };
+  // Built as DOM nodes rather than an HTML string. Note fields are user data
+  // (including imported bookmarks), so this removes the escaping question
+  // entirely and lets handlers bind to real element references instead of
+  // ids reconstructed from rowid.
+  function el(tag, className, text) {
+    var e = document.createElement(tag);
+    if (className) e.className = className;
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
 
-    // tags
-    if(i.tags.length > 0){
-      i.tags.split(',').forEach(function(tag){
-        document.getElementById('note-tags-rowid-' + i.rowid ).insertAdjacentHTML('beforeend', Sanitizer.escapeHTML`
-            <button class="tag-btn" id="note-tags-rowid-${i.rowid}-tag-${tag}">${tag}</button>
-            `);
-        // tag search
-        document.getElementById('note-tags-rowid-' + i.rowid + '-tag-' + tag).onclick = function(e){
+  message.notes.forEach(function (i) {
+    var note = el('div', 'note');
+
+    var line = el('div', 'note-line');
+    var title = el('span', 'note-title', i.title);
+    title.title = i.title;
+    line.appendChild(title);
+
+    var tagsEl = el('span', 'note-tags');
+    line.appendChild(tagsEl);
+
+    var del = el('button', 'btn-delete', '\u00d7');
+    del.title = 'Delete';
+    del.onclick = function () { cmdDelete(i.rowid); };
+    line.appendChild(del);
+    note.appendChild(line);
+
+    var sub = el('div', 'note-sub');
+    var date = el('span', 'note-id',
+      String(i.created_at).replace(/^\d{4}-/, '').replace(/:\d{2}$/, ''));
+    date.title = i.created_at;
+    sub.appendChild(date);
+    sub.appendChild(el('span', 'note-id', 'rowid ' + i.rowid));
+    sub.appendChild(el('span', 'note-id', String(i.uuid4).substring(0, 5)));
+
+    var urlWrap = el('span', 'note-url');
+    var link = el('a', null, String(i.url).replace(/^https?:\/\//, ''));
+    // only http(s) reaches href: escaping an attribute does not stop a
+    // javascript: or data: url from being a live link
+    link.href = /^https?:\/\//i.test(i.url) ? i.url : '#';
+    link.target = '_blank';
+    link.title = i.url;
+    urlWrap.appendChild(link);
+    sub.appendChild(urlWrap);
+    note.appendChild(sub);
+
+    var desc = el('div', 'note-desc', i.description);
+    desc.title = i.description;
+    note.appendChild(desc);
+
+    if (i.tags.length > 0) {
+      i.tags.split(',').forEach(function (tag) {
+        var btn = el('button', 'tag-btn', tag);
+        btn.onclick = function (e) {
           e.preventDefault();
           document.getElementById('search-text').value = tag;
           offset = 0;
           cmdSearch();
-          document.getElementById('indicator').innerHTML = makePaginationText();
-        }
+          document.getElementById('indicator').textContent = makePaginationText();
+        };
+        tagsEl.appendChild(btn);
       });
     }
 
+    notesEl.appendChild(note);
   });
 }
 
@@ -222,21 +258,21 @@ document.addEventListener('DOMContentLoaded', async function () {
     if(offset - LIMIT >= 0){
       offset -= LIMIT;
       cmdSearch();
-      document.getElementById('indicator').innerHTML = makePaginationText();
+      document.getElementById('indicator').textContent = makePaginationText();
     }
   };
   document.getElementById('next-btn').onclick = function(){
     if(offset + LIMIT < count){
       offset += LIMIT;
       cmdSearch();
-      document.getElementById('indicator').innerHTML = makePaginationText();
+      document.getElementById('indicator').textContent = makePaginationText();
     }
   };
 
   // register cmdSearch
   document.getElementById('search-text').addEventListener('keyup', function (e) {
       offset = 0;
-      document.getElementById('indicator').innerHTML = makePaginationText();
+      document.getElementById('indicator').textContent = makePaginationText();
       cmdSearch();
   });
 
@@ -244,13 +280,13 @@ document.addEventListener('DOMContentLoaded', async function () {
     e.preventDefault();
     document.getElementById('search-text').value = '';
     offset = 0;
-    document.getElementById('indicator').innerHTML = makePaginationText();
+    document.getElementById('indicator').textContent = makePaginationText();
     cmdSearch();
   };
 
   // initial query
   cmdSelect();
-  document.getElementById('indicator').innerHTML = makePaginationText();
+  document.getElementById('indicator').textContent = makePaginationText();
 
   chrome.tabs.query({'active': true, 'lastFocusedWindow': true}, function (tabs) {
     var title = tabs[0].title;
