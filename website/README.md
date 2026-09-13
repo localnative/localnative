@@ -24,6 +24,19 @@ $ npm run build
 
 This command generates static content into the `build` directory and can be served using any static contents hosting service.
 
+### Deployment (Cloudflare Workers)
+
+The site is deployed as a static-assets Worker named `localnative-app`, configured in `wrangler.toml`.
+
+```
+$ npx wrangler login   # one-time Cloudflare auth
+$ npm run deploy       # builds to build/ and runs wrangler deploy
+```
+
+The site is then live at `https://localnative-app.yi-lab.workers.dev`. To serve it on `localnative.app`, attach that domain as a custom domain to the Worker in the Cloudflare dashboard.
+
+Cache rules live in `static/_headers` (long-lived caching for the content-hashed files under `/assets`). The previous GitHub Pages deploy is still available as `npm run deploy:gh-pages`.
+
 ## License
 <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png" /></a><br />
 Unless otherwise noted, contents created by the Local Native team on this website are copyleft with a
