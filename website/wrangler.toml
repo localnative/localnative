@@ -1,0 +1,8 @@
+#:schema https://unpkg.com/wrangler@latest/config/schema.json
+name = "localnative-app"
+compatibility_date = "2026-09-12"
+
+[assets]
+directory = "./build"
+# Docusaurus emits a static 404.html; serve it (with 404 status) for unknown paths.
+not_found_handling = "404-page"

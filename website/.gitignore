@@ -5,6 +5,10 @@ static/MP_verify_*
 .firebaserc
 .firebase/*
 
+# Cloudflare Wrangler
+.wrangler
+.dev.vars*
+
 # Dependencies
 /node_modules
 
