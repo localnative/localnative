@@ -6,11 +6,6 @@ edition = "2021"
 [dependencies]
 console_error_panic_hook = "0.1"
 console_log = "1"
-gloo-net = { version = "0.6", default-features = false, features = [
-    "http",
-    "json",
-    "serde",
-] }
 log = "0.4"
 serde = { version = "1", features = ["derive"] }
 web-sys = { version = "0.3.90", features = [
@@ -35,10 +30,7 @@ chrono = { version = "0.4", default-features = false, features = [
     "now",
     "wasmbind",
 ] }
-fluent-static = "0.4"
-
-[build-dependencies]
-fluent-static-codegen = "0.4"
+fluent-static = "0.6"
 
 [profile.release]
 opt-level = 3

@@ -3,8 +3,8 @@ use std::str::FromStr;
 use chrono::{Local, NaiveDateTime, TimeZone};
 use connect::{get_current_page_info, CmdResult, PageInfo};
 
-use locales::tr;
 use serde::{Deserialize, Serialize};
+use tr::tr_for;
 use wasm_bindgen::JsCast;
 use xilem_web::{
     concurrent::{async_repeat, memoized_await},
@@ -22,7 +22,7 @@ use xilem_web::{
     App, IntoAttributeValue,
 };
 mod connect;
-mod locales;
+mod tr;
 
 pub struct AppState {
     public_checked: bool,
@@ -223,9 +223,9 @@ fn expand_text(
     if is_truncated {
         Some(
             span(if note.is_expand {
-                tr::collapse(language).to_string()
+                tr_for(language).collapse().to_string()
             } else {
-                tr::expand(language).to_string()
+                tr_for(language).expand().to_string()
             })
             .class("expand-text")
             .on_click(move |state: &mut AppState, _| {
@@ -270,28 +270,28 @@ fn active_view(state: &mut AppState) -> impl HtmlElement<AppState> {
 
 fn header_section(state: &mut AppState) -> impl HtmlDivElement<AppState> {
     div((
-        h1(tr::app_title(&state.language).to_string()).class("app-title"),
+        h1(tr_for(&state.language).app_title().to_string()).class("app-title"),
         div((
             checkbox("cb-public", "public", state.public_checked, |state| {
                 state.public_checked = !state.public_checked;
                 set_local_storage_parsed("public_checked", state.public_checked);
             })
             .class("toggle-input"),
-            label(tr::toggle_label(&state.language).to_string())
+            label(tr_for(&state.language).toggle_label().to_string())
                 .attr("for", "cb-public")
                 .attr("id", "label-public")
                 .class("toggle-label"),
         ))
         .class("toggle-container"),
         div((
-            label(tr::select_label(&state.language).to_string())
+            label(tr_for(&state.language).select_label().to_string())
                 .attr("id", "label-language")
                 .class("select-label"),
             select((
-                option(tr::option_en_us(&state.language).to_string())
+                option(tr_for(&state.language).option_en_us().to_string())
                     .selected(state.language == "en")
                     .attr("value", "en"),
-                option(tr::option_zh_cn(&state.language).to_string())
+                option(tr_for(&state.language).option_zh_cn().to_string())
                     .selected(state.language == "zh")
                     .attr("value", "zh"),
             ))
@@ -329,13 +329,13 @@ fn input_section(state: &mut AppState) -> impl HtmlDivElement<AppState> {
         div((
             text_input(
                 "title",
-                tr::title(&state.language).to_string(),
+                tr_for(&state.language).title().to_string(),
                 state.title.clone(),
                 |state, value| state.title = value,
             ),
             text_input(
                 "url",
-                tr::url(&state.language).to_string(),
+                tr_for(&state.language).url().to_string(),
                 state.url.clone(),
                 |state, value| state.url = value,
             ),
@@ -343,17 +343,17 @@ fn input_section(state: &mut AppState) -> impl HtmlDivElement<AppState> {
         .class("input-row"),
         textarea_input(
             "desc-text",
-            tr::description(&state.language).to_string(),
+            tr_for(&state.language).description().to_string(),
             state.desc.clone(),
             |state, value| state.desc = value,
         ),
         text_input(
             "tags-text",
-            tr::tags(&state.language).to_string(),
+            tr_for(&state.language).tags().to_string(),
             state.tags.clone(),
             |state, value| state.tags = value,
         ),
-        button(tr::insert_btn(&state.language).to_string())
+        button(tr_for(&state.language).insert_btn().to_string())
             .class("insert-btn")
             .on_click(defer(
                 move |state: &mut AppState, _| {
@@ -395,13 +395,13 @@ fn search_section(state: &mut AppState) -> impl HtmlDivElement<AppState> {
         div((
             text_input(
                 "search-text",
-                tr::search(&state.language).to_string(),
+                tr_for(&state.language).search().to_string(),
                 state.seach_info.search_text.clone(),
                 |state, value| state.seach_info.search_text = value,
             ),
             button(i("").class("fas fa-times"))
                 .class("clear-btn")
-                .attr("title", tr::clear_search(&state.language).to_string())
+                .attr("title", tr_for(&state.language).clear_search().to_string())
                 .on_click(|state: &mut AppState, _| {
                     state.seach_info.search_text = String::new();
                 }),
@@ -410,7 +410,7 @@ fn search_section(state: &mut AppState) -> impl HtmlDivElement<AppState> {
         div((
             button(i("").class("fas fa-chevron-left"))
                 .class("nav-btn")
-                .attr("title", tr::previous_page(&state.language).to_string())
+                .attr("title", tr_for(&state.language).previous_page().to_string())
                 .on_click(|state: &mut AppState, _| {
                     if state.seach_info.offset >= state.seach_info.limit {
                         state.seach_info.offset -= state.seach_info.limit;
@@ -418,7 +418,7 @@ fn search_section(state: &mut AppState) -> impl HtmlDivElement<AppState> {
                 }),
             button(i("").class("fas fa-chevron-right"))
                 .class("nav-btn")
-                .attr("title", tr::next_page(&state.language).to_string())
+                .attr("title", tr_for(&state.language).next_page().to_string())
                 .on_click(|state: &mut AppState, _| {
                     if state.seach_info.offset + state.seach_info.limit < state.count {
                         state.seach_info.offset += state.seach_info.limit;
