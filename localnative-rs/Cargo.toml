@@ -15,24 +15,24 @@ xshell = "0.2"
 xflags = "0.3"
 tauri-bundler = "2.9"
 clap = { version = "4", features = ["cargo"] }
-rusqlite = { version = "0.39", features = ["bundled"] }
+rusqlite = { version = "0.40", features = ["bundled"] }
 # To enable SQLCipher encryption, replace "bundled" with "bundled-sqlcipher":
-# rusqlite = { version = "0.39", features = ["bundled-sqlcipher"] }
+# rusqlite = { version = "0.40", features = ["bundled-sqlcipher"] }
 r2d2 = "0.8"
-r2d2_sqlite = "0.34"
+r2d2_sqlite = "0.35"
 linked_hash_set = "0.1"
 regex = "1.12"
 time = { version = "0.3", features = ["formatting", "macros", "serde-human-readable"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-dirs = "6"
-base64 = "0.22"
+dirs = "7"
+base64 = "0.23"
 uuid = { version = "1", features = ["v4"] }
 semver = "1"
 tokio = { version = "1", features = ["full"] }
 tokio-serde = { version = "0.9", features = ["bincode"] }
 futures = "0.3"
-tarpc = { version = "0.37", features = ["full"] }
+tarpc = { version = "0.38", features = ["full"] }
 get_if_addrs = "0.5"
 thiserror = "2.0"
 open = "5.3"
@@ -55,9 +55,8 @@ rand = "0.10"
 iced_aw = { version = "0.14", default-features = false, features = ["wrap", "number_input", "card"] }
 iced = { version = "0.14", features = ["canvas", "qr_code", "tokio"] }
 iced_runtime = { version = "0.14" }
-# egui/eframe desktop front-end (localnative_egui). Targets 0.34 to reuse the
-# egui/epaint/glow/winit/wgpu builds already present in the local cargo cache.
-eframe = "0.34"
+# egui/eframe desktop front-end (localnative_egui).
+eframe = "0.36"
 winreg = "0.56"
 jni = { version = "0.22", default-features = false }
 hex = "0.4"
@@ -65,6 +64,6 @@ tracing = "0.1"
 tokio-util = "0.7"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 governor = "0.10"
-mdns-sd = "0.20"
+mdns-sd = "0.21"
 hostname = "0.4"
 notify-rust = "4"
