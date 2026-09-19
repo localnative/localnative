@@ -244,7 +244,7 @@ impl LocalNativeApp {
     }
 
     fn toolbar(&mut self, ui: &mut egui::Ui) {
-        egui::Panel::top("toolbar").show_inside(ui, |ui| {
+        egui::Panel::top("toolbar").show(ui, |ui| {
             ui.add_space(4.0);
             ui.horizontal(|ui| {
                 ui.heading("Local Native");
@@ -301,7 +301,7 @@ impl LocalNativeApp {
         egui::Panel::left("sidebar")
             .resizable(true)
             .default_size(200.0)
-            .show_inside(ui, |ui| {
+            .show(ui, |ui| {
                 ui.add_space(4.0);
                 let mut tag_clicked: Option<String> = None;
                 let mut day_clicked: Option<String> = None;
@@ -363,7 +363,7 @@ impl LocalNativeApp {
     fn add_panel(&mut self, ui: &mut egui::Ui) {
         egui::Panel::bottom("add_note")
             .resizable(false)
-            .show_inside(ui, |ui| {
+            .show(ui, |ui| {
                 ui.add_space(4.0);
                 ui.heading("Add note");
                 egui::Grid::new("add_form")
@@ -432,7 +432,7 @@ impl LocalNativeApp {
         // contend with the sync thread's writes.
         let writes_enabled = self.sync_rx.is_none();
 
-        egui::CentralPanel::default().show_inside(ui, |ui| {
+        egui::CentralPanel::default().show(ui, |ui| {
             ui.horizontal(|ui| {
                 let total = self.result.count;
                 let start = if total == 0 { 0 } else { self.offset + 1 };
