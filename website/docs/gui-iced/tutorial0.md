@@ -43,7 +43,7 @@ title: 0. 序章
 新建一个用作项目开发的空文件夹，名字随意，我们将在这个文件夹下克隆核心库，方便我们之后开发。
 
 ```shell
-git clone https://gitlab.com/localnative/localnative.git
+git clone https://github.com/localnative/localnative.git
 ```
 
 中国读者如果在克隆的过程中出现网络异常的问题，建议通过国内git托管平台作为中转站，具体操作方法是在[`gitee`](https://gitee.com/)等类似平台内导入仓库，接着再从`gitee`克隆就可以了，在此我已经帮大家建了一个中转仓库了：

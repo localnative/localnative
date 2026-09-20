@@ -74,7 +74,7 @@ thread via `run_sync`). Remaining work to reach Iced parity:
 - 2 `too_many_arguments` warnings from `ouroboros` `#[self_referencing]` macro in `sync.rs` — these are macro-generated and cannot be suppressed without a file-level allow
 
 ### CI Pipeline
-- ~~`.gitlab-ci.yml` lint/fmt commands were fixed but pipeline hasn't been validated~~ — clippy/fmt gate is green; Tauri CI bumped to Node 20 and lockfile fixed (4ae9d58, 8efc68e)
+- ~~`.gitlab-ci.yml` lint/fmt commands were fixed but pipeline hasn't been validated~~ — clippy/fmt gate is green (now `.github/workflows/rust.yml`; the GitLab pipeline was retired along with the GitLab hosting); Tauri CI bumped to Node 20 and lockfile fixed (4ae9d58, 8efc68e)
 - Consider adding `cargo test` step if not already present
 
 ## Out of Scope (Major Architecture)

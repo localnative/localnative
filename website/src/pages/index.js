@@ -9,15 +9,15 @@ import styles from './styles.module.css';
 const platforms = [
   {
     label: 'Windows',
-    to: 'https://gitlab.com/localnative/localnative-release/tree/master/v0.5.1/win',
+    to: 'https://github.com/localnative/localnative/releases/latest',
   },
   {
     label: 'macOS',
-    to: 'https://gitlab.com/localnative/localnative-release/tree/master/v0.5.1/mac',
+    to: 'https://github.com/localnative/localnative/releases/latest',
   },
   {
     label: 'GNU/Linux',
-    to: 'https://gitlab.com/localnative/localnative-release/tree/master/v0.5.0/gnu-linux',
+    to: 'https://github.com/localnative/localnative/releases/latest',
   },
   {
     label: 'iOS & iPadOS',
