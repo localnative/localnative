@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Local Native is a cross-platform tool for saving and syncing notes in a local SQLite database without going through any centralized service. A shared Rust core (`localnative_core`) is wrapped by every platform front-end: native Rust GUIs (Iced, plus a newer egui/eframe front-end), CLI, Tauri, Flutter, Android, iOS, macOS, and a browser extension.
+Local Native is a cross-platform tool for saving and syncing notes in a local SQLite database without going through any centralized service. A shared Rust core (`localnative_core`) is wrapped by every platform front-end: native Rust GUIs (Iced, plus a newer egui/eframe front-end), CLI, Tauri, Android, iOS, macOS, and a browser extension.
 
 ## Big-Picture Architecture
 
@@ -88,9 +88,6 @@ cargo run -p xtask -- ndkbd [--debug]          # cargo-ndk build of localnative_
 ```bash
 # Tauri (Svelte frontend) — uses yarn (yarn.lock is the committed lockfile)
 cd localnative-tauri && yarn install && yarn dev           # build / lint / format scripts also available
-
-# Flutter (flutter_rust_bridge 2.x; see localnative-flutter/SETUP.md)
-cd localnative-flutter && make                             # check the Makefile for codegen + run targets
 
 # Android
 cd localnative-android && ./gradlew assembleDebug          # installDebug to push to a device

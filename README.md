@@ -21,8 +21,6 @@ localnative-browser-extension: browser extension app and host manifest template 
 
 localnative-docker: container build/run scripts (`Dockerfile`, `build.sh`, `run.sh`)
 
-localnative-flutter: cross-platform mobile/desktop app via Flutter + flutter_rust_bridge (see `SETUP.md`)
-
 localnative-ios: ios app
 
 localnative-mac: native macOS app
