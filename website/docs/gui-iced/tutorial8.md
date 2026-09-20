@@ -211,7 +211,7 @@ impl iced::Application for LocalNative {
   	// 也正是因为这样，在配置较低的电脑上，对配置进行写入
   	// 会花费一定事件，只有写入完成之后，才能进行退出
   	// 即造成了延迟退出的问题，如果你有更好的解决方法
-  	// 请在gitlab或者gitee的官方代码库内提出issue
+  	// 请在github或者gitee的官方代码库内提出issue
   	// LocalNative团队将会十分感谢你的帮助
     fn should_exit(&self) -> bool {
         self.should_exit
@@ -219,7 +219,7 @@ impl iced::Application for LocalNative {
   	// update方法不会全部列出，因为我们对LocalNative结构体作出了
   	// 比较重大的改变，所以update又些地方需要重新写
   	// 因为处理的事件比较多，且杂，这里就不放出所有的代码了
-  	// 你可以到gitlab或者gitee的源码库内找到这部分的完整源码
+  	// 你可以到github或者gitee的源码库内找到这部分的完整源码
     fn update(
         &mut self,
         message: Self::Message,

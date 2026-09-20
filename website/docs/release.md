@@ -4,7 +4,7 @@ title: Release
 ---
 
 ## Installer packages
-[https://gitlab.com/localnative/localnative-release](https://gitlab.com/localnative/localnative-release)
+[https://github.com/localnative/localnative/releases](https://github.com/localnative/localnative/releases)
 
 ## Libraries (deprecated)
 

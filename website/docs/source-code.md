@@ -3,7 +3,7 @@ id: source-code
 title: Source Code
 ---
 
-[https://gitlab.com/localnative/localnative](https://gitlab.com/localnative/localnative)
+[https://github.com/localnative/localnative](https://github.com/localnative/localnative)
 
 [git-ssb](https://git.scuttlebot.io/%25q13hLJchNXz%2FxZi9mjWVHyIbRnkr5VjF0Y6BfhrOV6Q%3D.sha256)
 `ssb://%q13hLJchNXz/xZi9mjWVHyIbRnkr5VjF0Y6BfhrOV6Q=.sha256`

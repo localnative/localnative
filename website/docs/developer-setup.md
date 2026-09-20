@@ -11,14 +11,14 @@ title: Developer Setup
 
 - or from source
 ```
-git clone https://gitlab.com/localnative/localnative.git
+git clone https://github.com/localnative/localnative.git
 cd localnative-browser-extension/app
 npm i -g web-ext
 web-ext run --verbose # firefox
 ```
 
 #### Setup browser extension host binary
-- Download and run the desktop application from [release archive](https://gitlab.com/localnative/localnative-release)
+- Download and run the desktop application from [release archive](https://github.com/localnative/localnative/releases)
 
     this will create `~/LocalNative/bin` directory containing the host binary
 - or use `cargo install localnative_cli`, and find the binary at `~/.cargo/bin/localnative-web-ext-host`

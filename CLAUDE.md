@@ -72,7 +72,7 @@ cargo run -p localnative_cli --bin localnative-import-db -- -i <file>  # one-way
 # other bins: localnative-rpc-server, localnative-rpc-client-sync,
 #             localnative-rpc-client-stop-server, localnative-upgrade
 
-# CI-equivalent lint/format gate (matches .gitlab-ci.yml / xtask header):
+# CI-equivalent lint/format gate (matches .github/workflows/rust.yml / xtask header):
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets --all-features -- -D warnings -A clippy::type_complexity
 ```
@@ -100,7 +100,7 @@ Other platform front-ends: `localnative-ios`, `localnative-mac`, `localnative-br
 - **Adding a database feature** = new variant in the `db::models` `Cmd` enum + handling in `db::process_cmd`/`queries`, plus a new `migrations` entry if the schema changes. Front-ends only need to learn the new JSON shape.
 - **Cross-FFI errors** must be returned as JSON, never panicked across the boundary — follow `serialize_error`.
 - The core is **synchronous rusqlite under a Tokio shim**; do not assume `async fn` query helpers exist. (`TODO.md` tracks a possible async migration — not yet done.)
-- CI runs on **GitLab** (`.gitlab-ci.yml`: fmt + clippy `-D warnings`, then per-crate builds) and **GitHub Actions** (`.github/workflows/`: rust, android, tauri, browser-extension, website, Play Store deploy). Keep both green; the clippy gate is strict.
+- CI runs on **GitHub Actions** (`.github/workflows/`: rust with fmt + clippy `-D warnings` and per-crate builds, android, tauri, browser-extension, website, Play Store deploy). Keep it green; the clippy gate is strict. The code host is **github.com/localnative/localnative** (mirrors: srht, gitee, bitbucket, ssb).
 - `TODO.md` is a live backlog of known tech debt (sparse test coverage, `.clone()` hot spots, rate-limiter improvements) — consult it before proposing large refactors.
 - **Versioning**: platforms version independently — see `docs/VERSIONING.md`. The only version shared across platforms is the **database schema version** in the `meta` table, which gates peer sync in `rpc.rs`. The Rust crates share one `[workspace.package]` version; the browser extension, Android, iOS and Tauri each carry their own. Never bump one artifact to match another.
 - License is **AGPL-3.0**; preserve the license header at the top of Rust source files.
