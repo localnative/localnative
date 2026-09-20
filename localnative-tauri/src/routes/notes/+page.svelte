@@ -136,7 +136,7 @@
 	}
 
 	#notes_panel::-webkit-scrollbar-track {
-		@apply my-4;
+		margin-block: 1rem;
 	}
 
 	#tags_panel::-webkit-scrollbar {
