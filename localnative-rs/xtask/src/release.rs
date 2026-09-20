@@ -1,4 +1,4 @@
-use std::{env, fs, path::Path};
+use std::{env, path::Path};
 
 use tauri_bundler::{
     AppCategory, BundleBinary, BundleSettings, DebianSettings, MacOsSettings, PackageSettings,
@@ -56,10 +56,6 @@ impl Release {
         sh.copy_file(&iced_src, &iced_dst)?;
         sh.copy_file(&host_src, &host_dst)?;
 
-        copy_dir_all(
-            Path::new("../localnative-electron/build"),
-            dst.join("build"),
-        )?;
         let package_types = vec![
             #[cfg(target_os = "macos")]
             PackageType::MacOsBundle,
@@ -141,18 +137,4 @@ fn suffix() -> String {
     } else {
         "".into()
     }
-}
-
-fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> anyhow::Result<()> {
-    fs::create_dir_all(&dst)?;
-    for entry in fs::read_dir(src)? {
-        let entry = entry?;
-        let ty = entry.file_type()?;
-        if ty.is_dir() {
-            copy_dir_all(entry.path(), dst.as_ref().join(entry.file_name()))?;
-        } else {
-            fs::copy(entry.path(), dst.as_ref().join(entry.file_name()))?;
-        }
-    }
-    Ok(())
 }

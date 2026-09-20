@@ -21,15 +21,11 @@ localnative-browser-extension: browser extension app and host manifest template 
 
 localnative-docker: container build/run scripts (`Dockerfile`, `build.sh`, `run.sh`)
 
-localnative-electron: desktop app (deprecated — superseded by localnative-tauri)
-
 localnative-flutter: cross-platform mobile/desktop app via Flutter + flutter_rust_bridge (see `SETUP.md`)
 
 localnative-ios: ios app
 
 localnative-mac: native macOS app
-
-localnative-neon: nodejs to rust bridge, used by localnative-electron
 
 localnative-rs: rust code
 - to build `localnative-web-ext-host` web extension host binary

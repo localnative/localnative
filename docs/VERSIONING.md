@@ -40,7 +40,6 @@ and review latency makes platforms drift by construction. Let them drift.
 | iOS | `MARKETING_VERSION` in the Xcode project | Marketing version + build number |
 | macOS | `MARKETING_VERSION` in the Xcode project | — |
 | Tauri | `src-tauri/tauri.conf.json` (`package.version`) | Keep `package.json` in step; the conf file is authoritative |
-| Electron | `localnative-electron/package.json` | Being retired in favour of the egui front-end |
 
 Bump an artifact when *that artifact* ships. Never bump one to match another.
 
@@ -64,7 +63,6 @@ reaches parity with the Iced front-end.
 | `script/set-version <v>` | Rust workspace version only (one line) |
 | `script/set-version-extension <v>` | Browser extension manifest only |
 | `script/release-browser-extension <v>` | Extension manifest, then packages the upload zip |
-| `script/set-version-electron <v>` | Rust workspace, plus Electron and neon |
 
 No script writes a version to a platform it does not release. Each edits by
 anchored match and fails loudly if the anchor is not unique — never by line
