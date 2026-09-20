@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Local Native is a cross-platform tool for saving and syncing notes in a local SQLite database without going through any centralized service. A shared Rust core (`localnative_core`) is wrapped by every platform front-end: native Rust GUIs (Iced, plus a newer egui/eframe front-end), CLI, Electron, Tauri, Flutter, Android, iOS, macOS, and a browser extension.
+Local Native is a cross-platform tool for saving and syncing notes in a local SQLite database without going through any centralized service. A shared Rust core (`localnative_core`) is wrapped by every platform front-end: native Rust GUIs (Iced, plus a newer egui/eframe front-end), CLI, Tauri, Flutter, Android, iOS, macOS, and a browser extension.
 
 ## Big-Picture Architecture
 
@@ -47,7 +47,7 @@ Standalone core modules (not part of the JSON `Cmd` dispatch) driven by dedicate
 - Localization uses **Fluent** (`fluent-bundle`); translation strings live in `localnative-rs/locales/` and are wired through `translate.rs`.
 
 ### egui GUI (`localnative_egui/`)
-- Newer desktop front-end on **eframe/egui 0.34** (wgpu backend), scaffolded as the first step of consolidating the desktop GUIs onto egui (retiring Iced, Electron, the Mac stub). Entry in `main.rs`; state/UI in `app.rs`.
+- Newer desktop front-end on **eframe/egui** (wgpu backend), scaffolded as the first step of consolidating the desktop GUIs onto egui (retiring Iced and the Mac stub). Entry in `main.rs`; state/UI in `app.rs`.
 - Unlike the JSON-dispatch FFI front-ends, it calls the synchronous `db::queries` layer directly on the UI thread (same as Iced); only peer sync runs off-thread, via `localnative_core::run_sync` polled through an `mpsc` channel.
 - eframe 0.34 drives the app through `App::ui` (not the deprecated `update`); panels use `Panel::*` + `show_inside`. Not yet at Iced parity — see `TODO.md` ("egui Desktop Front-end").
 
@@ -86,9 +86,6 @@ cargo run -p xtask -- ndkbd [--debug]          # cargo-ndk build of localnative_
 
 ### Front-ends
 ```bash
-# Electron
-cd localnative-electron && npm install && npm run dev      # (npm run build for native modules)
-
 # Tauri (Svelte frontend) — uses yarn (yarn.lock is the committed lockfile)
 cd localnative-tauri && yarn install && yarn dev           # build / lint / format scripts also available
 
@@ -99,7 +96,7 @@ cd localnative-flutter && make                             # check the Makefile 
 cd localnative-android && ./gradlew assembleDebug          # installDebug to push to a device
 ```
 
-Other platform front-ends: `localnative-ios`, `localnative-mac`, `localnative-neon` (Node↔Rust bridge for Electron), `localnative-browser-extension` (+ `wasm-app/`), `localnative-docker`. Build scripts for packaging/cross-compiling live in `script/`.
+Other platform front-ends: `localnative-ios`, `localnative-mac`, `localnative-browser-extension` (+ `wasm-app/`), `localnative-docker`. Build scripts for packaging/cross-compiling live in `script/`.
 
 ## Conventions & Gotchas
 
@@ -107,6 +104,6 @@ Other platform front-ends: `localnative-ios`, `localnative-mac`, `localnative-ne
 - **Cross-FFI errors** must be returned as JSON, never panicked across the boundary — follow `serialize_error`.
 - The core is **synchronous rusqlite under a Tokio shim**; do not assume `async fn` query helpers exist. (`TODO.md` tracks a possible async migration — not yet done.)
 - CI runs on **GitLab** (`.gitlab-ci.yml`: fmt + clippy `-D warnings`, then per-crate builds) and **GitHub Actions** (`.github/workflows/`: rust, android, tauri, browser-extension, website, Play Store deploy). Keep both green; the clippy gate is strict.
-- `TODO.md` is a live backlog of known tech debt (outdated Electron/neon deps, sparse test coverage, `.clone()` hot spots, rate-limiter improvements) — consult it before proposing large refactors.
-- **Versioning**: platforms version independently — see `docs/VERSIONING.md`. The only version shared across platforms is the **database schema version** in the `meta` table, which gates peer sync in `rpc.rs`. The Rust crates share one `[workspace.package]` version; the browser extension, Android, iOS, Tauri and Electron each carry their own. Never bump one artifact to match another.
+- `TODO.md` is a live backlog of known tech debt (sparse test coverage, `.clone()` hot spots, rate-limiter improvements) — consult it before proposing large refactors.
+- **Versioning**: platforms version independently — see `docs/VERSIONING.md`. The only version shared across platforms is the **database schema version** in the `meta` table, which gates peer sync in `rpc.rs`. The Rust crates share one `[workspace.package]` version; the browser extension, Android, iOS and Tauri each carry their own. Never bump one artifact to match another.
 - License is **AGPL-3.0**; preserve the license header at the top of Rust source files.

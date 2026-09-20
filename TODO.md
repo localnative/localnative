@@ -4,17 +4,10 @@ Items identified during code review that require larger effort or separate plann
 
 ## High Effort
 
-### Electron Native Module Rebuild
-- `localnative-neon` uses neon-cli v0.3.1 (current is v1.0+)
-- `electron-build-env` v0.2.0 is extremely outdated
-- Neon API changed significantly — native module may need rewrite for modern neon
-- Verify N-API compatibility with Electron 28+
-
 ### Test Coverage Expansion
 - 93 tests in `localnative_core` (26 in `db.rs`, 10 in `rpc.rs`, rest spread across the crate) — up from 34 at the last review, but still concentrated in unit tests
 - No integration tests for RPC sync (client ↔ server round-trip)
 - No tests for GUI state management (`localnative_iced/src/lib.rs`)
-- No tests for Electron renderer logic
 - No tests for browser extension / WASM app
 - Consider adding `tokio::test` integration tests for `rpc::sync()` with an in-memory server
 
@@ -41,19 +34,11 @@ landed in `localnative_core`; edits and deletes now propagate. Remaining work:
   blocks sync between peers with incompatible `Note` wire formats (e.g. pre-0.10
   vs 0.10). Only relax it alongside a real wire-compatibility scheme.
 
-### Electron Dependency Updates
-- ~~`@zxing/library` v0.18.6 → v1.3+~~ — done, bumped to `^0.23.0` (2026-06)
-- `crossfilter2` pinned at v1.5.4 — evaluate if upgrade is safe
-- `d3` v6.7.0 → v7+ (minor breaking changes in imports)
-- `dc` v4.2.7 → v5+ (check compatibility with crossfilter2)
-- `roddeh-i18n` v1.2.1 — verify UMD build works correctly with script tag loading
-- `glob` v7.2.3 → v10+ (ESM-only in v9+, may need alternative)
-
 ## Medium Effort
 
 ### egui Desktop Front-end (`localnative_egui/`)
-An egui/eframe (0.34) front-end was scaffolded as the first step of the desktop
-consolidation onto egui (retiring Iced, Electron, and the Mac stub). It wraps
+An egui/eframe front-end was scaffolded as the first step of the desktop
+consolidation onto egui (retiring Iced and the Mac stub). It wraps
 `localnative_core` directly: FTS search, tag filter, day-histogram filter
 (`do_filter`), add note, soft-delete, pagination, and peer sync (off the UI
 thread via `run_sync`). Remaining work to reach Iced parity:
@@ -88,25 +73,12 @@ thread via `run_sync`). Remaining work to reach Iced parity:
 ### Clippy Lint Fixes
 - 2 `too_many_arguments` warnings from `ouroboros` `#[self_referencing]` macro in `sync.rs` — these are macro-generated and cannot be suppressed without a file-level allow
 
-### Electron Post-Migration Verification
-- After running `npm install`, verify all UMD script paths resolve:
-  - `node_modules/underscore/underscore-umd.js`
-  - `node_modules/d3/dist/d3.js`
-  - `node_modules/crossfilter2/crossfilter.js`
-  - `node_modules/dc/dist/dc.js`
-  - `node_modules/@zxing/library/umd/index.min.js`
-  - `node_modules/roddeh-i18n/i18n.js`
-- Test that `contextBridge` APIs work end-to-end (neon-run, file dialog, screenshots)
-- Verify CSP headers don't block any legitimate functionality
-
 ### CI Pipeline
 - ~~`.gitlab-ci.yml` lint/fmt commands were fixed but pipeline hasn't been validated~~ — clippy/fmt gate is green; Tauri CI bumped to Node 20 and lockfile fixed (4ae9d58, 8efc68e)
 - Consider adding `cargo test` step if not already present
-- Consider adding Electron build/test step
 
 ## Out of Scope (Major Architecture)
 
-- **Full Electron → Tauri migration**: The Tauri frontend already exists at `localnative-tauri/` — consider deprecating Electron
 - **Database migration to async SQLx**: Currently uses synchronous `rusqlite` with `spawn_blocking`; async SQLx would remove mutex contention
 - **RPC protocol upgrade**: tarpc is functional but consider gRPC or QUIC for better cross-platform sync
 - **Browser extension modernization**: Manifest V3 migration for Chrome extension
