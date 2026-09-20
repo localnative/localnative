@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { invoke } from "@tauri-apps/api/tauri";
+  import { invoke } from "@tauri-apps/api/core";
   import { locale, setLocale, LL } from "../../i18n/i18n-svelte";
   import { isLocale } from "../../i18n/i18n-util";
 

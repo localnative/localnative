@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { open } from '@tauri-apps/api/dialog';
-	import { invoke } from '@tauri-apps/api/tauri';
+	import { open } from '@tauri-apps/plugin-dialog';
+	import { invoke } from '@tauri-apps/api/core';
 	import { cmdClientStopServer, cmdClientSync, cmdServer, cmdSyncViaAttach } from '../cmd';
 	import QRCode from 'qrcode';
 	import Fa from 'svelte-fa';

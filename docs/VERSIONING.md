@@ -39,7 +39,7 @@ and review latency makes platforms drift by construction. Let them drift.
 | Android | `localnative-android/app/build.gradle` | `versionCode` monotonic integer, independent of `versionName` |
 | iOS | `MARKETING_VERSION` in the Xcode project | Marketing version + build number |
 | macOS | `MARKETING_VERSION` in the Xcode project | — |
-| Tauri | `src-tauri/tauri.conf.json` (`package.version`) | Keep `package.json` in step; the conf file is authoritative |
+| Tauri | `src-tauri/tauri.conf.json` (`version`) | Keep `package.json` in step; the conf file is authoritative |
 
 Bump an artifact when *that artifact* ships. Never bump one to match another.
 

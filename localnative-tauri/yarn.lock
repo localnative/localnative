@@ -337,10 +337,31 @@
     obug "^2.1.0"
     vitefu "^1.1.2"
 
-"@tauri-apps/api@^1.6.0":
-  version "1.6.0"
-  resolved "https://registry.yarnpkg.com/@tauri-apps/api/-/api-1.6.0.tgz#745b7e4e26782c3b2ad9510d558fa5bb2cf29186"
-  integrity sha512-rqI++FWClU5I2UBp4HXFvl+sBWkdigBkxnpJDQUWttNyG7IZP4FwQGhTNL5EOw0vI8i6eSAJ5frLqO7n7jbJdg==
+"@tauri-apps/api@^2", "@tauri-apps/api@^2.11.0", "@tauri-apps/api@^2.8.0":
+  version "2.11.1"
+  resolved "https://registry.yarnpkg.com/@tauri-apps/api/-/api-2.11.1.tgz#cd6b13fc26403ca095a02e39ecdbec8048d2872d"
+  integrity sha512-M2FPuYND2m+wh5hfW9ZpSdxMPdEJovPBWwoHJmwUpysTYNHaOkVFN419m/K0LIgjb/7KU2vBgsUepJWugQCvAA==
+
+"@tauri-apps/plugin-dialog@^2":
+  version "2.7.3"
+  resolved "https://registry.yarnpkg.com/@tauri-apps/plugin-dialog/-/plugin-dialog-2.7.3.tgz#7e6d375fec8e39d2a90294604a9d77e66c39a072"
+  integrity sha512-CRgE+7TP4tvq9MjBU6f04NLTFIqVMLKHk3hAqlhil00ngK9ACTrXPH3oHpKMProxILodd3YjBoKbMwSI4IEcfA==
+  dependencies:
+    "@tauri-apps/api" "^2.11.0"
+
+"@tauri-apps/plugin-process@^2":
+  version "2.3.1"
+  resolved "https://registry.yarnpkg.com/@tauri-apps/plugin-process/-/plugin-process-2.3.1.tgz#fff77aa7550c9c5347689c859d581f88287bf7ae"
+  integrity sha512-nCa4fGVaDL/B9ai03VyPOjfAHRHSBz5v6F/ObsB73r/dA3MHHhZtldaDMIc0V/pnUw9ehzr2iEG+XkSEyC0JJA==
+  dependencies:
+    "@tauri-apps/api" "^2.8.0"
+
+"@tauri-apps/plugin-updater@^2":
+  version "2.12.0"
+  resolved "https://registry.yarnpkg.com/@tauri-apps/plugin-updater/-/plugin-updater-2.12.0.tgz#f3b47d4bae20f5499efe043f4debb7c85f88b9b3"
+  integrity sha512-74+g7rSIHXQje3ttR6tYap3FJP/UtZqqYxGVF9EE0Kpz0YADxHX2Ynw/eIlNPMy9D1aG+F8oBosT+6nphSa8Og==
+  dependencies:
+    "@tauri-apps/api" "^2.11.0"
 
 "@types/cookie@^0.6.0":
   version "0.6.0"
