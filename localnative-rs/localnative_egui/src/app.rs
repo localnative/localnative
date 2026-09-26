@@ -64,12 +64,15 @@ pub struct LocalNativeApp {
 
     // Peer sync.
     sync_addr: String,
+    /// Pairing code for the first sync with a new peer.
+    pairing_code: String,
     /// `Some` while a background sync is in flight.
     sync_rx: Option<Receiver<String>>,
 }
 
 impl LocalNativeApp {
-    pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
+    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+        install_cjk_font(&cc.egui_ctx);
         let (pool, status) = match db::init_pool() {
             Ok(pool) => (Some(pool), String::new()),
             Err(e) => (None, format!("failed to open database: {e}")),
@@ -90,6 +93,7 @@ impl LocalNativeApp {
             new_comments: String::new(),
             new_is_public: true,
             sync_addr: String::from("127.0.0.1:2345"),
+            pairing_code: String::new(),
             sync_rx: None,
         };
         app.refresh();
@@ -200,7 +204,8 @@ impl LocalNativeApp {
         }
     }
 
-    /// Spawn a background thread that syncs against `sync_addr`.
+    /// Spawn a background thread that syncs against `sync_addr`. A pairing
+    /// code is sent when set (first sync with a new peer).
     fn start_sync(&mut self) {
         if self.sync_rx.is_some() {
             return; // already running
@@ -210,9 +215,14 @@ impl LocalNativeApp {
             self.status = "enter a peer address first (e.g. 192.168.1.5:2345)".to_string();
             return;
         }
+        let code = self.pairing_code.trim().to_string();
+        let code = (!code.is_empty()).then_some(code);
         let (tx, rx) = mpsc::channel();
         thread::spawn(move || {
-            let cmd = serde_json::json!({ "action": "client-sync", "addr": addr });
+            let mut cmd = serde_json::json!({ "action": "client-sync", "addr": addr });
+            if let Some(code) = code {
+                cmd["code"] = serde_json::json!(code);
+            }
             let resp = localnative_core::run_sync(&cmd.to_string());
             let _ = tx.send(resp);
         });
@@ -276,6 +286,11 @@ impl LocalNativeApp {
                     egui::TextEdit::singleline(&mut self.sync_addr)
                         .hint_text("host:port")
                         .desired_width(160.0),
+                );
+                ui.add(
+                    egui::TextEdit::singleline(&mut self.pairing_code)
+                        .hint_text("pairing code (first sync)")
+                        .desired_width(170.0),
                 );
                 let syncing = self.sync_rx.is_some();
                 if ui
@@ -561,20 +576,83 @@ fn render_note(
     });
 }
 
-/// Turn the JSON returned by `run_sync` into a short status line.
+/// Turn the JSON returned by `run_sync` into a short status line. Every core
+/// failure is `{"error": <message>, "code": <code>}` — the code is kept for
+/// machines (and shown: `not-paired` says more than a generic failure).
 fn summarize_sync(resp: &str) -> String {
     match serde_json::from_str::<serde_json::Value>(resp) {
         Ok(v) => {
             if let Some(msg) = v.get("client-sync").and_then(|m| m.as_str()) {
                 format!("sync complete: {msg}")
-            } else if let Some(err) = v.get("error") {
-                format!("sync failed: {err}")
+            } else if let (Some(err), code) = (
+                v.get("error").and_then(|e| e.as_str()),
+                v.get("code").and_then(|c| c.as_str()),
+            ) {
+                match code {
+                    Some("not-paired") => {
+                        format!("sync failed: {err} — enter the pairing code shown on the peer")
+                    }
+                    Some(other) => format!("sync failed ({other}): {err}"),
+                    None => format!("sync failed: {err}"),
+                }
             } else {
                 format!("sync: {resp}")
             }
         }
         Err(_) => format!("sync: {resp}"),
     }
+}
+
+/// egui bundles no CJK glyphs, so Chinese titles would render as boxes.
+/// Load the platform's CJK font (read-only) and register it as a fallback.
+fn install_cjk_font(ctx: &egui::Context) {
+    let candidates: &[&str] = if cfg!(target_os = "macos") {
+        &[
+            "/System/Library/Fonts/PingFang.ttc",
+            "/System/Library/Fonts/Hiragino Sans GB.ttc",
+            "/Library/Fonts/Arial Unicode.ttf",
+        ]
+    } else if cfg!(target_os = "windows") {
+        &[
+            "C:\\Windows\\Fonts\\msyh.ttc",
+            "C:\\Windows\\Fonts\\simhei.ttf",
+        ]
+    } else {
+        &[
+            "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+            "/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc",
+            "/usr/share/fonts/opentype/noto/NotoSansCJKsc-Regular.otf",
+        ]
+    };
+
+    for path in candidates {
+        match std::fs::read(path) {
+            Ok(bytes) => {
+                let mut fonts = egui::FontDefinitions::default();
+                fonts.font_data.insert(
+                    "system-cjk".to_owned(),
+                    std::sync::Arc::new(egui::FontData::from_owned(bytes)),
+                );
+                // Preferred first, so Latin glyphs keep the bundled font and
+                // missing glyphs fall through to the CJK font.
+                fonts
+                    .families
+                    .entry(egui::FontFamily::Proportional)
+                    .or_default()
+                    .push("system-cjk".to_owned());
+                fonts
+                    .families
+                    .entry(egui::FontFamily::Monospace)
+                    .or_default()
+                    .push("system-cjk".to_owned());
+                ctx.set_fonts(fonts);
+                tracing::info!(path, "loaded CJK fallback font");
+                return;
+            }
+            Err(e) => tracing::debug!(path, %e, "CJK font candidate unavailable"),
+        }
+    }
+    tracing::warn!("no CJK font found; CJK text will render as boxes");
 }
 
 #[cfg(test)]
