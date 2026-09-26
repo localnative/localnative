@@ -24,30 +24,8 @@
 	const detectedLocale = detectLocale('en', ['en', 'zh'], navigatorDetector);
 	setLocale(detectedLocale);
 
-	// Tauri 2 updater: the v1 built-in update dialog is gone, so replicate it —
-	// check on startup, confirm, install, relaunch. Runs only inside Tauri.
-	if (import.meta.env.PROD && '__TAURI_INTERNALS__' in globalThis) {
-		import('@tauri-apps/api/app')
-			.then(({ getVersion }) => getVersion())
-			.then((currentVersion) => {
-				import('@tauri-apps/plugin-updater')
-					.then(({ check }) => check())
-					.then((update) => {
-						if (update?.available && update.version !== currentVersion) {
-							const install = confirm(
-								`A new version of Local Native is available (${update.version}). Install now?`
-							);
-							if (install) {
-								return update
-									.downloadAndInstall()
-									.then(() => import('@tauri-apps/plugin-process'))
-									.then(({ relaunch }) => relaunch());
-							}
-						}
-					})
-					.catch((err) => console.warn('update check failed:', err));
-			});
-	}
+	// No network activity on startup: checking for updates is the user's
+	// choice (Settings → Check for Updates), matching the local-first ethos.
 </script>
 
 <div class="flex w-full flex-row h-full">

@@ -26,8 +26,10 @@ export function cmdSearchOrFilter(searchText: string) {
   if (range) {
     cmdFilter(searchText, range[0], range[1]);
   } else {
+    // Paging keeps the query — the old `select` here silently dropped it.
     const message = {
-      action: "select",
+      action: "search",
+      query: searchText,
       limit: globalThis.AppState.limit,
       offset: globalThis.AppState.offset,
     };
@@ -81,7 +83,7 @@ export function cmdInsert(
   tags_text: string,
   tags_desc: string,
   annotations: any,
-  is_public: any
+  is_public: any,
 ) {
   const message = {
     action: "insert",
@@ -123,14 +125,6 @@ export function cmdSelect() {
     limit: globalThis.AppState.limit,
     offset: globalThis.AppState.offset,
   };
-
-  cmd(message);
-}
-
-export function cmdSsbSync() {
-  const message = {
-    action: "ssb-sync",
-  };
   cmd(message);
 }
 
@@ -142,43 +136,83 @@ export function cmdSyncViaAttach(uri: string) {
   cmd(message);
 }
 
+/** Start the sync server (no new pairings). */
 export function cmdServer() {
-  const message = {
-    action: "server",
-    addr: "0.0.0.0:2345",
-  };
-  cmd(message);
+  cmd({ action: "server", addr: "0.0.0.0:2345" });
 }
 
-export function cmdClientSync(addr: string) {
-  const message = {
+/** Start the server (if needed) and accept one new pairing. */
+export function cmdServerPairing() {
+  cmd({ action: "server-pairing", addr: "0.0.0.0:2345" });
+}
+
+/** Stop the sync server running in this process. */
+export function cmdServerStop() {
+  cmd({ action: "server-stop", addr: "0.0.0.0:2345" });
+}
+
+/** Sync with a peer; `code` pairs on first contact. */
+export function cmdClientSync(addr: string, code?: string) {
+  const message: { action: string; addr: string; code?: string } = {
     action: "client-sync",
     addr: addr,
   };
-  cmd(message);
-}
-
-export function cmdClientStopServer(addr: string) {
-  const message = {
-    action: "client-stop-server",
-    addr: addr,
-  };
+  if (code) {
+    message.code = code;
+  }
   cmd(message);
 }
 
 function cmd(message: any) {
   const input = JSON.stringify(message, null, 2);
 
-  invoke<string>("input", { input }).then((res) => {
-    const resp: { days: any; notes: any; tags: any; count: number } =
-      JSON.parse(res);
+  invoke<string>("input", { input })
+    .then((res) => {
+      let resp: any;
+      try {
+        resp = JSON.parse(res);
+      } catch {
+        emit("syncStatus", { error: res });
+        return;
+      }
 
-    if (resp.count) {
-      globalThis.AppState.count = resp.count;
-    }
+      // Bare-string replies (e.g. "Sync via attach completed") are statuses.
+      if (typeof resp !== "object" || resp === null) {
+        emit("syncStatus", { ok: String(resp) });
+        return;
+      }
 
-    onNativeMessage(resp);
-  });
+      // Every core failure arrives as {"error": <message>, "code": <code>}.
+      if (resp.error) {
+        console.warn("core error:", resp.code, resp.error);
+        emit("syncStatus", { error: resp.error, code: resp.code });
+        return;
+      }
+
+      // Sync/server results reach the sync page.
+      if (resp["client-sync"]) {
+        emit("syncStatus", { ok: resp["client-sync"] });
+        return;
+      }
+      if (resp.server !== undefined) {
+        emit("syncStatus", {
+          server: resp.server,
+          addresses: resp.addresses,
+          pairingCode: resp["pairing-code"],
+        });
+        return;
+      }
+
+      if (resp.count !== undefined) {
+        globalThis.AppState.count = resp.count;
+      }
+
+      onNativeMessage(resp);
+    })
+    .catch((err) => {
+      console.warn("invoke failed:", err);
+      emit("syncStatus", { error: String(err) });
+    });
 }
 
 function onNativeMessage(message: {

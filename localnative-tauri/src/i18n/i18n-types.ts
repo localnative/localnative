@@ -104,12 +104,40 @@ type RootTranslation = {
 		 * C​o​n​n​e​c​t​ ​f​a​i​l​e​d
 		 */
 		SyncAsClientConnectServerNotExistModalContent: string
+		/**
+		 * P​a​i​r​i​n​g​ ​c​o​d​e​ ​(​f​i​r​s​t​ ​s​y​n​c​)
+		 */
+		PairingCodePlaceholder: string
+		/**
+		 * P​a​i​r​ ​N​e​w​ ​D​e​v​i​c​e
+		 */
+		PairNewDevice: string
+		/**
+		 * P​a​i​r​i​n​g​ ​c​o​d​e​:
+		 */
+		PairingCodeShowing: string
 	}
 	Settings: {
 		/**
 		 * L​a​n​g​u​a​g​e
 		 */
 		Language: string
+		/**
+		 * C​h​e​c​k​ ​f​o​r​ ​U​p​d​a​t​e​s
+		 */
+		CheckForUpdates: string
+		/**
+		 * C​h​e​c​k​i​n​g​…
+		 */
+		CheckingForUpdates: string
+		/**
+		 * Y​o​u​ ​a​r​e​ ​u​p​ ​t​o​ ​d​a​t​e
+		 */
+		UpdateUpToDate: string
+		/**
+		 * U​p​d​a​t​e​ ​c​h​e​c​k​ ​f​a​i​l​e​d
+		 */
+		UpdateFailed: string
 	}
 }
 
@@ -203,12 +231,40 @@ export type TranslationFunctions = {
 		 * Connect failed
 		 */
 		SyncAsClientConnectServerNotExistModalContent: () => LocalizedString
+		/**
+		 * Pairing code (first sync)
+		 */
+		PairingCodePlaceholder: () => LocalizedString
+		/**
+		 * Pair New Device
+		 */
+		PairNewDevice: () => LocalizedString
+		/**
+		 * Pairing code:
+		 */
+		PairingCodeShowing: () => LocalizedString
 	}
 	Settings: {
 		/**
 		 * Language
 		 */
 		Language: () => LocalizedString
+		/**
+		 * Check for Updates
+		 */
+		CheckForUpdates: () => LocalizedString
+		/**
+		 * Checking…
+		 */
+		CheckingForUpdates: () => LocalizedString
+		/**
+		 * You are up to date
+		 */
+		UpdateUpToDate: () => LocalizedString
+		/**
+		 * Update check failed
+		 */
+		UpdateFailed: () => LocalizedString
 	}
 }
 
