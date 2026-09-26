@@ -68,6 +68,12 @@ function hideToast() {
 
 function onNativeMessage(message) {
   logTraffic('<<', message);
+  // Core failures arrive as {"error": <message>, "code": <code>} — surface
+  // them as a toast instead of silently dropping the command.
+  if (message && message.error) {
+    showToast(message.error);
+    return;
+  }
   // abort if no notes
   if (!message.notes) return;
 
