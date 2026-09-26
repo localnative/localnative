@@ -71,7 +71,7 @@ localnative-rs/target/debug/localnative-web-ext-host
 
 #### Database
 
-If above things are correctly setup, `localnative.sqlite3` database file is created at the directory `~/.ssb/localnative.sqlite3` the first time you click the web ext popup.
+If above things are correctly setup, `localnative.sqlite3` database file is created at `~/LocalNative/localnative.sqlite3` the first time you click the web ext popup. The `LOCALNATIVE_DB` environment variable (or the `--db` flag on the CLI binaries) overrides the location.
 
 hint to see what `localnative-web-ext-host` went wrong:
 ```
@@ -96,27 +96,24 @@ yarn check        # svelte-check type check
 ```
 Tauri uses `yarn` (`yarn.lock` is the committed lockfile).
 
-#### Electron - only Mac and GNU/Linux - deprecated
+#### egui (Rust) front-end
 ```
-cd localnative-electron
-npm i
-npm run build
-npm run dev
+cd localnative-rs
+cargo run -p localnative_egui
 ```
 
 ## Mobile
 #### Android
 
+The Gradle build compiles the Rust core itself (`cargo ndk` through the
+`buildRustCore` task in `app/build.gradle`); install `cargo-ndk` and the NDK
+first. `cargo xtask ndkbd` does the same by hand.
+
 #### iOS
 
-#### Flutter (Android / iOS / macOS)
-```
-cd localnative-flutter
-make setup        # install Rust targets + flutter_rust_bridge_codegen
-make bridge       # regenerate Dart↔Rust bindings
-make run-android  # or run-ios / run-macos
-```
-See `localnative-flutter/SETUP.md` for prerequisites (Flutter SDK, NDK, Xcode).
+`script/build-ios.sh` builds the Rust core for device and simulator as
+`localnative-ios/LocalNativeCore.xcframework`, which the Xcode project links.
+Run it after any change to `localnative_core`.
 
 ## Import / Export
 
@@ -142,11 +139,15 @@ cargo run -p localnative_cli --bin localnative-export -- --output ./exported-not
 ```
 
 ## Script
-There are scripts to bump version and release
+There are scripts to bump versions and package releases — see
+`docs/VERSIONING.md` for which script touches which platform.
 ```
 script
-├── release-appimage
-├── release-mac
-├── release-web-ext-host
-└── set-version
+├── set-version            # Rust workspace version
+├── set-version-extension  # browser extension version
+├── release-browser-extension
+├── release-iced-mac
+├── release-msi-win
+├── build_linux.sh
+└── build-ios.sh           # Rust core → LocalNativeCore.xcframework
 ```

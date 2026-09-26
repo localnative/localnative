@@ -1,14 +1,22 @@
-#!/bin/bash
-cd ../localnative-rs/
-pwd
+#!/bin/sh
+# Build the desktop binaries (Iced GUI + browser-extension host) on Linux.
+set -e
+
+cd "$(dirname "$0")/.."
+ROOT=$(pwd)
+
+cd "$ROOT/localnative-rs"
 cargo build --bin localnative_iced --release
 cargo build --bin localnative-web-ext-host --release
+
 cd target/release
-pwd
-mkdir localnative_linux_bin
-cp localnative_iced localnative_linux_bin/
-cp localnative-web-ext-host localnative_linux_bin/
-cp ../../LICENSE localnative_linux_bin/
-cp ../../README.md localnative_linux_bin/
-cp -R ../../locales localnative_linux_bin/
-tar -zcvf localnative_linux_bin.tar.gz localnative_linux_bin/
+OUT=localnative_linux_bin
+rm -rf "$OUT" "$OUT.tar.gz"
+mkdir "$OUT"
+cp localnative_iced "$OUT/"
+cp localnative-web-ext-host "$OUT/"
+cp "$ROOT/LICENSE" "$OUT/"
+cp "$ROOT/README.md" "$OUT/"
+cp -R "$ROOT/localnative-rs/locales" "$OUT/"
+tar -zcvf "$OUT.tar.gz" "$OUT"
+echo "Wrote $PWD/$OUT.tar.gz"

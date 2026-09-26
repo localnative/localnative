@@ -4,13 +4,37 @@ title: Changelog
 ---
 [Updates](https://chuanyan.live/tags/localnative)
 
-## Unreleased (maintenance)
-- No schema or feature changes — dependency and CI upkeep only.
-- Bumped `localnative-rs` crate dependencies (incl. `rusqlite` 0.39, `tarpc` 0.37, `governor` 0.10, `mdns-sd` 0.20).
-- Bumped Tauri frontend deps (Svelte 5, Vite 8, SvelteKit 2); Tauri CI now runs on Node 20.
-- Bumped Electron lower-risk deps (e.g. `@zxing/library` → 0.23).
-- `flutter_rust_bridge` 2.11 → 2.12.
-- Website (Docusaurus) lockfile refreshed to latest compatible.
+## Unreleased
+- **Sync rebuilt (schema 0.11.0, sync protocol v2)**: encrypted and
+  authenticated peer sync (Noise `XX`/`XXpsk3`) with device pairing via a
+  one-time code; notes move in byte-budgeted batches over one session with
+  256-bucket hash reconciliation. Deleting a note now removes its content
+  everywhere (tombstones carry no text), forged or far-future timestamps are
+  rejected, and a hybrid logical clock keeps deletes safe under clock skew.
+  The old per-note plaintext protocol and its 20-notes-per-sync limit are
+  gone, and so is the remote `stop` RPC.
+- **Search**: trigram + LIKE hybrid — CJK words (学习, 编程) and substrings
+  (`script` → JavaScript) match again; the unused duplicate index was dropped.
+  Tags are normalized in the core on every write.
+- **Core**: one error envelope (`{"error", "code"}`) on every front-end;
+  the database path is injectable (`LOCALNATIVE_DB`, `--db`, or per-platform
+  API); migrations run in transactions; fresh databases reach the current
+  schema on first open; `import-db` never modifies its source (works with
+  read-only backups); exports strip device identity; Markdown export skips
+  unwritable filenames instead of aborting; annotations return as text or
+  `data:` URLs instead of hex; SQLCipher is a real cargo feature with a
+  cipher check.
+- **Front-ends**: Iced — sync errors reach the screen, server start/stop
+  work, date-range selection can be cleared, IP input accepts every valid
+  address; egui — CJK font fallback, pairing code; Tauri — paging keeps the
+  query, sync results and errors are shown, CSP enabled, update checks are
+  manual; Android — no main-thread JNI, no cloud backup of the database,
+  structured JSON commands, database path from `filesDir`; iOS — app compiles
+  again (share extension queue via App Groups, no MMWormhole); browser
+  extension host — no debug.log of note contents, command allow-list.
+- **Builds**: Gradle builds the Rust core for all four ABIs (`cargo ndk`);
+  iOS links a built XCFramework (`script/build-ios.sh`); CI compiles the core
+  for Android/iOS and checks the packaged APK/AAB actually contains it.
 
 ## v0.5.0
 - ios and android: upgrade localnative_core dependencies

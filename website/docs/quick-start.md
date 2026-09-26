@@ -18,15 +18,25 @@ You can use [DB Browser for SQLite](http://sqlitebrowser.org/) to explore the da
 
 ## Sync
 
-### via attach file
-You can copy the SQLite database file from mobile device to desktop device via [File Sharing](https://support.apple.com/en-us/HT201301) and vice versa.
-
-Local Native desktop implemented wired sync based on files via exchange and appending items from one to another and vice versa.
-
 ### via LAN/WiFi
-From release [v0.4.0](https://localnative.app/blog/2019/08/24/localnative-v0.4.0-release), you can sync between desktop and desktop, also desktop and mobile.
+Sync is peer-to-peer between paired devices on the local network; traffic is
+encrypted and a device can only sync with devices it has paired with.
+
+First contact between two devices pairs them: on the device that will act as
+the server, start the server with pairing (the desktop Sync page's **Pair New
+Device**, or `localnative-rpc-server --pair`), note the one-time pairing code
+shown, then on the other device enter the server address and the code. The
+code is valid for five minutes. After pairing, syncing needs only the
+address — the pairing code field can stay empty.
+
+### via attach file
+You can copy the SQLite database file between devices (e.g. via [File
+Sharing](https://support.apple.com/en-us/HT201301) on iOS) and merge with
+`localnative-import-db`, or export a standalone copy with
+`localnative-export-db`. Exports carry no device identity (sync keys and
+paired peers are stripped), so a restored copy behaves as a new device.
 
 ## Note
-Windows currently does not have a standalone desktop app due to an upstream [issue](https://github.com/neon-bindings/neon/issues/357).
-
-There is a Mac App Store version of Local Native but due to sandbox nature, it is NOT usable because node.js `fs.mkdirSync` call got permission denied to create the above directories (and most likely permission issue for those browser extension manifest file as well). I am curious if there is a way to do so.
+Notes are stored in `~/LocalNative/localnative.sqlite3` on desktop
+(`./Documents/localnative.sqlite3` inside the app container on iOS).
+You can use [DB Browser for SQLite](http://sqlitebrowser.org/) to explore the database.

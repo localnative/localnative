@@ -51,7 +51,7 @@ jobs:
           key: ${{ runner.os }}-cargo-clippy-${{ hashFiles('localnative-rs/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-clippy-
-      - run: cargo clippy --workspace --all-targets -- -D warnings -A clippy::type_complexity
+      - run: cargo clippy --workspace --all-targets --all-features -- -D warnings -A clippy::type_complexity
         working-directory: localnative-rs
 
   build:
@@ -81,6 +81,25 @@ jobs:
             ${{ runner.os }}-cargo-build-
       - run: cargo build --workspace
         working-directory: localnative-rs
+
+  mobile-core:
+    name: Core compiles for Android and iOS
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios, aarch64-apple-ios-sim, aarch64-linux-android
+      - name: Check iOS targets
+        working-directory: localnative-rs
+        run: |
+          cargo check -p localnative_core --target aarch64-apple-ios
+          cargo check -p localnative_core --target aarch64-apple-ios-sim
+      - name: Check Android target
+        working-directory: localnative-rs
+        run: |
+          cargo install --locked cargo-ndk
+          cargo ndk -t arm64-v8a check -p localnative_core
 
   test:
     name: Test (${{ matrix.os }})

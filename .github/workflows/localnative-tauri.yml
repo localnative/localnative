@@ -5,12 +5,14 @@ on:
     branches: [main, master]
     paths:
       - "localnative-tauri/**"
+      - "localnative-rs/**"
       - "localnative-rs/localnative_core/**"
       - ".github/workflows/localnative-tauri.yml"
   pull_request:
     branches: [main, master]
     paths:
       - "localnative-tauri/**"
+      - "localnative-rs/**"
       - "localnative-rs/localnative_core/**"
       - ".github/workflows/localnative-tauri.yml"
   workflow_dispatch:

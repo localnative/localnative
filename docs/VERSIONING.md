@@ -11,22 +11,19 @@ already cost a release — see [Why](#why-this-policy-exists).
 ## Tier 1 — the schema version (the only cross-platform contract)
 
 Stored in the SQLite `meta` table under `meta_key = 'version'`, advanced by the
-migration table in `localnative_core/src/db.rs`.
+migration table in `localnative_core/src/db/migrations.rs`.
 
-This is the only version where a mismatch is a real error. `check_version_match`
-in `localnative_core/src/rpc.rs` gates peer sync on it, so an Android 0.6.1
-phone and a Chrome 0.5.2 extension sync correctly *because* their release
-numbers never enter the handshake.
+A schema mismatch is a real error only for local reads — each device migrates
+its own database. Peer sync is gated on the **sync protocol version**
+(`wire::PROTOCOL_VERSION`, negotiated during the handshake), so devices with
+different schema versions sync fine as long as they speak the same protocol.
+An Android 0.6.1 phone and a Chrome 0.5.2 extension sync correctly *because*
+their release numbers never enter the handshake.
 
-- Bump it **only** when the schema or wire format changes.
-- Never tie it to a release.
-- It is not user-visible.
-
-> **Known issue.** The gate is exact string equality, so any schema bump hard
-> blocks sync between peers even when the migration is purely additive — a
-> newer laptop will refuse an older phone that could safely sync. A
-> compatibility floor (`peer >= MIN_COMPAT`) would fix this; `semver` is already
-> a workspace dependency. Tracked separately from this policy.
+- Bump the schema version **only** when the schema changes.
+- Bump the protocol version **only** when the wire format changes.
+- Never tie either to a release.
+- Neither is user-visible.
 
 ## Tier 2 — shipped artifacts (independent, one per store)
 
