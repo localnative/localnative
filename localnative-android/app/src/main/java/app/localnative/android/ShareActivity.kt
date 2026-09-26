@@ -20,8 +20,13 @@ package app.localnative.android
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -42,6 +47,7 @@ import org.json.JSONObject
 class ShareActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        RustBridge.init(this)
 
         val sharedUrl = when (intent?.action) {
             Intent.ACTION_SEND -> {
@@ -81,14 +87,24 @@ class ShareActivity : ComponentActivity() {
         val cmd = j.toString()
         Log.d("CmdInsert", cmd)
 
-        try {
-            val response = RustBridge.run(cmd)
-            Log.d("CmdInsertResult", response)
-            finish()
-            val intent = Intent(this, MainActivity::class.java)
-            startActivity(intent)
-        } catch (e: Exception) {
-            Log.e("CmdInsert", "Error saving note", e)
+        lifecycleScope.launch {
+            try {
+                val response = withContext(Dispatchers.IO) { RustBridge.run(cmd) }
+                val error = try {
+                    JSONObject(response).optString("error").ifEmpty { null }
+                } catch (_: Exception) { null }
+                if (error != null) {
+                    Log.e("CmdInsert", "save failed: $error")
+                    Toast.makeText(this@ShareActivity, error, Toast.LENGTH_LONG).show()
+                    return@launch
+                }
+                finish()
+                val intent = Intent(this@ShareActivity, MainActivity::class.java)
+                startActivity(intent)
+            } catch (e: Exception) {
+                Log.e("CmdInsert", "Error saving note", e)
+                Toast.makeText(this@ShareActivity, "Failed to save note", Toast.LENGTH_LONG).show()
+            }
         }
     }
 }

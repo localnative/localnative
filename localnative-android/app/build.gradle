@@ -8,6 +8,7 @@ plugins {
 android {
     namespace 'app.localnative'
     compileSdkVersion 36
+    ndkVersion '29.0.14033849'
 
     defaultConfig {
         applicationId "app.localnative"
@@ -74,4 +75,41 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-runtime-compose:2.8.6'
     debugImplementation 'androidx.compose.ui:ui-tooling'
     debugImplementation 'androidx.compose.ui:ui-test-manifest'
+}
+
+// ── Rust core ──────────────────────────────────────────────────────────────
+// The app is a Kotlin shell over localnative_core; the .so files under
+// src/main/jniLibs are build outputs, never checked in. Every Gradle build
+// rebuilds them from source with cargo-ndk (debug profile for debug builds,
+// release otherwise). Requires: rustup targets for Android + cargo-ndk
+// (`cargo install cargo-ndk`) and the NDK (installed by the SDK manager).
+def cargoBin = { name ->
+    def cargoHome = System.getenv("CARGO_HOME") ?: "${System.getProperty('user.home')}/.cargo"
+    def exe = "${cargoHome}/bin/${name}"
+    if (!file(exe).exists()) {
+        throw new GradleException(
+            "${name} not found at ${exe}. Install with: cargo install cargo-ndk")
+    }
+    exe
+}
+
+tasks.register('buildRustCore', Exec) {
+    def rustDir = "${rootDir}/../localnative-rs"
+    if (!file("${rustDir}/localnative_core/Cargo.toml").exists()) {
+        throw new GradleException(
+            "localnative-rs checkout not found next to localnative-android (${rustDir})")
+    }
+    def profile = gradle.startParameter.taskNames.any { it.toLowerCase().contains('debug') } \
+        ? [] : ['--release']
+    workingDir "${rustDir}/localnative_core"
+    environment 'ANDROID_NDK_HOME', android.ndkDirectory.absolutePath
+    environment 'CARGO_NET_OFFLINE', System.getenv('CARGO_NET_OFFLINE') ?: 'false'
+    commandLine cargoBin('cargo'), 'ndk',
+        '-t', 'armeabi-v7a', '-t', 'arm64-v8a', '-t', 'x86', '-t', 'x86_64',
+        '-o', "${projectDir}/src/main/jniLibs",
+        'build', *profile
+}
+
+tasks.named('preBuild') {
+    dependsOn 'buildRustCore'
 }

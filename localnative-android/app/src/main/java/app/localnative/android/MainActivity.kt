@@ -25,6 +25,11 @@ import android.view.View
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.json.JSONObject
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import com.google.zxing.integration.android.IntentIntegrator
@@ -34,6 +39,7 @@ class MainActivity : ComponentActivity(), View.OnClickListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        RustBridge.init(this)
 
         setContent {
             MaterialTheme {
@@ -62,10 +68,26 @@ class MainActivity : ComponentActivity(), View.OnClickListener {
                 val builder = AlertDialog.Builder(this, R.style.AlertDialogCustom)
                 builder.setMessage(R.string.dialog_sync)
                     .setPositiveButton(R.string.sync) { _, _ ->
-                        val cmd = """{"action": "client-sync", "addr": "${result.contents}"}"""
-                        Log.d("doClientSyncCmd", cmd)
-                        val response = RustBridge.run(cmd)
-                        Log.d("doClientSyncCmdResp", response)
+                        // JSONObject escapes the scanned address; JNI runs off
+                        // the main thread so a long sync can't ANR.
+                        val cmd = JSONObject()
+                            .put("action", "client-sync")
+                            .put("addr", result.contents)
+                            .toString()
+                        lifecycleScope.launch(Dispatchers.IO) {
+                            val response = RustBridge.run(cmd)
+                            val message = try {
+                                val json = JSONObject(response)
+                                when {
+                                    json.has("error") -> json.getString("error")
+                                    json.has("client-sync") -> json.getString("client-sync")
+                                    else -> response
+                                }
+                            } catch (_: Exception) { response }
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(this@MainActivity, message, Toast.LENGTH_LONG).show()
+                            }
+                        }
                     }
                     .setNegativeButton(R.string.cancel) { _, _ ->
                         // User cancelled the dialog
