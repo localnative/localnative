@@ -60,3 +60,11 @@ count = 数量
 dark-theme = 暗色主题
 light-theme = 亮色主题
 allowed-origins = Allow Origins
+
+sync-with-peer = 与对方设备同步
+pairing-code = 配对码
+pairing-code-placeholder = 配对码（仅首次同步需要）
+pairing-code-showing = 请在对方设备输入此配对码：
+discover-peers = 发现局域网设备
+discover-peers-scanning = 正在扫描…
+no-peers-found = 局域网内未发现 Local Native 设备

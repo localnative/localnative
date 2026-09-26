@@ -200,9 +200,7 @@ impl Settings {
             }
             Message::TryFixHost => {
                 return Task::perform(
-                    crate::init::WebKind::init_all(
-                        self.allowed_origins_temp.take().map(|s| vec![s]),
-                    ),
+                    crate::init::init_all(self.allowed_origins_temp.take().map(|s| vec![s])),
                     crate::Message::InitHost,
                 );
             }

@@ -60,3 +60,11 @@ count = Count
 dark-theme = Dark theme
 light-theme = Light theme
 allowed-origins = Allow Origins
+
+sync-with-peer = Sync with peer
+pairing-code = Pairing code
+pairing-code-placeholder = Pairing code (first sync only)
+pairing-code-showing = Pairing code for the other device:
+discover-peers = Discover peers
+discover-peers-scanning = Scanning…
+no-peers-found = No Local Native peers found on the LAN
