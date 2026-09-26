@@ -76,20 +76,32 @@ class AppState {
     static let ln = RustLocalNative()
     static func search(input: String, offset: Int64) {
         AppState.setQuery(query: input)
-        let txt = ln.run(json_input:"""
-            {"action":"search","query":"\(input)","limit":10,"offset":\(offset)}
-            """
-        )
-        let data = txt.data(using: .utf8)!
-        let decoder = JSONDecoder()
-        do {
-            let resp = try decoder.decode(Response.self, from: data)
-            AppState.setCount(count: resp.count)
-            AppState.env.notes = resp.notes
-        } catch {
-            print(error.localizedDescription)
+        // JSONSerialization, not interpolation: a quote or backslash in the
+        // query must not corrupt the command.
+        let command: [String: Any] = [
+            "action": "search",
+            "query": input,
+            "limit": 10,
+            "offset": offset
+        ]
+        guard let json = try? JSONSerialization.data(withJSONObject: command),
+              let text = String(data: json, encoding: .utf8) else { return }
+        // The core call runs off the main thread so a large library can't ANR.
+        DispatchQueue.global(qos: .userInitiated).async {
+            let txt = ln.run(json_input: text)
+            let data = txt.data(using: .utf8)!
+            let decoder = JSONDecoder()
+            do {
+                let resp = try decoder.decode(Response.self, from: data)
+                DispatchQueue.main.async {
+                    AppState.setCount(count: resp.count)
+                    AppState.env.notes = resp.notes
+                    makePaginationText()
+                }
+            } catch {
+                print(error.localizedDescription)
+            }
         }
-        makePaginationText()
     }
 }
 

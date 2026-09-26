@@ -30,10 +30,23 @@ struct SyncView: View {
                     Spacer()
 
                     Button(action: {
-                        syncStatus = AppState.ln.run(json_input: """
-                            {"action":"client-sync",
-                            "addr":"\(scanResult)"}
-                            """)
+                        // JSONSerialization escapes the scanned address; the
+                        // core call runs off the main thread so a large sync
+                        // can't freeze the UI.
+                        let command: [String: Any] = [
+                            "action": "client-sync",
+                            "addr": scanResult
+                        ]
+                        guard let json = try? JSONSerialization.data(withJSONObject: command),
+                              let text = String(data: json, encoding: .utf8) else { return }
+                        syncStatus = "Syncing…"
+                        DispatchQueue.global(qos: .userInitiated).async {
+                            let result = AppState.ln.run(json_input: text)
+                            DispatchQueue.main.async {
+                                syncStatus = result
+                                AppState.search(input: "", offset: 0)
+                            }
+                        }
                     }) {
                         Label("Start Sync", systemImage: "arrow.triangle.2.circlepath")
                     }

@@ -30,9 +30,17 @@ struct NoteRowView: View {
                         title: Text("Delete Note?"),
                         message: Text("Delete \(String(note.uuid4.prefix(5))).. (\(String(note.id)))? This cannot be undone."),
                         primaryButton: .destructive(Text("Delete")) {
-                            AppState.ln.run(json_input: """
-                                {"action":"delete","rowid":\(note.id),"query":"\(AppState.getQuery())","limit":10,"offset":\(AppState.getOffset())}
-                                """)
+                            let command: [String: Any] = [
+                                "action": "delete",
+                                "rowid": note.id,
+                                "query": AppState.getQuery(),
+                                "limit": 10,
+                                "offset": AppState.getOffset()
+                            ]
+                            if let json = try? JSONSerialization.data(withJSONObject: command),
+                               let text = String(data: json, encoding: .utf8) {
+                                _ = AppState.ln.run(json_input: text)
+                            }
                             AppState.search(input: AppState.getQuery(), offset: AppState.getOffset())
                         },
                         secondaryButton: .cancel()
