@@ -1,271 +1,592 @@
-use crate::db::{
-    Pool,
-    models::Note,
-    sync::{
-        diff_from_server, diff_to_server, get_meta_version, get_note_by_uuid4, insert,
-        note_versions,
-    },
-};
-use crate::error::{RpcError, ValidationError};
-use futures::{FutureExt, StreamExt, future};
-use governor::{Quota, RateLimiter};
+/*
+    Local Native
+    Copyright (C) 2018-2019  Yi Wang
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
+
+    You should have received a copy of the GNU Affero General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+//! Peer-to-peer sync over the LAN.
+//!
+//! One TCP connection per sync, everything inside a Noise-encrypted channel
+//! ([`crate::secure`]). After a handshake that authenticates both devices,
+//! the session is: exchange hello → compare 256 bucket hashes → exchange
+//! versions only for buckets that differ → push and pull notes in
+//! byte-budgeted batches, each applied in one transaction. Two devices that
+//! are already in sync exchange a few kilobytes regardless of library size.
+//!
+//! There is no unauthenticated entry point: a connection that neither
+//! completes pairing nor presents a trusted key never reaches a database
+//! query, and there is no remote "stop" — stopping a server is local.
+
+use crate::db::{self, Pool, peers, sync as dbsync};
+use crate::error::{SyncError, ValidationError};
+use crate::secure::{ActiveCode, BATCH_BUDGET, CODE_LEN, MAX_PAYLOAD, SecureChannel};
+use crate::wire::{self, Applied, Diff, Hello, NoteV1, PROTOCOL_VERSION, Verdict, WireError};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::net::SocketAddr;
-use std::num::NonZeroU32;
-use std::sync::Arc;
-use tarpc::client;
-use tarpc::server::Channel as _;
-use tarpc::server::incoming::Incoming as _;
-use tarpc::{context, serde_transport::tcp, server::BaseChannel};
+use std::sync::{Arc, Mutex, OnceLock};
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::net::{TcpListener, TcpStream};
 use tokio_util::sync::CancellationToken;
-use uuid::Uuid;
 
-/// Maximum allowed size for individual note text fields (1 MB).
-const MAX_NOTE_FIELD_SIZE: usize = 1_048_576;
-/// Maximum allowed size for note annotations field (10 MB).
-const MAX_ANNOTATION_SIZE: usize = 10_485_760;
+const HANDSHAKE_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(30);
+const MESSAGE_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(60);
+/// Annotations larger than one message are streamed in chunks of this size.
+const BLOB_CHUNK: usize = 24 * 1024;
+/// Conservative ceiling for one `Notes` message (serialized, encrypted,
+/// framed — all bounded by `MAX_PAYLOAD`).
+const NOTES_MESSAGE_BUDGET: usize = 48 * 1024;
 
-fn validate_uuid4(uuid4: &str) -> Result<(), RpcError> {
-    Uuid::parse_str(uuid4).map_err(|_| ValidationError::InvalidUuid)?;
+// ── Wire messages ─────────────────────────────────────────────────────────
+
+/// One slice of a note's annotations, sent after the note itself.
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Blob {
+    pub uuid4: String,
+    pub bytes: Vec<u8>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+enum ClientMsg {
+    Hello(Hello),
+    /// This client's bucket hashes.
+    Hashes(Vec<[u8; 32]>),
+    /// Versions of this client's notes in the buckets whose hashes differed.
+    DiffReq {
+        buckets: Vec<u16>,
+        versions: Vec<(String, String)>,
+    },
+    /// Notes being pushed; annotations beyond the first chunk arrive as
+    /// [`ClientMsg::Blob`]. Applied when [`ClientMsg::NotesEnd`] arrives.
+    Notes(Vec<NoteV1>),
+    Blob(Blob),
+    NotesEnd,
+    /// UUIDs to pull, in order; the server answers with Notes/Blob/NotesEnd.
+    Pull(Vec<String>),
+    Done,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+enum ServerMsg {
+    Verdict(Verdict),
+    Hello(Hello),
+    Hashes(Vec<[u8; 32]>),
+    Diff(Diff),
+    Notes(Vec<NoteV1>),
+    Blob(Blob),
+    NotesEnd {
+        consumed: u32,
+    },
+    /// Result of applying a pushed batch.
+    Ack(Applied),
+    Err(WireError),
+}
+
+fn protocol(e: impl std::fmt::Display) -> SyncError {
+    SyncError::Protocol(e.to_string())
+}
+
+async fn send_msg<IO, M>(channel: &mut SecureChannel, io: &mut IO, msg: &M) -> Result<(), SyncError>
+where
+    IO: AsyncWriteExt + Unpin,
+    M: Serialize,
+{
+    let bytes = bincode::serialize(msg).map_err(protocol)?;
+    if bytes.len() > MAX_PAYLOAD {
+        return Err(protocol(
+            "outgoing message exceeds frame size (batching bug)",
+        ));
+    }
+    channel.send(io, &bytes).await
+}
+
+async fn recv_msg<IO, M>(channel: &mut SecureChannel, io: &mut IO) -> Result<M, SyncError>
+where
+    IO: AsyncReadExt + Unpin,
+    M: for<'de> Deserialize<'de>,
+{
+    let bytes = tokio::time::timeout(MESSAGE_TIMEOUT, channel.recv(io))
+        .await
+        .map_err(|_| SyncError::Timeout("peer stopped responding"))??;
+    bincode::deserialize(&bytes).map_err(protocol)
+}
+
+// ── Batched note transfer ─────────────────────────────────────────────────
+
+/// Send `notes` as a series of `Notes`/`Blob` messages, every message within
+/// the frame budget. The caller sends the end marker (which differs by
+/// direction) when the whole batch is out.
+async fn send_notes<IO, C>(
+    channel: &mut SecureChannel,
+    io: &mut IO,
+    notes: Vec<NoteV1>,
+) -> Result<(), SyncError>
+where
+    IO: AsyncReadExt + AsyncWriteExt + Unpin,
+    C: NotesCarrier,
+{
+    let mut batch: Vec<NoteV1> = Vec::new();
+    let mut budget = NOTES_MESSAGE_BUDGET;
+    for mut note in notes {
+        let mut blobs = Vec::new();
+        if note.annotations.len() > BLOB_CHUNK {
+            let rest = note.annotations.split_off(BLOB_CHUNK);
+            blobs = rest
+                .chunks(BLOB_CHUNK)
+                .map(|bytes| Blob {
+                    uuid4: note.uuid4.clone(),
+                    bytes: bytes.to_vec(),
+                })
+                .collect();
+        }
+        let size = note.encoded_len() + 96;
+        if budget < size {
+            C::send_notes_message(channel, io, std::mem::take(&mut batch)).await?;
+            budget = NOTES_MESSAGE_BUDGET;
+        }
+        budget = budget.saturating_sub(size);
+        batch.push(note);
+        if !blobs.is_empty() {
+            C::send_notes_message(channel, io, std::mem::take(&mut batch)).await?;
+            budget = NOTES_MESSAGE_BUDGET;
+            for blob in blobs {
+                C::send_blob(channel, io, blob).await?;
+            }
+        }
+    }
+    C::send_notes_message(channel, io, std::mem::take(&mut batch)).await?;
     Ok(())
 }
 
-fn validate_note(note: &Note) -> Result<(), RpcError> {
-    validate_uuid4(&note.uuid4)?;
-    if note.title.len() > MAX_NOTE_FIELD_SIZE {
-        return Err(ValidationError::FieldTooLarge { field: "title" }.into());
+/// The two directions a note transfer can flow, abstracted so the batching
+/// code above is written once.
+trait NotesCarrier {
+    async fn send_notes_message<IO>(
+        channel: &mut SecureChannel,
+        io: &mut IO,
+        notes: Vec<NoteV1>,
+    ) -> Result<(), SyncError>
+    where
+        IO: AsyncReadExt + AsyncWriteExt + Unpin;
+    async fn send_blob<IO>(
+        channel: &mut SecureChannel,
+        io: &mut IO,
+        blob: Blob,
+    ) -> Result<(), SyncError>
+    where
+        IO: AsyncReadExt + AsyncWriteExt + Unpin;
+}
+
+enum Client {}
+enum Server {}
+
+impl NotesCarrier for Client {
+    async fn send_notes_message<IO>(
+        channel: &mut SecureChannel,
+        io: &mut IO,
+        notes: Vec<NoteV1>,
+    ) -> Result<(), SyncError>
+    where
+        IO: AsyncReadExt + AsyncWriteExt + Unpin,
+    {
+        send_msg(channel, io, &ClientMsg::Notes(notes)).await
     }
-    if note.url.len() > MAX_NOTE_FIELD_SIZE {
-        return Err(ValidationError::FieldTooLarge { field: "url" }.into());
+    async fn send_blob<IO>(
+        channel: &mut SecureChannel,
+        io: &mut IO,
+        blob: Blob,
+    ) -> Result<(), SyncError>
+    where
+        IO: AsyncReadExt + AsyncWriteExt + Unpin,
+    {
+        send_msg(channel, io, &ClientMsg::Blob(blob)).await
     }
-    if note.tags.len() > MAX_NOTE_FIELD_SIZE {
-        return Err(ValidationError::FieldTooLarge { field: "tags" }.into());
+}
+
+impl NotesCarrier for Server {
+    async fn send_notes_message<IO>(
+        channel: &mut SecureChannel,
+        io: &mut IO,
+        notes: Vec<NoteV1>,
+    ) -> Result<(), SyncError>
+    where
+        IO: AsyncReadExt + AsyncWriteExt + Unpin,
+    {
+        send_msg(channel, io, &ServerMsg::Notes(notes)).await
     }
-    if note.description.len() > MAX_NOTE_FIELD_SIZE {
-        return Err(ValidationError::FieldTooLarge {
-            field: "description",
+    async fn send_blob<IO>(
+        channel: &mut SecureChannel,
+        io: &mut IO,
+        blob: Blob,
+    ) -> Result<(), SyncError>
+    where
+        IO: AsyncReadExt + AsyncWriteExt + Unpin,
+    {
+        send_msg(channel, io, &ServerMsg::Blob(blob)).await
+    }
+}
+
+/// Collect `Notes`/`Blob` messages until `NotesEnd`, reassembling chunked
+/// annotations. `from_server` selects which enum to read.
+async fn recv_notes<IO>(
+    channel: &mut SecureChannel,
+    io: &mut IO,
+    from_server: bool,
+) -> Result<(Vec<NoteV1>, u32), SyncError>
+where
+    IO: AsyncReadExt + Unpin,
+{
+    let mut notes: Vec<NoteV1> = Vec::new();
+    let mut by_uuid: HashMap<String, usize> = HashMap::new();
+    let mut consumed = 0u32;
+    if from_server {
+        loop {
+            match recv_msg::<_, ServerMsg>(channel, io).await? {
+                ServerMsg::Notes(batch) => {
+                    consumed =
+                        consumed.saturating_add(u32::try_from(batch.len()).unwrap_or(u32::MAX));
+                    for note in batch {
+                        by_uuid.insert(note.uuid4.clone(), notes.len());
+                        notes.push(note);
+                    }
+                }
+                ServerMsg::Blob(blob) => append_blob(&mut notes, &by_uuid, blob),
+                ServerMsg::NotesEnd { consumed: c } => return Ok((notes, c.max(consumed))),
+                ServerMsg::Err(e) => {
+                    return Err(SyncError::Remote {
+                        code: e.code,
+                        message: e.message,
+                    });
+                }
+                other => {
+                    return Err(protocol(format!(
+                        "unexpected message during pull: {other:?}"
+                    )));
+                }
+            }
         }
-        .into());
     }
-    if note.comments.len() > MAX_NOTE_FIELD_SIZE {
-        return Err(ValidationError::FieldTooLarge { field: "comments" }.into());
-    }
-    if note.annotations.len() > MAX_ANNOTATION_SIZE {
-        return Err(ValidationError::FieldTooLarge {
-            field: "annotations",
+    loop {
+        match recv_msg::<_, ClientMsg>(channel, io).await? {
+            ClientMsg::Notes(batch) => {
+                for note in batch {
+                    by_uuid.insert(note.uuid4.clone(), notes.len());
+                    notes.push(note);
+                }
+            }
+            ClientMsg::Blob(blob) => append_blob(&mut notes, &by_uuid, blob),
+            ClientMsg::NotesEnd => return Ok((notes, consumed)),
+            other => {
+                return Err(protocol(format!(
+                    "unexpected message during push: {other:?}"
+                )));
+            }
         }
-        .into());
-    }
-    Ok(())
-}
-
-#[tarpc::service]
-pub trait LocalNative {
-    async fn is_version_match(version: String) -> Result<bool, RpcError>;
-    async fn diff_to_server(candidates: Vec<(String, String)>) -> Result<Vec<String>, RpcError>;
-    async fn diff_from_server(candidates: Vec<(String, String)>) -> Result<Vec<String>, RpcError>;
-    async fn send_note(note: Note) -> Result<bool, RpcError>;
-    async fn receive_note(uuid4: String) -> Result<Note, RpcError>;
-    async fn stop() -> Result<(), RpcError>;
-}
-
-type SharedRateLimiter = Arc<
-    RateLimiter<
-        governor::state::NotKeyed,
-        governor::state::InMemoryState,
-        governor::clock::DefaultClock,
-    >,
->;
-
-#[derive(Clone)]
-struct LocalNativeServer {
-    pool: Pool,
-    stop_token: Option<CancellationToken>,
-    /// General rate limiter: 100 requests per second across all methods.
-    general_limiter: SharedRateLimiter,
-    /// Stricter rate limiter for data-intensive operations (send_note, receive_note): 20 req/sec.
-    data_limiter: SharedRateLimiter,
-}
-
-impl LocalNativeServer {
-    fn check_general_limit(&self) -> Result<(), RpcError> {
-        self.general_limiter
-            .check()
-            .map_err(|_| RpcError::RateLimited)
-    }
-
-    fn check_data_limit(&self) -> Result<(), RpcError> {
-        self.general_limiter
-            .check()
-            .map_err(|_| RpcError::RateLimited)?;
-        self.data_limiter.check().map_err(|_| RpcError::RateLimited)
     }
 }
 
-impl LocalNative for LocalNativeServer {
-    async fn is_version_match(
-        self,
-        _: context::Context,
-        version: String,
-    ) -> Result<bool, RpcError> {
-        self.check_general_limit()?;
-        let meta_version = {
-            let conn = self
-                .pool
-                .get()
-                .map_err(|e| RpcError::PoolError(e.to_string()))?;
-            get_meta_version(&conn)?
-        };
-        Ok(version == meta_version)
-    }
-
-    async fn diff_to_server(
-        self,
-        _: context::Context,
-        candidates: Vec<(String, String)>,
-    ) -> Result<Vec<String>, RpcError> {
-        self.check_general_limit()?;
-        let diff = {
-            let conn = self
-                .pool
-                .get()
-                .map_err(|e| RpcError::PoolError(e.to_string()))?;
-            diff_to_server(&conn, candidates)?
-        };
-        Ok(diff)
-    }
-
-    async fn diff_from_server(
-        self,
-        _: context::Context,
-        candidates: Vec<(String, String)>,
-    ) -> Result<Vec<String>, RpcError> {
-        self.check_general_limit()?;
-        let diff = {
-            let conn = self
-                .pool
-                .get()
-                .map_err(|e| RpcError::PoolError(e.to_string()))?;
-            diff_from_server(&conn, candidates)?
-        };
-        Ok(diff)
-    }
-
-    async fn send_note(self, _: context::Context, note: Note) -> Result<bool, RpcError> {
-        self.check_data_limit()?;
-        validate_note(&note)?;
-        let conn = self
-            .pool
-            .get()
-            .map_err(|e| RpcError::PoolError(e.to_string()))?;
-        insert(&conn, &note)?;
-        Ok(true)
-    }
-
-    async fn receive_note(self, _: context::Context, uuid4: String) -> Result<Note, RpcError> {
-        self.check_data_limit()?;
-        validate_uuid4(&uuid4)?;
-        let note = {
-            let conn = self
-                .pool
-                .get()
-                .map_err(|e| RpcError::PoolError(e.to_string()))?;
-            get_note_by_uuid4(&conn, &uuid4)?
-        };
-        Ok(note)
-    }
-
-    async fn stop(self, _: context::Context) -> Result<(), RpcError> {
-        self.check_general_limit()?;
-        if let Some(stop_tx) = self.stop_token {
-            stop_tx.cancel();
-        } else {
-            return Err(RpcError::ServerConfigError(
-                "Server was not started with a stop token".to_string(),
-            ));
-        }
-
-        Ok(())
+fn append_blob(notes: &mut [NoteV1], by_uuid: &HashMap<String, usize>, blob: Blob) {
+    if let Some(&i) = by_uuid.get(&blob.uuid4)
+        && let Some(note) = notes.get_mut(i)
+    {
+        note.annotations.extend_from_slice(&blob.bytes);
     }
 }
 
-/// Bind a TCP listener on `addr` and spawn the RPC server task in the background.
-/// Cancel the returned future by triggering the `stop_token` (if provided).
+// ── Server ────────────────────────────────────────────────────────────────
+
+struct ServerHandle {
+    stop: CancellationToken,
+    pairing: Arc<Mutex<Option<ActiveCode>>>,
+}
+
+fn registry() -> &'static Mutex<HashMap<SocketAddr, ServerHandle>> {
+    static REGISTRY: OnceLock<Mutex<HashMap<SocketAddr, ServerHandle>>> = OnceLock::new();
+    REGISTRY.get_or_init(|| Mutex::new(HashMap::new()))
+}
+
+fn lock<T>(lock: &Mutex<T>) -> std::sync::MutexGuard<'_, T> {
+    lock.lock().unwrap_or_else(|poisoned| poisoned.into_inner())
+}
+
+fn active_pairing(pairing: &Arc<Mutex<Option<ActiveCode>>>) -> Option<ActiveCode> {
+    lock(pairing)
+        .as_ref()
+        .filter(|code| !code.expired())
+        .cloned()
+}
+
+fn this_device(conn: &rusqlite::Connection) -> Result<Hello, SyncError> {
+    Ok(Hello {
+        protocol: PROTOCOL_VERSION,
+        min_protocol: wire::MIN_PROTOCOL_VERSION,
+        node_id: db::node_id(conn)?,
+        name: hostname::get()
+            .unwrap_or_default()
+            .to_string_lossy()
+            .trim_end_matches(".local")
+            .to_string(),
+        schema: db::migrations::get_meta_version(conn)?,
+    })
+}
+
+/// Bind `addr` and serve sync sessions until `stop_token` fires.
 pub async fn setup_server(
     addr: SocketAddr,
     pool: Pool,
-    stop_token: Option<CancellationToken>,
-) -> Result<(), RpcError> {
-    let listener = tcp::listen(addr, tarpc::tokio_serde::formats::Bincode::default).await?;
-    let stop_token_clone = stop_token.clone();
+    stop_token: CancellationToken,
+    pairing: Arc<Mutex<Option<ActiveCode>>>,
+) -> Result<(), SyncError> {
+    let listener = TcpListener::bind(addr).await?;
+    let bound = listener.local_addr()?;
+    let node = pool
+        .get()
+        .ok()
+        .and_then(|conn| db::node_id(&conn).ok())
+        .unwrap_or_default();
+    let mdns = crate::discovery::start_advertising(bound.port(), &node).ok();
+    tracing::info!(%bound, "sync server listening");
 
-    // Start mDNS advertising so other LAN peers can discover this server.
-    let mdns_daemon = match crate::discovery::start_advertising(addr.port()) {
-        Ok(d) => Some(d),
-        Err(e) => {
-            tracing::warn!("mDNS advertising failed to start (sync still works): {}", e);
-            None
-        }
-    };
-
-    // 100 requests/sec general limit, 20 requests/sec for data-intensive operations
-    let general_limiter: SharedRateLimiter = Arc::new(RateLimiter::direct(Quota::per_second(
-        NonZeroU32::new(100).unwrap(),
-    )));
-    let data_limiter: SharedRateLimiter = Arc::new(RateLimiter::direct(Quota::per_second(
-        NonZeroU32::new(20).unwrap(),
-    )));
-
-    tokio::spawn(async move {
+    loop {
         tokio::select! {
-            _ = listener
-                .filter_map(|r| future::ready(r.ok()))
-                .map(BaseChannel::with_defaults)
-                .max_channels_per_key(2, |t| {
-                    t.as_ref()
-                        .peer_addr()
-                        .map(|a| a.ip())
-                        .unwrap_or(std::net::IpAddr::V4(std::net::Ipv4Addr::UNSPECIFIED))
-                })
-                .map(|channel| {
-                    let server = LocalNativeServer {
-                        pool: pool.clone(),
-                        stop_token: stop_token_clone.clone(),
-                        general_limiter: general_limiter.clone(),
-                        data_limiter: data_limiter.clone(),
-                    };
-                    channel.execute(server.serve()).boxed()
-                })
-                .flatten_unordered(10)
-                .buffer_unordered(10)
-                .for_each(|_| future::ready(())) => {
-                // Server loop completed
-            }
-            _ = stop_token.as_ref().map(|token| token.cancelled().boxed()).unwrap_or(future::pending().boxed()) => {
-                // Stop signal received
+            _ = stop_token.cancelled() => break,
+            accepted = listener.accept() => {
+                let Ok((stream, _peer)) = accepted else { continue };
+                let pool = pool.clone();
+                let pairing = pairing.clone();
+                tokio::spawn(async move {
+                    if let Err(e) = serve_connection(stream, pool, pairing).await {
+                        tracing::info!(%e, "sync session ended with error");
+                    }
+                });
             }
         }
+    }
 
-        // Stop mDNS advertising when the server shuts down.
-        if let Some(daemon) = mdns_daemon {
-            crate::discovery::stop_advertising(daemon);
-        }
-    });
-
+    if let Some(daemon) = mdns {
+        crate::discovery::stop_advertising(daemon);
+    }
+    tracing::info!(%bound, "sync server stopped");
     Ok(())
 }
 
-/// Return the preferred non-loopback IP address of this host formatted as `"ip:3456"`,
-/// or an empty string if no suitable interface is found.
-pub fn get_server_addr() -> String {
-    get_if_addrs::get_if_addrs()
-        .unwrap_or_default()
-        .into_iter()
-        .find(|iface| !iface.is_loopback())
-        .map(|iface| format!("{}:3456", iface.addr.ip()))
-        .unwrap_or_default()
+async fn serve_connection(
+    mut stream: TcpStream,
+    pool: Pool,
+    pairing: Arc<Mutex<Option<ActiveCode>>>,
+) -> Result<(), SyncError> {
+    // Pairing is only offered while a code is active; sync mode is always on.
+    // The pooled connection is only held for synchronous spans, never across
+    // an await — rusqlite connections are not `Sync`, so holding one would
+    // make this task unspawnable.
+    let private_key = {
+        let conn = pool
+            .get()
+            .map_err(|e| SyncError::PoolError(e.to_string()))?;
+        crate::secure::static_private_key(&conn)?
+    };
+    let accepting = active_pairing(&pairing);
+    let handshake = tokio::time::timeout(
+        HANDSHAKE_TIMEOUT,
+        SecureChannel::accept(&private_key, &mut stream, accepting.as_ref()),
+    )
+    .await
+    .map_err(|_| SyncError::Timeout("handshake"))??;
+
+    let remote_key = handshake
+        .remote_static()
+        .map(|k| k.to_vec())
+        .ok_or_else(|| SyncError::Handshake("peer presented no static key".to_string()))?;
+    let pairing_proved = handshake.pairing_used();
+    let mut channel = handshake.into_transport()?;
+
+    // Gate on trust before anything is exchanged: a sync handshake with a
+    // key we never paired is refused outright — completing Noise_XX alone
+    // proves nothing. A pairing handshake already proved the one-time code,
+    // so the (until now unknown) key can be recorded.
+    if !pairing_proved {
+        let trusted = {
+            let conn = pool
+                .get()
+                .map_err(|e| SyncError::PoolError(e.to_string()))?;
+            peers::is_trusted(&conn, &remote_key)?
+        };
+        if !trusted {
+            tracing::warn!("refusing sync session from an unpaired device");
+            send_msg(
+                &mut channel,
+                &mut stream,
+                &ServerMsg::Verdict(Verdict {
+                    accepted: false,
+                    reason: Some("not-paired".to_string()),
+                }),
+            )
+            .await?;
+            let _ = stream.shutdown().await;
+            return Ok(());
+        }
+    }
+
+    let client_hello: Hello = match recv_msg::<_, ClientMsg>(&mut channel, &mut stream).await? {
+        ClientMsg::Hello(hello) => hello,
+        other => return Err(protocol(format!("expected hello, got {other:?}"))),
+    };
+    let compatible = {
+        let conn = pool
+            .get()
+            .map_err(|e| SyncError::PoolError(e.to_string()))?;
+        client_hello.compatible_with(&this_device(&conn)?)
+    };
+    if !compatible {
+        send_msg(
+            &mut channel,
+            &mut stream,
+            &ServerMsg::Verdict(Verdict {
+                accepted: false,
+                reason: Some("incompatible-protocol".to_string()),
+            }),
+        )
+        .await?;
+        return Err(SyncError::Incompatible {
+            local: PROTOCOL_VERSION,
+            remote: client_hello.protocol,
+        });
+    }
+
+    if pairing_proved {
+        // First contact through a valid code: record the device.
+        let conn = pool
+            .get()
+            .map_err(|e| SyncError::PoolError(e.to_string()))?;
+        peers::trust(
+            &conn,
+            &remote_key,
+            &client_hello.node_id,
+            &client_hello.name,
+            &stream
+                .peer_addr()
+                .map(|a| a.to_string())
+                .unwrap_or_default(),
+        )?;
+    }
+    send_msg(
+        &mut channel,
+        &mut stream,
+        &ServerMsg::Verdict(Verdict {
+            accepted: true,
+            reason: None,
+        }),
+    )
+    .await?;
+    let server_hello = {
+        let conn = pool
+            .get()
+            .map_err(|e| SyncError::PoolError(e.to_string()))?;
+        this_device(&conn)?
+    };
+    send_msg(&mut channel, &mut stream, &ServerMsg::Hello(server_hello)).await?;
+
+    // Session: reconciliation, then note transfer in both directions.
+    let mut push_buffer: Vec<NoteV1> = Vec::new();
+    let mut push_index: HashMap<String, usize> = HashMap::new();
+    loop {
+        match recv_msg::<_, ClientMsg>(&mut channel, &mut stream).await? {
+            ClientMsg::Hashes(_) => {
+                let hashes = {
+                    let conn = pool
+                        .get()
+                        .map_err(|e| SyncError::PoolError(e.to_string()))?;
+                    let versions = dbsync::note_versions(&conn)?;
+                    dbsync::bucket_hashes(&versions)
+                };
+                send_msg(&mut channel, &mut stream, &ServerMsg::Hashes(hashes)).await?;
+            }
+            ClientMsg::DiffReq { buckets, versions } => {
+                let diff = {
+                    let conn = pool
+                        .get()
+                        .map_err(|e| SyncError::PoolError(e.to_string()))?;
+                    dbsync::diff_versions(&conn, &buckets, versions)?
+                };
+                send_msg(&mut channel, &mut stream, &ServerMsg::Diff(diff)).await?;
+            }
+            ClientMsg::Notes(batch) => {
+                for note in batch {
+                    push_index.insert(note.uuid4.clone(), push_buffer.len());
+                    push_buffer.push(note);
+                }
+            }
+            ClientMsg::Blob(blob) => {
+                append_blob(&mut push_buffer, &push_index, blob);
+            }
+            ClientMsg::NotesEnd => {
+                let applied = {
+                    let conn = pool
+                        .get()
+                        .map_err(|e| SyncError::PoolError(e.to_string()))?;
+                    dbsync::apply_notes(&conn, &push_buffer)?
+                };
+                push_buffer.clear();
+                push_index.clear();
+                send_msg(&mut channel, &mut stream, &ServerMsg::Ack(applied)).await?;
+            }
+            ClientMsg::Pull(uuids) => {
+                let (notes, consumed) = {
+                    let conn = pool
+                        .get()
+                        .map_err(|e| SyncError::PoolError(e.to_string()))?;
+                    dbsync::load_notes(&conn, &uuids, BATCH_BUDGET)?
+                };
+                send_notes::<_, Server>(&mut channel, &mut stream, notes).await?;
+                send_msg(
+                    &mut channel,
+                    &mut stream,
+                    &ServerMsg::NotesEnd {
+                        consumed: u32::try_from(consumed).unwrap_or(u32::MAX),
+                    },
+                )
+                .await?;
+            }
+            ClientMsg::Done => {
+                {
+                    let conn = pool
+                        .get()
+                        .map_err(|e| SyncError::PoolError(e.to_string()))?;
+                    peers::touch(&conn, &remote_key)?;
+                }
+                let _ = stream.shutdown().await;
+                return Ok(());
+            }
+            other => return Err(protocol(format!("unexpected session message: {other:?}"))),
+        }
+    }
 }
 
-fn validate_client_addr(addr: &SocketAddr) -> Result<(), RpcError> {
+// ── Address helpers ───────────────────────────────────────────────────────
+
+/// This device's non-loopback LAN addresses as `"<ip>:<port>"`, for display.
+pub fn server_addresses(port: u16) -> Vec<String> {
+    if_addrs::get_if_addrs()
+        .unwrap_or_default()
+        .into_iter()
+        .filter(|iface| !iface.is_loopback())
+        .map(|iface| format!("{}:{}", iface.ip(), port))
+        .collect()
+}
+
+fn validate_client_addr(addr: &SocketAddr) -> Result<(), SyncError> {
     if addr.ip().is_unspecified() {
         return Err(ValidationError::Other(
             "Cannot connect to unspecified address (0.0.0.0)".to_string(),
@@ -278,7 +599,7 @@ fn validate_client_addr(addr: &SocketAddr) -> Result<(), RpcError> {
     Ok(())
 }
 
-fn validate_server_addr(addr: &SocketAddr) -> Result<(), RpcError> {
+fn validate_server_addr(addr: &SocketAddr) -> Result<(), SyncError> {
     if addr.port() == 0 {
         return Err(ValidationError::Other("Server port must not be 0".to_string()).into());
     }
@@ -288,222 +609,294 @@ fn validate_server_addr(addr: &SocketAddr) -> Result<(), RpcError> {
     Ok(())
 }
 
-async fn check_version_match(client: &LocalNativeClient, pool: &Pool) -> Result<bool, RpcError> {
-    let version = {
-        let conn = pool.get().map_err(|e| RpcError::PoolError(e.to_string()))?;
-        get_meta_version(&conn)?
-    };
-    let is_version_match = client
-        .is_version_match(context::current(), version)
-        .await??;
-    tracing::debug!(is_version_match, "version check result");
-    if !is_version_match {
-        return Err(RpcError::VersionMismatch);
-    }
-    Ok(is_version_match)
+// ── JSON-dispatch entry points ────────────────────────────────────────────
+
+/// Start (or confirm) a sync server on `addr`, accepting no new pairings.
+pub async fn start(addr: &str, pool: &Pool) -> Result<String, SyncError> {
+    let addr: SocketAddr = addr.parse()?;
+    validate_server_addr(&addr)?;
+    let handle = ensure_server(addr, pool.clone()).await?;
+    *lock(&handle.pairing) = None;
+    Ok("started".to_string())
 }
 
-/// Push local notes that the server does not yet have.
-/// Returns the number of notes sent.
-pub async fn run_sync_to_server(addr: &SocketAddr, pool: &Pool) -> Result<usize, RpcError> {
-    let transport =
-        tarpc::serde_transport::tcp::connect(addr, tarpc::tokio_serde::formats::Bincode::default)
-            .await?;
-    let client = LocalNativeClient::new(client::Config::default(), transport).spawn();
+/// Start the server (if needed) and accept one new pairing for the next few
+/// minutes. Returns the code to show on the other device.
+pub async fn start_pairing(addr: &str, pool: &Pool) -> Result<String, SyncError> {
+    let addr: SocketAddr = addr.parse()?;
+    validate_server_addr(&addr)?;
+    let handle = ensure_server(addr, pool.clone()).await?;
+    let code = ActiveCode::fresh();
+    let display = code.code.clone();
+    *lock(&handle.pairing) = Some(code);
+    Ok(display)
+}
 
-    check_version_match(&client, pool).await?;
-
-    let candidates = {
-        let conn = pool.get().map_err(|e| RpcError::PoolError(e.to_string()))?;
-        note_versions(&conn)?
+async fn ensure_server(addr: SocketAddr, pool: Pool) -> Result<Arc<ServerHandle>, SyncError> {
+    // Register (or find) the server in one synchronous span; the lock is
+    // never held across an await.
+    let handle = {
+        let mut servers = registry()
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
+        if let Some(existing) = servers.get(&addr) {
+            return Ok(Arc::new(ServerHandle {
+                stop: existing.stop.clone(),
+                pairing: existing.pairing.clone(),
+            }));
+        }
+        let stop = CancellationToken::new();
+        let pairing: Arc<Mutex<Option<ActiveCode>>> = Arc::new(Mutex::new(None));
+        servers.insert(
+            addr,
+            ServerHandle {
+                stop: stop.clone(),
+                pairing: pairing.clone(),
+            },
+        );
+        Arc::new(ServerHandle { stop, pairing })
     };
-    let diff_uuid4 = client
-        .diff_to_server(context::current(), candidates)
-        .await??;
-    let count = diff_uuid4.len();
-    tracing::info!(count, "notes to send to server");
+    let (stop, pairing) = (handle.stop.clone(), handle.pairing.clone());
+    tokio::spawn(async move {
+        // Surface "address in use" asynchronously; the registry entry is
+        // removed so a later start can retry.
+        if let Err(e) = setup_server(addr, pool, stop, pairing).await {
+            tracing::error!(%e, "sync server failed to start");
+            registry()
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner())
+                .remove(&addr);
+        }
+    });
+    // Give the bind a moment to fail fast (e.g. port already taken elsewhere).
+    tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+    Ok(handle)
+}
 
-    for u in diff_uuid4 {
-        let note = {
-            let conn = pool.get().map_err(|e| RpcError::PoolError(e.to_string()))?;
-            get_note_by_uuid4(&conn, &u)?
+/// Stop the server this process runs on `addr` (a local action — there is
+/// deliberately no remote stop).
+pub async fn stop_local(addr: &str) -> Result<String, SyncError> {
+    let addr: SocketAddr = addr.parse()?;
+    let mut servers = registry()
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+    let handle = servers
+        .remove(&addr)
+        .ok_or_else(|| SyncError::ServerConfigError(format!("no sync server running on {addr}")))?;
+    handle.stop.cancel();
+    Ok("stopped".to_string())
+}
+
+/// Run one synchronous database operation on a pooled connection.
+fn with_conn<T>(
+    pool: &Pool,
+    f: impl FnOnce(&rusqlite::Connection) -> Result<T, SyncError>,
+) -> Result<T, SyncError> {
+    let conn = pool
+        .get()
+        .map_err(|e| SyncError::PoolError(e.to_string()))?;
+    f(&conn)
+}
+
+/// Sync with the peer at `addr`. `code` pairs when this device has never
+/// synced with that peer before. Returns a human-readable summary.
+pub async fn sync(addr: &str, code: Option<&str>, pool: &Pool) -> Result<String, SyncError> {
+    let addr: SocketAddr = addr.parse()?;
+    validate_client_addr(&addr)?;
+
+    if let Some(code) = code {
+        let normalized: String = code.chars().filter(|c| c.is_ascii_alphanumeric()).collect();
+        if normalized.len() != CODE_LEN {
+            return Err(SyncError::InvalidPairingCode);
+        }
+    }
+
+    let stored_key = with_conn(pool, |conn| {
+        peers::find_by_addr(conn, &addr.to_string()).map_err(SyncError::from)
+    })?;
+    if code.is_none() && stored_key.is_none() {
+        return Err(SyncError::NotPaired);
+    }
+
+    let mut stream = TcpStream::connect(addr).await?;
+    let mode = if code.is_some() { b'P' } else { b'S' };
+    stream.write_all(&[mode]).await?;
+
+    let private_key = with_conn(pool, |conn| {
+        crate::secure::static_private_key(conn).map_err(SyncError::from)
+    })?;
+    let handshake = tokio::time::timeout(
+        HANDSHAKE_TIMEOUT,
+        SecureChannel::connect(&private_key, &mut stream, code, stored_key.as_deref()),
+    )
+    .await
+    .map_err(|_| SyncError::Timeout("handshake"))??;
+    let remote_key = handshake
+        .remote_static()
+        .map(|k| k.to_vec())
+        .ok_or_else(|| SyncError::Handshake("peer presented no static key".to_string()))?;
+    let mut channel = handshake.into_transport()?;
+
+    let my_hello = with_conn(pool, this_device)?;
+    send_msg(
+        &mut channel,
+        &mut stream,
+        &ClientMsg::Hello(my_hello.clone()),
+    )
+    .await?;
+
+    match recv_msg::<_, ServerMsg>(&mut channel, &mut stream).await? {
+        ServerMsg::Verdict(Verdict { accepted: true, .. }) => {}
+        ServerMsg::Verdict(Verdict {
+            accepted: false,
+            reason,
+        }) => {
+            return Err(match reason.as_deref() {
+                Some("not-paired") => SyncError::NotPaired,
+                Some("incompatible-protocol") => SyncError::Incompatible {
+                    local: PROTOCOL_VERSION,
+                    remote: 0,
+                },
+                other => SyncError::Rejected(other.unwrap_or("declined").to_string()),
+            });
+        }
+        ServerMsg::Err(e) => {
+            return Err(SyncError::Remote {
+                code: e.code,
+                message: e.message,
+            });
+        }
+        other => return Err(protocol(format!("expected verdict, got {other:?}"))),
+    }
+    let server_hello: Hello = match recv_msg::<_, ServerMsg>(&mut channel, &mut stream).await? {
+        ServerMsg::Hello(hello) => hello,
+        ServerMsg::Err(e) => {
+            return Err(SyncError::Remote {
+                code: e.code,
+                message: e.message,
+            });
+        }
+        other => return Err(protocol(format!("expected hello, got {other:?}"))),
+    };
+    if !my_hello.compatible_with(&server_hello) {
+        return Err(SyncError::Incompatible {
+            local: PROTOCOL_VERSION,
+            remote: server_hello.protocol,
+        });
+    }
+
+    // Both sides are authenticated; remember this peer by address.
+    with_conn(pool, |conn| {
+        peers::trust(
+            conn,
+            &remote_key,
+            &server_hello.node_id,
+            &server_hello.name,
+            &addr.to_string(),
+        )
+        .map_err(SyncError::from)
+    })?;
+
+    // Reconcile: compare bucket hashes, then versions where they differ.
+    let (versions, mine_hashes) = with_conn(pool, |conn| {
+        let versions = dbsync::note_versions(conn).map_err(SyncError::from)?;
+        Ok(dbsync::bucket_hashes_pair(versions))
+    })?;
+    send_msg(
+        &mut channel,
+        &mut stream,
+        &ClientMsg::Hashes(mine_hashes.clone()),
+    )
+    .await?;
+    let their_hashes: Vec<[u8; 32]> =
+        match recv_msg::<_, ServerMsg>(&mut channel, &mut stream).await? {
+            ServerMsg::Hashes(h) => h,
+            ServerMsg::Err(e) => {
+                return Err(SyncError::Remote {
+                    code: e.code,
+                    message: e.message,
+                });
+            }
+            other => return Err(protocol(format!("expected hashes, got {other:?}"))),
         };
-        client.send_note(context::current(), note).await??;
-    }
-    tracing::info!("sync to server complete");
-
-    Ok(count)
-}
-
-/// Pull notes from the server that this client does not yet have.
-/// Returns the number of notes received.
-pub async fn run_sync_from_server(addr: &SocketAddr, pool: &Pool) -> Result<usize, RpcError> {
-    let transport =
-        tarpc::serde_transport::tcp::connect(addr, tarpc::tokio_serde::formats::Bincode::default)
-            .await?;
-    let client = LocalNativeClient::new(client::Config::default(), transport).spawn();
-
-    check_version_match(&client, pool).await?;
-
-    let candidates = {
-        let conn = pool.get().map_err(|e| RpcError::PoolError(e.to_string()))?;
-        note_versions(&conn)?
+    let differing = dbsync::differing_buckets(&mine_hashes, &their_hashes);
+    send_msg(
+        &mut channel,
+        &mut stream,
+        &ClientMsg::DiffReq {
+            buckets: differing.clone(),
+            versions: dbsync::versions_in(&versions, &differing),
+        },
+    )
+    .await?;
+    let diff: Diff = match recv_msg::<_, ServerMsg>(&mut channel, &mut stream).await? {
+        ServerMsg::Diff(d) => d,
+        ServerMsg::Err(e) => {
+            return Err(SyncError::Remote {
+                code: e.code,
+                message: e.message,
+            });
+        }
+        other => return Err(protocol(format!("expected diff, got {other:?}"))),
     };
-    let diff_uuid4 = client
-        .diff_from_server(context::current(), candidates)
-        .await??;
-    let count = diff_uuid4.len();
-    tracing::info!(count, "notes to receive from server");
 
-    for u in diff_uuid4 {
-        let note = client.receive_note(context::current(), u).await??;
-        let conn = pool.get().map_err(|e| RpcError::PoolError(e.to_string()))?;
-        insert(&conn, &note)?;
-    }
-    tracing::info!("sync from server complete");
-
-    Ok(count)
-}
-
-/// Bidirectional sync with the server at `addr`: push local-only notes and pull server-only notes
-/// concurrently. Returns `"sync ok"` on success.
-pub async fn sync(addr: &str, pool: &Pool) -> Result<String, RpcError> {
-    let server_addr: SocketAddr = addr.parse()?;
-    validate_client_addr(&server_addr)?;
-
-    match tokio::try_join!(
-        run_sync_to_server(&server_addr, pool),
-        run_sync_from_server(&server_addr, pool)
-    ) {
-        Ok((sent, received)) => {
-            let total = sent + received;
-            notify_rust::Notification::new()
-                .summary("Local Native Sync Complete")
-                .body(&format!(
-                    "Synced {} notes ({} sent, {} received)",
-                    total, sent, received
-                ))
-                .show()
-                .ok();
-            Ok("sync ok".to_string())
+    // Push in batches, waiting for each to be applied.
+    let mut sent: u32 = 0;
+    let mut to_push = diff.push.clone();
+    while !to_push.is_empty() {
+        let (notes, consumed) = with_conn(pool, |conn| {
+            dbsync::load_notes(conn, &to_push, BATCH_BUDGET).map_err(SyncError::from)
+        })?;
+        if consumed == 0 {
+            tracing::warn!("a note exceeded the transfer budget and was skipped");
+            to_push.remove(0);
+            continue;
         }
-        Err(e) => {
-            notify_rust::Notification::new()
-                .summary("Local Native Sync Failed")
-                .body(&format!("Sync error: {}", e))
-                .show()
-                .ok();
-            Err(e)
+        sent = sent.saturating_add(u32::try_from(consumed).unwrap_or(u32::MAX));
+        to_push = to_push[consumed..].to_vec();
+        send_notes::<_, Client>(&mut channel, &mut stream, notes).await?;
+        send_msg(&mut channel, &mut stream, &ClientMsg::NotesEnd).await?;
+        match recv_msg::<_, ServerMsg>(&mut channel, &mut stream).await? {
+            ServerMsg::Ack(_) => {}
+            ServerMsg::Err(e) => {
+                return Err(SyncError::Remote {
+                    code: e.code,
+                    message: e.message,
+                });
+            }
+            other => return Err(protocol(format!("expected ack, got {other:?}"))),
         }
     }
-}
 
-pub async fn run_stop_server(addr: &SocketAddr, pool: &Pool) -> Result<(), RpcError> {
-    let transport =
-        tarpc::serde_transport::tcp::connect(addr, tarpc::tokio_serde::formats::Bincode::default)
-            .await?;
-    let client = LocalNativeClient::new(client::Config::default(), transport).spawn();
+    // Pull in batches until the server has nothing newer left.
+    let mut received: u32 = 0;
+    let mut to_pull = diff.pull.clone();
+    while !to_pull.is_empty() {
+        send_msg(&mut channel, &mut stream, &ClientMsg::Pull(to_pull.clone())).await?;
+        let (notes, consumed) = recv_notes(&mut channel, &mut stream, true).await?;
+        if consumed == 0 {
+            break;
+        }
+        let consumed = usize::try_from(consumed).unwrap_or(usize::MAX);
+        to_pull = to_pull[consumed.min(to_pull.len())..].to_vec();
+        let applied = with_conn(pool, |conn| {
+            dbsync::apply_notes(conn, &notes).map_err(SyncError::from)
+        })?;
+        received += applied.applied;
+    }
 
-    check_version_match(&client, pool).await?;
+    send_msg(&mut channel, &mut stream, &ClientMsg::Done).await?;
+    with_conn(pool, |conn| {
+        peers::touch(conn, &remote_key).map_err(SyncError::from)
+    })?;
+    let _ = stream.shutdown().await;
 
-    client.stop(context::current()).await??;
-    Ok(())
-}
-
-/// Send a stop signal to the server at `addr`. Returns `"stop ok"` on success.
-pub async fn stop_server(addr: &str, pool: &Pool) -> Result<String, RpcError> {
-    let server_addr: SocketAddr = addr.parse()?;
-    validate_client_addr(&server_addr)?;
-    run_stop_server(&server_addr, pool).await?;
-    Ok("stop ok".to_string())
-}
-
-/// Start the RPC server bound to `addr` with a fresh cancellation token.
-pub async fn start(addr: &str, pool: &Pool) -> Result<(), RpcError> {
-    let server_addr: SocketAddr = addr.parse()?;
-    validate_server_addr(&server_addr)?;
-
-    setup_server(server_addr, pool.clone(), Some(CancellationToken::new())).await?;
-
-    Ok(())
+    Ok(format!("sync ok: sent {sent}, received {received} note(s)"))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_validate_uuid4_valid() {
-        assert!(validate_uuid4("550e8400-e29b-41d4-a716-446655440000").is_ok());
-    }
-
-    #[test]
-    fn test_validate_uuid4_invalid() {
-        assert!(validate_uuid4("not-a-uuid").is_err());
-        assert!(validate_uuid4("").is_err());
-        assert!(validate_uuid4("550e8400-e29b-41d4-a716").is_err());
-    }
-
-    #[test]
-    fn test_validate_note_valid() {
-        let note = Note {
-            rowid: 1,
-            uuid4: "550e8400-e29b-41d4-a716-446655440000".to_string(),
-            title: "Test".to_string(),
-            url: "https://example.com".to_string(),
-            tags: "tag1,tag2".to_string(),
-            description: "desc".to_string(),
-            comments: "comment".to_string(),
-            annotations: "abcd".to_string(),
-            created_at: "2024-01-01 00:00:00".to_string(),
-            is_public: false,
-            metadata: String::new(),
-            updated_at: String::new(),
-            deleted: false,
-        };
-        assert!(validate_note(&note).is_ok());
-    }
-
-    #[test]
-    fn test_validate_note_invalid_uuid() {
-        let note = Note {
-            rowid: 1,
-            uuid4: "invalid-uuid".to_string(),
-            title: "Test".to_string(),
-            url: "https://example.com".to_string(),
-            tags: "".to_string(),
-            description: "".to_string(),
-            comments: "".to_string(),
-            annotations: "".to_string(),
-            created_at: "2024-01-01 00:00:00".to_string(),
-            is_public: false,
-            metadata: String::new(),
-            updated_at: String::new(),
-            deleted: false,
-        };
-        assert!(validate_note(&note).is_err());
-    }
-
-    #[test]
-    fn test_validate_note_oversized_field() {
-        let oversized = "x".repeat(MAX_NOTE_FIELD_SIZE + 1);
-        let note = Note {
-            rowid: 1,
-            uuid4: "550e8400-e29b-41d4-a716-446655440000".to_string(),
-            title: oversized,
-            url: "https://example.com".to_string(),
-            tags: "".to_string(),
-            description: "".to_string(),
-            comments: "".to_string(),
-            annotations: "".to_string(),
-            created_at: "2024-01-01 00:00:00".to_string(),
-            is_public: false,
-            metadata: String::new(),
-            updated_at: String::new(),
-            deleted: false,
-        };
-        assert!(validate_note(&note).is_err());
-    }
 
     #[test]
     fn test_validate_client_addr_unspecified() {

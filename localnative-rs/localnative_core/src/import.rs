@@ -455,9 +455,11 @@ fn plinky_timestamp(obj: &serde_json::Value) -> Option<String> {
 // ---------------------------------------------------------------------------
 
 /// Check whether a note with the given URL already exists in the database.
+/// Tombstones don't count: if the user deleted this URL before, re-importing
+/// it should bring it back, not be skipped as a duplicate.
 fn url_exists(conn: &Connection, url: &str) -> DbResult<bool> {
     let count: i64 = conn.query_row(
-        "SELECT COUNT(*) FROM note WHERE url = ?1",
+        "SELECT COUNT(*) FROM note WHERE url = ?1 AND deleted = 0",
         rusqlite::params![url],
         |row| row.get(0),
     )?;

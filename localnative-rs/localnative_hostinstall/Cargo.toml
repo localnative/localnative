@@ -1,0 +1,17 @@
+[package]
+name = "localnative_hostinstall"
+description = "Install browser native-messaging manifests for the Local Native extension host"
+homepage = "https://localnative.app"
+authors = ["Yi Wang"]
+license = "AGPL-3.0"
+edition = "2024"
+version.workspace = true
+
+[dependencies]
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+dirs = { workspace = true }
+tracing = { workspace = true }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+winreg = { workspace = true }
