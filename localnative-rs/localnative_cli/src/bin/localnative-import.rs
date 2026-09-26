@@ -35,8 +35,12 @@ fn main() {
                 .required(true),
         )
         .arg(arg!(<FILE> "Path to the export file").required(true))
+        .arg(arg!(-d --db <FILE> "Database file (default: platform location)").required(false))
         .get_matches();
 
+    if let Some(db) = matches.get_one::<String>("db") {
+        localnative_core::db::set_db_path(db);
+    }
     let format = matches.get_one::<String>("format").unwrap();
     let file_path = matches.get_one::<String>("FILE").unwrap();
 

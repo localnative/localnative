@@ -35,8 +35,12 @@ fn main() {
             "Merge notes from another database file into the local DB (one-way, last-write-wins)",
         )
         .arg(arg!(-i --input <FILE> "Source .sqlite3 file to import from").required(true))
+        .arg(arg!(-d --db <FILE> "Database file (default: platform location)").required(false))
         .get_matches();
 
+    if let Some(db) = matches.get_one::<String>("db") {
+        localnative_core::db::set_db_path(db);
+    }
     let src = matches.get_one::<String>("input").unwrap();
 
     let conn = match localnative_core::db::init_db() {

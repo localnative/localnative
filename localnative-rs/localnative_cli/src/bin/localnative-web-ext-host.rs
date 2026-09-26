@@ -15,14 +15,22 @@
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
+
+//! Browser-extension native-messaging host: read one JSON command from
+//! stdin, run it, write one JSON reply to stdout.
+//!
+//! Nothing is logged — stderr carries only size/shape errors without any
+//! note content, and there is no file logging at all. The commands the
+//! extension may send are allow-listed; anything else is refused locally.
+
 use localnative_core::run_sync as run;
-use std::fs::OpenOptions;
-use std::io::{self, Read, Seek, SeekFrom, Write};
+use std::io::{self, Read, Write};
 use std::str;
 
-const LOG_FILE: &str = "debug.log";
-const MAX_LOG_SIZE: u64 = 1024 * 1024; // 1MB
 const MAX_MESSAGE_SIZE: usize = 10 * 1024 * 1024; // 10MB
+
+/// The actions the popup uses. Sync, import and export stay desktop-side.
+const ALLOWED_ACTIONS: &[&str] = &["insert", "insert-image", "search", "select", "delete"];
 
 fn main() -> io::Result<()> {
     tracing_subscriber::fmt()
@@ -30,87 +38,63 @@ fn main() -> io::Result<()> {
             tracing_subscriber::EnvFilter::from_default_env()
                 .add_directive(tracing::Level::INFO.into()),
         )
+        .with_writer(std::io::stderr)
         .init();
-    // Read the message length (first 4 bytes).
-    let mut text_length_bytes = [0u8; 4];
-    let stdin = io::stdin();
-    let mut handle = stdin.lock();
-    handle.read_exact(&mut text_length_bytes)?;
 
-    let text_length: u32 = u32::from_ne_bytes(text_length_bytes);
-    let text_length: usize = text_length as usize;
-    eprintln!("text_length {:?}", text_length);
-    log_to_file(format!("text_length {:?}", text_length))?;
-
+    // Read the message length (first 4 bytes, native endianness).
+    let mut length_bytes = [0u8; 4];
+    io::stdin().lock().read_exact(&mut length_bytes)?;
+    let text_length = u32::from_ne_bytes(length_bytes) as usize;
     if text_length > MAX_MESSAGE_SIZE {
-        let err_msg = format!(
-            "Message too large: {} bytes (max {})",
-            text_length, MAX_MESSAGE_SIZE
+        // Content stays in stdin; reply and exit.
+        eprintln!("message too large: {text_length} bytes");
+        return send_message(
+            r#"{"error":"Message exceeds maximum allowed size","code":"too-large"}"#,
         );
-        eprintln!("{}", err_msg);
-        log_to_file(err_msg)?;
-        let error_response = r#"{"error": "Message exceeds maximum allowed size"}"#;
-        send_message(error_response)?;
-        return Ok(());
     }
 
-    // Read the text (JSON object) of the message.
-    let mut text_buf = vec![0; text_length];
-    handle.read_exact(&mut text_buf)?;
-    let text = match str::from_utf8(&text_buf) {
-        Ok(s) => s,
+    // Read the JSON command.
+    let mut buffer = vec![0; text_length];
+    io::stdin().lock().read_exact(&mut buffer)?;
+    let text = match str::from_utf8(&buffer) {
+        Ok(text) => text,
         Err(_) => {
-            let error_response = r#"{"error": "Invalid UTF-8 in message"}"#;
-            send_message(error_response)?;
-            return Ok(());
+            eprintln!("message was not valid UTF-8");
+            return send_message(r#"{"error":"Invalid UTF-8 in message","code":"invalid-input"}"#);
         }
     };
-    eprintln!("text_buf {:?}", text);
-    log_to_file(format!("text_buf {:?}", text))?;
 
-    let response = run(text);
-    eprintln!("response {:?}", response);
-    log_to_file(format!("response {:?}", response))?;
-
-    match send_message(&response) {
-        Ok(_) => (),
-        Err(err) => {
-            eprintln!("Error: {:?}", err);
-            log_to_file(format!("Error: {:?}", err))?;
+    // Only known actions reach the core.
+    let action = serde_json::from_str::<serde_json::Value>(text)
+        .ok()
+        .and_then(|value| {
+            value
+                .get("action")
+                .and_then(|a| a.as_str())
+                .map(str::to_owned)
+        });
+    match action.as_deref() {
+        Some(action) if ALLOWED_ACTIONS.contains(&action) => {
+            let response = run(text);
+            // Never echo a failure's source on success paths; the core
+            // envelope carries only an error message and code.
+            send_message(&response)
         }
-    };
-    Ok(())
-}
-
-// Sends message to the browser extension.
-fn send_message(message: &str) -> io::Result<()> {
-    let buf = message.as_bytes();
-    let size: u32 = u32::try_from(buf.len()).expect("response message exceeds u32::MAX bytes");
-
-    let bytes: [u8; 4] = size.to_ne_bytes();
-
-    let mut handle = io::stdout();
-    // Write message size.
-    handle.write_all(&bytes)?;
-    // Write the message itself.
-    handle.write_all(buf)?;
-    handle.flush()?;
-    Ok(())
-}
-
-fn log_to_file(message: String) -> io::Result<()> {
-    let mut file = OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(LOG_FILE)?;
-
-    let file_size = file.metadata()?.len();
-    if file_size > MAX_LOG_SIZE {
-        file.set_len(0)?;
-        file.seek(SeekFrom::Start(0))?;
+        other => {
+            eprintln!("action not allowed: {:?}", other);
+            send_message(
+                r#"{"error":"This command is not available to the browser extension","code":"not-allowed"}"#,
+            )
+        }
     }
+}
 
-    writeln!(file, "{}", message)?;
-    file.flush()?;
-    Ok(())
+// Send one native-messaging frame to the extension.
+fn send_message(message: &str) -> io::Result<()> {
+    let bytes = message.as_bytes();
+    let size = u32::try_from(bytes.len()).expect("response message exceeds u32::MAX bytes");
+    let mut stdout = io::stdout();
+    stdout.write_all(&size.to_ne_bytes())?;
+    stdout.write_all(bytes)?;
+    stdout.flush()
 }
