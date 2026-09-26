@@ -32,8 +32,12 @@ fn main() {
     let matches = Command::new("localnative-export-db")
         .about("Export a standalone copy of the database (VACUUM INTO, no -wal/-shm sidecars)")
         .arg(arg!(-o --output <FILE> "Destination .sqlite3 file path").required(true))
+        .arg(arg!(-d --db <FILE> "Database file (default: platform location)").required(false))
         .get_matches();
 
+    if let Some(db) = matches.get_one::<String>("db") {
+        localnative_core::db::set_db_path(db);
+    }
     let dest = matches.get_one::<String>("output").unwrap();
 
     let conn = match localnative_core::db::init_db() {

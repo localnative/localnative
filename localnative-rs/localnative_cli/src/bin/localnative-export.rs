@@ -32,8 +32,12 @@ fn main() {
         .about("Export Local Native notes as Markdown files with YAML frontmatter")
         .arg(arg!(-o --output <DIR> "Output directory for exported .md files").required(true))
         .arg(arg!(-q --query <QUERY> "Optional search query to filter notes").required(false))
+        .arg(arg!(-d --db <FILE> "Database file (default: platform location)").required(false))
         .get_matches();
 
+    if let Some(db) = matches.get_one::<String>("db") {
+        localnative_core::db::set_db_path(db);
+    }
     let output_dir = matches.get_one::<String>("output").unwrap();
     let query = matches.get_one::<String>("query");
 
@@ -48,8 +52,14 @@ fn main() {
     };
 
     match localnative_core::export::export_notes(&conn, output_path, query.map(|s| s.as_str())) {
-        Ok(count) => {
-            eprintln!("Exported {} note(s) to {}", count, output_dir);
+        Ok(summary) => {
+            eprintln!(
+                "Exported {} note(s) to {} ({} skipped)",
+                summary.written, output_dir, summary.skipped
+            );
+            if summary.skipped > 0 {
+                process::exit(2);
+            }
         }
         Err(e) => {
             eprintln!("Export failed: {}", e);
