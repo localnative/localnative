@@ -112,18 +112,36 @@ class MainViewModel : ViewModel() {
     fun deleteNote(rowid: Int) {
         viewModelScope.launch {
             val currentState = _uiState.value
-            val cmd = """{"action": "delete", "query": "${currentState.query}", "rowid": $rowid, "limit": ${currentState.limit}, "offset": ${currentState.offset}}"""
-            Log.d("deleteNote", cmd)
+            val cmd = JSONObject()
+                .put("action", "delete")
+                .put("query", currentState.query)
+                .put("rowid", rowid)
+                .put("limit", currentState.limit)
+                .put("offset", currentState.offset)
+                .toString()
 
             try {
-                val response = RustBridge.run(cmd)
-                Log.d("deleteNoteResponse", response)
+                val response = withContext(Dispatchers.IO) { RustBridge.run(cmd) }
+                if (coreError(response) != null) {
+                    _uiState.update { it.copy(error = "Failed to delete note: ${coreError(response)}") }
+                    return@launch
+                }
                 // Refresh the current page
                 performSearch(currentState.query, currentState.offset)
             } catch (e: Exception) {
                 Log.e("deleteNote", "Error deleting note", e)
                 _uiState.update { it.copy(error = "Failed to delete note: ${e.message}") }
             }
+        }
+    }
+
+    /** The error message of a core failure envelope, or null on success. */
+    private fun coreError(response: String): String? {
+        return try {
+            val json = JSONObject(response)
+            if (json.has("error")) json.getString("error") else null
+        } catch (_: Exception) {
+            null
         }
     }
 
@@ -171,13 +189,23 @@ class MainViewModel : ViewModel() {
     private suspend fun performSearch(query: String, offset: Long) {
         try {
             val currentState = _uiState.value
-            val cmd = """{"action": "search", "query": "$query", "limit": ${currentState.limit}, "offset": $offset}"""
-            Log.d("performSearch", cmd)
+            // JSONObject, not string interpolation: a quote or backslash in the
+            // query must not corrupt the command.
+            val cmd = JSONObject()
+                .put("action", "search")
+                .put("query", query)
+                .put("limit", currentState.limit)
+                .put("offset", offset)
+                .toString()
 
-            val response = RustBridge.run(cmd)
-            Log.d("performSearchResponse", response)
+            // JNI runs off the main thread: a large sync or search must not ANR.
+            val response = withContext(Dispatchers.IO) { RustBridge.run(cmd) }
 
             val jsonObject = JSONObject(response)
+            coreError(response)?.let { err ->
+                _uiState.update { it.copy(isLoading = false, error = err) }
+                return
+            }
             val count = jsonObject.getLong("count")
             val notesArray = jsonObject.getJSONArray("notes")
 
