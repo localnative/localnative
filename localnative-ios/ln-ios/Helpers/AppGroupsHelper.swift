@@ -1,26 +1,14 @@
-/*
-    Local Native
-    Copyright (C) 2018-2019  Yi Wang
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Affero General Public License for more details.
-
-    You should have received a copy of the GNU Affero General Public License
-    along with this program.  If not, see <https://www.gnu.org/licenses/>.
-*/
 //
 //  AppGroupsHelper.swift
 //  ln-ios
 //
-//  Helper for App Groups communication (replaces MMWormhole)
+//  Helper for App Groups communication between the share extension and the
+//  main app.
 //
+//  Shares are a queue, not a slot: a second share no longer overwrites the
+//  first, and shares made while the app is closed are delivered on next
+//  launch (the app drains the queue on startup, on entering the foreground,
+//  and on every Darwin notification).
 
 import Foundation
 
@@ -28,25 +16,25 @@ class AppGroupsHelper {
     static let shared = AppGroupsHelper()
 
     private let appGroupIdentifier = "group.app.localnative.ios"
-    private let messageKey = "shared_message"
-    private let timestampKey = "message_timestamp"
+    private let queueKey = "shared_messages"
 
     private var sharedDefaults: UserDefaults? {
         return UserDefaults(suiteName: appGroupIdentifier)
     }
 
-    /// Send a message from share extension to main app
+    /// Append a message to the shared queue (share extension side).
     func sendMessage(_ message: String) {
         guard let defaults = sharedDefaults else {
             print("Failed to access shared UserDefaults")
             return
         }
 
-        defaults.set(message, forKey: messageKey)
-        defaults.set(Date().timeIntervalSince1970, forKey: timestampKey)
+        var queue = defaults.stringArray(forKey: queueKey) ?? []
+        queue.append(message)
+        defaults.set(queue, forKey: queueKey)
         defaults.synchronize()
 
-        // Also post a Darwin notification to wake up the main app if needed
+        // Wake the main app if it is running.
         CFNotificationCenterPostNotification(
             CFNotificationCenterGetDarwinNotifyCenter(),
             CFNotificationName("app.localnative.ios.message" as CFString),
@@ -56,50 +44,53 @@ class AppGroupsHelper {
         )
     }
 
-    /// Read the latest message (for main app)
-    func readMessage() -> String? {
+    /// Read and clear every queued message (main app side).
+    @discardableResult
+    func drainMessages() -> [String] {
         guard let defaults = sharedDefaults else {
-            return nil
+            return []
         }
-
-        return defaults.string(forKey: messageKey)
+        let queue = defaults.stringArray(forKey: queueKey) ?? []
+        if !queue.isEmpty {
+            defaults.removeObject(forKey: queueKey)
+            defaults.synchronize()
+        }
+        return queue
     }
 
-    /// Clear the message after reading
-    func clearMessage() {
-        guard let defaults = sharedDefaults else {
-            return
-        }
+    /// The handler registered through `startListening`.
+    private var messageCallback: (([String]) -> Void)?
 
-        defaults.removeObject(forKey: messageKey)
-        defaults.removeObject(forKey: timestampKey)
-        defaults.synchronize()
+    private func deliverQueued() {
+        let messages = drainMessages()
+        if !messages.isEmpty {
+            DispatchQueue.main.async {
+                self.messageCallback?(messages)
+            }
+        }
     }
 
-    /// Start listening for messages (for main app)
-    func startListening(callback: @escaping (String) -> Void) {
-        // Listen for Darwin notifications
+    /// Deliver queued messages now and on every later notification.
+    func startListening(callback: @escaping ([String]) -> Void) {
+        self.messageCallback = callback
+
         let notificationName = CFNotificationName("app.localnative.ios.message" as CFString)
+        // Darwin callbacks are C function pointers and cannot capture
+        // context, so the helper is passed through as the observer pointer.
         let observer = UnsafeRawPointer(Unmanaged.passUnretained(self).toOpaque())
-
         CFNotificationCenterAddObserver(
             CFNotificationCenterGetDarwinNotifyCenter(),
             observer,
-            { (center, observer, name, object, userInfo) in
+            { (_, observer, _, _, _) in
                 guard let observer = observer else { return }
                 let helper = Unmanaged<AppGroupsHelper>.fromOpaque(observer).takeUnretainedValue()
-
-                if let message = helper.readMessage() {
-                    // Execute callback on main thread
-                    DispatchQueue.main.async {
-                        callback(message)
-                        helper.clearMessage()
-                    }
-                }
+                helper.deliverQueued()
             },
             notificationName.rawValue,
             nil,
             .deliverImmediately
         )
+        // Shares queued while the app was closed.
+        deliverQueued()
     }
 }

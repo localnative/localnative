@@ -58,8 +58,14 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
 
     func sceneWillEnterForeground(_ scene: UIScene) {
-        // Called as the scene transitions from the background to the foreground.
-        // Use this method to undo the changes made on entering the background.
+        // Deliver shares that queued up while the app was in the background.
+        let messages = AppGroupsHelper.shared.drainMessages()
+        if !messages.isEmpty {
+            for message in messages {
+                _ = AppState.ln.run(json_input: message)
+            }
+            AppState.search(input: "", offset: 0)
+        }
     }
 
     func sceneDidEnterBackground(_ scene: UIScene) {
