@@ -62,16 +62,19 @@ pub async fn init_bundle(locale: Language) -> Option<()> {
     Some(())
 }
 
+/// A message with Fluent arguments, formatted lazily where it is displayed.
 pub struct TranslateWithArgs<'a> {
     key: &'a str,
     args: FluentArgs<'a>,
 }
 
 impl<'a> TranslateWithArgs<'a> {
+    #[allow(dead_code)] // pairs with `args` for interpolating views
     pub fn new(key: &'a str, args: FluentArgs<'a>) -> Self {
         Self { key, args }
     }
 
+    #[allow(dead_code)] // used by views that interpolate (e.g. ip-qr)
     pub fn tr(&'a self) -> Cow<'a, str> {
         let res = BUNDLE
             .get()
@@ -170,6 +173,7 @@ macro_rules! args {
     };
 }
 
+#[allow(dead_code)] // pairs with TranslateWithArgs for interpolating views
 pub fn args<'s>(key: &'s str, value: &'s str) -> fluent_bundle::FluentArgs<'s> {
     let mut args = fluent_bundle::FluentArgs::new();
     args.set(key, value);

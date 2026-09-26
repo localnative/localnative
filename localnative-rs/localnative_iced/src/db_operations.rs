@@ -1,5 +1,5 @@
-use localnative_core::db::models::{CmdDelete, Note, QueryResult};
-use localnative_core::db::{Pool, migrations, queries, sync};
+use localnative_core::db::models::{CmdDelete, QueryResult};
+use localnative_core::db::{Pool, migrations, queries};
 use rusqlite::Connection;
 
 pub async fn delete(
@@ -32,26 +32,6 @@ pub async fn upgrade(pool: Pool, query: String, limit: u32, offset: u32) -> Opti
         let conn = pool.get().ok()?;
         if let Err(e) = migrations::upgrade(&conn) {
             tracing::error!(%e, "failed to upgrade database");
-            return None;
-        }
-        select_inner(&conn, &query, limit, offset)
-    })
-    .await
-    .unwrap_or(None)
-}
-
-#[allow(dead_code)]
-pub async fn insert(
-    pool: Pool,
-    query: String,
-    limit: u32,
-    offset: u32,
-    note: Note,
-) -> Option<QueryResult> {
-    tokio::task::spawn_blocking(move || {
-        let conn = pool.get().ok()?;
-        if let Err(e) = sync::insert(&conn, &note) {
-            tracing::error!(%e, "failed to insert note");
             return None;
         }
         select_inner(&conn, &query, limit, offset)

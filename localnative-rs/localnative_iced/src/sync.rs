@@ -1,62 +1,60 @@
 use iced::Element;
 use iced::Task;
-use iced::widget::Text;
-use iced::widget::{QRCode, Space, button, column, qr_code, row, text, text_input, tooltip};
+use iced::widget::{QRCode, Space, button, column, qr_code, row, text, text_input};
 use iced_aw::NumberInput;
 
-use localnative_core::db::{Pool, queries};
+use localnative_core::db::Pool;
 use localnative_core::discovery::PeerInfo;
-use once_cell::sync::OnceCell;
-use ouroboros::self_referencing;
-use regex::RegexSet;
-use std::borrow::Cow;
-use std::net::{IpAddr, Ipv4Addr};
+use std::net::IpAddr;
 use std::str::FromStr;
-use tokio_util::sync::CancellationToken;
-
-use std::{
-    net::{Ipv6Addr, SocketAddr},
-    path::PathBuf,
-};
+use std::{net::SocketAddr, path::PathBuf};
 
 use tinyfiledialogs::open_file_dialog;
 
-use crate::{
-    tr,
-    translate::{self, TranslateWithArgs},
-};
+use crate::tr;
 
-use crate::{error_handle, icons::IconItem};
+use crate::icons::IconItem;
 
-use self::ouroboros_impl_sync_view::Heads;
+/// The address the sync server binds to.
+const SERVER_BIND: &str = "0.0.0.0";
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub enum DiscoveryState {
+    #[default]
     Idle,
     Scanning,
     Done,
     Error(String),
 }
 
-#[allow(clippy::too_many_arguments)] // fields required by self_referencing macro
-#[self_referencing]
+#[derive(Debug, Default)]
 pub struct SyncView {
-    ip: String,
+    pub ip: String,
     pub port: u16,
+    /// Pairing code typed for first contact with a new peer.
+    pub code: String,
     pub server_addr: String,
-    pub ip_qr_code: qr_code::Data,
+    /// Shown while this device accepts a new pairing.
+    pub pairing_code: Option<String>,
+    pub ip_qr_code: Option<qr_code::Data>,
     pub sync_state: SyncState,
     pub server_state: ServerState,
-    pub stop: Option<tokio_util::sync::CancellationToken>,
     pub discovered_peers: Vec<PeerInfo>,
     pub discovery_state: DiscoveryState,
-    #[borrows(server_addr)]
-    #[covariant]
-    pub translate: TranslateWithArgs<'this>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+impl SyncView {
+    pub fn new() -> Self {
+        Self {
+            port: 2345,
+            ..Default::default()
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub enum SyncState {
+    #[default]
     Waiting,
     Syncing,
     SyncError(String),
@@ -64,10 +62,12 @@ pub enum SyncState {
     IpAddrParseError,
     IpAddrParsePass,
     FilePathGetError,
-    SyncFromFileUnknownError,
+    SyncFromFileError(String),
 }
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+
+#[derive(Debug, Copy, Clone, Default, PartialEq, Eq)]
 pub enum ServerState {
+    #[default]
     Closed,
     Starting,
     Opened,
@@ -79,12 +79,15 @@ pub enum ServerState {
 pub enum Message {
     IpInput(String),
     PortInput(u16),
+    CodeInput(String),
     ClearAddrInput,
-    SyncToServer,
-    SyncFromServer,
+    /// Sync with the peer at ip:port; the pairing code is used when set.
+    SyncPeer,
     SyncFromFile,
     IpAddrVerify,
     OpenServer,
+    /// Accept one new device: shows a pairing code.
+    StartPairing,
     Waiting,
     CloseServer,
     DiscoverPeers,
@@ -92,55 +95,15 @@ pub enum Message {
 }
 
 impl SyncView {
-    pub fn update_server_addr(&mut self, server_addr: String) {
-        let old = core::mem::take(self);
-        *self = Self::inner_update_server_addr(old, server_addr);
-    }
-
-    fn inner_update_server_addr(self, server_addr: String) -> Self {
-        let Heads {
-            stop,
-            server_state,
-            sync_state,
-            ip_qr_code,
-            port,
-            ip,
-            discovered_peers,
-            discovery_state,
-            ..
-        } = self.into_heads();
-
-        SyncViewBuilder {
-            stop,
-            server_state,
-            sync_state,
-            ip_qr_code,
-            server_addr,
-            port,
-            ip,
-            discovered_peers,
-            discovery_state,
-            translate_builder: |server_addr: &String| {
-                translate::TranslateWithArgs::new("ip-qr", translate::args("ip", server_addr))
-            },
-        }
-        .build()
-    }
-
     pub fn view(&self) -> Element<'_, Message> {
-        let ip_input = text_input("xxx.xxx.xxx.xxx", self.borrow_ip())
+        let ip_input = text_input("xxx.xxx.xxx.xxx", &self.ip)
             .on_input(Message::IpInput)
-            .padding(0)
             .on_submit(Message::IpAddrVerify);
 
-        let ip_tip = tooltip(
-            ip_input,
-            r"输入格式:xxx.xxx.xxx.xxx",
-            iced::widget::tooltip::Position::Bottom,
-        );
+        let port_input = NumberInput::new(&self.port, 0..=u16::MAX, Message::PortInput).padding(0.);
 
-        let port_input =
-            NumberInput::new(self.borrow_port(), 0..=u16::MAX, Message::PortInput).padding(0.);
+        let code_input =
+            text_input(&tr!("pairing-code-placeholder"), &self.code).on_input(Message::CodeInput);
 
         let clear_button = button(IconItem::Clear)
             .padding(0)
@@ -149,33 +112,41 @@ impl SyncView {
         let ip_input_row = row![
             Space::new().width(iced::Length::Fill),
             text(tr!("input-ip")),
-            ip_tip,
+            ip_input,
             text(":"),
             port_input,
             clear_button,
-            Space::new().width(iced::Length::Fill)
+            Space::new().width(iced::Length::Fill),
+        ];
+
+        // Pairing code: only needed the first time two devices sync.
+        let code_row = row![
+            Space::new().width(iced::Length::Fill),
+            text(tr!("pairing-code")),
+            code_input,
+            Space::new().width(iced::Length::Fill),
         ];
 
         // --- Peer discovery section ---
-        let discover_button_label = match self.borrow_discovery_state() {
+        let discover_button_label = match self.discovery_state {
             DiscoveryState::Idle | DiscoveryState::Done | DiscoveryState::Error(_) => {
-                text("Discover Peers")
+                text(tr!("discover-peers"))
             }
-            DiscoveryState::Scanning => text("Scanning..."),
+            DiscoveryState::Scanning => text(tr!("discover-peers-scanning")),
         };
 
         let mut discover_button = button(row![IconItem::Sync, discover_button_label]).padding(0);
-        if *self.borrow_discovery_state() != DiscoveryState::Scanning {
+        if self.discovery_state != DiscoveryState::Scanning {
             discover_button = discover_button.on_press(Message::DiscoverPeers);
         }
 
         let mut discovery_col = column![discover_button].spacing(4);
 
-        if let DiscoveryState::Error(err) = self.borrow_discovery_state() {
-            discovery_col = discovery_col.push(text(format!("Discovery error: {}", err)));
+        if let DiscoveryState::Error(err) = &self.discovery_state {
+            discovery_col = discovery_col.push(text(err.to_string()));
         }
 
-        let peers = self.borrow_discovered_peers();
+        let peers = &self.discovered_peers;
         if !peers.is_empty() {
             for (idx, peer) in peers.iter().enumerate() {
                 let ip_str = peer
@@ -184,50 +155,42 @@ impl SyncView {
                     .map(|a| a.to_string())
                     .unwrap_or_default();
                 let label = format!(
-                    "{} - {}:{} (v{})",
-                    peer.hostname, ip_str, peer.port, peer.version
+                    "{} — {ip_str}:{} (proto {})",
+                    peer.hostname, peer.port, peer.protocol
                 );
                 let peer_button = button(text(label))
                     .padding(2)
                     .on_press(Message::SelectPeer(idx));
                 discovery_col = discovery_col.push(peer_button);
             }
-        } else if *self.borrow_discovery_state() == DiscoveryState::Done {
-            discovery_col = discovery_col.push(text("No peers found on LAN"));
+        } else if self.discovery_state == DiscoveryState::Done {
+            discovery_col = discovery_col.push(text(tr!("no-peers-found")));
         }
 
-        let sync_from_server_button = button(row![
-            IconItem::SyncFromServer,
-            text(tr!("sync-from-server"))
-        ])
-        .padding(0)
-        .on_press(Message::SyncFromServer);
-
-        let sync_to_server_button =
-            button(row![IconItem::SyncToServer, text(tr!("sync-to-server"))])
+        let sync_with_peer_button =
+            button(row![IconItem::SyncFromServer, text(tr!("sync-with-peer"))])
                 .padding(0)
-                .on_press(Message::SyncToServer);
+                .on_press(Message::SyncPeer);
 
-        let sync_form_file_button =
+        let sync_from_file_button =
             button(row![IconItem::SyncFromFile, text(tr!("sync-from-file"))])
                 .padding(0)
                 .on_press(Message::SyncFromFile);
 
-        let content_text = match self.borrow_sync_state() {
-            SyncState::Waiting => tr!("sync-waiting"),
-            SyncState::Syncing => tr!("sync-syncing"),
-            SyncState::SyncError(err) => {
-                let prefix = tr!("sync-error").to_string();
-                Cow::from(format!("{}{:?}", prefix, err))
+        let content_text: String = match &self.sync_state {
+            SyncState::Waiting => tr!("sync-waiting").into_owned(),
+            SyncState::Syncing => tr!("sync-syncing").into_owned(),
+            SyncState::SyncError(err) => format!("{}{err}", tr!("sync-error")),
+            SyncState::Complete => tr!("sync-complete").into_owned(),
+            SyncState::IpAddrParseError => tr!("sync-ip-parse-error").into_owned(),
+            SyncState::IpAddrParsePass => tr!("sync-ip-parse-complete").into_owned(),
+            SyncState::FilePathGetError => tr!("sync-file-path-error").into_owned(),
+            SyncState::SyncFromFileError(err) => {
+                format!("{}{err}", tr!("sync-error"))
             }
-            SyncState::Complete => tr!("sync-complete"),
-            SyncState::IpAddrParseError => tr!("sync-ip-parse-error"),
-            SyncState::IpAddrParsePass => tr!("sync-ip-parse-complete"),
-            SyncState::FilePathGetError => tr!("sync-file-path-error"),
-            SyncState::SyncFromFileUnknownError => tr!("sync-from-file-unknown-error"),
         };
 
-        let server_button_text = match self.borrow_server_state() {
+        let server_button_text = match self.server_state {
             ServerState::Closed => row![IconItem::CloseServer, text(tr!("closed"))],
             ServerState::Starting => row![IconItem::Sync, text(tr!("starting"))],
             ServerState::Opened => row![IconItem::OpenServer, text(tr!("opened"))],
@@ -236,7 +199,7 @@ impl SyncView {
         };
         let mut server_button = button(server_button_text).padding(0);
 
-        server_button = match self.borrow_server_state() {
+        server_button = match self.server_state {
             ServerState::Closed => server_button.on_press(Message::OpenServer),
             ServerState::Starting | ServerState::Closing | ServerState::Error => {
                 server_button.on_press(Message::Waiting)
@@ -244,29 +207,37 @@ impl SyncView {
             ServerState::Opened => server_button.on_press(Message::CloseServer),
         };
 
+        let mut server_section = column![text(tr!("sync-server-tip")), server_button].spacing(8);
+        if let Some(code) = &self.pairing_code {
+            // The code another device types to pair with this one.
+            server_section = server_section.push(
+                row![
+                    text(tr!("pairing-code-showing")),
+                    text(code.clone()).size(24)
+                ]
+                .spacing(8),
+            );
+        }
+
         let mut res = column![
             text(content_text),
             text(tr!("sync-client-tip")),
             text(tr!("input-ip-tip")),
             ip_input_row,
+            code_row,
             discovery_col,
-            row![
-                sync_from_server_button,
-                sync_to_server_button,
-                sync_form_file_button
-            ]
-            .spacing(20)
-            .align_y(iced::Alignment::Center),
-            text(tr!("sync-server-tip")),
-            server_button
+            row![sync_with_peer_button, sync_from_file_button].spacing(20),
+            server_section,
         ]
         .spacing(20)
         .align_x(iced::Alignment::Center);
 
-        if *self.borrow_server_state() == ServerState::Opened {
+        if self.server_state == ServerState::Opened
+            && let Some(qr) = &self.ip_qr_code
+        {
             res = res
-                .push(Text::new(self.borrow_translate().tr()))
-                .push(QRCode::new(self.borrow_ip_qr_code()));
+                .push(text(self.server_addr.clone()))
+                .push(QRCode::new(qr));
         }
 
         res.into()
@@ -274,117 +245,86 @@ impl SyncView {
 
     pub fn update(&mut self, message: Message, pool: Pool) -> Task<crate::Message> {
         match message {
-            Message::IpInput(input) => {
-                let ip_regex = IP_REGEX_SET.get_or_init(|| {
-                    RegexSet::new([
-                        r"^$",
-                        r"^(25[0-5]|2[0-4]\d|[0-1]?\d?\d)\.?$",
-                        r"^(25[0-5]|2[0-4]\d|[0-1]?\d?\d)\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)\.?$",
-                        r"^(25[0-5]|2[0-4]\d|[0-1]?\d?\d)\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)\.?$",
-                        r"^(25[0-5]|2[0-4]\d|[0-1]?\d?\d)\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)\.(25[0-5]|[0-4]\d|[0-1]?\d?\d)$",
-                    ])
-                    .unwrap()
-                });
-                if ip_regex.is_match(&input) || Ipv6Addr::from_str(&input).is_ok() {
-                    self.with_ip_mut(|ip| *ip = input);
-                }
-            }
-            Message::PortInput(input) => {
-                self.with_port_mut(|port| *port = input);
-            }
-            Message::SyncFromServer => {
-                if let Ok(ip) = IpAddr::from_str(self.borrow_ip()) {
-                    let addr = SocketAddr::new(ip, *self.borrow_port());
-                    self.with_sync_state_mut(|state| *state = SyncState::Syncing);
-                    return Task::perform(
-                        client_sync_from_server(addr, pool.clone()),
-                        crate::Message::SyncResult,
-                    );
-                } else {
-                    self.with_sync_state_mut(|state| *state = SyncState::IpAddrParseError);
+            Message::IpInput(input) => self.ip = input,
+            Message::PortInput(input) => self.port = input,
+            Message::CodeInput(input) => self.code = input,
+            Message::SyncPeer => {
+                match SocketAddr::from_str(&format!("{}:{}", self.ip.trim(), self.port)) {
+                    Ok(addr) => {
+                        self.sync_state = SyncState::Syncing;
+                        let code = self.code.trim().to_string();
+                        let code = (!code.is_empty()).then_some(code);
+                        return Task::perform(
+                            client_sync(addr, code, pool.clone()),
+                            crate::Message::SyncResult,
+                        );
+                    }
+                    Err(_) => self.sync_state = SyncState::IpAddrParseError,
                 }
             }
             Message::ClearAddrInput => {
-                self.with_ip_mut(|ip| ip.clear());
-                self.with_sync_state_mut(|state| *state = SyncState::Waiting);
-
-                self.with_port_mut(|port| *port = 2345);
-            }
-            Message::SyncToServer => {
-                if let Ok(ip) = IpAddr::from_str(self.borrow_ip()) {
-                    let addr = SocketAddr::new(ip, *self.borrow_port());
-                    self.with_sync_state_mut(|state| *state = SyncState::Syncing);
-                    return Task::perform(
-                        client_sync_to_server(addr, pool.clone()),
-                        crate::Message::SyncResult,
-                    );
-                } else {
-                    self.with_sync_state_mut(|state| *state = SyncState::IpAddrParseError);
-                }
+                self.ip.clear();
+                self.code.clear();
+                self.sync_state = SyncState::Waiting;
+                self.port = 2345;
             }
             Message::IpAddrVerify => {
-                if IpAddr::from_str(self.borrow_ip()).is_err() {
-                    self.with_sync_state_mut(|state| *state = SyncState::IpAddrParseError);
+                self.sync_state = if IpAddr::from_str(self.ip.trim()).is_err() {
+                    SyncState::IpAddrParseError
                 } else {
-                    self.with_sync_state_mut(|state| *state = SyncState::IpAddrParsePass);
-                }
+                    SyncState::IpAddrParsePass
+                };
             }
             Message::SyncFromFile => {
                 if let Some(path) = get_sync_file_path() {
-                    self.with_sync_state_mut(|state| *state = SyncState::Syncing);
-
+                    self.sync_state = SyncState::Syncing;
                     return Task::perform(
                         sync_via_file(path, pool.clone()),
-                        crate::Message::SyncOption,
+                        crate::Message::SyncFileResult,
                     );
                 } else {
-                    self.with_sync_state_mut(|state| *state = SyncState::FilePathGetError);
+                    self.sync_state = SyncState::FilePathGetError;
                 }
             }
             Message::OpenServer => {
-                self.with_server_state_mut(|state| *state = ServerState::Starting);
-
+                self.server_state = ServerState::Starting;
+                let addr = format!("{SERVER_BIND}:{}", self.port);
                 return Task::perform(
-                    start_server(*self.borrow_port(), pool.clone()),
-                    crate::Message::StartServerResult,
+                    start_server(addr, pool.clone()),
+                    crate::Message::ServerStartResult,
+                );
+            }
+            Message::StartPairing => {
+                self.server_state = ServerState::Starting;
+                let addr = format!("{SERVER_BIND}:{}", self.port);
+                return Task::perform(
+                    start_pairing(addr, pool.clone()),
+                    crate::Message::ServerStartResult,
                 );
             }
             Message::Waiting => {
                 // waiting...
-                if *self.borrow_server_state() == ServerState::Error {
-                    self.with_server_state_mut(|state| *state = ServerState::Closed);
+                if self.server_state == ServerState::Error {
+                    self.server_state = ServerState::Closed;
                 }
             }
             Message::CloseServer => {
-                self.with_server_state_mut(|state| *state = ServerState::Closing);
-                match self.with_stop_mut(|stop| {
-                    stop.take()
-                        .map(|stop| Task::perform(stop_server(stop), crate::Message::ServerOption))
-                }) {
-                    Some(cmd) => {
-                        return cmd;
-                    }
-                    _ => {
-                        self.with_server_state_mut(|state| *state = ServerState::Closed);
-                    }
-                }
+                self.server_state = ServerState::Closing;
+                let addr = format!("{SERVER_BIND}:{}", self.port);
+                return Task::perform(stop_server(addr), crate::Message::ServerStopResult);
             }
             Message::DiscoverPeers => {
-                self.with_discovery_state_mut(|state| *state = DiscoveryState::Scanning);
-                self.with_discovered_peers_mut(|peers| peers.clear());
+                self.discovery_state = DiscoveryState::Scanning;
+                self.discovered_peers.clear();
                 return Task::perform(discover_lan_peers(), crate::Message::DiscoveryResult);
             }
             Message::SelectPeer(idx) => {
-                // Extract data before mutating to satisfy the borrow checker.
-                let selected = self.borrow_discovered_peers().get(idx).and_then(|peer| {
-                    peer.addresses
-                        .first()
-                        .map(|addr| (addr.to_string(), peer.port))
-                });
-                if let Some((ip_str, peer_port)) = selected {
-                    self.with_ip_mut(|ip| *ip = ip_str);
-                    self.with_port_mut(|port| *port = peer_port);
-                    self.with_sync_state_mut(|state| *state = SyncState::IpAddrParsePass);
+                if let Some(peer) = self.discovered_peers.get(idx)
+                    && let Some(addr) = peer.addresses.first()
+                {
+                    self.ip = addr.to_string();
+                    self.port = peer.port;
+                    self.sync_state = SyncState::IpAddrParsePass;
                 }
             }
         }
@@ -392,36 +332,36 @@ impl SyncView {
     }
 }
 
-impl Default for SyncView {
-    fn default() -> Self {
-        SyncViewBuilder {
-            ip: String::new(),
-            port: 2345,
-            server_addr: String::new(),
-            ip_qr_code: qr_code::Data::new([0]).unwrap(),
-            sync_state: SyncState::Waiting,
-            server_state: ServerState::Closed,
-            stop: None,
-            discovered_peers: Vec::new(),
-            discovery_state: DiscoveryState::Idle,
-            translate_builder: |server_addr: &String| {
-                translate::TranslateWithArgs::new("ip-qr", translate::args("ip", server_addr))
-            },
-        }
-        .build()
+/// Sync with a peer through the JSON dispatcher on a worker thread, so no
+/// database connection is ever held across the UI runtime's awaits.
+pub async fn client_sync(
+    addr: SocketAddr,
+    code: Option<String>,
+    pool: Pool,
+) -> Result<String, String> {
+    let _ = pool; // the dispatcher opens its own pool at the configured path
+    let mut command = serde_json::json!({ "action": "client-sync", "addr": addr.to_string() });
+    if let Some(code) = code {
+        command["code"] = serde_json::json!(code);
     }
-}
-
-pub static IP_REGEX_SET: OnceCell<RegexSet> = OnceCell::new();
-
-pub async fn client_sync_from_server(addr: SocketAddr, pool: Pool) -> anyhow::Result<()> {
-    localnative_core::rpc::run_sync_from_server(&addr, &pool).await?;
-    Ok(())
-}
-
-pub async fn client_sync_to_server(addr: SocketAddr, pool: Pool) -> anyhow::Result<()> {
-    localnative_core::rpc::run_sync_to_server(&addr, &pool).await?;
-    Ok(())
+    let response =
+        tokio::task::spawn_blocking(move || localnative_core::run_sync(&command.to_string()))
+            .await
+            .map_err(|e| e.to_string())?;
+    match serde_json::from_str::<serde_json::Value>(&response) {
+        Ok(value) => {
+            if let Some(error) = value.get("error").and_then(|e| e.as_str()) {
+                Err(error.to_string())
+            } else {
+                Ok(value
+                    .get("client-sync")
+                    .and_then(|s| s.as_str())
+                    .unwrap_or("sync ok")
+                    .to_string())
+            }
+        }
+        Err(_) => Ok(response),
+    }
 }
 
 pub fn get_sync_file_path() -> Option<PathBuf> {
@@ -438,40 +378,79 @@ pub fn get_sync_file_path() -> Option<PathBuf> {
         .map(PathBuf::from)
 }
 
-pub async fn sync_via_file(path: PathBuf, pool: Pool) -> Option<()> {
+pub async fn sync_via_file(path: PathBuf, pool: Pool) -> Result<(), String> {
     tokio::task::spawn_blocking(move || {
-        if let Some(uri) = path.to_str() {
-            let conn = pool.get().map_err(error_handle).ok()?;
-            if let Err(e) = queries::sync_via_attach(&conn, uri) {
-                tracing::error!(%e, "sync via file failed");
-            };
-        }
-        Some(())
+        let Some(uri) = path.to_str() else {
+            return Err("selected path is not valid UTF-8".to_string());
+        };
+        let conn = pool
+            .get()
+            .map_err(|e| format!("database connection error: {e}"))?;
+        localnative_core::db::queries::sync_via_attach(&conn, uri).map_err(|e| format!("{e}"))
     })
     .await
-    .map_err(error_handle)
-    .ok()?
+    .map_err(|e| e.to_string())?
 }
 
-pub fn get_ip() -> Option<String> {
-    use std::net::UdpSocket;
-    UdpSocket::bind("0.0.0.0:0")
-        .and_then(|s| s.connect("8.8.8.8:90").and_then(|_| s.local_addr()))
-        .map(|addr| addr.ip().to_string())
-        .map_err(error_handle)
-        .ok()
+/// Start the sync server through the core's registry. Returns the address a
+/// peer can use, and the pairing code when one was requested.
+pub async fn start_server(addr: String, pool: Pool) -> Result<ServerStarted, String> {
+    let command = serde_json::json!({ "action": "server", "addr": addr });
+    run_server_command(command, pool).await
 }
 
-pub async fn start_server(port: u16, pool: Pool) -> anyhow::Result<CancellationToken> {
-    let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), port);
-    let stop_token = CancellationToken::new();
-    localnative_core::rpc::setup_server(addr, pool, Some(stop_token.clone())).await?;
-    Ok(stop_token)
+pub async fn start_pairing(addr: String, pool: Pool) -> Result<ServerStarted, String> {
+    let command = serde_json::json!({ "action": "server-pairing", "addr": addr });
+    run_server_command(command, pool).await
 }
 
-pub async fn stop_server(stop: CancellationToken) -> Option<()> {
-    stop.cancelled().await;
-    Some(())
+#[derive(Debug, Clone)]
+pub struct ServerStarted {
+    pub address: Option<String>,
+    pub pairing_code: Option<String>,
+}
+
+async fn run_server_command(
+    command: serde_json::Value,
+    _pool: Pool,
+) -> Result<ServerStarted, String> {
+    let response =
+        tokio::task::spawn_blocking(move || localnative_core::run_sync(&command.to_string()))
+            .await
+            .map_err(|e| e.to_string())?;
+    let value: serde_json::Value = serde_json::from_str(&response).map_err(|_| response.clone())?;
+    if let Some(error) = value.get("error").and_then(|e| e.as_str()) {
+        return Err(error.to_string());
+    }
+    Ok(ServerStarted {
+        address: value
+            .get("addresses")
+            .and_then(|a| a.as_array())
+            .and_then(|a| a.first())
+            .and_then(|a| a.as_str())
+            .map(str::to_owned),
+        pairing_code: value
+            .get("pairing-code")
+            .and_then(|c| c.as_str())
+            .map(str::to_owned),
+    })
+}
+
+pub async fn stop_server(addr: String) -> Result<(), String> {
+    let command = serde_json::json!({ "action": "server-stop", "addr": addr });
+    let response =
+        tokio::task::spawn_blocking(move || localnative_core::run_sync(&command.to_string()))
+            .await
+            .map_err(|e| e.to_string())?;
+    match serde_json::from_str::<serde_json::Value>(&response) {
+        Ok(value) if value.get("error").is_none() => Ok(()),
+        Ok(value) => Err(value
+            .get("error")
+            .and_then(|e| e.as_str())
+            .unwrap_or("stop failed")
+            .to_string()),
+        Err(_) => Err(response),
+    }
 }
 
 /// Scan the LAN for Local Native peers via mDNS (3-second timeout).

@@ -227,10 +227,14 @@ impl SearchPage {
             Message::Search => self.handle_search(pool, limit),
             Message::SearchInput(search_value) => {
                 self.search_value = search_value;
+                // A new query starts on the first page, not wherever the
+                // previous query was paged to.
+                self.offset = 0;
                 self.handle_search(pool, limit)
             }
             Message::Clear => {
                 self.search_value.clear();
+                self.offset = 0;
                 self.handle_search(pool, limit)
             }
             Message::Refresh => self.handle_search(pool, limit),
@@ -326,6 +330,7 @@ impl SearchPage {
         match tag_msg {
             crate::tags::Message::Search(text) => self.search_value = text,
         }
+        self.offset = 0;
         self.handle_search(pool, limit)
     }
 
@@ -336,9 +341,16 @@ impl SearchPage {
         limit: u32,
     ) -> Task<crate::Message> {
         match dm {
-            crate::days::Message::Clear => self.handle_search(pool, limit),
+            // A right-click on the chart clears the selection — without this
+            // the range could never be removed once set.
+            crate::days::Message::Clear => {
+                self.range = None;
+                self.offset = 0;
+                self.handle_search(pool, limit)
+            }
             crate::days::Message::Selected { start, end } => {
                 self.range = Some((start, end));
+                self.offset = 0;
                 self.handle_search(pool, limit)
             }
             dm => {

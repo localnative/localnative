@@ -11,8 +11,6 @@ mod search_page;
 mod settings;
 mod sidebar;
 mod style;
-// The ouroboros #[self_referencing] macro generates builder fns with many parameters.
-#[allow(clippy::too_many_arguments)]
 mod sync;
 mod tags;
 mod translate;
@@ -34,7 +32,6 @@ pub use note::NoteView;
 pub use search_page::SearchPage;
 use sidebar::Sidebar;
 pub use tags::TagView;
-use tokio_util::sync::CancellationToken;
 
 use crate::sync::SyncView;
 
@@ -67,7 +64,7 @@ impl Data {
                 rowid: -1,
                 show_modal: false,
             },
-            sync_view: SyncView::default(),
+            sync_view: SyncView::new(),
             settings: settings::Settings {
                 disable_delete_tip_temp: config.disable_delete_tip,
                 language_temp: config.language,
@@ -213,124 +210,89 @@ impl Data {
         self.sync_view.update(sync_msg, self.pool.clone())
     }
 
+    /// Peer sync finished (or failed). Errors arrive as strings from the
+    /// core's JSON envelope; no error type gymnastics.
     fn handle_sync_result_message(
         &mut self,
-        res: anyhow::Result<()>,
+        res: Result<String, String>,
         config: &Config,
     ) -> Task<Message> {
-        if let Err(err) = res {
-            if let Some(io_error) = err.downcast_ref::<std::io::Error>() {
-                self.sync_view.with_sync_state_mut(|state| {
-                    *state = sync::SyncState::SyncError(io_error.to_string())
-                });
+        match res {
+            Err(err) => {
+                self.sync_view.sync_state = sync::SyncState::SyncError(err);
+                Task::none()
             }
-            Task::none()
-        } else {
-            self.sync_view
-                .with_sync_state_mut(|state| *state = sync::SyncState::Complete);
-
-            search_page::search(
-                &self.pool,
-                self.search_page.search_value.clone(),
-                config.limit,
-                self.search_page.offset,
-                self.search_page.range,
-            )
+            Ok(_) => {
+                self.sync_view.sync_state = sync::SyncState::Complete;
+                search_page::search(
+                    &self.pool,
+                    self.search_page.search_value.clone(),
+                    config.limit,
+                    self.search_page.offset,
+                    self.search_page.range,
+                )
+            }
         }
     }
 
-    fn handle_sync_option_message(&mut self, opt: Option<()>, config: &Config) -> Task<Message> {
-        if opt.is_none() {
-            self.sync_view
-                .with_sync_state_mut(|state| *state = sync::SyncState::SyncFromFileUnknownError);
-
-            Task::none()
-        } else {
-            self.sync_view
-                .with_sync_state_mut(|state| *state = sync::SyncState::Complete);
-            search_page::search(
-                &self.pool,
-                self.search_page.search_value.clone(),
-                config.limit,
-                self.search_page.offset,
-                self.search_page.range,
-            )
+    /// File sync finished (or failed) — a failure is no longer reported as
+    /// success.
+    fn handle_sync_file_result_message(
+        &mut self,
+        res: Result<(), String>,
+        config: &Config,
+    ) -> Task<Message> {
+        match res {
+            Err(err) => {
+                self.sync_view.sync_state = sync::SyncState::SyncFromFileError(err);
+                Task::none()
+            }
+            Ok(()) => {
+                self.sync_view.sync_state = sync::SyncState::Complete;
+                search_page::search(
+                    &self.pool,
+                    self.search_page.search_value.clone(),
+                    config.limit,
+                    self.search_page.offset,
+                    self.search_page.range,
+                )
+            }
         }
     }
 
     fn handle_start_server_result_message(
         &mut self,
-        res: anyhow::Result<CancellationToken>,
+        res: Result<sync::ServerStarted, String>,
     ) -> Task<Message> {
         match res {
-            Ok(stop) => {
-                let is_none = sync::get_ip()
-                    .and_then(|ip| {
-                        let addr = ip + ":" + self.sync_view.borrow_port().to_string().as_str();
-                        let state = iced::widget::qr_code::Data::new(&addr).ok();
-                        state.map(|state| (addr, state))
-                    })
-                    .map(|(addr, state)| {
-                        self.sync_view
-                            .with_server_state_mut(|state| *state = sync::ServerState::Opened);
-                        self.sync_view.update_server_addr(addr);
-                        self.sync_view
-                            .with_ip_qr_code_mut(|qr_code| *qr_code = state);
-                    })
-                    .is_none();
-                if is_none {
-                    self.sync_view
-                        .with_server_state_mut(|state| *state = sync::ServerState::Closed);
-                    if let Some(cmd) = self.sync_view.with_stop_mut(|ref_mut_stop| {
-                        ref_mut_stop.take().map(|old_stop| {
-                            Task::batch([
-                                Task::perform(sync::stop_server(old_stop), Message::ServerOption),
-                                Task::perform(sync::stop_server(stop), Message::ServerOption),
-                            ])
-                        })
-                    }) {
-                        return cmd;
-                    }
-                } else {
-                    if self.sync_view.borrow_stop().is_some() {
-                        if let Some(cmd) =
-                            self.sync_view
-                                .with_stop_mut(|ref_mut_stop| match ref_mut_stop.take() {
-                                    Some(old_stop) => {
-                                        ref_mut_stop.replace(stop);
-                                        Some(Task::perform(
-                                            sync::stop_server(old_stop),
-                                            Message::ServerOption,
-                                        ))
-                                    }
-                                    _ => None,
-                                })
-                        {
-                            return cmd;
-                        }
-                    } else {
-                        self.sync_view.with_stop_mut(|ref_mut_stop| {
-                            ref_mut_stop.replace(stop);
-                        });
-                    }
-                }
+            Ok(started) => {
+                self.sync_view.server_state = sync::ServerState::Opened;
+                self.sync_view.pairing_code = started.pairing_code.clone();
+                self.sync_view.ip_qr_code = started
+                    .address
+                    .as_deref()
+                    .and_then(|addr| iced::widget::qr_code::Data::new(addr).ok());
+                self.sync_view.server_addr = started.address.unwrap_or_default();
             }
             Err(err) => {
-                self.sync_view.with_sync_state_mut(|state| {
-                    *state = sync::SyncState::SyncError(err.to_string())
-                });
+                self.sync_view.server_state = sync::ServerState::Error;
+                self.sync_view.sync_state = sync::SyncState::SyncError(err);
             }
         }
         Task::none()
     }
 
-    fn handle_server_option_message(&mut self, opt: Option<()>) -> Task<Message> {
-        if opt.is_some() {
-            self.sync_view
-                .with_server_state_mut(|state| *state = sync::ServerState::Closed);
-        } else {
-            self.sync_view
-                .with_server_state_mut(|state| *state = sync::ServerState::Error);
+    fn handle_server_stop_result_message(&mut self, res: Result<(), String>) -> Task<Message> {
+        match res {
+            Ok(()) => {
+                self.sync_view.server_state = sync::ServerState::Closed;
+                self.sync_view.pairing_code = None;
+                self.sync_view.ip_qr_code = None;
+            }
+            Err(err) => {
+                self.sync_view.server_state = sync::ServerState::Error;
+                self.sync_view.sync_state = sync::SyncState::SyncError(err);
+            }
         }
         Task::none()
     }
@@ -341,13 +303,11 @@ impl Data {
     ) -> Task<Message> {
         match result {
             Ok(peers) => {
-                self.sync_view
-                    .with_discovery_state_mut(|state| *state = sync::DiscoveryState::Done);
-                self.sync_view.with_discovered_peers_mut(|p| *p = peers);
+                self.sync_view.discovery_state = sync::DiscoveryState::Done;
+                self.sync_view.discovered_peers = peers;
             }
             Err(err) => {
-                self.sync_view
-                    .with_discovery_state_mut(|state| *state = sync::DiscoveryState::Error(err));
+                self.sync_view.discovery_state = sync::DiscoveryState::Error(err);
             }
         }
         Task::none()
@@ -386,9 +346,9 @@ impl Data {
             Message::DeleteTipMessage(msg) => self.handle_delete_tip_message(msg, &*config),
             Message::SyncClientMessage(sync_msg) => self.handle_sync_client_message(sync_msg),
             Message::SyncResult(res) => self.handle_sync_result_message(res, &*config),
-            Message::SyncOption(opt) => self.handle_sync_option_message(opt, &*config),
-            Message::StartServerResult(res) => self.handle_start_server_result_message(res),
-            Message::ServerOption(opt) => self.handle_server_option_message(opt),
+            Message::SyncFileResult(res) => self.handle_sync_file_result_message(res, &*config),
+            Message::ServerStartResult(res) => self.handle_start_server_result_message(res),
+            Message::ServerStopResult(res) => self.handle_server_stop_result_message(res),
             Message::DiscoveryResult(result) => self.handle_discovery_result(result),
             Message::SettingsMessage(msg) => self.handle_settings_message(msg, config),
             Message::InitHost(..) => Task::none(),
@@ -414,10 +374,10 @@ pub enum Message {
     RequestClosed,
     ApplyLanguage(Option<()>),
     CloseWindow(Option<()>),
-    SyncResult(anyhow::Result<()>),
-    SyncOption(Option<()>),
-    StartServerResult(anyhow::Result<CancellationToken>),
-    ServerOption(Option<()>),
+    SyncResult(Result<String, String>),
+    SyncFileResult(Result<(), String>),
+    ServerStartResult(Result<sync::ServerStarted, String>),
+    ServerStopResult(Result<(), String>),
     DiscoveryResult(Result<Vec<localnative_core::discovery::PeerInfo>, String>),
     InitHost(()),
     Receiver(Option<QueryResult>),
@@ -463,7 +423,7 @@ pub fn run_app() -> iced::Result {
                     ),
                     Task::perform(translate::init_bundle(language), Message::ApplyLanguage),
                     if is_first_open {
-                        Task::perform(init::WebKind::init_all(None), Message::InitHost)
+                        Task::perform(init::init_all(None), Message::InitHost)
                     } else {
                         Task::none()
                     },
@@ -622,7 +582,9 @@ pub fn logo() -> Option<iced::window::Icon> {
     )
     .ok()
     .and_then(|dyn_img| {
-        let img = dyn_img.to_rgb8();
+        // Window icons are RGBA; handing `from_rgba` an RGB buffer always
+        // fails, which is why the icon never showed.
+        let img = dyn_img.to_rgba8();
         let (width, height) = img.dimensions();
         iced::window::icon::from_rgba(img.into_raw(), width, height).ok()
     })
