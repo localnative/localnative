@@ -11,8 +11,10 @@ use std::path::Path;
 
 /// Sanitize a title into a filename-safe slug.
 ///
-/// Non-alphanumeric characters become hyphens, consecutive hyphens
-/// are collapsed, and leading/trailing hyphens are stripped.
+/// Non-alphanumeric characters become hyphens, consecutive hyphens are
+/// collapsed, leading/trailing hyphens are stripped, and the result is
+/// truncated so the full path always fits the OS limits (255 bytes is the
+/// common denominator; 64 leaves ample room for suffixes).
 fn sanitize_filename(title: &str) -> String {
     let slug: String = title
         .to_lowercase()
@@ -37,32 +39,23 @@ fn sanitize_filename(title: &str) -> String {
     if result.ends_with('-') {
         result.pop();
     }
+    // Bound the length *in bytes* so multi-byte characters can't push the
+    // filename over the filesystem limit, without splitting a character.
+    if result.len() > 64 {
+        let mut end = 64;
+        while end > 0 && !result.is_char_boundary(end) {
+            end -= 1;
+        }
+        result.truncate(end);
+    }
     result
 }
 
-/// Escape a string value for YAML (wrap in quotes if it contains special chars).
+/// Quote a string for YAML using JSON quoting — valid YAML double-quoted
+/// scalars use the same escapes, and unlike ad-hoc rules this never
+/// mis-handles YAML-special unquoted values (`yes`, `null`, `3.14`, `: `).
 fn yaml_escape(s: &str) -> String {
-    if s.is_empty() {
-        return "\"\"".to_string();
-    }
-    // If the string contains characters that need quoting in YAML
-    if s.contains(':')
-        || s.contains('#')
-        || s.contains('\'')
-        || s.contains('"')
-        || s.contains('\n')
-        || s.contains('\\')
-        || s.starts_with(' ')
-        || s.ends_with(' ')
-        || s.starts_with('[')
-        || s.starts_with('{')
-    {
-        // Use double-quoted form, escaping inner double-quotes and backslashes
-        let escaped = s.replace('\\', "\\\\").replace('"', "\\\"");
-        format!("\"{}\"", escaped)
-    } else {
-        s.to_string()
-    }
+    serde_json::to_string(s).expect("strings always serialize")
 }
 
 /// Render a single note as a Markdown string with YAML frontmatter.
@@ -123,15 +116,26 @@ pub fn note_to_markdown(note: &Note) -> String {
     md
 }
 
+/// Outcome of a Markdown export.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct ExportSummary {
+    /// Notes written to disk.
+    pub written: usize,
+    /// Notes that could not be written (logged); the export continued.
+    pub skipped: usize,
+}
+
 /// Export notes to a directory as individual Markdown files.
 ///
-/// If `query` is `Some`, only notes matching the query are exported.
-/// Returns the number of notes exported.
+/// If `query` is `Some`, only notes matching the query are exported. A note
+/// that cannot be written is skipped and counted — one bad title no longer
+/// aborts the whole export — and only a failure to create the output
+/// directory or read the database is an error.
 pub fn export_notes(
     conn: &Connection,
     output_dir: &Path,
     query: Option<&str>,
-) -> Result<usize, ExportError> {
+) -> Result<ExportSummary, ExportError> {
     // Create output directory if it doesn't exist
     fs::create_dir_all(output_dir)?;
 
@@ -142,7 +146,7 @@ pub fn export_notes(
     };
 
     let mut used_names: HashSet<String> = HashSet::new();
-    let mut count = 0;
+    let mut summary = ExportSummary::default();
 
     for note in &notes {
         let base_name = sanitize_filename(&note.title);
@@ -164,11 +168,16 @@ pub fn export_notes(
 
         let file_path = output_dir.join(format!("{}.md", file_name));
         let markdown = note_to_markdown(note);
-        fs::write(&file_path, markdown)?;
-        count += 1;
+        match fs::write(&file_path, markdown) {
+            Ok(()) => summary.written += 1,
+            Err(e) => {
+                tracing::warn!(uuid4 = %note.uuid4, %e, "skipped note during export");
+                summary.skipped += 1;
+            }
+        }
     }
 
-    Ok(count)
+    Ok(summary)
 }
 
 #[derive(Debug)]
@@ -215,8 +224,25 @@ mod tests {
     }
 
     #[test]
+    fn test_sanitize_filename_is_bounded() {
+        // 100 CJK characters is 300 bytes — well past any filename limit.
+        let slug = sanitize_filename(&"长".repeat(100));
+        assert!(
+            slug.len() <= 64,
+            "slug was {slug_len} bytes",
+            slug_len = slug.len()
+        );
+        // Truncation lands on a character boundary.
+        assert!(slug.chars().all(|c| c == '长'));
+    }
+
+    #[test]
     fn test_yaml_escape() {
-        assert_eq!(yaml_escape("simple"), "simple");
+        // Always quoted: the empty string, YAML-special unquoted words, and
+        // anything with structure — JSON quoting is valid YAML.
+        assert_eq!(yaml_escape("simple"), "\"simple\"");
+        assert_eq!(yaml_escape("yes"), "\"yes\"");
+        assert_eq!(yaml_escape("3.14"), "\"3.14\"");
         assert_eq!(yaml_escape("has: colon"), "\"has: colon\"");
         assert_eq!(yaml_escape("has \"quotes\""), "\"has \\\"quotes\\\"\"");
         assert_eq!(yaml_escape(""), "\"\"");
@@ -242,16 +268,37 @@ mod tests {
 
         let md = note_to_markdown(&note);
         assert!(md.starts_with("---\n"));
-        assert!(md.contains("uuid: abcd-1234"));
-        assert!(md.contains("title: Test Note"));
+        assert!(md.contains("uuid: \"abcd-1234\""));
+        assert!(md.contains("title: \"Test Note\""));
         assert!(md.contains("url: \"https://example.com\""));
-        assert!(md.contains("tags: [rust, local-first, sync]"));
+        assert!(md.contains("tags: [\"rust\", \"local-first\", \"sync\"]"));
         assert!(md.contains("is_public: true"));
         assert!(md.contains("# Test Note"));
         assert!(md.contains("## Description"));
         assert!(md.contains("A test description."));
         assert!(md.contains("## Comments"));
         assert!(md.contains("A comment."));
+    }
+
+    #[test]
+    fn test_export_continues_past_unwritable_notes() {
+        let path =
+            std::env::temp_dir().join(format!("ln_export_test_{}.sqlite3", std::process::id()));
+        let conn = crate::db::init_db_at(&path).unwrap();
+        queries_for_export(&conn, "Ordinary note");
+        queries_for_export(&conn, &"长".repeat(100));
+
+        let out = std::env::temp_dir().join(format!("ln_export_test_out_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&out);
+        let summary = export_notes(&conn, &out, None).unwrap();
+        assert_eq!(summary.written, 2, "nothing skipped: {summary:?}");
+        assert_eq!(summary.skipped, 0);
+        let _ = std::fs::remove_dir_all(&out);
+        let _ = std::fs::remove_file(&path);
+    }
+
+    fn queries_for_export(conn: &Connection, title: &str) {
+        db::queries::insert_note(conn, title, "", "", "", "", b"", true).unwrap();
     }
 
     #[test]
@@ -282,101 +329,73 @@ mod tests {
 
     #[test]
     fn test_export_notes_creates_files() {
-        use rusqlite::Connection;
+        let path =
+            std::env::temp_dir().join(format!("ln_export_files_{}.sqlite3", std::process::id()));
+        let conn = crate::db::init_db_at(&path).unwrap();
+        db::queries::insert_note(
+            &conn,
+            "First Note",
+            "https://example.com",
+            "tag1,tag2",
+            "Desc 1",
+            "Comment 1",
+            b"",
+            true,
+        )
+        .unwrap();
+        db::queries::insert_note(
+            &conn,
+            "Second Note",
+            "https://example.org",
+            "tag3",
+            "Desc 2",
+            "",
+            b"",
+            false,
+        )
+        .unwrap();
 
-        let conn = Connection::open_in_memory().unwrap();
-        // Create schema
-        conn.execute_batch(
-            "CREATE TABLE note (
-                uuid4 TEXT NOT NULL,
-                title TEXT NOT NULL,
-                url TEXT NOT NULL,
-                tags TEXT NOT NULL,
-                description TEXT NOT NULL,
-                comments TEXT NOT NULL,
-                annotations BLOB NOT NULL,
-                created_at TEXT NOT NULL,
-                is_public INTEGER NOT NULL DEFAULT 0,
-                metadata TEXT NOT NULL DEFAULT '',
-                updated_at TEXT NOT NULL DEFAULT '',
-                deleted INTEGER NOT NULL DEFAULT 0
-            );
-            CREATE VIRTUAL TABLE note_fts USING fts5(
-                title, url, tags, description,
-                content='note', content_rowid='rowid'
-            );
-            INSERT INTO note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public)
-            VALUES ('uuid-1111', 'First Note', 'https://example.com', 'tag1,tag2', 'Desc 1', 'Comment 1', '', '2024-01-15 10:00:00', 1);
-            INSERT INTO note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public)
-            VALUES ('uuid-2222', 'Second Note', 'https://example.org', 'tag3', 'Desc 2', '', '', '2024-01-16 11:00:00', 0);
-            INSERT INTO note_fts(rowid, title, url, tags, description)
-            SELECT rowid, title, url, tags, description FROM note;",
-        ).unwrap();
-
-        let tmp_dir = std::env::temp_dir().join("localnative_export_test");
+        let tmp_dir =
+            std::env::temp_dir().join(format!("ln_export_files_out_{}", std::process::id()));
         let _ = fs::remove_dir_all(&tmp_dir);
 
-        let count = export_notes(&conn, &tmp_dir, None).unwrap();
-        assert_eq!(count, 2);
+        let summary = export_notes(&conn, &tmp_dir, None).unwrap();
+        assert_eq!(summary.written, 2);
+        assert_eq!(summary.skipped, 0);
         assert!(tmp_dir.join("first-note.md").exists());
         assert!(tmp_dir.join("second-note.md").exists());
 
-        // Verify content of first note
+        // Verify content of the second note
         let content = fs::read_to_string(tmp_dir.join("second-note.md")).unwrap();
-        assert!(content.contains("uuid: uuid-2222"));
+        assert!(content.contains("uuid: \""));
+        assert!(content.contains("title: \"Second Note\""));
         assert!(content.contains("is_public: false"));
 
-        // Cleanup
         let _ = fs::remove_dir_all(&tmp_dir);
     }
 
     #[test]
     fn test_export_duplicate_titles() {
-        use rusqlite::Connection;
+        let path =
+            std::env::temp_dir().join(format!("ln_export_dup_{}.sqlite3", std::process::id()));
+        let conn = crate::db::init_db_at(&path).unwrap();
+        db::queries::insert_note(&conn, "Same Title", "", "", "", "", b"", false).unwrap();
+        db::queries::insert_note(&conn, "Same Title", "", "", "", "", b"", false).unwrap();
 
-        let conn = Connection::open_in_memory().unwrap();
-        conn.execute_batch(
-            "CREATE TABLE note (
-                uuid4 TEXT NOT NULL,
-                title TEXT NOT NULL,
-                url TEXT NOT NULL,
-                tags TEXT NOT NULL,
-                description TEXT NOT NULL,
-                comments TEXT NOT NULL,
-                annotations BLOB NOT NULL,
-                created_at TEXT NOT NULL,
-                is_public INTEGER NOT NULL DEFAULT 0,
-                metadata TEXT NOT NULL DEFAULT '',
-                updated_at TEXT NOT NULL DEFAULT '',
-                deleted INTEGER NOT NULL DEFAULT 0
-            );
-            CREATE VIRTUAL TABLE note_fts USING fts5(
-                title, url, tags, description,
-                content='note', content_rowid='rowid'
-            );
-            INSERT INTO note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public)
-            VALUES ('uuid-aaaa', 'Same Title', '', '', '', '', '', '2024-01-15 10:00:00', 0);
-            INSERT INTO note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public)
-            VALUES ('uuid-bbbb', 'Same Title', '', '', '', '', '', '2024-01-16 11:00:00', 0);
-            INSERT INTO note_fts(rowid, title, url, tags, description)
-            SELECT rowid, title, url, tags, description FROM note;",
-        ).unwrap();
-
-        let tmp_dir = std::env::temp_dir().join("localnative_export_dup_test");
+        let tmp_dir =
+            std::env::temp_dir().join(format!("ln_export_dup_out_{}", std::process::id()));
         let _ = fs::remove_dir_all(&tmp_dir);
 
-        let count = export_notes(&conn, &tmp_dir, None).unwrap();
-        assert_eq!(count, 2);
+        let summary = export_notes(&conn, &tmp_dir, None).unwrap();
+        assert_eq!(summary.written, 2);
         // First one gets the clean name, second gets uuid suffix
         assert!(tmp_dir.join("same-title.md").exists());
-        // Second file should have uuid prefix appended
         let entries: Vec<_> = fs::read_dir(&tmp_dir)
             .unwrap()
             .filter_map(|e| e.ok())
             .collect();
         assert_eq!(entries.len(), 2);
 
-        // Cleanup
         let _ = fs::remove_dir_all(&tmp_dir);
     }
 }

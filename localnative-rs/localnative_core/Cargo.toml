@@ -21,10 +21,11 @@ base64 = { workspace = true }
 uuid = { workspace = true, features = ["v4"] }
 semver = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
-tokio-serde = { workspace = true, features = ["bincode"] }
-futures = { workspace = true }
-tarpc = { workspace = true, features = ["full"] }
-get_if_addrs = { workspace = true }
+bincode = { workspace = true }
+getrandom = { workspace = true }
+if-addrs = { workspace = true }
+snow = { workspace = true }
+blake2 = { workspace = true }
 anyhow = { workspace = true }
 tokio-util = { workspace = true }
 thiserror = { workspace = true }
@@ -34,10 +35,8 @@ r2d2 = { workspace = true }
 r2d2_sqlite = { workspace = true }
 chrono = { workspace = true, default-features = false, features = ["serde"] }
 tracing = { workspace = true }
-governor = { workspace = true }
 mdns-sd = { workspace = true }
 hostname = { workspace = true }
-notify-rust = { workspace = true }
 
 [lib]
 name = "localnative_core"
@@ -46,4 +45,7 @@ crate-type = ["rlib", "cdylib", "staticlib"]
 
 [features]
 default = []
-encryption = []
+# Encrypt the database at rest with SQLCipher. Swaps the bundled SQLite for the
+# bundled SQLCipher build (CommonCrypto on Apple targets, OpenSSL's libcrypto
+# elsewhere — install libssl-dev on Debian/Ubuntu).
+encryption = ["rusqlite/bundled-sqlcipher"]
