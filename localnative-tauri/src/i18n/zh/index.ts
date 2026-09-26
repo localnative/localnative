@@ -26,10 +26,17 @@ const zh: Translation = {
 		StopSyncServer: '关闭服务器',
 		SyncAsServerLocalAddr: '本地服务器地址：{serverAddress}',
 		SyncAsClientConnectServerNotExistModalTitle: '错误',
-		SyncAsClientConnectServerNotExistModalContent: '连接失败'
+		SyncAsClientConnectServerNotExistModalContent: '连接失败',
+		PairingCodePlaceholder: '配对码（首次同步时填写）',
+		PairNewDevice: '配对新设备',
+		PairingCodeShowing: '配对码：'
 	},
 	Settings: {
-		Language: '语言'
+		Language: '语言',
+		CheckForUpdates: '检查更新',
+		CheckingForUpdates: '正在检查…',
+		UpdateUpToDate: '已是最新版本',
+		UpdateFailed: '检查更新失败'
 	}
 };
 

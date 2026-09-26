@@ -26,10 +26,17 @@ const en: BaseTranslation = {
 		StopSyncServer: 'Stop Server',
 		SyncAsServerLocalAddr: 'Local Server Address: {serverAddress}',
 		SyncAsClientConnectServerNotExistModalTitle: 'Error',
-		SyncAsClientConnectServerNotExistModalContent: 'Connect failed'
+		SyncAsClientConnectServerNotExistModalContent: 'Connect failed',
+		PairingCodePlaceholder: 'Pairing code (first sync)',
+		PairNewDevice: 'Pair New Device',
+		PairingCodeShowing: 'Pairing code:'
 	},
 	Settings: {
-		Language: 'Language'
+		Language: 'Language',
+		CheckForUpdates: 'Check for Updates',
+		CheckingForUpdates: 'Checking…',
+		UpdateUpToDate: 'You are up to date',
+		UpdateFailed: 'Update check failed'
 	}
 };
 

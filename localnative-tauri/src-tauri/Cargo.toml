@@ -1,11 +1,10 @@
 [package]
-name = "localnative"
-version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
-license = ""
-repository = ""
-default-run = "localnative"
+name = "localnative-tauri"
+version = "0.5.2"
+description = "Local Native desktop app (Tauri + Svelte)"
+authors = ["Yi Wang"]
+license = "AGPL-3.0"
+default-run = "localnative-tauri"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -21,5 +20,6 @@ tauri-plugin-dialog = "2"
 tauri-plugin-process = "2"
 tauri-plugin-updater = "2"
 localnative_core = { path = "../../localnative-rs/localnative_core" }
+localnative_hostinstall = { path = "../../localnative-rs/localnative_hostinstall" }
 tokio = "1"
 dirs = "7"

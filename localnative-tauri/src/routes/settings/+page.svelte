@@ -19,6 +19,40 @@
   const browserFix = async () => {
     await invoke("fix_browser");
   };
+
+  // Update check is manual and user-initiated: the app makes no network
+  // request on its own.
+  let updateStatus: string = "";
+  let checking = false;
+
+  const checkForUpdates = async () => {
+    if (checking) return;
+    checking = true;
+    updateStatus = $LL.Settings.CheckingForUpdates();
+    try {
+      const { check } = await import("@tauri-apps/plugin-updater");
+      const update = await check();
+      if (update?.available) {
+        const install = confirm(
+          `A new version of Local Native is available (${update.version}). Install now?`,
+        );
+        if (install) {
+          await update.downloadAndInstall();
+          const { relaunch } = await import("@tauri-apps/plugin-process");
+          await relaunch();
+          return;
+        }
+        updateStatus = "";
+      } else {
+        updateStatus = $LL.Settings.UpdateUpToDate();
+      }
+    } catch (err) {
+      console.warn("update check failed:", err);
+      updateStatus = $LL.Settings.UpdateFailed();
+    } finally {
+      checking = false;
+    }
+  };
 </script>
 
 <div class="w-full h-full flex flex-col justify-center items-center gap-4">
@@ -37,4 +71,12 @@
   <div class="flex flex-row justify-between items-center w-96">
     <button class="btn w-full" on:click={browserFix}>Browser Fix</button>
   </div>
+  <div class="flex flex-row justify-between items-center w-96">
+    <button class="btn w-full" on:click={checkForUpdates} disabled={checking}>
+      {$LL.Settings.CheckForUpdates()}
+    </button>
+  </div>
+  {#if updateStatus}
+    <div class="text-sm opacity-70">{updateStatus}</div>
+  {/if}
 </div>
