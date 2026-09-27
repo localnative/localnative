@@ -12,32 +12,23 @@ on:
       - "localnative-browser-extension/**"
       - ".github/workflows/browser-extension.yml"
 
-env:
-  CARGO_TERM_COLOR: always
-
 permissions:
   contents: read
 
 jobs:
-  build-wasm:
-    name: Build WASM App
+  lint-popup:
+    name: Lint popup
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-node@v4
         with:
-          targets: wasm32-unknown-unknown
-      - name: Install Trunk
-        uses: jetli/trunk-action@v0.5.0
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            localnative-browser-extension/wasm-app/target
-          key: ${{ runner.os }}-cargo-wasm-${{ hashFiles('localnative-browser-extension/wasm-app/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-wasm-
-      - name: Build WASM app
-        working-directory: localnative-browser-extension/wasm-app
-        run: trunk build --release
+          node-version: "22"
+      - name: Syntax-check the popup scripts
+        working-directory: localnative-browser-extension/app
+        run: |
+          node --check popup.js
+          node --check popup-i18n.js
+          node --check i18n.js
+          node --check locales/en-US.js
+          node --check locales/zh-CN.js
