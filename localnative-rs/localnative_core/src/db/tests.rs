@@ -338,6 +338,130 @@ fn received_tombstone_with_content_is_stored_stripped() {
     assert_eq!(outcome.rejected, 1);
 }
 
+// ── Note editing ──────────────────────────────────────────────────────────
+
+#[test]
+fn update_changes_only_given_fields_and_bumps_the_token() {
+    let (_p, conn) = test_db("update");
+    let note = queries::insert_note(
+        &conn,
+        "Original title",
+        "https://kept.example",
+        "Rust, web ,",
+        "kept description",
+        "original comment",
+        b"attachment",
+        false,
+    )
+    .unwrap();
+    let before = dbsync::get_wire_note(&conn, &note.uuid4).unwrap().unwrap();
+
+    let updated = queries::update_note(
+        &conn,
+        &note.uuid4,
+        Some("Edited title"),
+        None,
+        Some("rust, web, edited"),
+        None,
+        Some("new comment"),
+        None,
+    )
+    .unwrap();
+
+    assert_eq!(updated.title, "Edited title");
+    assert_eq!(
+        updated.url, "https://kept.example",
+        "absent field untouched"
+    );
+    assert_eq!(
+        updated.tags, "rust,web,edited",
+        "tags normalized on update too"
+    );
+    assert_eq!(updated.description, "kept description");
+    assert_eq!(updated.comments, "new comment");
+    assert_eq!(updated.annotations, "attachment");
+    assert_eq!(updated.created_at, note.created_at);
+
+    let after = dbsync::get_wire_note(&conn, &note.uuid4).unwrap().unwrap();
+    assert!(
+        after.updated_at > before.updated_at,
+        "edit must outrank the version it replaces: {} vs {}",
+        after.updated_at,
+        before.updated_at
+    );
+
+    // The edited text is searchable immediately (FTS triggers fired).
+    assert_eq!(queries::do_search(&conn, "Edited", 10, 0).unwrap().count, 1);
+    assert_eq!(
+        queries::do_search(&conn, "Original", 10, 0).unwrap().count,
+        0,
+        "the old title no longer matches"
+    );
+}
+
+#[test]
+fn update_rejects_unknown_and_deleted_notes() {
+    let (_p, conn) = test_db("update_reject");
+    let err = queries::update_note(
+        &conn,
+        "550e8400-e29b-41d4-a716-446655449999",
+        Some("x"),
+        None,
+        None,
+        None,
+        None,
+        None,
+    )
+    .unwrap_err();
+    assert!(err.to_string().contains("no live note"), "{err}");
+
+    let note = queries::insert_note(&conn, "doomed", "", "", "", "", b"", false).unwrap();
+    queries::delete_note(&conn, note.rowid).unwrap();
+    let err = queries::update_note(
+        &conn,
+        &note.uuid4,
+        Some("resurrected"),
+        None,
+        None,
+        None,
+        None,
+        None,
+    )
+    .unwrap_err();
+    assert!(err.to_string().contains("no live note"), "{err}");
+}
+
+#[test]
+fn update_command_round_trips_through_json() {
+    let (_p, conn) = test_db("update_json");
+    let note = queries::insert_note(&conn, "json title", "", "", "", "", b"", false).unwrap();
+    let cmd = models::Cmd::Update(models::CmdUpdate {
+        uuid4: note.uuid4.clone(),
+        title: Some("edited via json".into()),
+        url: None,
+        tags: None,
+        description: None,
+        comments: None,
+        annotations: None,
+        query: String::new(),
+        limit: 10,
+        offset: 0,
+    });
+    let json = serde_json::to_string(&cmd).unwrap();
+    let parsed: models::Cmd = serde_json::from_str(&json).unwrap();
+    let response = super::process_cmd(parsed, &conn).unwrap();
+    let result: models::QueryResult = serde_json::from_str(&response).unwrap();
+    assert_eq!(result.notes[0].title, "edited via json");
+
+    // The JSON a front-end would actually send.
+    let sent = format!(
+        r#"{{"action":"update","uuid4":"{}","title":"typed edit","query":"","limit":10,"offset":0}}"#,
+        note.uuid4
+    );
+    let parsed: models::Cmd = serde_json::from_str(&sent).expect("front-end update payload parses");
+    assert!(matches!(parsed, models::Cmd::Update(_)));
+}
+
 // ── Last-write-wins and the clock ─────────────────────────────────────────
 
 #[test]

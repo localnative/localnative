@@ -322,16 +322,19 @@ async fn edits_flow_both_directions() {
         .unwrap()
         .uuid4
     };
-    // The client also edits the server's note.
+    // The client also edits the server's note through the real edit path —
+    // update_note mints the newer last-write-wins token itself.
     {
         let conn = client_pool.get().unwrap();
-        let newer = format!(
-            "{:020}-node-client",
-            chrono::Utc::now().timestamp_millis() + 1
-        );
-        conn.execute(
-            "UPDATE note SET title = 'edited by client', updated_at = ?1 WHERE uuid4 = ?2",
-            rusqlite::params![newer, server_uuid],
+        queries::update_note(
+            &conn,
+            &server_uuid,
+            Some("edited by client"),
+            None,
+            None,
+            None,
+            None,
+            None,
         )
         .unwrap();
     }

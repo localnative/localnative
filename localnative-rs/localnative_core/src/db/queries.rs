@@ -21,7 +21,7 @@
 
 use super::models::{
     CmdDelete, CmdExportDb, CmdFilter, CmdImportDb, CmdInsert, CmdSearch, CmdSelect,
-    CmdSyncViaAttach, Day, Note, QueryResult, Tags,
+    CmdSyncViaAttach, CmdUpdate, Day, Note, QueryResult, Tags,
 };
 use super::{
     DbResult, TOMBSTONE_CONTENT, ValidationError, next_update_token, normalize_stored_tags,
@@ -88,6 +88,30 @@ impl CmdInsert {
 impl CmdDelete {
     pub fn process(&self, conn: &Connection) -> DbResult<()> {
         delete_note(conn, self.rowid)
+    }
+}
+
+impl CmdUpdate {
+    pub fn process(&self, conn: &Connection) -> DbResult<Note> {
+        let annotations = self.annotations.as_deref().map(|text| {
+            // Same forms insert accepts: plain UTF-8, or a base64 `data:` URL.
+            match text.split_once(";base64,") {
+                Some((_, data)) => STANDARD
+                    .decode(data.trim())
+                    .unwrap_or_else(|_| text.as_bytes().to_vec()),
+                None => text.as_bytes().to_vec(),
+            }
+        });
+        update_note(
+            conn,
+            &self.uuid4,
+            self.title.as_deref(),
+            self.url.as_deref(),
+            self.tags.as_deref(),
+            self.description.as_deref(),
+            self.comments.as_deref(),
+            annotations.as_deref(),
+        )
     }
 }
 
@@ -239,6 +263,66 @@ pub fn insert_note_with_timestamp(
             annotations,
             created_at,
             is_public,
+            updated_at
+        ],
+    )?;
+
+    let note = conn.query_row(
+        &format!("SELECT {NOTE_COLUMNS} FROM note WHERE uuid4 = ?1"),
+        rusqlite::params![uuid4],
+        map_note,
+    )?;
+    Ok(note)
+}
+
+/// Edit an existing note (identified by `uuid4`), leaving absent fields
+/// and `created_at`/`is_public` untouched. The row gets a fresh
+/// last-write-wins token — strictly newer than the version it replaces — so
+/// the edit outranks the older copy on every peer. Updating a deleted note is
+/// an error: un-deleting through the edit path would silently resurrect it
+/// with a token the tombstone should keep beating.
+#[allow(clippy::too_many_arguments)]
+pub fn update_note(
+    conn: &Connection,
+    uuid4: &str,
+    title: Option<&str>,
+    url: Option<&str>,
+    tags: Option<&str>,
+    description: Option<&str>,
+    comments: Option<&str>,
+    annotations: Option<&[u8]>,
+) -> DbResult<Note> {
+    use rusqlite::OptionalExtension;
+    let current: Option<(i64, String)> = conn
+        .query_row(
+            "SELECT rowid, updated_at FROM note WHERE uuid4 = ?1 AND deleted = 0",
+            rusqlite::params![uuid4],
+            |row| Ok((row.get(0)?, row.get(1)?)),
+        )
+        .optional()?;
+    let Some((rowid, previous_token)) = current else {
+        return Err(ValidationError::Other(format!("no live note with uuid4 {uuid4}")).into());
+    };
+
+    let updated_at = next_update_token(conn, Some(&previous_token))?;
+    conn.execute(
+        "UPDATE note SET
+             title = COALESCE(?2, title),
+             url = COALESCE(?3, url),
+             tags = COALESCE(?4, tags),
+             description = COALESCE(?5, description),
+             comments = COALESCE(?6, comments),
+             annotations = COALESCE(?7, annotations),
+             updated_at = ?8
+         WHERE rowid = ?1",
+        rusqlite::params![
+            rowid,
+            title,
+            url,
+            tags.map(normalize_tags),
+            description,
+            comments,
+            annotations,
             updated_at
         ],
     )?;
