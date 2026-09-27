@@ -146,8 +146,11 @@ Android/iOS/Tauri toolchains.
 - [x] **F7 — The native-messaging host installer was duplicated.** Fixed: one
   shared crate, `localnative_hostinstall`, used by Iced and Tauri; Tauri's
   `unwrap()`s are gone.
-- [ ] **F8 — The unshipped WASM popup asks for more than the shipped one**
-  (`tabs`, `<all_urls>`). Open: depends on the product decision below.
+- [x] **F8 — The unshipped WASM popup asked for more than the shipped one**
+  (`tabs`, `<all_urls>`). Fixed by decision: deleted (`wasm-app/` never
+  shipped, depended on personal-fork git branches, and the JS popup has the
+  smaller permission set). The browser-extension CI now syntax-checks the
+  popup instead of building the WASM app.
 
 ### Release engineering and docs
 
@@ -184,31 +187,34 @@ Android/iOS/Tauri toolchains.
   edits, local stop. Unit tests moved onto the real migration chain (scratch
   files). 69 unit + 9 integration tests pass.
 
-### Product decisions (recommendations, not code changes)
+### Product decisions (decided 2026-09-26)
 
-- **One desktop shell.** Recommendation: Tauri (OS webview gives CJK fonts,
-  IME and accessibility; shares UI with the extension popup). If a pure-Rust
-  UI matters more, egui — the CJK font fix in F2 applies either way. Freeze
-  Iced once the choice is made; delete the 38-line `localnative-mac` stub.
-- **`is_public`** has had no meaning since SSB was removed. Either give it one
-  (for example "never leaves this device") or drop it from the UI.
-- **One extension popup.** Ship the WASM popup or delete it; maintaining both
-  doubles the work. Its git dependencies on personal-fork branches need an
-  upstream release first (this is also F8).
-- **Typed bindings (UniFFI).** Replacing hand-written JSON on mobile with
-  generated Kotlin/Swift bindings would prevent the F4/F5 class of bugs.
+- [x] **One desktop shell: Tauri.** The OS webview brings CJK text, input
+  methods and accessibility for free, and its UI patterns are shared with the
+  extension popup and website. Executed: `localnative_egui` and the
+  `localnative-mac` Xcode stub are deleted; Iced is frozen (kept compiling,
+  no new features) until its users have moved.
+- [x] **`is_public` retired from the UIs, column kept.** It has meant nothing
+  since SSB was removed in 0.5.0. No UI showed a toggle any more; the last
+  vestiges (Tauri's dead insert commands, egui's "private" badge) are gone.
+  The schema column stays — removing it buys nothing and forces a migration;
+  if sharing ever returns, the field is there with the right name.
+- [x] **One extension popup: the shipped JS one.** `wasm-app/` is deleted
+  (never shipped, personal-fork git dependencies, larger permission request
+  than the MV3 popup). See F8.
+- [ ] **Typed bindings (UniFFI)** for Kotlin/Swift — deferred on purpose:
+  the structured error envelope + real integration tests closed the bug
+  class it would have prevented, and the mobile call path shouldn't be
+  rewritten twice in one month. Revisit when the next mobile-facing core
+  feature lands (note editing on mobile, or sync from the share extension).
 
 ## Backlog (carried over)
 
-### egui Desktop Front-end (`localnative_egui/`)
-Remaining work to reach Iced parity:
-- Note editing — core only inserts/deletes; needs an update path
-- Arbitrary date-range filtering / a date-picker widget (single-day filtering is wired)
-- Localization via Fluent (Iced uses `translate.rs` + `locales/`)
-- Day-histogram chart visualization (Iced uses `plotters_bridge.rs`)
-- Hosting a sync server + mDNS peer discovery
-- Import/export entry points (core `import.rs`, `export.rs`)
-- Wire into `xtask release` packaging and CI once it reaches parity
+### Note editing in the core
+`db::models::Cmd` has insert and delete but no update; editing today means
+delete + re-insert, which mints a new UUID and a new token. An update command
+(LWW token bump, FTS trigger already handles the index) unblocks editing in
+every front-end at once — and is the natural moment to revisit UniFFI.
 
 ### Reduce Excessive `.clone()` in GUI Layer
 - `localnative_iced/src/chart.rs`: `raw.clone()` in `fold_map` callers, `data.clone().into_iter()`, `will_draw.days.clone()`

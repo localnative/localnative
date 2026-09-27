@@ -5,6 +5,11 @@ title: Changelog
 [Updates](https://chuanyan.live/tags/localnative)
 
 ## Unreleased
+- **Desktop consolidates on Tauri**: the experimental egui front-end and the
+  macOS Xcode stub are removed. Tauri is the desktop app; the Iced GUI is
+  frozen (still builds, no new features). The unshipped WASM popup is gone —
+  the shipped JS popup has the smaller permission set — and `is_public` is
+  retired from the UIs (the schema column stays).
 - **Sync rebuilt (schema 0.11.0, sync protocol v2)**: encrypted and
   authenticated peer sync (Noise `XX`/`XXpsk3`) with device pairing via a
   one-time code; notes move in byte-budgeted batches over one session with

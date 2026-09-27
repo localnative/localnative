@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Local Native is a cross-platform tool for saving and syncing notes in a local SQLite database without going through any centralized service. A shared Rust core (`localnative_core`) is wrapped by every platform front-end: native Rust GUIs (Iced, plus a newer egui/eframe front-end), CLI, Tauri, Android, iOS, macOS, and a browser extension.
+Local Native is a cross-platform tool for saving and syncing notes in a local SQLite database without going through any centralized service. A shared Rust core (`localnative_core`) is wrapped by every platform front-end: the Rust GUI (Iced), CLI, Tauri (the desktop app), Android, iOS, and a browser extension.
 
 ## Big-Picture Architecture
 
@@ -51,11 +51,6 @@ Standalone core modules (not part of the JSON `Cmd` dispatch) driven by dedicate
 - Charts are rendered with a local **`plotters_bridge.rs`** — `plotters-iced` was dropped because it is incompatible with iced 0.14, so chart drawing is reimplemented against the raw `plotters` backend.
 - Localization uses **Fluent** (`fluent-bundle`); translation strings live in `localnative-rs/locales/` and are wired through `translate.rs`.
 
-### egui GUI (`localnative_egui/`)
-- Newer desktop front-end on **eframe/egui** (wgpu backend), scaffolded as the first step of consolidating the desktop GUIs onto egui (retiring Iced and the Mac stub). Entry in `main.rs`; state/UI in `app.rs`.
-- Unlike the JSON-dispatch FFI front-ends, it calls the synchronous `db::queries` layer directly on the UI thread (same as Iced); only peer sync runs off-thread, via `localnative_core::run_sync` polled through an `mpsc` channel.
-- eframe 0.34 drives the app through `App::ui` (not the deprecated `update`); panels use `Panel::*` + `show_inside`. Not yet at Iced parity — see `TODO.md` ("egui Desktop Front-end").
-
 ## Common Commands
 
 ### Rust core (primary work happens here)
@@ -64,7 +59,6 @@ cd localnative-rs
 
 cargo build                      # build the workspace
 cargo run -p localnative_iced    # run the native GUI (Iced)
-cargo run -p localnative_egui    # run the native GUI (egui/eframe)
 cargo test                       # run all tests
 cargo test test_serde            # run a single test by name
 
@@ -98,7 +92,7 @@ cd localnative-tauri && yarn install && yarn dev           # build / lint / form
 cd localnative-android && ./gradlew assembleDebug          # installDebug to push to a device
 ```
 
-Other platform front-ends: `localnative-ios`, `localnative-mac` (stub), `localnative-browser-extension` (+ `wasm-app/`). Build scripts for packaging/cross-compiling live in `script/`.
+Other platform front-ends: `localnative-ios`, `localnative-browser-extension`. Build scripts for packaging/cross-compiling live in `script/`.
 
 ## Conventions & Gotchas
 
