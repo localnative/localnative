@@ -210,11 +210,12 @@ Android/iOS/Tauri toolchains.
 
 ## Backlog (carried over)
 
-### Note editing in the core
-`db::models::Cmd` has insert and delete but no update; editing today means
-delete + re-insert, which mints a new UUID and a new token. An update command
-(LWW token bump, FTS trigger already handles the index) unblocks editing in
-every front-end at once — and is the natural moment to revisit UniFFI.
+### Note editing UIs
+The core has an `update` command (identified by uuid4, absent fields
+untouched, fresh last-write-wins token so the edit propagates like any newer
+version); the front-ends have no edit forms yet. Wiring an edit view into
+Tauri (and the extension popup) is the remaining work — and shipping the
+first of those is the natural moment to revisit UniFFI.
 
 ### Reduce Excessive `.clone()` in GUI Layer
 - `localnative_iced/src/chart.rs`: `raw.clone()` in `fold_map` callers, `data.clone().into_iter()`, `will_draw.days.clone()`

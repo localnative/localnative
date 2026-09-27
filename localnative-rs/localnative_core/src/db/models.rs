@@ -62,6 +62,7 @@ pub enum Cmd {
     Insert(CmdInsert),
     InsertImage(CmdInsert),
     Delete(CmdDelete),
+    Update(CmdUpdate),
     Select(CmdSelect),
     Search(CmdSearch),
     Filter(CmdFilter),
@@ -104,6 +105,31 @@ pub struct CmdSearch {
 pub struct CmdDelete {
     pub query: String,
     pub rowid: i64,
+    pub limit: u32,
+    pub offset: u32,
+}
+
+/// Edit an existing note. Identified by `uuid4` (stable across sync); only
+/// the fields present change. The note's last-write-wins token is bumped, so
+/// the edit propagates to peers like any newer version.
+#[derive(Serialize, Deserialize, Debug)]
+pub struct CmdUpdate {
+    pub uuid4: String,
+    #[serde(default)]
+    pub title: Option<String>,
+    #[serde(default)]
+    pub url: Option<String>,
+    #[serde(default)]
+    pub tags: Option<String>,
+    #[serde(default)]
+    pub description: Option<String>,
+    #[serde(default)]
+    pub comments: Option<String>,
+    /// Annotations as on insert: UTF-8 text, or a base64 `data:` URL for
+    /// binary content.
+    #[serde(default)]
+    pub annotations: Option<String>,
+    pub query: String,
     pub limit: u32,
     pub offset: u32,
 }

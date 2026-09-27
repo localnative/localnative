@@ -170,6 +170,12 @@ pub fn process_cmd(cmd: Cmd, conn: &Connection) -> DbResult<String> {
                 queries::do_search(conn, &delete.query, delete.limit, delete.offset)?;
             Ok(serde_json::to_string(&search_result)?)
         }
+        Cmd::Update(ref update) => {
+            update.process(conn)?;
+            let search_result =
+                queries::do_search(conn, &update.query, update.limit, update.offset)?;
+            Ok(serde_json::to_string(&search_result)?)
+        }
         Cmd::Select(ref select) => {
             let select_result = select.process(conn)?;
             Ok(serde_json::to_string(&select_result)?)
