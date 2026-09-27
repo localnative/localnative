@@ -1,7 +1,6 @@
 [workspace]
 members = [
     "localnative_iced",
-    "localnative_egui",
     "localnative_core",
     "localnative_cli",
     "localnative_hostinstall",
@@ -11,8 +10,7 @@ resolver = "2"
 
 # Shared release version for the Rust crates. These ship together, so they
 # carry one number; every other platform versions independently -- see
-# docs/VERSIONING.md. localnative_egui is deliberately excluded until it
-# reaches parity with the Iced front-end.
+# docs/VERSIONING.md.
 [workspace.package]
 version = "0.7.0"
 
@@ -62,9 +60,6 @@ plotters = { version = "0.3", features = ["histogram"] }
 rand = "0.10"
 iced_aw = { version = "0.14", default-features = false, features = ["wrap", "number_input", "card"] }
 iced = { version = "0.14", features = ["canvas", "qr_code", "tokio"] }
-iced_runtime = { version = "0.14" }
-# egui/eframe desktop front-end (localnative_egui).
-eframe = "0.36"
 winreg = "0.56"
 jni = { version = "0.22", default-features = false }
 hex = "0.4"

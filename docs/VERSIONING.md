@@ -50,9 +50,6 @@ together and carry one version, declared once in `[workspace.package]` in
 like the app stores forbids reuse and downgrades — so this number must only
 ever move forward.
 
-`localnative_egui` is deliberately excluded and pinned at `0.1.0` until it
-reaches parity with the Iced front-end.
-
 ## Which script bumps what
 
 | Command | Touches |

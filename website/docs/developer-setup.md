@@ -96,12 +96,6 @@ yarn check        # svelte-check type check
 ```
 Tauri uses `yarn` (`yarn.lock` is the committed lockfile).
 
-#### egui (Rust) front-end
-```
-cd localnative-rs
-cargo run -p localnative_egui
-```
-
 ## Mobile
 #### Android
 

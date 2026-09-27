@@ -15,15 +15,13 @@ A cross-platform tool to save and sync your notes in local SQLite database witho
 
 localnative-android: android app
 
-localnative-browser-extension: browser extension app and host manifest template (includes `wasm-app/`, an experimental WASM popup)
+localnative-browser-extension: browser extension app and host manifest template
 
 localnative-ios: ios app
 
-localnative-mac: macOS Xcode stub (not a shipping app)
-
 localnative-rs: rust code
 - `localnative_core`: the core native module every front-end shares
-- `localnative_iced` / `localnative_egui`: Rust desktop GUIs
+- `localnative_iced`: Rust GUI
 - `localnative_cli`: CLI binaries, incl. the `localnative-web-ext-host` extension host
 - `localnative_hostinstall`: browser native-messaging manifest installer shared by the desktop apps
 
