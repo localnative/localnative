@@ -2,25 +2,6 @@ import { invoke } from "@tauri-apps/api/core";
 import { emit } from "@tauri-apps/api/event";
 import { debounce } from "underscore";
 
-export function cmdInsertImage(dataURL: any) {
-  const message = {
-    action: "insert-image",
-
-    title: "Screenshot_" + new Date().toISOString(),
-    url: "mime://image/png",
-    tags: "screenshot",
-    description: "",
-    comments: "",
-    annotations: dataURL,
-
-    limit: globalThis.AppState.limit,
-    offset: globalThis.AppState.offset,
-    is_public: false,
-  };
-
-  cmd(message);
-}
-
 export function cmdSearchOrFilter(searchText: string) {
   const range = globalThis.AppState.range;
   if (range) {
@@ -59,46 +40,6 @@ export function cmdDelete(searchText: string, rowid: number) {
     offset: globalThis.AppState.offset,
   };
 
-  cmd(message);
-}
-
-export function makeTags(str: string) {
-  const s = str.replace(/,+/g, " ").trim();
-  const l = s.replace(/\s+/g, ",").split(",");
-  const collection = new Set<string>();
-
-  l.forEach(function (tag) {
-    collection.add(tag);
-  });
-
-  const arr = new Array<string>();
-  collection.forEach((v) => arr.push(v));
-
-  return arr.join(",");
-}
-
-export function cmdInsert(
-  title: string,
-  url: string,
-  tags_text: string,
-  tags_desc: string,
-  annotations: any,
-  is_public: any,
-) {
-  const message = {
-    action: "insert",
-    title: title,
-    url: url,
-    tags: makeTags(tags_text),
-    description: tags_desc,
-    comments: "",
-    annotations: annotations,
-
-    limit: globalThis.AppState.limit,
-    offset: globalThis.AppState.offset,
-    is_public: is_public,
-  };
-  console.log(message);
   cmd(message);
 }
 
