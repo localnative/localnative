@@ -9,6 +9,9 @@ title: Changelog
   absent fields are untouched and a fresh last-write-wins token means the
   edit propagates to peers like any newer version (and can't resurrect a
   deleted note).
+- **Tauri**: the day histogram and the tag panel show data again (they read
+  field names the core no longer sends); zooming the histogram keeps the
+  search term and paging inside a zoomed range works.
 - **Desktop consolidates on Tauri**: the experimental egui front-end and the
   macOS Xcode stub are removed. Tauri is the desktop app; the Iced GUI is
   frozen (still builds, no new features). The unshipped WASM popup is gone —

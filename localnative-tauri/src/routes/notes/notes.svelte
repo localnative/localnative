@@ -25,7 +25,6 @@
 
 	onMount(async () => {
 		refreshNotesUnlistenFn = await listen<any>('refreshNotes', (ev) => {
-			console.log('notes:' + JSON.stringify(ev.payload.notes));
 			lastNotes = ev.payload.notes;
 		});
 	});
@@ -39,6 +38,9 @@
 	const drawQR = async (uuid: string, url: string) => {
 		await QRCode.toCanvas(document.getElementById(`qr_${uuid}`), url);
 	};
+
+	// An untagged note has `tags === ''`, which would split into one empty tag.
+	const tagsOf = (note: { tags: string }) => note.tags.split(',').filter((tag) => tag !== '');
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -68,7 +70,7 @@
 						<div>uuid: {note.uuid4.substring(0, 6) + '...'}</div>
 					</div>
 					<div class="flex flex-row gap-2">
-						{#each note.tags.split(',') as tag}
+						{#each tagsOf(note) as tag}
 							<button
 								class="btn btn-xs normal-case"
 								on:click={() => emit('update_search_tag', { tag })}

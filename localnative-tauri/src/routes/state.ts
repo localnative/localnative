@@ -9,9 +9,12 @@ declare global {
 	var LastSyncServerIp: string;
 }
 
+/** An inclusive day range as the core's `filter` command takes it: `YYYY-MM-DD`. */
+export type DayRange = [string, string];
+
 export class State {
 	private _limit = 10;
-	private _range: [number, number] | null = null;
+	private _range: DayRange | null = null;
 	private _query = '';
 	private _count = 0;
 	private _offset = 0;
@@ -32,6 +35,7 @@ export class State {
 		this._count = value;
 	}
 
+	/** The search text behind the current list, so a chart zoom can keep it. */
 	public get query(): string {
 		return this._query;
 	}
@@ -39,10 +43,10 @@ export class State {
 		this._query = value;
 	}
 
-	public get range(): [number, number] | null {
+	public get range(): DayRange | null {
 		return this._range;
 	}
-	public set range(value: [number, number] | null) {
+	public set range(value: DayRange | null) {
 		this._range = value;
 	}
 

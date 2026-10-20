@@ -1,241 +1,107 @@
 <script lang="ts">
 	import { cmdFilter } from '../cmd';
-	import { emit, listen, type UnlistenFn } from '@tauri-apps/api/event';
+	import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 	import { onDestroy, onMount } from 'svelte';
 	import * as echarts from 'echarts';
 
-	let mainChartElement: HTMLElement | null;
-	let timeSeriesChart: echarts.ECharts;
+	/** One bar per day, as the core's `days` facet sends it. */
+	type Day = { date: string; count: number };
+
+	let mainChartElement: HTMLElement | null = null;
+	let timeSeriesChart: echarts.ECharts | null = null;
 	let refreshChartUnlistenFn: UnlistenFn | null = null;
 	let resetChartZoomUnlistenFn: UnlistenFn | null = null;
-	let lastUseDays: Array<{ k: string; v: number; dd: Date; month: Date }> | null = null;
+	// The days behind the drawn bars; the zoom window indexes into them.
+	let drawnDays: Day[] | null = null;
 
-	$: {
-		if (mainChartElement) {
-			timeSeriesChart = echarts.init(mainChartElement);
-		}
-	}
+	const onResize = () => timeSeriesChart?.resize();
 
 	onMount(async () => {
-		refreshChartUnlistenFn = await listen<any>('refreshChart', (ev) => {
-			console.log(ev.payload.days);
+		if (mainChartElement) {
+			timeSeriesChart = echarts.init(mainChartElement);
+			// Registered once: registering on every redraw stacked up one
+			// handler per redraw, each firing its own filter for one zoom.
+			timeSeriesChart.on('datazoom', onDataZoom);
+		}
+
+		refreshChartUnlistenFn = await listen<{ days: Day[] }>('refreshChart', (ev) => {
 			refreshChart(ev.payload.days);
 		});
 
-		resetChartZoomUnlistenFn = await listen<any>('resetChartZoom', (ev) => {
-			if (timeSeriesChart) {
-				timeSeriesChart.dispatchAction({
-					type: 'dataZoom',
-					start: 0,
-					end: 100
-				});
-			}
+		resetChartZoomUnlistenFn = await listen('resetChartZoom', () => {
+			// Silent: a programmatic reset must not fire a filter of its own.
+			timeSeriesChart?.dispatchAction({ type: 'dataZoom', start: 0, end: 100 }, { silent: true });
 		});
 
-		window.addEventListener('resize', () => {
-			if (lastUseDays != null) {
-				refreshChart(lastUseDays);
-			}
-		});
+		window.addEventListener('resize', onResize);
 	});
 
 	onDestroy(() => {
-		if (refreshChartUnlistenFn) {
-			refreshChartUnlistenFn();
-		}
-
-		if (resetChartZoomUnlistenFn) {
-			resetChartZoomUnlistenFn();
-		}
+		refreshChartUnlistenFn?.();
+		resetChartZoomUnlistenFn?.();
+		window.removeEventListener('resize', onResize);
+		timeSeriesChart?.dispose();
+		timeSeriesChart = null;
 	});
 
-	// const addDays = (dateStr: string, days: number) => {
-	// 	var date = new Date(dateStr.valueOf());
-	// 	date.setDate(date.getDate() + days);
-	// 	return date;
-	// };
+	/** The zoom window selects an inclusive day range (`YYYY-MM-DD`). */
+	const onDataZoom = () => {
+		if (!timeSeriesChart || !drawnDays || drawnDays.length === 0) return;
+		// After a zoom echarts writes the window back as category indices.
+		const zoom = (timeSeriesChart.getOption() as any).dataZoom?.[0];
+		if (!zoom) return;
+		const last = drawnDays.length - 1;
+		const first = drawnDays[Math.min(last, Math.max(0, zoom.startValue ?? 0))];
+		const end = drawnDays[Math.min(last, Math.max(0, zoom.endValue ?? last))];
+		if (!first || !end) return;
 
-	// const refreshChart = (days: Array<{ k: string; v: number; dd: Date; month: Date }>) => {
-	// 	lastUseDays = days;
+		globalThis.AppState.clearOffset();
+		globalThis.AppState.range = [first.date, end.date];
+		cmdFilter(globalThis.AppState.query, first.date, end.date);
+	};
 
-	// 	let width =
-	// 		document.getElementsByTagName('body')[0].clientWidth -
-	// 		(document.getElementById('nav')?.clientWidth ?? 0) -
-	// 		(document.getElementById('tags')?.clientWidth ?? 0);
+	const sameDays = (a: Day[], b: Day[]) =>
+		a.length === b.length && a.every((day, i) => day.date === b[i].date && day.count === b[i].count);
 
-	// 	let lnDayChart = dc.barChart('#ln-day-chart');
-	// 	let lnMonthChart = dc.barChart('#ln-month-chart');
+	const refreshChart = (days: Day[]) => {
+		if (!timeSeriesChart) return;
+		// The histogram always spans every day, so the reply to a range filter
+		// carries the bars already drawn: leave the zoom window alone then. A
+		// new query draws new bars and starts from the full range.
+		if (drawnDays && sameDays(days, drawnDays)) return;
+		drawnDays = days;
 
-	// 	var dateFormatSpecifier = '%Y-%m-%d';
-	// 	var dateFormat = d3.timeFormat(dateFormatSpecifier);
-	// 	var dateFormatParser = d3.timeParse(dateFormatSpecifier);
-	// 	var dtMax = new Date().toISOString().substr(0, 10);
-	// 	var dtMin = dtMax;
-	// 	if (days.length) {
-	// 		dtMin = dtMax = days[0].k;
-	// 	}
-
-	// 	days.forEach(function (d) {
-	// 		d.dd = dateFormatParser(d.k)!;
-	// 		d.month = d3.timeMonth(d.dd ?? undefined);
-	// 		dtMin = d.k < dtMin ? d.k : dtMin;
-	// 		dtMax = d.k > dtMax ? d.k : dtMax;
-	// 	});
-
-	// 	console.log(days);
-
-	// 	var ln = crossfilter(days);
-	// 	var all = ln.groupAll();
-
-	// 	// Dimensions
-	// 	var daysDimension = ln.dimension(function (d) {
-	// 		return d.dd;
-	// 	});
-
-	// 	var daysGroup = daysDimension.group().reduceSum(function (d) {
-	// 		return d.v;
-	// 	});
-
-	// 	var months = ln.dimension(function (d) {
-	// 		return d.month;
-	// 	});
-
-	// 	var monthsGroup = months.group();
-
-	// 	lnDayChart
-	// 		.width(width - 50) // sub margin left and right
-	// 		.height(80)
-	// 		.transitionDuration(1000)
-	// 		.margins({ top: 10, right: 10, bottom: 20, left: 40 })
-	// 		.dimension(months)
-	// 		.centerBar(true)
-	// 		.gap(1)
-	// 		.mouseZoomable(true)
-	// 		.rangeChart(lnMonthChart)
-	// 		.x(d3.scaleTime().domain([addDays(dtMin, -31), addDays(dtMax, 31)]))
-	// 		.round(d3.timeMonth.round)
-	// 		.xUnits(function (start, stop, step) {
-	// 			if (typeof step == 'number' || typeof step == 'undefined') {
-	// 				return d3.timeMonths(new Date(start), new Date(stop), step);
-	// 			} else {
-	// 				return d3.timeMonths(new Date(start), new Date(stop), parseInt(step[0]));
-	// 			}
-	// 		})
-	// 		.alwaysUseRounding(true)
-	// 		.elasticY(true)
-	// 		.renderHorizontalGridLines(true)
-	// 		.brushOn(true)
-	// 		.group(daysGroup);
-
-	// 	lnMonthChart
-	// 		.width(width - 50) // sub margin left and right
-	// 		.height(70)
-	// 		.margins({ top: 10, right: 10, bottom: 20, left: 40 })
-	// 		.dimension(months)
-	// 		.group(monthsGroup)
-	// 		.centerBar(true)
-	// 		.gap(1)
-	// 		.x(d3.scaleTime().domain([addDays(dtMin, -31), addDays(dtMax, 31)]))
-	// 		.y(d3.scaleLinear().domain([0, 31]))
-	// 		.round(d3.timeMonth.round)
-	// 		.alwaysUseRounding(true)
-	// 		.brushOn(true)
-	// 		.xUnits(function (start, stop, step) {
-	// 			if (typeof step == 'number' || typeof step == 'undefined') {
-	// 				return d3.timeMonths(new Date(start), new Date(stop), step);
-	// 			} else {
-	// 				return d3.timeMonths(new Date(start), new Date(stop), parseInt(step[0]));
-	// 			}
-	// 		})
-	// 		.controlsUseVisibility(true)
-	// 		.renderHorizontalGridLines(true)
-	// 		.on('filtered', (chart, filter) => {
-	// 			if (filter) {
-	// 				// lnDayChart.focus(filter);
-	// 				globalThis.AppState.clearOffset();
-
-	// 				let range_from = filter[0].toISOString().substr(0, 10);
-	// 				let range_to = filter[1].toISOString().substr(0, 10);
-	// 				globalThis.AppState.range = [range_from, range_to];
-
-	// 				cmdFilter('', range_from, range_to);
-	// 			}
-	// 		})
-	// 		.yAxis()
-	// 		.tickValues([0, 5, 10, 15, 20, 25, 30]);
-
-	// 	dc.renderAll();
-	// };
-
-	const refreshChart = (days: Array<{ k: string; v: number }>) => {
-		var option;
-
-		const dateList = days.map(function (item) {
-			return item.k;
-		});
-
-		const valueList = days.map(function (item) {
-			return item.v;
-		});
-
-		option = {
+		timeSeriesChart.setOption({
 			grid: {
 				top: '8px',
 				right: '76px',
 				bottom: '80px',
 				left: '70px'
 			},
-			dataZoom: [
-				{
-					type: 'slider'
-				},
-				{
-					type: 'inside'
-				}
-			],
+			dataZoom: [{ type: 'slider', start: 0, end: 100 }, { type: 'inside', start: 0, end: 100 }],
 			tooltip: {
 				trigger: 'axis'
 			},
 			xAxis: {
-				data: dateList
+				type: 'category',
+				data: days.map((day) => day.date)
 			},
 			yAxis: {
-				// splitLine: {
-				// 	lineStyle: {
-				// 		color: '#a6adba'
-				// 	}
-				// }
+				type: 'value',
+				minInterval: 1
 			},
-			series: {
-				type: 'bar',
-				showSymbol: false,
-				data: valueList
-			}
-		};
-		timeSeriesChart.on('datazoom', function (params) {
-			var option: any = timeSeriesChart.getOption();
-			if (option.dataZoom) {
-				const start = new Date(days[option.dataZoom[0].startValue].k)
-					.toISOString()
-					.substring(0, 10);
-
-				const end = new Date(days[option.dataZoom[0].endValue].k).toISOString().substring(0, 10);
-
-				globalThis.AppState.clearOffset();
-				globalThis.AppState.range = [Number(start), Number(end)];
-
-				cmdFilter('', start, end);
-			}
+			series: [
+				{
+					type: 'bar',
+					data: days.map((day) => day.count)
+				}
+			]
 		});
-		option && timeSeriesChart.setOption(option);
 	};
 </script>
 
 <slot>
 	<div id="main" class="w-full h-40">
-		<div class="w-full h-full" bind:this={mainChartElement} />
+		<div class="w-full h-full" bind:this={mainChartElement}></div>
 	</div>
 </slot>
-
-<style>
-</style>

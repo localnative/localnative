@@ -2,40 +2,39 @@
 	import { emit, listen, type UnlistenFn } from '@tauri-apps/api/event';
 	import { onDestroy, onMount } from 'svelte';
 
+	/** A tag facet as the core sends it. */
+	type TagCount = { tag: string; count: number };
+
 	let refreshTagsUnlistenFn: UnlistenFn | null = null;
-	let lastTags: Array<{
-		k: string;
-		v: number;
-	}> = [];
+	let lastTags: TagCount[] = [];
 
 	onMount(async () => {
-		refreshTagsUnlistenFn = await listen<any>('refreshTags', (ev) => {
-			console.log('tags:' + JSON.stringify(ev.payload.tags));
+		refreshTagsUnlistenFn = await listen<{ tags: unknown }>('refreshTags', (ev) => {
 			if (Array.isArray(ev.payload.tags)) {
-				lastTags = ev.payload.tags;
-				lastTags.sort((x, y) => y.v - x.v);
+				// Most used first; ties alphabetical so the order is stable.
+				lastTags = [...(ev.payload.tags as TagCount[])].sort(
+					(x, y) => y.count - x.count || x.tag.localeCompare(y.tag)
+				);
 			}
 		});
 	});
 
 	onDestroy(() => {
-		if (refreshTagsUnlistenFn) {
-			refreshTagsUnlistenFn();
-		}
+		refreshTagsUnlistenFn?.();
 	});
 </script>
 
 <slot>
 	<div class="w-max-full flex flex-row flex-wrap">
-		{#each lastTags as tag}
+		{#each lastTags as tag (tag.tag)}
 			<div class="m-1">
 				<button
 					class="btn btn-sm normal-case"
-					on:click={() => emit('update_search_tag', { tag: tag.k })}
+					on:click={() => emit('update_search_tag', { tag: tag.tag })}
 				>
-					{tag.k}
+					{tag.tag}
 				</button>
-				<span>{tag.v}</span>
+				<span>{tag.count}</span>
 			</div>
 		{/each}
 	</div>

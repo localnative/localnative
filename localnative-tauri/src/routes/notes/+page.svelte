@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { faMagnifyingGlass, faCalendar, faXmark } from '@fortawesome/free-solid-svg-icons';
+	import { faXmark } from '@fortawesome/free-solid-svg-icons';
 	import { emit, listen, type UnlistenFn } from '@tauri-apps/api/event';
 	import { onDestroy, onMount } from 'svelte';
 	import Fa from 'svelte-fa';
@@ -10,20 +10,20 @@
 	import LL from '../../i18n/i18n-svelte';
 	import * as underscore from 'underscore';
 
-	let date = new Date();
-
-	let refreshTagsUnlistenFn: UnlistenFn | null = null;
+	let refreshPaginationUnlistenFn: UnlistenFn | null = null;
 	let updateSearchTagUnlistenFn: UnlistenFn | null = null;
 	let lastPaginationText: string = '0 - 0 / 0';
 	let searchText: string = '';
 
 	onMount(async () => {
-		refreshTagsUnlistenFn = await listen<any>('refreshPaginationText', (ev) => {
-			console.log('pagination_text:' + JSON.stringify(ev.payload.tags));
-			lastPaginationText = ev.payload.pagination_text;
-		});
+		refreshPaginationUnlistenFn = await listen<{ pagination_text: string }>(
+			'refreshPaginationText',
+			(ev) => {
+				lastPaginationText = ev.payload.pagination_text;
+			}
+		);
 
-		updateSearchTagUnlistenFn = await listen<any>('update_search_tag', (ev) => {
+		updateSearchTagUnlistenFn = await listen<{ tag: string }>('update_search_tag', (ev) => {
 			searchText = ev.payload.tag;
 			search();
 		});
@@ -32,20 +32,13 @@
 	});
 
 	onDestroy(() => {
-		if (refreshTagsUnlistenFn) {
-			refreshTagsUnlistenFn();
-		}
-
-		if (updateSearchTagUnlistenFn) {
-			updateSearchTagUnlistenFn();
-		}
+		refreshPaginationUnlistenFn?.();
+		updateSearchTagUnlistenFn?.();
 	});
 
 	const search = underscore.debounce(() => {
-		console.log('dddd');
 		globalThis.AppState.clearOffset();
 		globalThis.AppState.range = null;
-		console.log('searching:' + searchText);
 		cmdSearchImp(searchText);
 	}, 300);
 
@@ -74,18 +67,11 @@
 						placeholder={$LL.Notes.SearchPlaceholder()}
 						class="input input-bordered input-sm w-full"
 						bind:value={searchText}
-						on:keyup={search}
-						on:input={(e) => {
-							searchText = e.currentTarget.value;
-							search();
-						}}
+						on:input={search}
 					/>
 					<button class="btn btn-square btn-sm" on:click={searchClear}>
 						<Fa icon={faXmark} />
 					</button>
-					<!-- <button class="btn btn-square btn-sm" on:click={search}>
-						<Fa icon={faMagnifyingGlass} />
-					</button> -->
 				</div>
 			</div>
 			<div class="btn-group">

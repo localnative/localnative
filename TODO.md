@@ -152,6 +152,18 @@ Android/iOS/Tauri toolchains.
   smaller permission set). The browser-extension CI now syntax-checks the
   popup instead of building the WASM app.
 
+### Front-ends — follow-up (2026-10-20)
+
+- [x] **F9 — Tauri's histogram and tag panel were empty.** Both read the
+  `{k, v}` pairs the core stopped sending in the database refactor (the facets
+  are `days: [{date, count}]` and `tags: [{tag, count}]`), so the chart drew
+  no bars and the tag panel showed blank buttons. Fixed: the panels read the
+  core's shape; the zoom window stores `YYYY-MM-DD` strings (it stored `NaN`,
+  which broke paging inside a zoomed range); one `datazoom` handler instead of
+  one per redraw; a zoom keeps the search term; a reset no longer fires a
+  filter of its own; an untagged note no longer renders an empty tag button;
+  note bodies are no longer logged to the console.
+
 ### Release engineering and docs
 
 - [x] **R1 — Android release builds never compiled the core.** Fixed: the
