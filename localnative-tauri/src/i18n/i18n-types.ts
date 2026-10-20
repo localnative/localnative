@@ -61,6 +61,42 @@ type RootTranslation = {
 		 * D​o​ ​y​o​u​ ​w​a​n​t​ ​t​o​ ​d​e​l​e​t​e​ ​t​h​i​s​ ​n​o​t​e​?
 		 */
 		DeleteModalContent: string
+		/**
+		 * E​d​i​t
+		 */
+		Edit: string
+		/**
+		 * D​e​l​e​t​e
+		 */
+		Delete: string
+		/**
+		 * E​d​i​t​ ​N​o​t​e
+		 */
+		EditModalTitle: string
+		/**
+		 * T​i​t​l​e
+		 */
+		EditTitle: string
+		/**
+		 * U​R​L
+		 */
+		EditUrl: string
+		/**
+		 * T​a​g​s​ ​(​c​o​m​m​a​ ​s​e​p​a​r​a​t​e​d​)
+		 */
+		EditTags: string
+		/**
+		 * D​e​s​c​r​i​p​t​i​o​n
+		 */
+		EditDescription: string
+		/**
+		 * S​a​v​e
+		 */
+		Save: string
+		/**
+		 * C​a​n​c​e​l
+		 */
+		Cancel: string
 	}
 	Sync: {
 		/**
@@ -189,6 +225,42 @@ export type TranslationFunctions = {
 		 * Do you want to delete this note?
 		 */
 		DeleteModalContent: () => LocalizedString
+		/**
+		 * Edit
+		 */
+		Edit: () => LocalizedString
+		/**
+		 * Delete
+		 */
+		Delete: () => LocalizedString
+		/**
+		 * Edit Note
+		 */
+		EditModalTitle: () => LocalizedString
+		/**
+		 * Title
+		 */
+		EditTitle: () => LocalizedString
+		/**
+		 * URL
+		 */
+		EditUrl: () => LocalizedString
+		/**
+		 * Tags (comma separated)
+		 */
+		EditTags: () => LocalizedString
+		/**
+		 * Description
+		 */
+		EditDescription: () => LocalizedString
+		/**
+		 * Save
+		 */
+		Save: () => LocalizedString
+		/**
+		 * Cancel
+		 */
+		Cancel: () => LocalizedString
 	}
 	Sync: {
 		/**

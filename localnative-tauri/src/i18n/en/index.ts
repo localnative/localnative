@@ -14,7 +14,16 @@ const en: BaseTranslation = {
 		SearchPlaceholder: 'Searching Notes...',
 		Tags: 'Tags',
 		DeleteModalTitle: 'Delete Note',
-		DeleteModalContent: 'Do you want to delete this note?'
+		DeleteModalContent: 'Do you want to delete this note?',
+		Edit: 'Edit',
+		Delete: 'Delete',
+		EditModalTitle: 'Edit Note',
+		EditTitle: 'Title',
+		EditUrl: 'URL',
+		EditTags: 'Tags (comma separated)',
+		EditDescription: 'Description',
+		Save: 'Save',
+		Cancel: 'Cancel'
 	},
 	Sync: {
 		SyncWithFile: 'Sync with local file',

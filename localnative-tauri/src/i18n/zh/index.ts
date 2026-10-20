@@ -14,7 +14,16 @@ const zh: Translation = {
 		SearchPlaceholder: '搜索标签...',
 		Tags: '标签',
 		DeleteModalTitle: '删除便签',
-		DeleteModalContent: '你想要删除这条便签吗？'
+		DeleteModalContent: '你想要删除这条便签吗？',
+		Edit: '编辑',
+		Delete: '删除',
+		EditModalTitle: '编辑便签',
+		EditTitle: '标题',
+		EditUrl: '链接',
+		EditTags: '标签（逗号分隔）',
+		EditDescription: '描述',
+		Save: '保存',
+		Cancel: '取消'
 	},
 	Sync: {
 		SyncWithFile: '通过本地文件同步',

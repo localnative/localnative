@@ -2,6 +2,14 @@ import { invoke } from "@tauri-apps/api/core";
 import { emit } from "@tauri-apps/api/event";
 import { debounce } from "underscore";
 
+/** The fields of a note the edit dialog can change. */
+export type NoteEdit = {
+  title: string;
+  url: string;
+  tags: string;
+  description: string;
+};
+
 export function cmdSearchOrFilter(searchText: string) {
   const range = globalThis.AppState.range;
   if (range) {
@@ -37,6 +45,27 @@ export function cmdDelete(searchText: string, rowid: number) {
     action: "delete",
     query: searchText,
     rowid: rowid,
+    limit: globalThis.AppState.limit,
+    offset: globalThis.AppState.offset,
+  };
+
+  cmd(message);
+}
+
+/**
+ * Edit a note in place. Every editable field is sent: the core leaves an
+ * absent field untouched, and clearing one is a legitimate edit. The reply is
+ * the current page of the current query, so the list refreshes itself.
+ */
+export function cmdUpdate(searchText: string, uuid4: string, edit: NoteEdit) {
+  const message = {
+    action: "update",
+    uuid4: uuid4,
+    title: edit.title,
+    url: edit.url,
+    tags: edit.tags,
+    description: edit.description,
+    query: searchText,
     limit: globalThis.AppState.limit,
     offset: globalThis.AppState.offset,
   };
