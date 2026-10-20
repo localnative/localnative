@@ -30,7 +30,14 @@ use std::str;
 const MAX_MESSAGE_SIZE: usize = 10 * 1024 * 1024; // 10MB
 
 /// The actions the popup uses. Sync, import and export stay desktop-side.
-const ALLOWED_ACTIONS: &[&str] = &["insert", "insert-image", "search", "select", "delete"];
+const ALLOWED_ACTIONS: &[&str] = &[
+    "insert",
+    "insert-image",
+    "search",
+    "select",
+    "delete",
+    "update",
+];
 
 fn main() -> io::Result<()> {
     tracing_subscriber::fmt()

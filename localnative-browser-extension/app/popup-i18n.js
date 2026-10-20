@@ -15,7 +15,8 @@
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-let lc;
+// `var`: popup.js tests `typeof lc` for rows built before the locale loads
+var lc;
 function i18nRefresh() {
   document.getElementById('label-save-content').textContent = lc('save content');
   document.getElementById('label-public').textContent = lc('public');

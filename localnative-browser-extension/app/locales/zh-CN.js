@@ -31,6 +31,11 @@ locales['zh-CN'] = i18n.create({
     "prev": '上页',
     "next": '下页',
     "page": '页',
-    "of": '共'
+    "of": '共',
+    "tags": '标签',
+    "edit": '编辑',
+    "delete": '删除',
+    "save": '保存',
+    "cancel": '取消'
   }
 });

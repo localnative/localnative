@@ -223,11 +223,16 @@ Android/iOS/Tauri toolchains.
 ## Backlog (carried over)
 
 ### Note editing UIs
-The core has an `update` command (identified by uuid4, absent fields
-untouched, fresh last-write-wins token so the edit propagates like any newer
-version); the front-ends have no edit forms yet. Wiring an edit view into
-Tauri (and the extension popup) is the remaining work — and shipping the
-first of those is the natural moment to revisit UniFFI.
+The core's `update` command (identified by uuid4, absent fields untouched,
+fresh last-write-wins token so the edit propagates like any newer version)
+now has front-ends:
+- [x] **Tauri** (2026-10-20): a pencil on each note opens an edit dialog
+  (title, URL, tags, description) that sends `update`; the reply is the
+  current page of the current query, so the list refreshes itself.
+- [x] **Browser extension** (2026-10-20): ✎ on a row turns it into an inline
+  form; `update` joined the native-messaging host's allow-list.
+- [ ] **Android / iOS**: no edit view yet — the moment to revisit UniFFI (see
+  the product decisions above).
 
 ### Reduce Excessive `.clone()` in GUI Layer
 - `localnative_iced/src/chart.rs`: `raw.clone()` in `fold_map` callers, `data.clone().into_iter()`, `will_draw.days.clone()`

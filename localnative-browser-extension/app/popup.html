@@ -373,6 +373,56 @@
         color: white;
       }
 
+      .btn-edit {
+        padding: 1px 6px;
+        flex: 0 0 auto;
+        line-height: 1.4;
+        background: transparent;
+        color: var(--primary);
+        border: 1px solid var(--primary);
+        border-radius: 4px;
+        font-size: 11px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .btn-edit:hover {
+        background: var(--primary);
+        color: white;
+      }
+
+      /* A row being edited: the same inputs as the save form, stacked */
+      .note-editing {
+        background: var(--bg-card);
+      }
+
+      .note-edit {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .note-edit-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 6px;
+      }
+
+      .note-edit-actions .btn {
+        padding: 4px 12px;
+      }
+
+      .btn-save {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+      }
+
+      .btn-save:hover {
+        background: var(--primary-hover);
+        border-color: var(--primary-hover);
+      }
+
       .note-title {
         font-weight: 600;
         font-size: 13px;
