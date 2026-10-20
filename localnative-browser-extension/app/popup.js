@@ -37,6 +37,23 @@ function logTraffic(direction, payload) {
 
 var toastTimer;
 
+// Labels on rows built after load. `lc` is set by popup-i18n.js once the
+// stored language is known; until then (and for a missing key) the key is
+// the English text.
+function t(key) {
+  return typeof lc === 'function' ? lc(key) : key;
+}
+
+// Rows and forms are built as DOM nodes rather than HTML strings. Note fields
+// are user data (including imported bookmarks), so this removes the escaping
+// question entirely and lets handlers bind to real element references.
+function el(tag, className, text) {
+  var e = document.createElement(tag);
+  if (className) e.className = className;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+
 function showToast(text) {
   var el = document.getElementById('toast');
   // built as nodes rather than markup: the message comes from
@@ -86,17 +103,6 @@ function onNativeMessage(message) {
   var notesEl = document.getElementById('notes');
   notesEl.textContent = '';
 
-  // Built as DOM nodes rather than an HTML string. Note fields are user data
-  // (including imported bookmarks), so this removes the escaping question
-  // entirely and lets handlers bind to real element references instead of
-  // ids reconstructed from rowid.
-  function el(tag, className, text) {
-    var e = document.createElement(tag);
-    if (className) e.className = className;
-    if (text !== undefined) e.textContent = text;
-    return e;
-  }
-
   message.notes.forEach(function (i) {
     var note = el('div', 'note');
 
@@ -108,8 +114,13 @@ function onNativeMessage(message) {
     var tagsEl = el('span', 'note-tags');
     line.appendChild(tagsEl);
 
+    var edit = el('button', 'btn-edit', '\u270e');
+    edit.title = t('edit');
+    edit.onclick = function () { editNote(note, i); };
+    line.appendChild(edit);
+
     var del = el('button', 'btn-delete', '\u00d7');
-    del.title = 'Delete';
+    del.title = t('delete');
     del.onclick = function () { cmdDelete(i.rowid); };
     line.appendChild(del);
     note.appendChild(line);
@@ -153,6 +164,57 @@ function onNativeMessage(message) {
 
     notesEl.appendChild(note);
   });
+}
+
+// Turn a note row into an inline edit form. Save sends every field: the core
+// leaves an absent field untouched, and clearing one is a legitimate edit.
+// Cancel re-renders the page from the core, which also drops the form.
+function editNote(noteEl, note) {
+  function field(placeholder, value) {
+    var input = el('input', 'save-input');
+    input.type = 'text';
+    input.placeholder = placeholder;
+    input.value = value;
+    return input;
+  }
+
+  var title = field(t('title'), note.title);
+  var url = field(t('url'), note.url);
+  var desc = field(t('description'), note.description);
+  var tags = field(t('tags'), note.tags);
+
+  var form = el('form', 'note-edit');
+  var row = el('div', 'input-row');
+  row.appendChild(title);
+  row.appendChild(url);
+  form.appendChild(row);
+  form.appendChild(desc);
+  form.appendChild(tags);
+
+  var actions = el('div', 'note-edit-actions');
+  var save = el('button', 'btn btn-save', t('save'));
+  save.type = 'submit';
+  var cancel = el('button', 'btn', t('cancel'));
+  cancel.type = 'button';
+  cancel.onclick = function () { cmdSearch(); };
+  actions.appendChild(save);
+  actions.appendChild(cancel);
+  form.appendChild(actions);
+
+  form.onsubmit = function (e) {
+    e.preventDefault();
+    cmdUpdate(note.uuid4, {
+      title: title.value,
+      url: url.value,
+      tags: makeTags(tags.value),
+      description: desc.value
+    });
+  };
+
+  noteEl.textContent = '';
+  noteEl.classList.add('note-editing');
+  noteEl.appendChild(form);
+  title.focus();
 }
 
 function connect() {
@@ -338,7 +400,6 @@ function cmdInsert(annotations, is_public) {
     offset: offset,
     is_public: is_public
   };
-  console.log(message);
   cmd(message);
 }
 
@@ -369,6 +430,22 @@ function cmdDelete(rowid) {
 
     query: document.getElementById('search-text').value,
     rowid: rowid,
+    limit: LIMIT,
+    offset: offset
+  };
+  cmd(message);
+}
+
+function cmdUpdate(uuid4, fields) {
+  var message = {
+    action: "update",
+    uuid4: uuid4,
+    title: fields.title,
+    url: fields.url,
+    tags: fields.tags,
+    description: fields.description,
+
+    query: document.getElementById('search-text').value,
     limit: LIMIT,
     offset: offset
   };

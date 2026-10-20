@@ -5,10 +5,12 @@ title: Changelog
 [Updates](https://chuanyan.live/tags/localnative)
 
 ## Unreleased
-- **Note editing in the core**: a new `update` command edits by uuid4 —
-  absent fields are untouched and a fresh last-write-wins token means the
-  edit propagates to peers like any newer version (and can't resurrect a
-  deleted note).
+- **Note editing**: the desktop app (a pencil on each note opens an edit
+  dialog) and the browser extension popup (✎ turns the row into an inline
+  form) edit a note's title, URL, tags and description in place. In the
+  core a new `update` command edits by uuid4 — absent fields are untouched
+  and a fresh last-write-wins token means the edit propagates to peers like
+  any newer version (and can't resurrect a deleted note).
 - **Tauri**: the day histogram and the tag panel show data again (they read
   field names the core no longer sends); zooming the histogram keeps the
   search term and paging inside a zoomed range works.

@@ -25,6 +25,11 @@ locales['en-US'] = i18n.create({
     "url": 'url',
     "type to add tags, enter to save, comma or space as tag seperator": 'type to add tags, enter to save, comma or space as tag seperator',
     "type to search": 'type to search',
-    "clear search term(s)": 'clear search term(s)'
+    "clear search term(s)": 'clear search term(s)',
+    "tags": 'tags',
+    "edit": 'edit',
+    "delete": 'delete',
+    "save": 'save',
+    "cancel": 'cancel'
   }
 });

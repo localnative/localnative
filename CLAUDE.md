@@ -99,6 +99,7 @@ Other platform front-ends: `localnative-ios`, `localnative-browser-extension`. B
 - **Adding a database feature** = new variant in the `db::models` `Cmd` enum + handling in `db::process_cmd`/`queries`, plus a new `migrations` entry if the schema changes. Front-ends only need to learn the new JSON shape.
 - **Cross-FFI errors** must be returned as JSON, never panicked across the boundary — follow `serialize_error`.
 - **Reply shapes are the core's serde output, verbatim.** A query reply is `QueryResult`: `count`, `notes`, `days: [{date, count}]`, `tags: [{tag, count}]`. The JS/Kotlin/Swift front-ends spell these field names by hand, so check them against `db/models.rs` when touching a reader (Tauri's chart and tag panel sat on the pre-refactor `{k, v}` names for a year).
+- **The browser extension only reaches allow-listed actions** (`ALLOWED_ACTIONS` in `localnative_cli/src/bin/localnative-web-ext-host.rs`): a popup feature that needs a new command adds it there too.
 - The core is **synchronous rusqlite under a Tokio shim**; do not assume `async fn` query helpers exist. (`TODO.md` tracks a possible async migration — not yet done.)
 - CI runs on **GitHub Actions** (`.github/workflows/`: rust with fmt + clippy `-D warnings` and per-crate builds, android, tauri, browser-extension, website, Play Store deploy). Keep it green; the clippy gate is strict. The code host is **github.com/localnative/localnative** (mirrors: srht, gitee, bitbucket, ssb).
 - `TODO.md` is a live backlog of known tech debt — consult it before proposing large refactors.
