@@ -52,7 +52,7 @@
 				</li>
 			</ul>
 		</div>
-		<div class="flex-1" />
+		<div class="flex-1"></div>
 		<div>
 			<ul class="menu bg-base-100 p-2">
 				<li class="tooltip tooltip-right my-1" data-tip={$LL.Nav.About()}>

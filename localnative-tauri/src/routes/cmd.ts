@@ -19,7 +19,8 @@ export function cmdSearchOrFilter(searchText: string) {
   }
 }
 
-export const cmdFilter = debounce((searchText: string, from: any, to: any) => {
+/** Notes created between `from` and `to` (inclusive, `YYYY-MM-DD`). */
+export const cmdFilter = debounce((searchText: string, from: string, to: string) => {
   const message = {
     action: "filter",
     query: searchText,
@@ -46,6 +47,7 @@ export function cmdDelete(searchText: string, rowid: number) {
 export function cmdSearchImp(searchText: string) {
   globalThis.AppState.clearOffset();
   globalThis.AppState.range = null;
+  globalThis.AppState.query = searchText;
 
   const message = {
     action: "search",
@@ -60,6 +62,7 @@ export function cmdSearchImp(searchText: string) {
 export function cmdSelect() {
   globalThis.AppState.clearOffset();
   globalThis.AppState.range = null;
+  globalThis.AppState.query = "";
 
   const message = {
     action: "select",
@@ -156,10 +159,11 @@ function cmd(message: any) {
     });
 }
 
+// A query result as the core returns it (`QueryResult` in the core's models).
 function onNativeMessage(message: {
-  days: any;
+  days: Array<{ date: string; count: number }>;
   notes: any;
-  tags: any;
+  tags: Array<{ tag: string; count: number }>;
   count: number;
 }) {
   emit("refreshTags", { tags: message.tags });
@@ -175,10 +179,9 @@ function onNativeMessage(message: {
 
   emit("refreshNotes", { notes: message.notes });
 
-  if (
-    message.days && // filter result has no days field
-    globalThis.AppState.offset == 0 // only first page refresh chart
-  ) {
+  // The histogram spans every day whatever the page or range, so only the
+  // first page of a query redraws it; paging leaves the zoom alone.
+  if (message.days && globalThis.AppState.offset == 0) {
     emit("refreshChart", { days: message.days });
   }
 }
