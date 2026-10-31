@@ -44,8 +44,9 @@ title: Changelog
   query, sync results and errors are shown, CSP enabled, update checks are
   manual; Android — no main-thread JNI, no cloud backup of the database,
   structured JSON commands, database path from `filesDir`; iOS — app compiles
-  again (share extension queue via App Groups, no MMWormhole); browser
-  extension host — no debug.log of note contents, command allow-list.
+  again (share extension queue via App Groups, no MMWormhole), and the notes
+  list no longer ends in a footer linking to another app; browser extension
+  host — no debug.log of note contents, command allow-list.
 - **Builds**: Gradle builds the Rust core for all four ABIs (`cargo ndk`);
   iOS links a built XCFramework (`script/build-ios.sh`); CI compiles the core
   for Android/iOS and checks the packaged APK/AAB actually contains it.

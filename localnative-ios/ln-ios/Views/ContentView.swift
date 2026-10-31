@@ -42,18 +42,6 @@ struct ContentView: View {
                     NoteRowView(note: note, query: $searchText)
                 }
                 .listStyle(.plain)
-
-                HStack {
-                    Text("Write your own geolocation notes with")
-                    Button(action: {
-                        guard let url = URL(string: "https://hexagon.place/") else { return }
-                        UIApplication.shared.open(url)
-                    }) {
-                        Text("Hexagon Place App")
-                    }
-                }
-                .font(.caption)
-                .padding()
             }
             .navigationTitle("LN")
             .navigationBarTitleDisplayMode(.inline)
