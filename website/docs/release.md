@@ -21,4 +21,4 @@ Those library artifacts are not updated for newer releases, please build from th
 | description  | url |
 |--------------|-----|
 | nodejs binary (deprecated) | [https://www.npmjs.com/package/localnative](https://www.npmjs.com/package/localnative) |
-| nodejs to rust bridge | [https://www.npmjs.com/package/localnative-neon](https://www.npmjs.com/package/localnative-neon) |
+| nodejs to rust bridge (deprecated) | [https://www.npmjs.com/package/localnative-neon](https://www.npmjs.com/package/localnative-neon) |
