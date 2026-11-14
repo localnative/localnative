@@ -1,6 +1,9 @@
 # TODO
 
-Live backlog. The first section is the architecture review of 2026-09-26: each
+Live backlog. Strategy lives in `docs/ROADMAP.md` (2026-11-14: the
+archive / read-later / recall / sync pivot); this file tracks execution.
+
+The first section is the architecture review of 2026-09-26: each
 item records the defect, the evidence, and the fix. `[x]` means fixed and
 verified in the working tree; `[ ]` means still open.
 
