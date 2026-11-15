@@ -66,6 +66,14 @@ type RootTranslation = {
 		 */
 		Edit: string
 		/**
+		 * R​e​a​d​ ​a​r​c​h​i​v​e​d​ ​t​e​x​t
+		 */
+		Read: string
+		/**
+		 * C​l​o​s​e
+		 */
+		Close: string
+		/**
 		 * D​e​l​e​t​e
 		 */
 		Delete: string
@@ -229,6 +237,14 @@ export type TranslationFunctions = {
 		 * Edit
 		 */
 		Edit: () => LocalizedString
+		/**
+		 * Read archived text
+		 */
+		Read: () => LocalizedString
+		/**
+		 * Close
+		 */
+		Close: () => LocalizedString
 		/**
 		 * Delete
 		 */

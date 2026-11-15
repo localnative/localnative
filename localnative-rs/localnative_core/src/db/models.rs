@@ -64,6 +64,7 @@ pub enum Cmd {
     Delete(CmdDelete),
     Update(CmdUpdate),
     Select(CmdSelect),
+    Get(CmdGet),
     Search(CmdSearch),
     Filter(CmdFilter),
     Upgrade,
@@ -138,6 +139,11 @@ pub struct CmdUpdate {
 pub struct CmdSelect {
     pub limit: u32,
     pub offset: u32,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct CmdGet {
+    pub uuid4: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

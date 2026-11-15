@@ -25,14 +25,14 @@ Everything funnels through one entry point. Each front-end serializes a command 
 This is **synchronous `rusqlite`** (bundled SQLite) with an **`r2d2` / `r2d2_sqlite` connection pool** — *not* SQLx. One module directory:
 - `models` — request/response structs and the inner `Cmd` enum. **Add new database commands as variants here.**
 - `queries` — SQL/CRUD, search, filtering, tag aggregation, file merge/import/export.
-- `migrations` — version-keyed migration table (`MIGRATIONS: [(semver::Version, fn)]`) run automatically by `migrations::upgrade` on every open; each migration runs in its own transaction. Schema history: 0.4.0 → 0.11.0. To change the schema, append a new `(Version, migrate_fn)` entry — do **not** hand-edit existing migrations or the frozen baseline.
+- `migrations` — version-keyed migration table (`MIGRATIONS: [(semver::Version, fn)]`) run automatically by `migrations::upgrade` on every open; each migration runs in its own transaction. Schema history: 0.4.0 → 0.12.0. To change the schema, append a new `(Version, migrate_fn)` entry — do **not** hand-edit existing migrations or the frozen baseline.
 - `sync` — version sets, 256-bucket reconciliation hashes, and note apply/load in wire form.
 - `peers` — the paired-device table used by the secure transport.
 - `encryption` — optional **SQLCipher** support, gated behind the `encryption` cargo feature (which itself switches `rusqlite` to `bundled-sqlcipher`). Keying verifies `PRAGMA cipher_version`, so a plain build fails loudly instead of pretending to encrypt.
 
 Search is FTS5 trigram for terms of 3+ characters and escaped `LIKE` for shorter ones (trigram can't match them). Last-write-wins tokens come from a hybrid logical clock persisted in `meta` (`hlc` row) — a local write always outranks the version it replaces and every token the device has observed.
 
-Notes carry: title, URL, tags, description, comments, annotations (binary), timestamps, a UUID4, and a public/private flag.
+Notes carry: title, URL, tags, description, comments, annotations, timestamps, a UUID4, and a public/private flag. UTF-8 annotations (including archived article text) are stored as SQLite text and indexed by schema 0.12.0's generated `archive_text` column; binary annotations stay blobs and are excluded from the text index.
 
 ### Import / Export (`localnative_core/src/import.rs`, `export.rs`)
 Standalone core modules (not part of the JSON `Cmd` dispatch) driven by dedicated CLI binaries:
@@ -64,6 +64,7 @@ cargo test test_serde            # run a single test by name
 
 # localnative_cli ships several binaries (src/bin/), not one — select with --bin:
 cargo run -p localnative_cli --bin localnative-web-ext-host          # browser-extension native-messaging host
+cargo run -p localnative_cli --bin localnative-mcp                   # read-only MCP stdio server
 cargo run -p localnative_cli --bin localnative-import -- <args>      # import Pocket/Omnivore/Raindrop/Plinky
 cargo run -p localnative_cli --bin localnative-export -- <args>      # export notes to Markdown
 cargo run -p localnative_cli --bin localnative-export-db -- -o <file>  # VACUUM INTO single-file DB backup

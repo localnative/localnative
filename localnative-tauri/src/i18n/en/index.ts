@@ -16,6 +16,8 @@ const en: BaseTranslation = {
 		DeleteModalTitle: 'Delete Note',
 		DeleteModalContent: 'Do you want to delete this note?',
 		Edit: 'Edit',
+		Read: 'Read archived text',
+		Close: 'Close',
 		Delete: 'Delete',
 		EditModalTitle: 'Edit Note',
 		EditTitle: 'Title',

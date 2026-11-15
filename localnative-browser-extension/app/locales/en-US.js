@@ -17,7 +17,7 @@
 */
 locales['en-US'] = i18n.create({
   values: {
-    "save content": 'save content',
+    "save content": 'save readable text',
     "public": 'public',
     "language": 'language',
     "description": "description",

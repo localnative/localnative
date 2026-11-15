@@ -2,7 +2,7 @@
 	import { cmdDelete, cmdUpdate, type NoteEdit } from '../cmd';
 	import { emit, listen, type UnlistenFn } from '@tauri-apps/api/event';
 	import { onDestroy, onMount } from 'svelte';
-	import { faTrash, faQrcode, faPen } from '@fortawesome/free-solid-svg-icons';
+	import { faTrash, faQrcode, faPen, faBookOpen } from '@fortawesome/free-solid-svg-icons';
 	import Fa from 'svelte-fa';
 	import QRCode from 'qrcode';
 	import LL from '../../i18n/i18n-svelte';
@@ -33,6 +33,9 @@
 	let editDialog: HTMLDialogElement;
 	let editing: (NoteEdit & { uuid4: string }) | null = null;
 
+	let readerDialog: HTMLDialogElement;
+	let reading: Note | null = null;
+
 	onMount(async () => {
 		refreshNotesUnlistenFn = await listen<{ notes: Note[] }>('refreshNotes', (ev) => {
 			lastNotes = ev.payload.notes;
@@ -59,6 +62,14 @@
 		cmdDelete(current_search_text, wantDeleteRowId);
 		wantDeleteRowId = 0;
 		deleteDialog.close();
+	};
+
+	const hasReadableArchive = (note: Note) =>
+		note.annotations.trim() !== '' && !note.annotations.startsWith('data:');
+
+	const startReading = (note: Note) => {
+		reading = note;
+		readerDialog.showModal();
 	};
 
 	const startEdit = (note: Note) => {
@@ -116,6 +127,16 @@
 							</button>
 						{/each}
 
+						{#if hasReadableArchive(note)}
+							<button
+								type="button"
+								class="btn btn-xs"
+								title={$LL.Notes.Read()}
+								on:click={() => startReading(note)}
+							>
+								<Fa icon={faBookOpen} />
+							</button>
+						{/if}
 						<button type="button" class="btn btn-xs" title={$LL.Notes.Edit()} on:click={() => startEdit(note)}>
 							<Fa icon={faPen} />
 						</button>
@@ -174,4 +195,30 @@
 			{/if}
 		</div>
 	</dialog>
+
+	<!-- Svelte text interpolation escapes legacy HTML as well as plain text. -->
+	<dialog class="modal" bind:this={readerDialog} on:close={() => (reading = null)}>
+		<div class="modal-box w-11/12 max-w-4xl h-3/4 flex flex-col">
+			{#if reading}
+				<div class="pb-4">
+					<h3 class="font-bold text-lg">{reading.title}</h3>
+					<a href={reading.url} class="link text-sm" rel="noreferrer" target="_blank">{reading.url}</a>
+				</div>
+				<div class="archive-text flex-1 overflow-auto">{reading.annotations}</div>
+			{/if}
+			<div class="modal-action">
+				<button type="button" class="btn" on:click={() => readerDialog.close()}>
+					{$LL.Notes.Close()}
+				</button>
+			</div>
+		</div>
+	</dialog>
 </slot>
+
+<style>
+	.archive-text {
+		white-space: pre-wrap;
+		overflow-wrap: anywhere;
+		line-height: 1.75;
+	}
+</style>

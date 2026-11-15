@@ -19,7 +19,7 @@ let locales = {};
 
 locales['zh-CN'] = i18n.create({
   values: {
-    "save content": '保存内容',
+    "save content": '保存可读正文',
     "public": '公开',
     "language": '语言',
     "description": "描述",

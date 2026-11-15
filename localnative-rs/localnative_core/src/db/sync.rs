@@ -243,7 +243,7 @@ pub fn apply_notes(conn: &Connection, notes: &[NoteV1]) -> DbResult<Applied> {
                     normalize_tags(&note.tags),
                     note.description,
                     note.comments,
-                    note.annotations,
+                    super::queries::annotations_for_storage(&note.annotations),
                     note.created_at,
                     note.is_public,
                     metadata,

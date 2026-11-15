@@ -106,6 +106,34 @@ fn legacy_0_3_10_database_migrates_all_the_way() {
     assert!(super::token_millis(&stored.updated_at).is_some());
 }
 
+#[test]
+fn legacy_0_11_article_text_joins_the_search_index() {
+    let path = legacy_db(
+        "legacy_0_11_archive",
+        "CREATE TABLE note (
+             rowid INTEGER PRIMARY KEY AUTOINCREMENT,
+             uuid4 TEXT NOT NULL UNIQUE, title TEXT NOT NULL, url TEXT NOT NULL,
+             tags TEXT NOT NULL, description TEXT NOT NULL, comments TEXT NOT NULL,
+             annotations TEXT NOT NULL, created_at TEXT NOT NULL,
+             is_public BOOLEAN NOT NULL DEFAULT 0, metadata TEXT NOT NULL DEFAULT '{}',
+             updated_at TEXT NOT NULL DEFAULT '', deleted INTEGER NOT NULL DEFAULT 0);
+         CREATE TABLE meta (meta_key TEXT PRIMARY KEY, meta_value TEXT NOT NULL);
+         INSERT INTO meta VALUES ('version', '0.11.0');
+         INSERT INTO note (uuid4, title, url, tags, description, comments, annotations,
+                           created_at, is_public, updated_at)
+         VALUES ('550e8400-e29b-41d4-a716-446655440012', 'Old archive', '', '', '', '',
+                 CAST('text from a page saved before the archive index existed' AS BLOB),
+                 '2026-01-01 00:00:00', 0, '00000000000000000001-legacy');",
+    );
+    let conn = init_db_at(&path).expect("migrate archived text from 0.11.0");
+    assert_eq!(
+        queries::do_search(&conn, "saved before", 10, 0)
+            .unwrap()
+            .count,
+        1
+    );
+}
+
 // ── Search ────────────────────────────────────────────────────────────────
 
 #[test]
@@ -172,6 +200,85 @@ fn search_matches_tags_and_urls() {
     .unwrap();
     assert_eq!(queries::do_search(&conn, "travel", 10, 0).unwrap().count, 1);
     assert_eq!(queries::do_search(&conn, "page", 10, 0).unwrap().count, 1);
+}
+
+#[test]
+fn archived_text_is_searchable_and_binary_annotations_are_not_indexed() {
+    let (_p, conn) = test_db("search_archive");
+    let note = queries::insert_note(
+        &conn,
+        "Saved article",
+        "https://example.com/article",
+        "",
+        "",
+        "",
+        "A quixotic article with 正文注记 in its body".as_bytes(),
+        false,
+    )
+    .unwrap();
+    queries::insert_note(
+        &conn,
+        "Screenshot",
+        "",
+        "",
+        "",
+        "",
+        b"\x89PNG\r\n\x1a\n\x00\xff\xfe",
+        false,
+    )
+    .unwrap();
+
+    assert_eq!(
+        queries::do_search(&conn, "quixotic", 10, 0).unwrap().count,
+        1
+    );
+    assert_eq!(queries::do_search(&conn, "正文", 10, 0).unwrap().count, 1);
+    let archive_text: String = conn
+        .query_row(
+            "SELECT archive_text FROM note WHERE title = 'Screenshot'",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap();
+    assert!(archive_text.is_empty());
+
+    // A full external-content rebuild uses the same generated text-only value.
+    conn.execute_batch("INSERT INTO note_fts_trigram(note_fts_trigram) VALUES('rebuild');")
+        .unwrap();
+    assert_eq!(
+        queries::do_search(&conn, "quixotic", 10, 0).unwrap().count,
+        1
+    );
+
+    queries::update_note(
+        &conn,
+        &note.uuid4,
+        None,
+        None,
+        None,
+        None,
+        None,
+        Some(b"replacement archive prose"),
+    )
+    .unwrap();
+    assert_eq!(
+        queries::do_search(&conn, "quixotic", 10, 0).unwrap().count,
+        0
+    );
+    assert_eq!(
+        queries::do_search(&conn, "replacement", 10, 0)
+            .unwrap()
+            .count,
+        1
+    );
+
+    queries::delete_note(&conn, note.rowid).unwrap();
+    assert_eq!(
+        queries::do_search(&conn, "replacement", 10, 0)
+            .unwrap()
+            .count,
+        0
+    );
 }
 
 #[test]
@@ -462,7 +569,63 @@ fn update_command_round_trips_through_json() {
     assert!(matches!(parsed, models::Cmd::Update(_)));
 }
 
+#[test]
+fn get_command_returns_archived_text_only_for_live_notes() {
+    let (_p, conn) = test_db("get_archive");
+    let note = queries::insert_note(
+        &conn,
+        "Archived page",
+        "https://example.com/source",
+        "",
+        "",
+        "",
+        b"full article body",
+        false,
+    )
+    .unwrap();
+
+    let command = format!(r#"{{"action":"get","uuid4":"{}"}}"#, note.uuid4);
+    let parsed: models::Cmd = serde_json::from_str(&command).unwrap();
+    let response = super::process_cmd(parsed, &conn).unwrap();
+    let fetched: models::Note = serde_json::from_str(&response).unwrap();
+    assert_eq!(fetched.uuid4, note.uuid4);
+    assert_eq!(fetched.url, "https://example.com/source");
+    assert_eq!(fetched.annotations, "full article body");
+
+    queries::delete_note(&conn, note.rowid).unwrap();
+    let parsed: models::Cmd = serde_json::from_str(&command).unwrap();
+    assert!(super::process_cmd(parsed, &conn).is_err());
+}
+
 // ── Last-write-wins and the clock ─────────────────────────────────────────
+
+#[test]
+fn synced_article_text_is_searchable_on_the_receiving_peer() {
+    let (_pa, source) = test_db("archive_sync_source");
+    let (_pb, peer) = test_db("archive_sync_peer");
+    let note = queries::insert_note(
+        &source,
+        "Peer archive",
+        "https://example.com/peer",
+        "",
+        "",
+        "",
+        b"article body arriving over note sync",
+        false,
+    )
+    .unwrap();
+    let wire = dbsync::get_wire_note(&source, &note.uuid4)
+        .unwrap()
+        .unwrap();
+    dbsync::apply_notes(&peer, &[wire]).unwrap();
+
+    let result = queries::do_search(&peer, "arriving over", 10, 0).unwrap();
+    assert_eq!(result.count, 1);
+    assert_eq!(
+        result.notes[0].annotations,
+        "article body arriving over note sync"
+    );
+}
 
 #[test]
 fn lww_newer_wins_older_ignored() {

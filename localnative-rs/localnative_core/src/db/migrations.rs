@@ -27,7 +27,7 @@
 
 use super::{
     DatabaseError, DbResult, TOMBSTONE_CONTENT, meta_get, normalize_stored_tags,
-    observe_stored_tokens,
+    normalize_text_annotations, observe_stored_tokens,
 };
 use crate::db::models::Note;
 use rusqlite::Connection;
@@ -46,6 +46,7 @@ const MIGRATIONS: &[(Version, MigrationFn)] = &[
     (Version::new(0, 9, 0), migrate_fts5_trigram),
     (Version::new(0, 10, 0), migrate_lww),
     (Version::new(0, 11, 0), migrate_0_11),
+    (Version::new(0, 12, 0), migrate_0_12),
 ];
 
 /// The schema version of a fully migrated database.
@@ -384,6 +385,42 @@ fn migrate_0_11(conn: &Connection) -> DbResult<()> {
          CREATE INDEX IF NOT EXISTS note_created_at ON note(created_at);",
     )?;
     observe_stored_tokens(conn)?;
+    Ok(())
+}
+
+/// Schema 0.12.0: archived article text joins the search index.
+fn migrate_0_12(conn: &Connection) -> DbResult<()> {
+    normalize_text_annotations(conn, "main")?;
+    conn.execute_batch(
+        "ALTER TABLE note ADD COLUMN archive_text TEXT GENERATED ALWAYS AS (
+             CASE WHEN typeof(annotations) = 'text' THEN annotations ELSE '' END
+         ) VIRTUAL;
+         DROP TRIGGER IF EXISTS note_fts_trigram_insert;
+         DROP TRIGGER IF EXISTS note_fts_trigram_delete;
+         DROP TRIGGER IF EXISTS note_fts_trigram_update;
+         DROP TABLE IF EXISTS note_fts_trigram;
+         CREATE VIRTUAL TABLE note_fts_trigram USING fts5(
+             title, url, tags, description, archive_text,
+             content=note, content_rowid=rowid,
+             tokenize='trigram'
+         );
+         INSERT INTO note_fts_trigram(rowid, title, url, tags, description, archive_text)
+         SELECT rowid, title, url, tags, description, archive_text FROM note;
+         CREATE TRIGGER note_fts_trigram_insert AFTER INSERT ON note BEGIN
+             INSERT INTO note_fts_trigram(rowid, title, url, tags, description, archive_text)
+             VALUES (new.rowid, new.title, new.url, new.tags, new.description, new.archive_text);
+         END;
+         CREATE TRIGGER note_fts_trigram_delete AFTER DELETE ON note BEGIN
+             INSERT INTO note_fts_trigram(note_fts_trigram, rowid, title, url, tags, description, archive_text)
+             VALUES ('delete', old.rowid, old.title, old.url, old.tags, old.description, old.archive_text);
+         END;
+         CREATE TRIGGER note_fts_trigram_update AFTER UPDATE ON note BEGIN
+             INSERT INTO note_fts_trigram(note_fts_trigram, rowid, title, url, tags, description, archive_text)
+             VALUES ('delete', old.rowid, old.title, old.url, old.tags, old.description, old.archive_text);
+             INSERT INTO note_fts_trigram(rowid, title, url, tags, description, archive_text)
+             VALUES (new.rowid, new.title, new.url, new.tags, new.description, new.archive_text);
+         END;",
+    )?;
     Ok(())
 }
 

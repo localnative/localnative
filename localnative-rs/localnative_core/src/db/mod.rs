@@ -180,6 +180,12 @@ pub fn process_cmd(cmd: Cmd, conn: &Connection) -> DbResult<String> {
             let select_result = select.process(conn)?;
             Ok(serde_json::to_string(&select_result)?)
         }
+        Cmd::Get(ref get) => {
+            let note = get.process(conn)?.ok_or_else(|| {
+                ValidationError::Other(format!("no live note with uuid4 {}", get.uuid4))
+            })?;
+            Ok(serde_json::to_string(&note)?)
+        }
         Cmd::Search(ref search) => {
             let search_result = search.process(conn)?;
             Ok(serde_json::to_string(&search_result)?)
@@ -343,7 +349,30 @@ pub(crate) fn next_update_token(conn: &Connection, previous: Option<&str>) -> Db
     Ok(format!("{:020}-{}", stamp.max(0), node_id(conn)?))
 }
 
-// ── Tags ──────────────────────────────────────────────────────────────────
+// ── Stored-value normalization ─────────────────────────────────────────────
+
+/// Convert historical UTF-8 annotation blobs to SQLite text without changing
+/// their bytes or last-write-wins tokens. Binary annotations remain blobs.
+pub(crate) fn normalize_text_annotations(conn: &Connection, schema: &str) -> DbResult<usize> {
+    let rows: Vec<(i64, Vec<u8>)> = {
+        let mut stmt = conn.prepare(&format!(
+            "SELECT rowid, annotations FROM {schema}.note WHERE typeof(annotations) = 'blob'"
+        ))?;
+        stmt.query_map([], |row| Ok((row.get(0)?, row.get(1)?)))?
+            .collect::<Result<_, _>>()?
+    };
+    let mut changed = 0;
+    for (rowid, bytes) in rows {
+        if let Ok(text) = std::str::from_utf8(&bytes) {
+            conn.execute(
+                &format!("UPDATE {schema}.note SET annotations = ?1 WHERE rowid = ?2"),
+                rusqlite::params![text, rowid],
+            )?;
+            changed += 1;
+        }
+    }
+    Ok(changed)
+}
 
 /// The canonical form of a tag list: comma-separated, trimmed, empty entries
 /// dropped, duplicates removed case-insensitively (the first spelling wins).

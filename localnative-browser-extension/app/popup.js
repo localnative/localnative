@@ -24,15 +24,23 @@ let count = 0;
 // the popup does not paint the light theme before the stored one applies
 const prefsReady = chrome.storage.local.get(['darkTheme', 'saveContent', 'ssbify']).catch(function () { return {}; });
 
-// Raw protocol traffic is developer-facing: the count it carried is already in
-// the pagination indicator and failures raise a toast, so it goes to the
-// console and to the indicator's tooltip rather than taking a row in the popup.
+// Protocol diagnostics describe only the message shape. Note fields and
+// archived article text must never be written to the browser console.
 function logTraffic(direction, payload) {
-  var line = direction + ' ' + JSON.stringify(payload);
-  if (direction === '<<') {
-    document.getElementById('indicator').title = line.substring(0, 500);
+  var summary = {};
+  if (payload && typeof payload === 'object') {
+    ['action', 'count', 'error', 'code'].forEach(function (key) {
+      if (typeof payload[key] === 'string' || typeof payload[key] === 'number') {
+        summary[key] = payload[key];
+      }
+    });
+    if (Array.isArray(payload.notes)) summary.notes = payload.notes.length;
   }
-  console.debug('[localnative]', direction, payload);
+  var line = direction + ' ' + JSON.stringify(summary);
+  if (direction === '<<') {
+    document.getElementById('indicator').title = line;
+  }
+  console.debug('[localnative]', direction, summary);
 }
 
 var toastTimer;
@@ -248,7 +256,25 @@ function getPageContent(callback) {
   chrome.tabs.query({active: true, currentWindow: true}, function (tabs) {
     chrome.scripting.executeScript({
       target: {tabId: tabs[0].id},
-      func: function () { return document.body.outerHTML; }
+      func: function () {
+        var root = document.querySelector('article') || document.querySelector('main') || document.body;
+        if (!root) return '';
+        var copy = root.cloneNode(true);
+        copy.querySelectorAll(
+          'script, style, noscript, template, svg, canvas, iframe, nav, form, ' +
+          'button, input, select, textarea, [role="navigation"], [hidden], [aria-hidden="true"]'
+        ).forEach(function (node) { node.remove(); });
+        var text = copy.innerText || copy.textContent || '';
+        text = text
+          .replace(/\r/g, '')
+          .replace(/[\t\f\v ]+/g, ' ')
+          .replace(/ *\n */g, '\n')
+          .replace(/\n{3,}/g, '\n\n')
+          .trim();
+        // Native messaging accepts 10 MiB; bound article text well below that
+        // so the rest of the command and its UTF-8 encoding always fit.
+        return text.substring(0, 2000000);
+      }
     }, function (results) {
       // annotations are optional: pages that disallow injection still save
       if (chrome.runtime.lastError || !results || !results[0]) {
@@ -288,9 +314,11 @@ document.addEventListener('DOMContentLoaded', async function () {
   // focus on tags
   document.getElementById('tags-text').focus();
 
-  // save content -- stored as "ssbify" before the rename, so fall back to the
-  // old key once and drop it on the next write
-  const saveContent = prefs.saveContent !== undefined ? prefs.saveContent : !!prefs.ssbify;
+  // Private saves archive readable text by default. Preserve either generation
+  // of an existing preference; public notes never capture page content.
+  const saveContent = prefs.saveContent !== undefined
+    ? prefs.saveContent
+    : (prefs.ssbify !== undefined ? !!prefs.ssbify : true);
   document.getElementById('save-content').checked = saveContent;
 
   document.getElementById('save-content').onchange = function (e) {

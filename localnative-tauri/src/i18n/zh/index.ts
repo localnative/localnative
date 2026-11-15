@@ -16,6 +16,8 @@ const zh: Translation = {
 		DeleteModalTitle: '删除便签',
 		DeleteModalContent: '你想要删除这条便签吗？',
 		Edit: '编辑',
+		Read: '阅读存档正文',
+		Close: '关闭',
 		Delete: '删除',
 		EditModalTitle: '编辑便签',
 		EditTitle: '标题',

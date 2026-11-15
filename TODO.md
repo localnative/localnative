@@ -1,11 +1,34 @@
 # TODO
 
 Live backlog. Strategy lives in `docs/ROADMAP.md` (2026-11-14: the
-archive / read-later / recall / sync pivot); this file tracks execution.
+archive / MCP / read-later / recall / sync pivot); this file tracks execution.
 
-The first section is the architecture review of 2026-09-26: each
+The next section is the architecture review of 2026-09-26: each
 item records the defect, the evidence, and the fix. `[x]` means fixed and
 verified in the working tree; `[ ]` means still open.
+
+## Text Archive + MCP execution (2026-11-14)
+
+The first release is deliberately text-only. Raw HTML, screenshots, an object
+store, blob sync, embeddings, read-later state and highlights are not part of
+this slice.
+
+- [x] **Capture:** the extension extracts bounded readable text from
+  `article`/`main`/body, defaults private saves to include it, and redacts note
+  content from protocol logs.
+- [x] **Storage:** keep text in `annotations`; schema 0.12.0 adds text
+  annotations to trigram FTS and short-term LIKE without indexing binary
+  annotations. Existing note sync remains unchanged.
+- [x] **Retrieval:** `get` returns one live note by UUID through the normal
+  JSON dispatcher and error envelope.
+- [x] **Reader:** Tauri opens archived text in a safe, scrollable reader with a
+  source link; legacy HTML is escaped rather than executed.
+- [x] **MCP:** `localnative-mcp` provides read-only `search_notes` and
+  `get_note` over stdio. Search omits article bodies; get returns the source
+  URL and full archived text.
+- [x] **Verification:** migration/search/get/MCP tests, Rust fmt + clippy +
+  workspace tests, extension syntax checks, Tauri check + build, and a real
+  MCP session against a scratch archived note.
 
 ## Architecture review (2026-09-26)
 

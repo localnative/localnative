@@ -5,11 +5,11 @@ more users and contributors; the app stays free (AGPL-3.0), revenue is not a
 near-term driver.
 
 The pivot in one line: LocalNative stops being "a bookmark app" and becomes
-**the local-first home for what you read** — save it permanently (Archive),
-read and highlight it anywhere with no account (Read later), ask your own
-history questions offline (Recall), all carried by an engine worth extracting
-(Sync). Each phase ships user-visible value, is a release + blog beat, and
-feeds the next phase.
+**the local-first home for what you read** — save the readable text permanently
+(Archive), let your own AI tools retrieve it (MCP), read and highlight it
+anywhere with no account (Read later), ask your history questions offline
+(Recall), all carried by an engine worth extracting (Sync). Each phase ships
+user-visible value, is a release + blog beat, and feeds the next phase.
 
 ## What we already own (the unfair advantage)
 
@@ -40,8 +40,8 @@ Not a code phase; the packaging around the pivot.
   page (current screenshots show the 0.4.0 era).
 - `docs/ARCHITECTURE.md`: core layout, one diagram of the shells around the
   core, the sync protocol in five paragraphs, and "where to add your first
-  feature" pointers. The test culture (69 unit + 9 integration tests, real
-  migration chain) should be presented as the contributor safety net.
+  feature" pointers. The migration-chain unit and integration tests should be
+  presented as the contributor safety net.
 - Umbrella naming for marketing only — no repo renames: LocalNative Archive,
   Read Later, Recall, Sync all name features of "LocalNative".
 - GitHub Discussions on; every phase opens a set of `good first issue`
@@ -50,65 +50,77 @@ Not a code phase; the packaging around the pivot.
   Store for the extension, Tauri releases for desktop — all listing copy
   updated to the new narrative at the Phase 1 release.
 
-## Phase 1 — Archive: "your own archive.org"
+## Phase 1 — Text Archive: "your own archive.org"
 
-**User story:** pressing save keeps the page itself — readable text now,
-faithful snapshot when possible — searchable forever, on my disk, synced to
-my devices.
+**User story:** pressing save keeps the page's readable text — searchable
+forever, on my disk, synced to my devices.
 
 ### Engineering
 
-- **Object store (core, new `objects.rs` + migration):** content-addressed
-  store at `~/LocalNative/objects/<blake2s>`; tables
-  `object(hash TEXT PRIMARY KEY, size INTEGER, media_type TEXT, created_at TEXT)`
-  and `note_snapshot(note_uuid4 TEXT, object_hash TEXT, kind TEXT,
-  created_at TEXT, token TEXT)` with the usual HLC write token. `kind` ∈
-  `article_html | article_text | raw_html | screenshot`.
-  Article *text* (tens of KB) is note-adjacent data and syncs through the
-  existing note payload from day one; *objects* (raw HTML, screenshots) sync
-  through a new manifest reconciliation (below).
-- **FTS:** new trigram FTS table over article text keyed by object hash,
-  joined into search results so a hit inside a page body surfaces the note.
-  Snippets come from the article text, not just the description.
-- **Capture (extension):** default save flow becomes capture: Readability.js
-  parse in the popup (DOMParser) for `article_html` + `article_text`; raw
-  `fetch()` of the URL for `raw_html` when same-origin policy allows;
-  `tabs.captureVisibleTab` screenshot as an opt-in later step. SingleFile-style
-  full DOM serialization is a follow-up, not a blocker — readable article +
-  raw HTML is 90% of the archival value.
-- **Allow-list:** the native-messaging host's action allow-list (P1) gains
-  `snapshot`/`object` commands; still no note content on any log path.
-- **Viewer (Tauri):** objects served through a custom `lnarchive://` protocol
-  into a sandboxed webview; article HTML sanitized (ammonia) at store time;
-  snapshot viewing strictly offline (`default-src 'self'`, no remote loads —
-  mirrors P4's CSP discipline).
-- **Mobile:** Android/iOS render `article_html` in the platform WebView via
-  the core; raw HTML opens in a viewer screen. No new permissions.
-- **Export/import:** export bundles objects (or skips and reports, per C5
-  behavior); import adopts by hash — dedupe is free because everything is
-  content-addressed.
-- **Sync:** the wire protocol gains an object-manifest exchange (hash →
-  have/need) beside the existing note reconciliation; blobs move in
-  byte-budgeted batches inside the same Noise session. Protocol version bump
-  per docs/VERSIONING.md. **This is the phase's main engineering risk** —
-  budget an interop test like `bulk_sync_moves_every_note` but for objects.
+- **Storage (core):** readable UTF-8 article text lives in the existing
+  `annotations` column. It therefore uses the existing note payload, HLC
+  conflict resolution, export and Noise sync unchanged. Binary annotations
+  remain supported but are not indexed as article text. No object store, new
+  blob protocol, or raw HTML snapshot is in this phase.
+- **FTS:** schema 0.12.0 adds text annotations to the trigram index and the
+  short-term LIKE fallback. A hit inside an article surfaces its note.
+- **Capture (extension):** save content extracts `article`, `main`, or body
+  text in the active tab, removes non-content elements, normalizes whitespace,
+  and caps oversized captures. Pages that disallow injection still save the
+  note. Protocol logs redact note and article content.
+- **Retrieval (core):** a `get` command returns one live note by UUID for the
+  reader and MCP. Unknown UUIDs return the normal error envelope.
+- **Reader (Tauri):** an in-app dialog renders article text as text, never as
+  HTML, with comfortable measure, scrolling, dark mode, and a source link.
+  No remote content or new webview protocol is involved.
+- **Verification:** real migration-chain tests cover old article text,
+  insert/update/delete indexing, short terms, CJK and binary annotations;
+  the extension passes its syntax gate and the Tauri frontend passes check
+  and build.
 
 ### Brand promise note
 
-"Notes in one SQLite file" becomes "your archive in open files on your disk":
-one SQLite database plus a content-addressed object directory. Still local,
-inspectable, greppable, yours — and no server. The website copy should say
-exactly that. Open decision to settle early: under `--features encryption`,
-objects stay plaintext (hash-named) or get an encrypted container; the first
-release documents whichever is true, the second release fixes it.
+The promise stays "your archive in one SQLite file." Article text inherits the
+database's SQLCipher behavior when encryption is enabled and remains plaintext
+in the default build, exactly like the rest of a note. Raw HTML, screenshots,
+content-addressed objects and their encryption format are later decisions, not
+hidden work in this release.
 
 ### Release beat
 
-Versioned release + blog post "Your own archive.org" + landing demo. The
-launch hook for outside audiences: link rot and platform decay; ArchiveBox needs
-a server, SingleFile has no search/sync/mobile.
+Versioned release + blog post "Remember the web, locally" + landing demo. The
+launch hook is link rot without a server: save readable text, search it, and
+sync it using the existing open database and peer protocol.
 
-## Phase 2 — Read later + highlights: "Pocket's ghost, with no account"
+## Phase 2 — MCP: "your reading history, available to your agents"
+
+**User story:** an AI tool I already use can search my saved reading and open a
+result with its source URL, without LocalNative hosting a model or uploading my
+library.
+
+### Engineering
+
+- **Binary:** `localnative-mcp` in `localnative_cli`, speaking MCP JSON-RPC
+  over stdio. Stdout carries protocol messages only; diagnostics go to stderr.
+- **Read-only tools:** `search_notes(query, limit, offset)` returns compact
+  result metadata without article bodies; `get_note(uuid4)` returns the full
+  note, including archived text and its source URL. There is no save, update,
+  delete, sync, or remote command in the first server.
+- **Core reuse:** calls go through the same JSON dispatcher as every other
+  shell and honor `LOCALNATIVE_DB`; there is no second query language or
+  platform-specific business logic.
+- **No model dependency:** embeddings, local endpoints and synthesis stay out
+  of this phase. MCP clients supply their own agent or model.
+- **Verification:** unit tests cover initialize, tools/list, argument
+  validation, compact search results and get-by-UUID; a real stdio session
+  runs against a scratch database containing an archived article.
+
+### Release beat
+
+"Ask your AI about everything you've read — locally." Show an MCP client
+finding an article and citing its original URL.
+
+## Phase 3 — Read later + highlights: "Pocket's ghost, with no account"
 
 **User story:** save now, read later on any device — offline on my phone —
 and highlight the good parts; highlights come back when I revisit the page.
@@ -119,9 +131,9 @@ and highlight the good parts; highlights come back when I revisit the page.
   TEXT, token TEXT)` — `unread | reading | done`, LWW via token, syncs like
   any note-derived record. Queue views (Unread/Reading/Done) in Tauri and
   mobile; the extension's primary button becomes "Save for later".
-- **Reader view:** typography-first rendering of `article_html` in Tauri and
-  the mobile WebViews (fonts, measure, dark mode, font size). Reading on a
-  phone offline over the P2P sync from Phase 1 is the demo.
+- **Reader view:** typography-first rendering of the archived plain text in
+  Tauri and native mobile scrolling views (fonts, measure, dark mode, font
+  size). Reading on a phone offline over existing note sync is the demo.
 - **Highlights:** a content script annotates selections; anchors stored
   Hypothesis-style (text quote + prefix/suffix context, robust to DOM drift)
   as typed entries in the note's `annotations` JSON (`type: "highlight"`) —
@@ -140,14 +152,14 @@ and highlight the good parts; highlights come back when I revisit the page.
 library." That sentence is the blog post. Show phone + desktop syncing on a
 home LAN with the cable unplugged.
 
-## Phase 3 — Recall: local AI over your own corpus
+## Phase 4 — Recall: local AI over your own corpus
 
 **User story:** "where did I read about X?" — semantic search, then optional
 answers, entirely on my machine.
 
 ### Engineering
 
-- **Embeddings (core, opt-in):** table `object_embedding(object_hash TEXT,
+- **Embeddings (core, opt-in):** table `note_embedding(note_uuid4 TEXT,
   model TEXT, vec BLOB)`. **No new native dependencies in v1** — pure-Rust
   brute-force cosine over f32 blobs is instant at personal scale (100k docs ×
   384 dims ≈ 150 MB scan), keeps the iOS/Android builds green, and defers
@@ -169,7 +181,7 @@ answers, entirely on my machine.
 "Chat with everything you've read — offline." The 2026 demo that travels:
 airplane-mode Q&A over a personal archive.
 
-## Phase 4 — Sync: extract the engine
+## Phase 5 — Sync: extract the engine
 
 **User story (developer):** "SQLite sync with Noise encryption and mDNS, zero
 servers, as a crate."
@@ -178,8 +190,8 @@ servers, as a crate."
   `discovery.rs`, `wire.rs`, HLC, bucket reconciliation) generic over a small
   `Record` trait (content hash, version token, chunked serialization);
   note-specific validation stays in the core, which becomes the crate's first
-  consumer. The object-manifest exchange from Phase 1 is the second record
-  type and the proof the abstraction holds.
+  consumer. A later second record type is the proof that the abstraction
+  holds; it is not invented just to make the SDK look general.
 - `docs/SYNC.md`: the wire spec (handshake, framing, version negotiation per
   VERSIONING.md) published for interop; interop tests that pin a client
   against a frozen byte stream.
@@ -199,22 +211,24 @@ implementation is a note app you can read end to end."
 
 ## Sequencing rationale
 
-Archive → Read later → Recall → Sync. Each phase's data model is the next
-phase's substrate: the archive corpus is what read-later organizes and recall
-searches; three phases of real traffic over blobs and records is what makes a
-credible extracted engine. Every phase ends in a public beat aimed at a
-different audience (self-hosters, Pocket refugees, local-AI crowd, app
-developers) — cumulative rather than repetitive.
+Text Archive → MCP → Read later → Recall → Sync. The archive corpus is what
+MCP exposes, read-later organizes and recall searches; real application use,
+not a desire to publish a crate, is what makes a credible extracted engine.
+Every phase ends in a public beat aimed at a different audience (self-hosters,
+AI-tool users, Pocket refugees, local-AI crowd, app developers) — cumulative
+rather than repetitive.
 
 ## Risks and open decisions
 
-- **Object sync over the wire** (Phase 1's hard part): new manifest
-  reconciliation + blob batching; mitigate by reusing the byte-budget/session
-  machinery and an interop test from day one.
-- **Encryption vs. objects**: decide plaintext-hash-named vs. container
-  before Phase 1 ships; document honestly in the first release either way.
-- **MV3 service-worker lifecycle** during large captures: offscreen document
-  for parsing; capture must complete or cleanly resume.
+- **Capture size**: long articles enlarge every query response because notes
+  currently include annotations. Keep capture capped; paginated MCP search
+  omits bodies, and a later API can omit them from list results after every
+  front-end has a reader-specific fetch path.
+- **Legacy HTML annotations**: older saves may contain HTML rather than plain
+  text. They remain searchable and render escaped, never as live markup; a
+  one-click re-capture/migration is a follow-up.
+- **MV3 service-worker lifecycle** during large captures: extraction runs in
+  the active tab and returns one bounded result; failure still saves the note.
 - **Highlight anchor drift**: quote+context anchors degrade gracefully;
   accept "unanchored highlight keeps its text" as the fallback state.
 - **Iced** stays frozen (per 2026-09-26 product decisions); none of these

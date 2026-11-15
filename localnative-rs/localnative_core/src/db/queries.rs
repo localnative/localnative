@@ -20,12 +20,12 @@
 //! facets, and whole-file merge, import and export.
 
 use super::models::{
-    CmdDelete, CmdExportDb, CmdFilter, CmdImportDb, CmdInsert, CmdSearch, CmdSelect,
+    CmdDelete, CmdExportDb, CmdFilter, CmdGet, CmdImportDb, CmdInsert, CmdSearch, CmdSelect,
     CmdSyncViaAttach, CmdUpdate, Day, Note, QueryResult, Tags,
 };
 use super::{
     DbResult, TOMBSTONE_CONTENT, ValidationError, next_update_token, normalize_stored_tags,
-    normalize_tags, observe_stored_tokens,
+    normalize_tags, normalize_text_annotations, observe_stored_tokens,
 };
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD;
@@ -139,6 +139,12 @@ impl CmdSelect {
     }
 }
 
+impl CmdGet {
+    pub fn process(&self, conn: &Connection) -> DbResult<Option<Note>> {
+        get_note(conn, &self.uuid4)
+    }
+}
+
 impl CmdSearch {
     pub fn process(&self, conn: &Connection) -> DbResult<QueryResult> {
         do_search(conn, &self.query, self.limit, self.offset)
@@ -151,6 +157,15 @@ impl CmdSearch {
 const NOTE_COLUMNS: &str = "note.rowid, note.uuid4, note.title, note.url, note.tags, \
      note.description, note.comments, note.annotations, note.created_at, note.is_public, \
      note.metadata";
+
+/// Store UTF-8 annotations as SQLite text so archive indexing and LIKE work;
+/// preserve screenshots and other binary annotations as blobs.
+pub(crate) fn annotations_for_storage(value: &[u8]) -> Value {
+    match std::str::from_utf8(value) {
+        Ok(text) => Value::Text(text.to_string()),
+        Err(_) => Value::Blob(value.to_vec()),
+    }
+}
 
 /// Present stored annotations the way the write side accepts them: UTF-8 as
 /// text, anything else (screenshots) as a base64 `data:` URL.
@@ -249,6 +264,7 @@ pub fn insert_note_with_timestamp(
 ) -> DbResult<Note> {
     let uuid4 = Uuid::new_v4().to_string();
     let updated_at = next_update_token(conn, None)?;
+    let annotations = annotations_for_storage(annotations);
 
     conn.execute(
         "INSERT INTO note (uuid4, title, url, tags, description, comments, annotations, created_at, is_public, metadata, updated_at)
@@ -305,6 +321,7 @@ pub fn update_note(
     };
 
     let updated_at = next_update_token(conn, Some(&previous_token))?;
+    let annotations = annotations.map(annotations_for_storage);
     conn.execute(
         "UPDATE note SET
              title = COALESCE(?2, title),
@@ -434,9 +451,10 @@ impl NoteFilter {
         for like in &text.likes {
             sql.push_str(
                 " AND (note.title LIKE ? ESCAPE '\\' OR note.url LIKE ? ESCAPE '\\' \
-                 OR note.tags LIKE ? ESCAPE '\\' OR note.description LIKE ? ESCAPE '\\')",
+                 OR note.tags LIKE ? ESCAPE '\\' OR note.description LIKE ? ESCAPE '\\' \
+                 OR note.archive_text LIKE ? ESCAPE '\\')",
             );
-            params.extend(std::iter::repeat_n(Value::Text(like.clone()), 4));
+            params.extend(std::iter::repeat_n(Value::Text(like.clone()), 5));
         }
         Self { sql, params }
     }
@@ -469,7 +487,7 @@ fn note_page(
                 "SELECT {NOTE_COLUMNS} FROM note
                  JOIN note_fts_trigram ON note_fts_trigram.rowid = note.rowid
                  WHERE note_fts_trigram MATCH ? AND {}
-                 ORDER BY bm25(note_fts_trigram, 10.0, 5.0, 3.0, 1.0), note.created_at DESC
+                 ORDER BY bm25(note_fts_trigram, 10.0, 5.0, 3.0, 1.0, 1.0), note.created_at DESC
                  LIMIT ? OFFSET ?",
                 filter.sql
             );
@@ -553,6 +571,17 @@ fn run_query(
         days: day_histogram(conn, &text)?,
         tags: tag_counts(conn, &text, range)?,
     })
+}
+
+/// One live note by its stable UUID, including archived article text.
+pub fn get_note(conn: &Connection, uuid4: &str) -> DbResult<Option<Note>> {
+    Ok(conn
+        .query_row(
+            &format!("SELECT {NOTE_COLUMNS} FROM note WHERE uuid4 = ?1 AND deleted = 0"),
+            rusqlite::params![uuid4],
+            map_note,
+        )
+        .optional()?)
 }
 
 /// Newest notes plus the day histogram and tag counts.
@@ -719,6 +748,8 @@ fn sync_attached(conn: &Connection) -> DbResult<()> {
         ),
         [],
     )?;
+    normalize_text_annotations(&tx, "main")?;
+    normalize_text_annotations(&tx, "other")?;
     strip_tombstones(&tx, "main")?;
     strip_tombstones(&tx, "other")?;
     normalize_stored_tags(&tx)?;
@@ -818,6 +849,7 @@ fn import_attached(conn: &Connection) -> DbResult<usize> {
     );
     let tx = conn.unchecked_transaction()?;
     let merged = tx.execute(&merge_sql("main", &select), [])?;
+    normalize_text_annotations(&tx, "main")?;
     strip_tombstones(&tx, "main")?;
     normalize_stored_tags(&tx)?;
     observe_stored_tokens(&tx)?;
