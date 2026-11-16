@@ -35,7 +35,7 @@ Search is FTS5 trigram for terms of 3+ characters and escaped `LIKE` for shorter
 Notes carry: title, URL, tags, description, comments, annotations, timestamps, a UUID4, and a public/private flag. UTF-8 annotations (including archived article text) are stored as SQLite text and indexed by schema 0.12.0's generated `archive_text` column; binary annotations stay blobs and are excluded from the text index.
 
 ### Import / Export (`localnative_core/src/import.rs`, `export.rs`)
-Standalone core modules (not part of the JSON `Cmd` dispatch) driven by dedicated CLI binaries:
+Standalone core modules (not part of the JSON `Cmd` dispatch) driven by the unified CLI's `import` and `export` subcommands:
 - `import.rs` parses external sources into `ImportedNote`s and bulk-inserts them with URL-based de-duplication (`import_notes`): Pocket HTML (`parse_pocket_html`), Omnivore JSON (`parse_omnivore_json`), Raindrop CSV (`parse_raindrop_csv`), Plinky JSON (`parse_plinky_json`).
 - `export.rs` writes notes out as individual Markdown files with YAML frontmatter (`export_notes`), slugifying titles into filename-safe names.
 
@@ -62,15 +62,19 @@ cargo run -p localnative_iced    # run the native GUI (Iced)
 cargo test                       # run all tests
 cargo test test_serde            # run a single test by name
 
-# localnative_cli ships several binaries (src/bin/), not one — select with --bin:
-cargo run -p localnative_cli --bin localnative-web-ext-host          # browser-extension native-messaging host
-cargo run -p localnative_cli --bin localnative-mcp                   # read-only MCP stdio server
-cargo run -p localnative_cli --bin localnative-import -- <args>      # import Pocket/Omnivore/Raindrop/Plinky
-cargo run -p localnative_cli --bin localnative-export -- <args>      # export notes to Markdown
-cargo run -p localnative_cli --bin localnative-export-db -- -o <file>  # VACUUM INTO single-file DB backup
-cargo run -p localnative_cli --bin localnative-import-db -- -i <file>  # one-way LWW merge a DB file into the local DB
-# other bins: localnative-rpc-server, localnative-rpc-client-sync,
-#             localnative-rpc-client-stop-server, localnative-upgrade
+# One localnative implementation; old binary names remain thin compatibility launchers:
+cargo run -p localnative_cli -- --help                             # all unified subcommands
+cargo run -p localnative_cli -- search <query>                     # compact JSON search results
+cargo run -p localnative_cli -- get <uuid4>                        # full note and archived text
+cargo run -p localnative_cli -- mcp                                # read-only MCP stdio server
+cargo run -p localnative_cli -- host install                       # host alias + browser manifests
+cargo run -p localnative_cli -- sync serve --pair                  # paired LAN sync server
+cargo run -p localnative_cli -- import --format pocket <file>       # Pocket/Omnivore/Raindrop/Plinky
+cargo run -p localnative_cli -- export --output <dir>               # notes to Markdown
+cargo run -p localnative_cli -- export-db --output <file>           # single-file DB backup
+cargo run -p localnative_cli -- import-db --input <file>            # one-way LWW DB merge
+# Browser manifests must execute the permanent localnative-web-ext-host alias directly:
+cargo run -p localnative_cli --bin localnative-web-ext-host
 
 # CI-equivalent lint/format gate (matches .github/workflows/rust.yml / xtask header):
 cargo fmt --all -- --check
@@ -80,7 +84,7 @@ cargo clippy --workspace --all-targets --all-features -- -D warnings -A clippy::
 ### xtask (release & Android build automation)
 ```bash
 cd localnative-rs
-cargo run -p xtask -- release [-v <version>]   # package iced + web-ext-host + MCP into dist/
+cargo run -p xtask -- release [-v <version>]   # package iced + unified CLI + web-ext-host into dist/
 cargo run -p xtask -- ndkbd [--debug]          # cargo-ndk build of localnative_core .so for Android
 ```
 
@@ -100,7 +104,7 @@ Other platform front-ends: `localnative-ios`, `localnative-browser-extension`. B
 - **Adding a database feature** = new variant in the `db::models` `Cmd` enum + handling in `db::process_cmd`/`queries`, plus a new `migrations` entry if the schema changes. Front-ends only need to learn the new JSON shape.
 - **Cross-FFI errors** must be returned as JSON, never panicked across the boundary — follow `serialize_error`.
 - **Reply shapes are the core's serde output, verbatim.** A query reply is `QueryResult`: `count`, `notes`, `days: [{date, count}]`, `tags: [{tag, count}]`. List-page notes have `annotations: ""` plus `has_archive`; the `get` command returns one full note including article text. The JS/Kotlin/Swift front-ends spell these field names by hand, so check them against `db/models.rs` when touching a reader (Tauri's chart and tag panel sat on the pre-refactor `{k, v}` names for a year).
-- **The browser extension only reaches allow-listed actions** (`ALLOWED_ACTIONS` in `localnative_cli/src/bin/localnative-web-ext-host.rs`): a popup feature that needs a new command adds it there too.
+- **The browser extension only reaches allow-listed actions** (`ALLOWED_ACTIONS` in `localnative_cli/src/host.rs`): a popup feature that needs a new command adds it there too. Browser manifests cannot pass `host` as an argument, so the permanent `localnative-web-ext-host` alias dispatches by executable name before Clap parses arguments.
 - The core is **synchronous rusqlite under a Tokio shim**; do not assume `async fn` query helpers exist. (`TODO.md` tracks a possible async migration — not yet done.)
 - CI runs on **GitHub Actions** (`.github/workflows/`: rust with fmt + clippy `-D warnings` and per-crate builds, android, tauri, browser-extension, website, Play Store deploy). Keep it green; the clippy gate is strict. The code host is **github.com/localnative/localnative** (mirrors: srht, gitee, bitbucket, ssb).
 - `TODO.md` is a live backlog of known tech debt — consult it before proposing large refactors.

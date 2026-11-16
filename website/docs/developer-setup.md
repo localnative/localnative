@@ -18,26 +18,35 @@ web-ext run --verbose # firefox
 ```
 
 #### Setup browser extension host binary
-- Download and run the desktop application from [release archive](https://github.com/localnative/localnative/releases)
-
-    this will create `~/LocalNative/bin` directory containing the host binary
-- or use `cargo install localnative_cli`, and find the binary at `~/.cargo/bin/localnative-web-ext-host`
-
-- or build from source, via [cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html)
+- Download and run the desktop application from the [release archive](https://github.com/localnative/localnative/releases), which installs the browser host.
+- Or install from a source checkout with Cargo, then install the Chrome and Firefox manifests:
 ```
-cd localnative-rs/localnative_cli
-cargo build
+cargo install --path localnative-rs/localnative_cli --bin localnative --bin localnative-web-ext-host
+localnative host install
 ```
-  If build succeed, the web extension host debug executable location is
+- To use an unpacked extension with a different Chrome ID, repeat its origin with `--allowed-origin`:
 ```
-localnative-rs/target/debug/localnative-web-ext-host
+localnative host install --allowed-origin chrome-extension://YOUR_EXTENSION_ID/
 ```
 
-#### Setup native messaging manifest to point to extension host binary
+To build and install from a source checkout instead:
+```
+cd localnative-rs
+cargo build -p localnative_cli --bin localnative --bin localnative-web-ext-host
+./target/debug/localnative host install
+```
+
+The installer copies the unified executable to the permanent
+`localnative-web-ext-host` name and writes manifests with that absolute path.
+This alias is required because browser native-messaging manifests cannot add a
+`host` command argument.
+
+#### Manually configure a native messaging manifest
+The automatic installer is recommended. To configure a browser by hand instead:
 - Copy manifest json template file `app.localnative.json` from `localnative-browser-extension/host` to your browser's specific manifest location
     - [Firefox](https://developer.mozilla.org/en-US/Add-ons/WebExtensions/Native_manifests#Manifest_location)
     - [Chrome](https://developer.chrome.com/extensions/nativeMessaging#native-messaging-host-location)
-- Change the host `path` in `app.localnative.json` to where `localnative-web-ext-host` binary is from previous step
+- Change the host `path` to the installed `localnative-web-ext-host` executable
 
 ##### Firefox example manifest file
 `~/.mozilla/native-messaging-hosts/app.localnative.json`
@@ -71,7 +80,7 @@ localnative-rs/target/debug/localnative-web-ext-host
 
 #### Database
 
-If above things are correctly setup, `localnative.sqlite3` database file is created at `~/LocalNative/localnative.sqlite3` the first time you click the web ext popup. The `LOCALNATIVE_DB` environment variable (or the `--db` flag on the CLI binaries) overrides the location.
+If above things are correctly setup, `localnative.sqlite3` database file is created at `~/LocalNative/localnative.sqlite3` the first time you click the web ext popup. The `LOCALNATIVE_DB` environment variable (or the unified CLI's `--db` flag) overrides the location.
 
 hint to see what `localnative-web-ext-host` went wrong:
 ```
@@ -111,16 +120,16 @@ Run it after any change to `localnative_core`.
 
 ## Import / Export
 
-Local Native ships dedicated CLI binaries (in `localnative_cli`) for moving notes
-in and out of the local SQLite database. Both operate on the database at the
-default location (`~/.ssb/localnative.sqlite3`).
+The unified `localnative` CLI moves notes in and out of the local SQLite
+database. It uses `~/LocalNative/localnative.sqlite3` by default; `--db` or
+`LOCALNATIVE_DB` selects another file.
 
 #### Import from another service
 Supported formats: `pocket` (HTML export), `omnivore` (JSON), `raindrop` (CSV),
 `plinky` (JSON). Notes are de-duplicated by URL, so re-running an import is safe.
 ```
 cd localnative-rs
-cargo run -p localnative_cli --bin localnative-import -- --format pocket path/to/export.html
+cargo run -p localnative_cli -- import --format pocket path/to/export.html
 ```
 
 #### Export to Markdown
@@ -128,8 +137,8 @@ Exports each note as an individual `.md` file with YAML frontmatter. An optional
 search query filters which notes are exported.
 ```
 cd localnative-rs
-cargo run -p localnative_cli --bin localnative-export -- --output ./exported-notes
-cargo run -p localnative_cli --bin localnative-export -- --output ./exported-notes --query rust
+cargo run -p localnative_cli -- export --output ./exported-notes
+cargo run -p localnative_cli -- export --output ./exported-notes --query rust
 ```
 
 ## Script

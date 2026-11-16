@@ -11,8 +11,8 @@ Desktop
 ```
 LocalNative # folder at user home directory
 ├── bin
-│   └── localnative-web-ext-host-X.Y.Z{-mac,-gnu-linux,.exe} # web extension host (rust binary)
-│   └── localnative-mcp # optional read-only AI / MCP server
+│   ├── localnative-web-ext-host # permanent browser extension host alias
+│   └── localnative # unified CLI and optional read-only AI / MCP server
 └── localnative.sqlite3 # user's database
 ```
 You can use [DB Browser for SQLite](http://sqlitebrowser.org/) to explore the database.
@@ -34,7 +34,7 @@ encrypted and a device can only sync with devices it has paired with.
 
 First contact between two devices pairs them: on the device that will act as
 the server, start the server with pairing (the desktop Sync page's **Pair New
-Device**, or `localnative-rpc-server --pair`), note the one-time pairing code
+Device**, or `localnative sync serve --pair`), note the one-time pairing code
 shown, then on the other device enter the server address and the code. The
 code is valid for five minutes. After pairing, syncing needs only the
 address — the pairing code field can stay empty.
@@ -42,9 +42,9 @@ address — the pairing code field can stay empty.
 ### via attach file
 You can copy the SQLite database file between devices (e.g. via [File
 Sharing](https://support.apple.com/en-us/HT201301) on iOS) and merge with
-`localnative-import-db`, or export a standalone copy with
-`localnative-export-db`. Exports carry no device identity (sync keys and
-paired peers are stripped), so a restored copy behaves as a new device.
+`localnative import-db --input <FILE>`, or export a standalone copy with
+`localnative export-db --output <FILE>`. Exports carry no device identity (sync
+keys and paired peers are stripped), so a restored copy behaves as a new device.
 
 ## Note
 Notes are stored in `~/LocalNative/localnative.sqlite3` on desktop

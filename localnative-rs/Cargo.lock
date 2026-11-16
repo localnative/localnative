@@ -4237,6 +4237,7 @@ version = "0.7.0"
 dependencies = [
  "clap",
  "localnative_core",
+ "localnative_hostinstall",
  "serde_json",
  "tracing",
  "tracing-subscriber",

@@ -1,6 +1,6 @@
 /*
     Local Native
-    Copyright (C) 2019  Yi Wang
+    Copyright (C) 2018-2026  Yi Wang
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as published by
@@ -16,85 +16,6 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use clap::{Command, arg};
-use localnative_core::db;
-use localnative_core::import;
-
 fn main() {
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            tracing_subscriber::EnvFilter::from_default_env()
-                .add_directive(tracing::Level::INFO.into()),
-        )
-        .init();
-
-    let matches = Command::new("localnative-import")
-        .about("Import notes from external services")
-        .arg(
-            arg!(-f --format <FORMAT> "Import format: pocket, omnivore, raindrop, or plinky")
-                .required(true),
-        )
-        .arg(arg!(<FILE> "Path to the export file").required(true))
-        .arg(arg!(-d --db <FILE> "Database file (default: platform location)").required(false))
-        .get_matches();
-
-    if let Some(db) = matches.get_one::<String>("db") {
-        localnative_core::db::set_db_path(db);
-    }
-    let format = matches.get_one::<String>("format").unwrap();
-    let file_path = matches.get_one::<String>("FILE").unwrap();
-
-    let content = match std::fs::read_to_string(file_path) {
-        Ok(c) => c,
-        Err(e) => {
-            eprintln!("Error reading file '{}': {}", file_path, e);
-            std::process::exit(1);
-        }
-    };
-
-    let notes = match format.as_str() {
-        "pocket" => import::parse_pocket_html(&content),
-        "omnivore" => match import::parse_omnivore_json(&content) {
-            Ok(notes) => notes,
-            Err(e) => {
-                eprintln!("Error parsing Omnivore JSON: {}", e);
-                std::process::exit(1);
-            }
-        },
-        "raindrop" => import::parse_raindrop_csv(&content),
-        "plinky" => match import::parse_plinky_json(&content) {
-            Ok(notes) => notes,
-            Err(e) => {
-                eprintln!("Error parsing Plinky JSON: {}", e);
-                std::process::exit(1);
-            }
-        },
-        _ => {
-            eprintln!(
-                "Unknown format '{}'. Supported formats: pocket, omnivore, raindrop, plinky",
-                format
-            );
-            std::process::exit(1);
-        }
-    };
-
-    eprintln!("Parsed {} notes from {} file", notes.len(), format);
-
-    let conn = match db::init_db() {
-        Ok(c) => c,
-        Err(e) => {
-            eprintln!("Error opening database: {}", e);
-            std::process::exit(1);
-        }
-    };
-
-    match import::import_notes(&conn, notes) {
-        Ok(result) => {
-            eprintln!("{}", result);
-        }
-        Err(e) => {
-            eprintln!("Error during import: {}", e);
-            std::process::exit(1);
-        }
-    }
+    std::process::exit(localnative_cli::run_from_env());
 }

@@ -1,6 +1,6 @@
 /*
     Local Native
-    Copyright (C) 2019  Yi Wang
+    Copyright (C) 2018-2026  Yi Wang
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as published by
@@ -16,36 +16,6 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-//! Stop the sync server run by *this* process's `localnative-rpc-server`.
-//! Stopping a server is a local action; there is deliberately no remote stop.
-
-use clap::{Command, arg};
-use localnative_core::run_sync as run;
-use std::process;
-
 fn main() {
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            tracing_subscriber::EnvFilter::from_default_env()
-                .add_directive(tracing::Level::INFO.into()),
-        )
-        .init();
-
-    let matches = Command::new("localnative-rpc-server-stop")
-        .about("Stop a sync server started by this process")
-        .arg(
-            arg!(-a --addr[ADDR] "Address the server was started on").default_value("0.0.0.0:2345"),
-        )
-        .get_matches();
-
-    let addr = matches.get_one::<String>("addr").unwrap();
-    let json = serde_json::json!({ "action": "server-stop", "addr": addr }).to_string();
-    let response = run(&json);
-    let ok = serde_json::from_str::<serde_json::Value>(&response)
-        .map(|v| v.get("error").is_none())
-        .unwrap_or(false);
-    println!("{response}");
-    if !ok {
-        process::exit(1);
-    }
+    std::process::exit(localnative_cli::run_from_env());
 }

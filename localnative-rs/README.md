@@ -16,16 +16,23 @@ sudo apt install pkg-config libfreetype6-dev libfontconfig1-dev libxkbcommon-dev
 ```
 and then `cargo build`
 
-# localnative-mcp
+# localnative CLI
 
-The read-only MCP server exposes `search_notes` and `get_note` over stdio:
+The unified `localnative` command provides search, retrieval, import/export,
+sync, browser-host installation, and a read-only MCP server. Run
+`cargo run -p localnative_cli -- --help` for all subcommands.
+
+The MCP server exposes `search_notes` and `get_note` over stdio:
 
 ```bash
-cargo build --release --bin localnative-mcp
+cargo build --release --bin localnative --bin localnative-web-ext-host
+./target/release/localnative mcp
 ```
 
-Release bundles include this binary. Client configuration and troubleshooting
-are documented at https://localnative.app/docs/mcp.
+Release bundles include the unified CLI and permanent browser-host alias. The
+former standalone commands remain compatibility aliases in this release. Client
+configuration and troubleshooting are documented at
+https://localnative.app/docs/mcp.
 
 ### Release
 Our project uses [Tauri Bundler](https://github.com/tauri-apps/tauri/tree/dev/tooling/bundler) for packaging of various platforms. Thank you very much for the Tauri team’s contribution to the Rust community.

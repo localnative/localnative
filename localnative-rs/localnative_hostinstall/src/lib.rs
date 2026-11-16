@@ -17,12 +17,12 @@
 */
 
 //! One installer for the browser-extension native-messaging manifests, shared
-//! by every desktop front-end (Iced, Tauri).
+//! by the desktop front-ends and the `localnative host install` command.
 //!
-//! Each browser discovers the `localnative-web-ext-host` binary through a JSON
-//! manifest at a platform- and browser-specific location. This crate computes
-//! those locations, writes (or refreshes) the manifests, and on Linux also
-//! copies the host binary next to `~/LocalNative/` where the database lives.
+//! Each browser discovers the permanent `localnative-web-ext-host` alias through
+//! a JSON manifest at a platform- and browser-specific location. This crate
+//! computes those locations, writes (or refreshes) the manifests, and installs
+//! the host executable where the manifests can find it.
 
 use serde::Serialize;
 use std::path::{Path, PathBuf};
@@ -44,9 +44,9 @@ pub struct AppHost {
 impl AppHost {
     /// Where the host binary is expected to live for the manifest to point at.
     ///
-    /// macOS/Windows: next to the running app binary (the installer ships both).
-    /// Linux: `~/LocalNative/localnative-web-ext-host`, where [`install_all`]
-    /// also copies it from next to the running binary.
+    /// macOS/Windows: next to the running app or CLI binary.
+    /// Linux: `~/LocalNative/localnative-web-ext-host`. Desktop installers copy
+    /// the sibling host alias; the CLI installer copies its unified executable.
     pub fn path() -> PathBuf {
         let name = {
             #[cfg(target_os = "windows")]
@@ -124,15 +124,17 @@ impl AppHost {
 }
 
 #[cfg(target_os = "windows")]
-fn registr(kind: WebKind) {
+fn registr(kind: WebKind) -> std::io::Result<()> {
     use winreg::enums::*;
 
     let path = kind.registr_path();
     let write_path = path.join("app.localnative");
-    let Some(json_path) = kind.json_path() else {
-        tracing::error!(?kind, "no manifest path for registry");
-        return;
-    };
+    let json_path = kind.json_path().ok_or_else(|| {
+        std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "manifest path is not valid Unicode",
+        )
+    })?;
     let key = winreg::RegKey::predef(HKEY_CURRENT_USER);
     let value = key
         .open_subkey(&path)
@@ -149,12 +151,8 @@ fn registr(kind: WebKind) {
             })
     };
     match value {
-        Some(v) if v == json_path => {}
-        _ => {
-            if let Err(e) = write() {
-                tracing::error!(%e, "failed to register native messaging host");
-            }
-        }
+        Some(value) if value == json_path => Ok(()),
+        _ => write(),
     }
 }
 
@@ -217,21 +215,28 @@ impl WebKind {
             {
                 let from = parent.join("localnative-web-ext-host");
                 let to = home.join("LocalNative").join("localnative-web-ext-host");
-
-                if to.exists()
-                    && to.is_dir()
-                    && let Err(e) = std::fs::remove_dir(&to)
-                {
-                    tracing::error!(%e, "failed to remove stale host directory");
-                }
-
-                if let Err(e) = std::fs::copy(from, to) {
-                    tracing::error!(%e, "failed to copy web-ext-host binary");
+                if let Err(error) = copy_host(&from, &to) {
+                    tracing::error!(%error, "failed to copy web-ext-host binary");
                 }
             }
         }
-        try_init_file(Self::FireFox, None);
-        try_init_file(Self::Chrome, allowed_origins);
+        for (kind, origins) in [(Self::FireFox, None), (Self::Chrome, allowed_origins)] {
+            if let Err(error) = try_init_file(kind, origins) {
+                tracing::error!(?kind, %error, "failed to init host file");
+            }
+        }
+    }
+
+    /// Install the currently running unified CLI as the permanent host alias,
+    /// then write both browser manifests. Unlike the desktop installer, every
+    /// failure is returned so the command can set a failing exit status.
+    pub fn install_cli(allowed_origins: Option<Vec<String>>) -> std::io::Result<PathBuf> {
+        let source = std::env::current_exe()?;
+        let destination = AppHost::path();
+        copy_host(&source, &destination)?;
+        try_init_file(Self::FireFox, None)?;
+        try_init_file(Self::Chrome, allowed_origins)?;
+        Ok(destination)
     }
 
     #[cfg(target_os = "windows")]
@@ -283,15 +288,36 @@ impl WebKind {
     }
 }
 
-fn try_init_file(kind: WebKind, allowed_origins: Option<Vec<String>>) {
-    if let Some(dir_path) = kind.path() {
-        #[cfg(target_os = "windows")]
-        registr(kind);
-        let raw_file = kind.host(allowed_origins).raw_data();
-        if let Err(e) = init_file(&dir_path, &raw_file) {
-            tracing::error!(?kind, %e, "failed to init host file");
-        }
+fn copy_host(source: &Path, destination: &Path) -> std::io::Result<()> {
+    if let (Ok(source_path), Ok(destination_path)) = (
+        std::fs::canonicalize(source),
+        std::fs::canonicalize(destination),
+    ) && source_path == destination_path
+    {
+        return Ok(());
     }
+    if let Some(parent) = destination.parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+    if destination.is_dir() {
+        std::fs::remove_dir(destination)?;
+    }
+    std::fs::copy(source, destination)?;
+    Ok(())
+}
+
+fn try_init_file(kind: WebKind, allowed_origins: Option<Vec<String>>) -> std::io::Result<()> {
+    let Some(dir_path) = kind.path() else {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            "could not determine the browser manifest directory",
+        ));
+    };
+    let raw_file = kind.host(allowed_origins).raw_data();
+    init_file(&dir_path, &raw_file)?;
+    #[cfg(target_os = "windows")]
+    registr(kind)?;
+    Ok(())
 }
 
 fn init_file(dir_path: &Path, raw_file: &[u8]) -> std::io::Result<()> {

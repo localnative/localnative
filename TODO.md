@@ -23,12 +23,28 @@ this slice.
   JSON dispatcher and error envelope.
 - [x] **Reader:** Tauri opens archived text in a safe, scrollable reader with a
   source link; legacy HTML is escaped rather than executed.
-- [x] **MCP:** `localnative-mcp` provides read-only `search_notes` and
+- [x] **MCP:** `localnative mcp` provides read-only `search_notes` and
   `get_note` over stdio. Search omits article bodies; get returns the source
-  URL and full archived text.
+  URL and full archived text. `localnative-mcp` remains a transitional alias.
 - [x] **Verification:** migration/search/get/MCP tests, Rust fmt + clippy +
   workspace tests, extension syntax checks, Tauri check + build, and a real
   MCP session against a scratch archived note.
+
+## CLI consolidation (2026-11-16)
+
+- [x] **Unified command:** `localnative` provides search/get, MCP, browser-host,
+  LAN sync, import/export, database merge/backup and migration subcommands.
+- [x] **Compatibility:** the nine former non-host commands are thin launchers
+  into the same implementation. `localnative-web-ext-host` is a permanent alias
+  dispatched by executable name because manifests cannot supply `host` as an
+  argument; release bundles ship only the unified CLI and this host alias.
+- [x] **Installation:** `localnative host install` copies the running CLI to the
+  permanent host name, writes Chrome/Firefox manifests and reports failures.
+- [x] **Verification:** black-box tests cover legacy aliases, Pocket import,
+  Markdown/database export and merge, archive search/get, MCP stdio and a real
+  native-messaging insert after installation under a temporary home.
+- [ ] **Distribution:** add five-platform CI packages and install tests before
+  publishing the CLI to crates.io, PyPI and npm; no registry release is done.
 
 ## Architecture review (2026-09-26)
 

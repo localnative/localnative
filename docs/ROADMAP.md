@@ -100,8 +100,9 @@ library.
 
 ### Engineering
 
-- **Binary:** `localnative-mcp` in `localnative_cli`, speaking MCP JSON-RPC
+- **Command:** `localnative mcp` in `localnative_cli`, speaking MCP JSON-RPC
   over stdio. Stdout carries protocol messages only; diagnostics go to stderr.
+  The transitional `localnative-mcp` alias dispatches to the same implementation.
 - **Read-only tools:** `search_notes(query, limit, offset)` returns compact
   result metadata without article bodies; `get_note(uuid4)` returns the full
   note, including archived text and its source URL. There is no save, update,

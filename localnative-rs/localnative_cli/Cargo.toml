@@ -6,10 +6,16 @@ version.workspace = true
 authors = ["Yi Wang"]
 license = "AGPL-3.0"
 edition = "2024"
+default-run = "localnative"
+
+[[bin]]
+name = "localnative"
+path = "src/main.rs"
 
 [dependencies]
 clap = { workspace = true, features = ["cargo"] }
 localnative_core = { path = "../localnative_core" }
+localnative_hostinstall = { path = "../localnative_hostinstall" }
 serde_json = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
