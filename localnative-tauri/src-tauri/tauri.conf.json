@@ -30,11 +30,7 @@
     "category": "DeveloperTool",
     "copyright": "",
     "createUpdaterArtifacts": true,
-    "icon": [
-      "icons/icon.png",
-      "icons/icon.icns",
-      "icons/icon.ico"
-    ],
+    "icon": ["icons/icon.png", "icons/icon.icns", "icons/icon.ico"],
     "shortDescription": "",
     "longDescription": "",
     "macOS": {
@@ -55,9 +51,7 @@
   "plugins": {
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbWVudDogaW1pbmlzaWduIHB1YmxpYyBrZXk6IDNCQ0YzMDIyOEU4OUM5QTUKUldTbHlZbU9JakRQTzBKUzRsSVhvT3NpUzhpMDF5YnFSVVpxOGtPOEhHQ0U3T0FsUW84TlloRU0K",
-      "endpoints": [
-        "https://localnative.app/updater/update.json"
-      ]
+      "endpoints": ["https://localnative.app/updater/update.json"]
     }
   }
 }

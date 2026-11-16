@@ -63,7 +63,7 @@
       on:change={select_locale}
       class="select select-bordered max-w-xs"
     >
-      {#each languages as language}
+      {#each languages as language (language.locale)}
         <option value={language.locale}>{language.text}</option>
       {/each}
     </select>

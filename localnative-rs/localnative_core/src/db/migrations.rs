@@ -189,6 +189,7 @@ fn migrate_note(conn: &Connection) -> DbResult<()> {
                 description: row.get(4)?,
                 comments: row.get(5)?,
                 annotations: row.get(6)?,
+                has_archive: false,
                 created_at: row.get(7)?,
                 is_public: row.get(8)?,
                 metadata: String::new(),

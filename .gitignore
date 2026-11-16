@@ -10,3 +10,4 @@ external-libs/*
 !.gitkeep
 !.gitlab-ci.yml
 !.mrconfig-template
+!.prettierignore

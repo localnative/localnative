@@ -12,9 +12,11 @@ use crate::flags::Release;
 // cargo build --target {target} --release
 // iced_src = target/{target}/release/localnatice_iced + {suffix}
 // host_src = target/{target}/release/localnative-web-ext-host + {suffix}
+// mcp_src = target/{target}/release/localnative-mcp + {suffix}
 // dst = dist/localnative-{target}-{version}
 // cp iced_src dst
 // cp host_src dst
+// cp mcp_src dst
 // gzip(&src, &dst.with_extension("gz"))?;
 impl Release {
     pub fn run(&self) -> anyhow::Result<()> {
@@ -33,9 +35,11 @@ impl Release {
         .run()?;
 
         cmd!(sh, "cargo build --release --bin localnative-web-ext-host").run()?;
+        cmd!(sh, "cargo build --release --bin localnative-mcp").run()?;
         let suffix = suffix();
         let iced_src = src.join(format!("localnative_iced{}", suffix));
         let host_src = src.join(format!("localnative-web-ext-host{}", suffix));
+        let mcp_src = src.join(format!("localnative-mcp{}", suffix));
 
         // let tag = format!(
         //     "{}-{}-{}",
@@ -50,11 +54,13 @@ impl Release {
         sh.create_dir(&dst)?;
         let iced_dst = dst.join(format!("localnative_iced{}", suffix));
         let host_dst = dst.join(format!("localnative-web-ext-host{}", suffix));
+        let mcp_dst = dst.join(format!("localnative-mcp{}", suffix));
 
         let readme = Path::new("README.md");
         sh.copy_file(readme, &dst)?;
         sh.copy_file(&iced_src, &iced_dst)?;
         sh.copy_file(&host_src, &host_dst)?;
+        sh.copy_file(&mcp_src, &mcp_dst)?;
 
         let package_types = vec![
             #[cfg(target_os = "macos")]
@@ -123,6 +129,7 @@ impl Release {
             .binaries(vec![
                 BundleBinary::new("localnative_iced".into(), true),
                 BundleBinary::new("localnative-web-ext-host".into(), false),
+                BundleBinary::new("localnative-mcp".into(), false),
             ])
             .package_types(package_types)
             .build()?;

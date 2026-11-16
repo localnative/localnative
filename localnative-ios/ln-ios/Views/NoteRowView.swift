@@ -14,6 +14,7 @@ struct NoteRowView: View {
     @Binding var query: String
     @State private var showingAlert = false
     @State private var showingQRCode = false
+    @State private var showingArchive = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -63,6 +64,22 @@ struct NoteRowView: View {
                                 AppState.clearOffset()
                                 AppState.search(input: String(tag), offset: 0)
                             }
+                    }
+
+                    if note.has_archive == true {
+                        Button(action: {
+                            showingArchive = true
+                        }) {
+                            Image(systemName: "doc.text")
+                                .foregroundColor(.white)
+                                .padding(6)
+                                .background(Color.gray)
+                                .cornerRadius(6)
+                        }
+                        .buttonStyle(BorderlessButtonStyle())
+                        .sheet(isPresented: $showingArchive) {
+                            QRCodeView(note: note, image: generateQRCode(from: note.url), showQRCode: false)
+                        }
                     }
 
                     Button(action: {
@@ -122,7 +139,6 @@ struct NoteRowView: View {
     func makeText(note: Note) -> String{
         return note.title
             + newLineOrEmptyString(str: note.description)
-            + newLineOrEmptyString(str: note.annotations)
     }
     func newLineOrEmptyString(str: String) -> String{
         if(str.trimmingCharacters(in: .whitespacesAndNewlines) == ""){

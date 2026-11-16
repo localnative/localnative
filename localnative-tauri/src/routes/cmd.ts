@@ -28,17 +28,20 @@ export function cmdSearchOrFilter(searchText: string) {
 }
 
 /** Notes created between `from` and `to` (inclusive, `YYYY-MM-DD`). */
-export const cmdFilter = debounce((searchText: string, from: string, to: string) => {
-  const message = {
-    action: "filter",
-    query: searchText,
-    limit: globalThis.AppState.limit,
-    offset: globalThis.AppState.offset,
-    from: from,
-    to: to,
-  };
-  cmd(message);
-}, 500);
+export const cmdFilter = debounce(
+  (searchText: string, from: string, to: string) => {
+    const message = {
+      action: "filter",
+      query: searchText,
+      limit: globalThis.AppState.limit,
+      offset: globalThis.AppState.offset,
+      from: from,
+      to: to,
+    };
+    cmd(message);
+  },
+  500,
+);
 
 export function cmdDelete(searchText: string, rowid: number) {
   const message = {
@@ -71,6 +74,16 @@ export function cmdUpdate(searchText: string, uuid4: string, edit: NoteEdit) {
   };
 
   cmd(message);
+}
+
+export async function cmdGet(uuid4: string) {
+  const input = JSON.stringify({ action: "get", uuid4 });
+  const res = await invoke<string>("input", { input });
+  const resp = JSON.parse(res);
+  if (resp.error) {
+    throw new Error(resp.error);
+  }
+  return resp;
 }
 
 export function cmdSearchImp(searchText: string) {

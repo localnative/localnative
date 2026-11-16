@@ -11,35 +11,43 @@ import SwiftUI
 struct QRCodeView: View {
     var note: Note
     var image: UIImage
+    var showQRCode: Bool = true
+    @State private var fullNote: Note?
     @Environment(\.dismiss) private var dismiss
+
+    private var displayNote: Note {
+        fullNote ?? note
+    }
 
     var body: some View {
         NavigationView {
-            VStack(alignment: .leading, spacing: 16) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
                 HStack {
-                    Text(note.created_at.prefix(19))
+                    Text(displayNote.created_at.prefix(19))
                         .font(.caption)
                         .foregroundColor(.secondary)
                     Spacer()
-                    Text("\(String(note.uuid4.prefix(5))).. \(String(note.id))")
+                    Text("\(String(displayNote.uuid4.prefix(5))).. \(String(note.id))")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
 
-                Text(makeText(note: note))
+                Text(makeText(note: displayNote))
                     .font(.body)
 
-                if let url = URL(string: note.url), !note.url.isEmpty {
+                if let url = URL(string: displayNote.url), !displayNote.url.isEmpty {
                     Link(destination: url) {
-                        Text(note.url)
+                        Text(displayNote.url)
                             .foregroundColor(.blue)
                             .lineLimit(3)
                     }
                     .font(.caption)
                 }
 
-                VStack {
-                    Text("QR Code")
+                if showQRCode {
+                    VStack {
+                        Text("QR Code")
                         .font(.headline)
                     Image(uiImage: image)
                         .interpolation(.none)
@@ -51,12 +59,21 @@ struct QRCodeView: View {
                         .cornerRadius(12)
                         .shadow(radius: 4)
                 }
-                .frame(maxWidth: .infinity)
+                    .frame(maxWidth: .infinity)
+                }
 
                 Spacer()
             }
             .padding()
-            .navigationTitle("Note QR Code")
+        }
+        .onAppear {
+            if note.has_archive == true && fullNote == nil {
+                AppState.getNote(uuid4: note.uuid4) { loaded in
+                    fullNote = loaded
+                }
+            }
+        }
+        .navigationTitle(showQRCode ? "Note QR Code" : "Archived Text")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {

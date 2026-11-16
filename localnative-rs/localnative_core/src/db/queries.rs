@@ -40,7 +40,7 @@ use uuid::Uuid;
 
 impl CmdFilter {
     pub fn process(&self, conn: &Connection) -> DbResult<QueryResult> {
-        do_filter(
+        do_filter_summary(
             conn,
             &self.query,
             self.limit,
@@ -135,7 +135,7 @@ impl CmdImportDb {
 
 impl CmdSelect {
     pub fn process(&self, conn: &Connection) -> DbResult<QueryResult> {
-        do_select(conn, self.limit, self.offset)
+        do_select_summary(conn, self.limit, self.offset)
     }
 }
 
@@ -147,16 +147,23 @@ impl CmdGet {
 
 impl CmdSearch {
     pub fn process(&self, conn: &Connection) -> DbResult<QueryResult> {
-        do_search(conn, &self.query, self.limit, self.offset)
+        do_search_summary(conn, &self.query, self.limit, self.offset)
     }
 }
 
 // ── Row mapping ───────────────────────────────────────────────────────────
 
-/// Columns every read query projects, in the order [`map_note`] expects.
+/// Full note fields for `get` and internal export/sync reads.
 const NOTE_COLUMNS: &str = "note.rowid, note.uuid4, note.title, note.url, note.tags, \
      note.description, note.comments, note.annotations, note.created_at, note.is_public, \
-     note.metadata";
+     note.metadata, CASE WHEN typeof(note.annotations) = 'text' AND length(note.annotations) > 0 \
+     THEN 1 ELSE 0 END AS has_archive";
+
+/// List pages carry archive availability without transferring every article body.
+const NOTE_LIST_COLUMNS: &str = "note.rowid, note.uuid4, note.title, note.url, note.tags, \
+     note.description, note.comments, '' AS annotations, note.created_at, note.is_public, \
+     note.metadata, CASE WHEN typeof(note.annotations) = 'text' AND length(note.annotations) > 0 \
+     THEN 1 ELSE 0 END AS has_archive";
 
 /// Store UTF-8 annotations as SQLite text so archive indexing and LIKE work;
 /// preserve screenshots and other binary annotations as blobs.
@@ -199,6 +206,7 @@ fn map_note(row: &rusqlite::Row) -> rusqlite::Result<Note> {
         description: row.get("description")?,
         comments: row.get("comments")?,
         annotations: annotations_for_api(row.get_ref("annotations")?),
+        has_archive: row.get("has_archive").unwrap_or(false),
         created_at: row.get("created_at")?,
         is_public: row.get("is_public")?,
         metadata: row.get("metadata")?,
@@ -478,13 +486,19 @@ fn note_page(
     range: Option<(&str, &str)>,
     limit: Option<u32>,
     offset: u32,
+    include_annotations: bool,
 ) -> DbResult<Vec<Note>> {
     let limit = limit.map_or(-1, i64::from);
+    let columns = if include_annotations {
+        NOTE_COLUMNS
+    } else {
+        NOTE_LIST_COLUMNS
+    };
     let (sql, mut params) = match &text.fts {
         Some(fts) => {
             let filter = NoteFilter::new(text, range, true);
             let sql = format!(
-                "SELECT {NOTE_COLUMNS} FROM note
+                "SELECT {columns} FROM note
                  JOIN note_fts_trigram ON note_fts_trigram.rowid = note.rowid
                  WHERE note_fts_trigram MATCH ? AND {}
                  ORDER BY bm25(note_fts_trigram, 10.0, 5.0, 3.0, 1.0, 1.0), note.created_at DESC
@@ -498,7 +512,7 @@ fn note_page(
         None => {
             let filter = NoteFilter::new(text, range, false);
             let sql = format!(
-                "SELECT {NOTE_COLUMNS} FROM note WHERE {}
+                "SELECT {columns} FROM note WHERE {}
                  ORDER BY note.created_at DESC LIMIT ? OFFSET ?",
                 filter.sql
             );
@@ -562,11 +576,12 @@ fn run_query(
     range: Option<(&str, &str)>,
     limit: u32,
     offset: u32,
+    include_annotations: bool,
 ) -> DbResult<QueryResult> {
     let text = TextQuery::parse(query);
     Ok(QueryResult {
         count: count_notes(conn, &text, range)?,
-        notes: note_page(conn, &text, range, Some(limit), offset)?,
+        notes: note_page(conn, &text, range, Some(limit), offset, include_annotations)?,
         // The histogram always spans every day, so a selected range can be widened again.
         days: day_histogram(conn, &text)?,
         tags: tag_counts(conn, &text, range)?,
@@ -584,17 +599,32 @@ pub fn get_note(conn: &Connection, uuid4: &str) -> DbResult<Option<Note>> {
         .optional()?)
 }
 
-/// Newest notes plus the day histogram and tag counts.
+/// Newest full notes plus the day histogram and tag counts.
 pub fn do_select(conn: &Connection, limit: u32, offset: u32) -> DbResult<QueryResult> {
-    run_query(conn, "", None, limit, offset)
+    run_query(conn, "", None, limit, offset, true)
 }
 
-/// Notes matching `query`; an empty query lists every note, newest first.
+/// Newest notes for JSON list responses, without article bodies.
+pub fn do_select_summary(conn: &Connection, limit: u32, offset: u32) -> DbResult<QueryResult> {
+    run_query(conn, "", None, limit, offset, false)
+}
+
+/// Full notes matching `query`; an empty query lists every note, newest first.
 pub fn do_search(conn: &Connection, query: &str, limit: u32, offset: u32) -> DbResult<QueryResult> {
-    run_query(conn, query, None, limit, offset)
+    run_query(conn, query, None, limit, offset, true)
 }
 
-/// Notes matching `query` created between `from` and `to` (inclusive,
+/// Matching notes for JSON list responses, without article bodies.
+pub fn do_search_summary(
+    conn: &Connection,
+    query: &str,
+    limit: u32,
+    offset: u32,
+) -> DbResult<QueryResult> {
+    run_query(conn, query, None, limit, offset, false)
+}
+
+/// Full notes matching `query` created between `from` and `to` (inclusive,
 /// `YYYY-MM-DD`). The day histogram ignores the range.
 pub fn do_filter(
     conn: &Connection,
@@ -604,7 +634,19 @@ pub fn do_filter(
     from: &str,
     to: &str,
 ) -> DbResult<QueryResult> {
-    run_query(conn, query, Some((from, to)), limit, offset)
+    run_query(conn, query, Some((from, to)), limit, offset, true)
+}
+
+/// Matching notes for JSON list responses, without article bodies.
+pub fn do_filter_summary(
+    conn: &Connection,
+    query: &str,
+    limit: u32,
+    offset: u32,
+    from: &str,
+    to: &str,
+) -> DbResult<QueryResult> {
+    run_query(conn, query, Some((from, to)), limit, offset, false)
 }
 
 /// Every live note, newest first.
@@ -612,9 +654,9 @@ pub fn select_all(conn: &Connection) -> DbResult<Vec<Note>> {
     search_all(conn, "")
 }
 
-/// Every note matching `query`, without pagination.
+/// Every full note matching `query`, without pagination.
 pub fn search_all(conn: &Connection, query: &str) -> DbResult<Vec<Note>> {
-    note_page(conn, &TextQuery::parse(query), None, None, 0)
+    note_page(conn, &TextQuery::parse(query), None, None, 0, true)
 }
 
 // ── Whole-file operations ─────────────────────────────────────────────────

@@ -1,54 +1,55 @@
-import type { BaseTranslation } from '../i18n-types';
+import type { BaseTranslation } from "../i18n-types";
 
 const en: BaseTranslation = {
-	Yes: 'Yes',
-	No: 'No',
-	Ok: 'Ok',
-	Nav: {
-		Notes: 'Notes',
-		Sync: 'Sync',
-		About: 'About',
-		Settings: 'Settings'
-	},
-	Notes: {
-		SearchPlaceholder: 'Searching Notes...',
-		Tags: 'Tags',
-		DeleteModalTitle: 'Delete Note',
-		DeleteModalContent: 'Do you want to delete this note?',
-		Edit: 'Edit',
-		Read: 'Read archived text',
-		Close: 'Close',
-		Delete: 'Delete',
-		EditModalTitle: 'Edit Note',
-		EditTitle: 'Title',
-		EditUrl: 'URL',
-		EditTags: 'Tags (comma separated)',
-		EditDescription: 'Description',
-		Save: 'Save',
-		Cancel: 'Cancel'
-	},
-	Sync: {
-		SyncWithFile: 'Sync with local file',
-		SyncWithFileSelect: 'Select File',
-		SyncAsClient: 'Sync as Client',
-		SyncAsClientPlaceholder: 'Server Address, eg: 127.0.0.1:2345',
-		SyncAsServer: 'Sync as Server',
-		StartSyncServer: 'Start Server',
-		StopSyncServer: 'Stop Server',
-		SyncAsServerLocalAddr: 'Local Server Address: {serverAddress}',
-		SyncAsClientConnectServerNotExistModalTitle: 'Error',
-		SyncAsClientConnectServerNotExistModalContent: 'Connect failed',
-		PairingCodePlaceholder: 'Pairing code (first sync)',
-		PairNewDevice: 'Pair New Device',
-		PairingCodeShowing: 'Pairing code:'
-	},
-	Settings: {
-		Language: 'Language',
-		CheckForUpdates: 'Check for Updates',
-		CheckingForUpdates: 'Checking…',
-		UpdateUpToDate: 'You are up to date',
-		UpdateFailed: 'Update check failed'
-	}
+  Yes: "Yes",
+  No: "No",
+  Ok: "Ok",
+  Nav: {
+    Notes: "Notes",
+    Sync: "Sync",
+    About: "About",
+    Settings: "Settings",
+  },
+  Notes: {
+    SearchPlaceholder: "Searching Notes...",
+    Tags: "Tags",
+    DeleteModalTitle: "Delete Note",
+    DeleteModalContent: "Do you want to delete this note?",
+    Edit: "Edit",
+    Read: "Read archived text",
+    LoadingArchive: "Loading archived text…",
+    Close: "Close",
+    Delete: "Delete",
+    EditModalTitle: "Edit Note",
+    EditTitle: "Title",
+    EditUrl: "URL",
+    EditTags: "Tags (comma separated)",
+    EditDescription: "Description",
+    Save: "Save",
+    Cancel: "Cancel",
+  },
+  Sync: {
+    SyncWithFile: "Sync with local file",
+    SyncWithFileSelect: "Select File",
+    SyncAsClient: "Sync as Client",
+    SyncAsClientPlaceholder: "Server Address, eg: 127.0.0.1:2345",
+    SyncAsServer: "Sync as Server",
+    StartSyncServer: "Start Server",
+    StopSyncServer: "Stop Server",
+    SyncAsServerLocalAddr: "Local Server Address: {serverAddress}",
+    SyncAsClientConnectServerNotExistModalTitle: "Error",
+    SyncAsClientConnectServerNotExistModalContent: "Connect failed",
+    PairingCodePlaceholder: "Pairing code (first sync)",
+    PairNewDevice: "Pair New Device",
+    PairingCodeShowing: "Pairing code:",
+  },
+  Settings: {
+    Language: "Language",
+    CheckForUpdates: "Check for Updates",
+    CheckingForUpdates: "Checking…",
+    UpdateUpToDate: "You are up to date",
+    UpdateFailed: "Update check failed",
+  },
 };
 
 export default en;

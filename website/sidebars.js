@@ -1,6 +1,6 @@
 module.exports = {
   someSidebar: {
-    "Quick Start": ["quick-start","videos"],
+    "Quick Start": ["quick-start", "mcp", "videos"],
     "Developer": ["developer-setup"
       , "source-code"
       , "release"

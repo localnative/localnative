@@ -76,9 +76,9 @@ fn compact_search(response: &Value, limit: u32, offset: u32) -> Value {
                 .iter()
                 .map(|note| {
                     let has_archive = note
-                        .get("annotations")
-                        .and_then(Value::as_str)
-                        .is_some_and(|text| !text.trim().is_empty() && !text.starts_with("data:"));
+                        .get("has_archive")
+                        .and_then(Value::as_bool)
+                        .unwrap_or(false);
                     json!({
                         "uuid4": note.get("uuid4"),
                         "title": note.get("title"),

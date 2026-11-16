@@ -220,10 +220,9 @@ rather than repetitive.
 
 ## Risks and open decisions
 
-- **Capture size**: long articles enlarge every query response because notes
-  currently include annotations. Keep capture capped; paginated MCP search
-  omits bodies, and a later API can omit them from list results after every
-  front-end has a reader-specific fetch path.
+- **Capture size**: list responses now carry `has_archive` instead of article
+  bodies, and readers fetch full text with `get`. Keep capture capped to bound
+  database size, `get` responses, and peer sync payloads.
 - **Legacy HTML annotations**: older saves may contain HTML rather than plain
   text. They remain searchable and render escaped, never as live markup; a
   one-click re-capture/migration is a follow-up.

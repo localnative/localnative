@@ -12,9 +12,19 @@ Desktop
 LocalNative # folder at user home directory
 ├── bin
 │   └── localnative-web-ext-host-X.Y.Z{-mac,-gnu-linux,.exe} # web extension host (rust binary)
+│   └── localnative-mcp # optional read-only AI / MCP server
 └── localnative.sqlite3 # user's database
 ```
 You can use [DB Browser for SQLite](http://sqlitebrowser.org/) to explore the database.
+
+## Archive and AI
+
+Private browser saves include readable article text by default. Article bodies
+are full-text searchable and stay in the same SQLite database and peer sync
+payload as other note data. Open an archived note in the desktop reader to
+fetch its full text.
+
+To let an AI assistant search and read your library, see [AI / MCP](mcp).
 
 ## Sync
 

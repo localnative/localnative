@@ -103,6 +103,24 @@ class AppState {
             }
         }
     }
+
+    static func getNote(uuid4: String, completion: @escaping (Note?) -> Void) {
+        let command: [String: Any] = ["action": "get", "uuid4": uuid4]
+        guard let json = try? JSONSerialization.data(withJSONObject: command),
+              let text = String(data: json, encoding: .utf8) else {
+            completion(nil)
+            return
+        }
+        DispatchQueue.global(qos: .userInitiated).async {
+            let response = ln.run(json_input: text)
+            guard let data = response.data(using: .utf8) else {
+                DispatchQueue.main.async { completion(nil) }
+                return
+            }
+            let note = try? JSONDecoder().decode(Note.self, from: data)
+            DispatchQueue.main.async { completion(note) }
+        }
+    }
 }
 
 struct Note: Codable, Identifiable {
@@ -113,6 +131,7 @@ struct Note: Codable, Identifiable {
     var tags: String
     var description: String
     var annotations: String
+    var has_archive: Bool?
     var created_at: String
     private enum CodingKeys: String, CodingKey {
         case id = "rowid"
@@ -122,6 +141,7 @@ struct Note: Codable, Identifiable {
         case tags
         case description
         case annotations
+        case has_archive
         case created_at
     }
 }

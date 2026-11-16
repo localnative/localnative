@@ -45,6 +45,9 @@ pub struct Note {
     /// The note's annotations as the write side accepts them: UTF-8 text as
     /// is, and binary content (screenshots) as a `data:` URL.
     pub annotations: String,
+    /// Whether readable archived text is available through `get`.
+    #[serde(default)]
+    pub has_archive: bool,
     pub created_at: String,
     pub is_public: bool,
     pub metadata: String,

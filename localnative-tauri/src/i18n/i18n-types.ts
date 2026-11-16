@@ -70,6 +70,10 @@ type RootTranslation = {
 		 */
 		Read: string
 		/**
+		 * L​o​a​d​i​n​g​ ​a​r​c​h​i​v​e​d​ ​t​e​x​t​…
+		 */
+		LoadingArchive: string
+		/**
 		 * C​l​o​s​e
 		 */
 		Close: string
@@ -241,6 +245,10 @@ export type TranslationFunctions = {
 		 * Read archived text
 		 */
 		Read: () => LocalizedString
+		/**
+		 * Loading archived text…
+		 */
+		LoadingArchive: () => LocalizedString
 		/**
 		 * Close
 		 */

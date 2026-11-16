@@ -584,6 +584,20 @@ fn get_command_returns_archived_text_only_for_live_notes() {
     )
     .unwrap();
 
+    let search: models::Cmd =
+        serde_json::from_str(r#"{"action":"search","query":"article","limit":10,"offset":0}"#)
+            .unwrap();
+    let list_response = super::process_cmd(search, &conn).unwrap();
+    let list: models::QueryResult = serde_json::from_str(&list_response).unwrap();
+    assert!(
+        list.notes[0].annotations.is_empty(),
+        "list pages stay compact"
+    );
+    assert!(
+        list.notes[0].has_archive,
+        "the reader can discover the archive"
+    );
+
     let command = format!(r#"{{"action":"get","uuid4":"{}"}}"#, note.uuid4);
     let parsed: models::Cmd = serde_json::from_str(&command).unwrap();
     let response = super::process_cmd(parsed, &conn).unwrap();

@@ -156,24 +156,24 @@ pub fn process_cmd(cmd: Cmd, conn: &Connection) -> DbResult<String> {
     match cmd {
         Cmd::Insert(ref insert) => {
             insert.process(conn)?;
-            let select_result = queries::do_select(conn, insert.limit, insert.offset)?;
+            let select_result = queries::do_select_summary(conn, insert.limit, insert.offset)?;
             Ok(serde_json::to_string(&select_result)?)
         }
         Cmd::InsertImage(ref insert) => {
             insert.process_image(conn)?;
-            let select_result = queries::do_select(conn, insert.limit, insert.offset)?;
+            let select_result = queries::do_select_summary(conn, insert.limit, insert.offset)?;
             Ok(serde_json::to_string(&select_result)?)
         }
         Cmd::Delete(ref delete) => {
             delete.process(conn)?;
             let search_result =
-                queries::do_search(conn, &delete.query, delete.limit, delete.offset)?;
+                queries::do_search_summary(conn, &delete.query, delete.limit, delete.offset)?;
             Ok(serde_json::to_string(&search_result)?)
         }
         Cmd::Update(ref update) => {
             update.process(conn)?;
             let search_result =
-                queries::do_search(conn, &update.query, update.limit, update.offset)?;
+                queries::do_search_summary(conn, &update.query, update.limit, update.offset)?;
             Ok(serde_json::to_string(&search_result)?)
         }
         Cmd::Select(ref select) => {
