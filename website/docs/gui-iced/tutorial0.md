@@ -3,6 +3,10 @@ id: tutorial0
 title: 0. 序章
 ---
 
+:::warning 历史教程
+本系列记录已从当前代码库移除的 Iced 桌面端，仅供研究旧版本。当前桌面端使用 Tauri。
+:::
+
 从今天起，我们将要使用[`iced`](https://github.com/hecrj/iced)来构建一个跨平台的网站书签管理工具。
 
 ![localnative演示](/img/tutorial/0-00.gif)

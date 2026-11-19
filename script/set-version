@@ -1,7 +1,6 @@
 #!/bin/bash
 #
-# Set the shared version for the Rust crates -- localnative_core,
-# localnative_cli, localnative_iced and xtask -- which ship together and so
+# Set the shared version for the Rust workspace crates, which ship together and
 # carry one number. The version lives in [workspace.package] and the members
 # inherit it with `version.workspace = true`, so this edits exactly one line.
 #

@@ -67,6 +67,10 @@
     note.tags.split(",").filter((tag) => tag !== "");
 
   const askDelete = (rowid: number) => {
+    if (!globalThis.AppState.confirmDelete) {
+      cmdDelete(current_search_text, rowid);
+      return;
+    }
     wantDeleteRowId = rowid;
     deleteDialog.showModal();
   };

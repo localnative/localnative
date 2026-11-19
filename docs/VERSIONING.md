@@ -42,8 +42,8 @@ Bump an artifact when *that artifact* ships. Never bump one to match another.
 
 ## Tier 3 — the Rust crates (one shared number)
 
-`localnative_core`, `localnative_cli`, `localnative_iced` and `xtask` ship
-together and carry one version, declared once in `[workspace.package]` in
+`localnative_core`, `localnative_cli`, `localnative_hostinstall` and `xtask`
+ship together and carry one version, declared once in `[workspace.package]` in
 `localnative-rs/Cargo.toml`; members inherit it with `version.workspace = true`.
 
 `localnative_core` and `localnative_cli` are **published to crates.io**, which

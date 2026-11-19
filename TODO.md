@@ -245,9 +245,11 @@ Android/iOS/Tauri toolchains.
 
 - [x] **One desktop shell: Tauri.** The OS webview brings CJK text, input
   methods and accessibility for free, and its UI patterns are shared with the
-  extension popup and website. Executed: `localnative_egui` and the
-  `localnative-mac` Xcode stub are deleted; Iced is frozen (kept compiling,
-  no new features) until its users have moved.
+  extension popup and website. `localnative_egui` and the `localnative-mac`
+  Xcode stub were already deleted. Iced was removed on 2026-11-18 after Tauri
+  covered its supported workflows and preferences. Existing Iced releases and
+  `~/LocalNative/config.json` files are left untouched; Tauri stores its own
+  preferences in WebView local storage.
 - [x] **`is_public` retired from the UIs, column kept.** It has meant nothing
   since SSB was removed in 0.5.0. No UI showed a toggle any more; the last
   vestiges (Tauri's dead insert commands, egui's "private" badge) are gone.
@@ -276,14 +278,8 @@ now has front-ends:
 - [ ] **Android / iOS**: no edit view yet — the moment to revisit UniFFI (see
   the product decisions above).
 
-### Reduce Excessive `.clone()` in GUI Layer
-- `localnative_iced/src/chart.rs`: `raw.clone()` in `fold_map` callers, `data.clone().into_iter()`, `will_draw.days.clone()`
-- `localnative_iced/src/tags.rs`: `self.tag.tag.clone()` — consider `Arc<String>`
-- Profile first to confirm these are real bottlenecks
-
 ### Test gaps outside the core
-- No tests for GUI state management (`localnative_iced/src/lib.rs`)
-- No tests for the browser extension / WASM app
+- No automated tests for the browser extension popup or Tauri UI state
 
 ### Out of scope (major architecture)
 - **Async SQLx**: the core is synchronous `rusqlite`; searches take ~10 ms at

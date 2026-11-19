@@ -171,6 +171,46 @@ type RootTranslation = {
 		 */
 		Language: string
 		/**
+		 * T​h​e​m​e
+		 */
+		Theme: string
+		/**
+		 * S​y​s​t​e​m
+		 */
+		ThemeSystem: string
+		/**
+		 * L​i​g​h​t
+		 */
+		ThemeLight: string
+		/**
+		 * D​a​r​k
+		 */
+		ThemeDark: string
+		/**
+		 * N​o​t​e​s​ ​p​e​r​ ​p​a​g​e
+		 */
+		PageSize: string
+		/**
+		 * A​s​k​ ​b​e​f​o​r​e​ ​d​e​l​e​t​i​n​g​ ​a​ ​n​o​t​e
+		 */
+		ConfirmDelete: string
+		/**
+		 * C​h​r​o​m​e​ ​e​x​t​e​n​s​i​o​n​ ​o​r​i​g​i​n​s​ ​(​c​o​m​m​a​ ​s​e​p​a​r​a​t​e​d​)
+		 */
+		AllowedOrigins: string
+		/**
+		 * I​n​s​t​a​l​l​ ​b​r​o​w​s​e​r​ ​h​o​s​t
+		 */
+		BrowserFix: string
+		/**
+		 * B​r​o​w​s​e​r​ ​h​o​s​t​ ​i​n​s​t​a​l​l​e​d
+		 */
+		BrowserFixSuccess: string
+		/**
+		 * B​r​o​w​s​e​r​ ​h​o​s​t​ ​i​n​s​t​a​l​l​a​t​i​o​n​ ​f​a​i​l​e​d
+		 */
+		BrowserFixFailed: string
+		/**
 		 * C​h​e​c​k​ ​f​o​r​ ​U​p​d​a​t​e​s
 		 */
 		CheckForUpdates: string
@@ -345,6 +385,46 @@ export type TranslationFunctions = {
 		 * Language
 		 */
 		Language: () => LocalizedString
+		/**
+		 * Theme
+		 */
+		Theme: () => LocalizedString
+		/**
+		 * System
+		 */
+		ThemeSystem: () => LocalizedString
+		/**
+		 * Light
+		 */
+		ThemeLight: () => LocalizedString
+		/**
+		 * Dark
+		 */
+		ThemeDark: () => LocalizedString
+		/**
+		 * Notes per page
+		 */
+		PageSize: () => LocalizedString
+		/**
+		 * Ask before deleting a note
+		 */
+		ConfirmDelete: () => LocalizedString
+		/**
+		 * Chrome extension origins (comma separated)
+		 */
+		AllowedOrigins: () => LocalizedString
+		/**
+		 * Install browser host
+		 */
+		BrowserFix: () => LocalizedString
+		/**
+		 * Browser host installed
+		 */
+		BrowserFixSuccess: () => LocalizedString
+		/**
+		 * Browser host installation failed
+		 */
+		BrowserFixFailed: () => LocalizedString
 		/**
 		 * Check for Updates
 		 */

@@ -92,9 +92,6 @@ You can use [DB Browser for SQLite](http://sqlitebrowser.org/) to explore the da
 
 ##  Desktop
 
-#### Rust GUI using Iced
-see tutorial
-
 #### Tauri (Svelte frontend) — recommended desktop target
 ```
 cd localnative-tauri
@@ -103,7 +100,11 @@ yarn dev          # vite dev
 yarn build        # vite build (production)
 yarn check        # svelte-check type check
 ```
-Tauri uses `yarn` (`yarn.lock` is the committed lockfile).
+Tauri uses `yarn` (`yarn.lock` is the committed lockfile). Linux desktop builds
+require GTK 3 and WebKitGTK 4.1; the Ubuntu CI installs:
+```
+sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf libxdo-dev
+```
 
 ## Mobile
 #### Android
@@ -149,8 +150,6 @@ script
 ├── set-version            # Rust workspace version
 ├── set-version-extension  # browser extension version
 ├── release-browser-extension
-├── release-iced-mac
-├── release-msi-win
 ├── build_linux.sh
 └── build-ios.sh           # Rust core → LocalNativeCore.xcframework
 ```

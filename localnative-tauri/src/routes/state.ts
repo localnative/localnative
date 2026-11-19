@@ -1,3 +1,10 @@
+import {
+  loadDeleteConfirmation,
+  loadPageSize,
+  saveDeleteConfirmation,
+  savePageSize,
+} from "../preferences";
+
 declare global {
   // eslint-disable-next-line no-var
   var AppState: State;
@@ -13,7 +20,8 @@ declare global {
 export type DayRange = [string, string];
 
 export class State {
-  private _limit = 10;
+  private _limit = loadPageSize();
+  public confirmDelete = loadDeleteConfirmation();
   private _range: DayRange | null = null;
   private _query = "";
   private _count = 0;
@@ -21,6 +29,16 @@ export class State {
 
   public get limit() {
     return this._limit;
+  }
+
+  public set limit(value: number) {
+    this._limit = savePageSize(value);
+    this.clearOffset();
+  }
+
+  public setConfirmDelete(value: boolean) {
+    this.confirmDelete = value;
+    saveDeleteConfirmation(value);
   }
 
   public get offset(): number {

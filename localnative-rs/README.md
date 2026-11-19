@@ -2,20 +2,6 @@
 
 `cargo build`
 
-# localnative-iced
-
-### windows and mac
-
-`cargo build`
-
-### linux
-
-Dependencies:
-```bash
-sudo apt install pkg-config libfreetype6-dev libfontconfig1-dev libxkbcommon-dev
-```
-and then `cargo build`
-
 # localnative CLI
 
 The unified `localnative` command provides search, retrieval, import/export,
@@ -34,27 +20,17 @@ former standalone commands remain compatibility aliases in this release. Client
 configuration and troubleshooting are documented at
 https://localnative.app/docs/mcp.
 
-### Release
-Our project uses [Tauri Bundler](https://github.com/tauri-apps/tauri/tree/dev/tooling/bundler) for packaging of various platforms. Thank you very much for the Tauri team’s contribution to the Rust community.
+### CLI release
 
-You can use the following command to package the program:
 ```bash
 cargo xtask release
 ```
 
-help:
-```bash
-xtask release
-  Release local native
+This writes `localnative`, `localnative-web-ext-host`, the README and LICENSE to
+`dist/`. The optional `-v <version>` overrides the displayed package version.
+Desktop installers are built separately from `localnative-tauri` with
+`cargo tauri build` or its GitHub Actions workflow.
 
-  OPTIONS:
-    -v, --version <version>
-      You can specify a version
-```
-
-If you do not set the version number, output the version according to the version of the xtask package.
-
-At present, the dmg format of the mac platform will be a bit problematic on my computer, so I commented it out in the `package_types` of `localnative-rs/xtask/src/release.rs`, if you want to try whether it can be packaged normally on your computer, It can be restored. In the current packager, the `mis` package language under windows is set to Chinese, you can change it according to your own language, and then package it later.
 ### cargo xtask ndkbd
 
 You can use `cargo xtask ndkbd` to compile `localnative_core` as *.so files, and these files will be copied to the corresponding folder. Before you are ready to execute this command, you need to make sure that the [`cargo-ndk`](https://lib.rs/crates/cargo-ndk) tool is installed on your computer. You can use `cargo install cargo-ndk` to download and install. In addition, you need to make sure that valid Android development is installed on your computer. The environment includes SDK, NDK, and the two environment variables `ANDROID_SDK_ROOT` and `NDK_HOME`. 

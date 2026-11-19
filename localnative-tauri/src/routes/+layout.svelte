@@ -11,9 +11,16 @@
   import Fa from "svelte-fa";
   import { State } from "./state";
   import { loadAllLocales } from "../i18n/i18n-util.sync";
+  import { isLocale } from "../i18n/i18n-util";
   import { setLocale } from "../i18n/i18n-svelte";
   import { detectLocale, navigatorDetector } from "typesafe-i18n/detectors";
   import LL from "../i18n/i18n-svelte";
+  import { onDestroy } from "svelte";
+  import {
+    applyThemePreference,
+    loadLocalePreference,
+    loadThemePreference,
+  } from "../preferences";
 
   if (import.meta.env.PROD) {
     document.addEventListener("contextmenu", (event) => event.preventDefault());
@@ -21,9 +28,20 @@
 
   globalThis.AppState = new State();
 
+  applyThemePreference(loadThemePreference());
+  const systemTheme = window.matchMedia("(prefers-color-scheme: dark)");
+  const followSystemTheme = () => {
+    if (loadThemePreference() === "system") applyThemePreference("system");
+  };
+  systemTheme.addEventListener("change", followSystemTheme);
+  onDestroy(() => systemTheme.removeEventListener("change", followSystemTheme));
+
   loadAllLocales();
   const detectedLocale = detectLocale("en", ["en", "zh"], navigatorDetector);
-  setLocale(detectedLocale);
+  const savedLocale = loadLocalePreference();
+  setLocale(
+    savedLocale && isLocale(savedLocale) ? savedLocale : detectedLocale,
+  );
 
   // No network activity on startup: checking for updates is the user's
   // choice (Settings → Check for Updates), matching the local-first ethos.

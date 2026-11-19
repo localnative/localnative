@@ -5,17 +5,17 @@
 // Release
 // set Cargo.toml version
 // cargo build --target {target} --release
-// iced_src = target/{target}/release/localnatice_iced + {suffix}
+// cli_src = target/{target}/release/localnative + {suffix}
 // host_src = target/{target}/release/localnative-web-ext-host + {suffix}
-// dst = dist/localnative-{target}-{version}
-// cp iced_src dst
+// dst = dist/
+// cp cli_src dst
 // cp host_src dst
 // gzip(&src, &dst.with_extension("gz"))?;
 
 xflags::xflags! {
     src "./src/flags.rs"
     cmd xtask {
-        /// Release iced and web-ext-host
+        /// Package the unified CLI and permanent web extension host
         cmd release
         {
             /// You can specify a version

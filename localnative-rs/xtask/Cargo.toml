@@ -9,4 +9,3 @@ edition = "2024"
 anyhow = { workspace = true }
 xshell = { workspace = true }
 xflags = { workspace = true }
-tauri-bundler = { workspace = true }

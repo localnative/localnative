@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @plugin "daisyui";
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 .date-time-picker :is(span) {
   background-color: transparent !important;

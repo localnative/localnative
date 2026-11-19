@@ -5,6 +5,10 @@ title: Changelog
 [Updates](https://chuanyan.live/tags/localnative)
 
 ## Unreleased
+- **Iced removed**: Tauri is now the only desktop front-end. Page size, theme,
+  language, delete-confirmation and custom browser-origin preferences are
+  persisted in the desktop app; notes and the SQLite schema are unchanged.
+  Existing Iced releases and old `config.json` files remain untouched.
 - **Note editing**: the desktop app (a pencil on each note opens an edit
   dialog) and the browser extension popup (✎ turns the row into an inline
   form) edit a note's title, URL, tags and description in place. In the
@@ -15,10 +19,9 @@ title: Changelog
   field names the core no longer sends); zooming the histogram keeps the
   search term and paging inside a zoomed range works.
 - **Desktop consolidates on Tauri**: the experimental egui front-end and the
-  macOS Xcode stub are removed. Tauri is the desktop app; the Iced GUI is
-  frozen (still builds, no new features). The unshipped WASM popup is gone —
-  the shipped JS popup has the smaller permission set — and `is_public` is
-  retired from the UIs (the schema column stays).
+  macOS Xcode stub are removed. The unshipped WASM popup is gone — the shipped
+  JS popup has the smaller permission set — and `is_public` is retired from the
+  UIs (the schema column stays).
 - **Sync rebuilt (schema 0.11.0, sync protocol v2)**: encrypted and
   authenticated peer sync (Noise `XX`/`XXpsk3`) with device pairing via a
   one-time code; notes move in byte-budgeted batches over one session with

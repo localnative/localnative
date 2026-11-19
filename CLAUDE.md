@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Local Native is a cross-platform tool for saving and syncing notes in a local SQLite database without going through any centralized service. A shared Rust core (`localnative_core`) is wrapped by every platform front-end: the Rust GUI (Iced), CLI, Tauri (the desktop app), Android, iOS, and a browser extension.
+Local Native is a cross-platform tool for saving and syncing notes in a local SQLite database without going through any centralized service. A shared Rust core (`localnative_core`) is wrapped by every platform front-end: Tauri (the desktop app), CLI/MCP, Android, iOS, and a browser extension.
 
 ## Big-Picture Architecture
 
@@ -46,10 +46,10 @@ Standalone core modules (not part of the JSON `Cmd` dispatch) driven by the unif
 - `sync-via-attach` (two-way file merge), `export-db` (standalone copy, identity stripped), and `import-db` (read-only one-way merge) share the same last-write-wins rules.
 - **mDNS** service discovery via `mdns-sd` in `discovery.rs` (`_localnative._tcp.local.`, addresses via `enable_addr_auto`, TXT carries protocol/node id).
 
-### Native GUI (`localnative_iced/`)
-- Built on **Iced 0.14** (`iced::application(...).run()`); binary entry in `bin.rs`, state/update/view in `lib.rs`.
-- Charts are rendered with a local **`plotters_bridge.rs`** — `plotters-iced` was dropped because it is incompatible with iced 0.14, so chart drawing is reimplemented against the raw `plotters` backend.
-- Localization uses **Fluent** (`fluent-bundle`); translation strings live in `localnative-rs/locales/` and are wired through `translate.rs`.
+### Desktop (`localnative-tauri/`)
+- Tauri 2 + Svelte is the only desktop shell. It covers search, charts/tags, editing, archived-text reading, QR links, file sync and paired LAN sync.
+- Language, theme, page size and delete-confirmation preferences persist in WebView local storage. Browser host installation shares `localnative_hostinstall` with the CLI; custom Chrome origins are configurable in Settings.
+- Tauri has its own package and release workflow. `scripts/build-sidecars.mjs` stages the unified CLI and permanent browser host as target-triple sidecars for every desktop production build. The Rust `xtask release` command packages those two programs separately for CLI-only distribution.
 
 ## Common Commands
 
@@ -58,7 +58,6 @@ Standalone core modules (not part of the JSON `Cmd` dispatch) driven by the unif
 cd localnative-rs
 
 cargo build                      # build the workspace
-cargo run -p localnative_iced    # run the native GUI (Iced)
 cargo test                       # run all tests
 cargo test test_serde            # run a single test by name
 
@@ -84,7 +83,7 @@ cargo clippy --workspace --all-targets --all-features -- -D warnings -A clippy::
 ### xtask (release & Android build automation)
 ```bash
 cd localnative-rs
-cargo run -p xtask -- release [-v <version>]   # package iced + unified CLI + web-ext-host into dist/
+cargo run -p xtask -- release [-v <version>]   # package unified CLI + web-ext-host into dist/
 cargo run -p xtask -- ndkbd [--debug]          # cargo-ndk build of localnative_core .so for Android
 ```
 

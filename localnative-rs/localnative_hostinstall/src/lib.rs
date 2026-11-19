@@ -204,32 +204,37 @@ pub enum WebKind {
 }
 
 impl WebKind {
-    /// Install both manifests (and, on Linux, the host binary copy).
-    /// `allowed_origins` overrides the Chrome extension ID list (used when
-    /// loading the extension unpacked during development).
+    /// Install both manifests (and, on Linux, the host binary copy), logging
+    /// any failure for compatibility with existing desktop callers.
     pub fn install_all(allowed_origins: Option<Vec<String>>) {
-        #[cfg(target_os = "linux")]
-        {
-            if let (Ok(exe), Some(home)) = (std::env::current_exe(), dirs::home_dir())
-                && let Some(parent) = exe.parent()
-            {
-                let from = parent.join("localnative-web-ext-host");
-                let to = home.join("LocalNative").join("localnative-web-ext-host");
-                if let Err(error) = copy_host(&from, &to) {
-                    tracing::error!(%error, "failed to copy web-ext-host binary");
-                }
-            }
-        }
-        for (kind, origins) in [(Self::FireFox, None), (Self::Chrome, allowed_origins)] {
-            if let Err(error) = try_init_file(kind, origins) {
-                tracing::error!(?kind, %error, "failed to init host file");
-            }
+        if let Err(error) = Self::try_install_all(allowed_origins) {
+            tracing::error!(%error, "failed to install browser native messaging");
         }
     }
 
+    /// Fallible desktop installation used to report the result in a UI.
+    /// `allowed_origins` overrides the Chrome extension ID list (used when
+    /// loading the extension unpacked during development).
+    pub fn try_install_all(allowed_origins: Option<Vec<String>>) -> std::io::Result<()> {
+        #[cfg(target_os = "linux")]
+        {
+            let exe = std::env::current_exe()?;
+            let home = dirs::home_dir()
+                .ok_or_else(|| std::io::Error::other("could not determine home directory"))?;
+            let parent = exe
+                .parent()
+                .ok_or_else(|| std::io::Error::other("executable has no parent directory"))?;
+            let from = parent.join("localnative-web-ext-host");
+            let to = home.join("LocalNative").join("localnative-web-ext-host");
+            copy_host(&from, &to)?;
+        }
+        try_init_file(Self::FireFox, None)?;
+        try_init_file(Self::Chrome, allowed_origins)
+    }
+
     /// Install the currently running unified CLI as the permanent host alias,
-    /// then write both browser manifests. Unlike the desktop installer, every
-    /// failure is returned so the command can set a failing exit status.
+    /// then write both browser manifests. Every failure is returned so the
+    /// command can set a failing exit status.
     pub fn install_cli(allowed_origins: Option<Vec<String>>) -> std::io::Result<PathBuf> {
         let source = std::env::current_exe()?;
         let destination = AppHost::path();

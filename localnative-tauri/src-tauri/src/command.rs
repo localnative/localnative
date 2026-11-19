@@ -11,11 +11,14 @@ pub async fn input(input: String) -> String {
         .unwrap_or_else(|| String::from(r#"{"error":"no reply from the core","code":"internal"}"#))
 }
 
-/// (Re)install the browser native-messaging manifests. Shares its
-/// implementation with the Iced app via `localnative_hostinstall`.
+/// (Re)install the browser native-messaging manifests through the same shared
+/// installer used by `localnative host install`.
 #[tauri::command]
-pub async fn fix_browser() -> Result<(), String> {
-    tauri::async_runtime::spawn_blocking(|| localnative_hostinstall::WebKind::install_all(None))
-        .await
-        .map_err(|e| e.to_string())
+pub async fn fix_browser(allowed_origins: Option<Vec<String>>) -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        localnative_hostinstall::WebKind::try_install_all(allowed_origins)
+    })
+    .await
+    .map_err(|e| e.to_string())?
+    .map_err(|e| e.to_string())
 }

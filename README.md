@@ -21,7 +21,6 @@ localnative-ios: ios app
 
 localnative-rs: rust code
 - `localnative_core`: the core native module every front-end shares
-- `localnative_iced`: Rust GUI
 - `localnative_cli`: unified `localnative` CLI, MCP server, and permanent `localnative-web-ext-host` alias
 - `localnative_hostinstall`: browser native-messaging installer shared by the CLI and desktop apps
 

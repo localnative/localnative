@@ -4,7 +4,7 @@
   "version": "0.5.2",
   "identifier": "app.localnative",
   "build": {
-    "beforeBuildCommand": "yarn run build",
+    "beforeBuildCommand": "node scripts/build-sidecars.mjs && yarn run build",
     "beforeDevCommand": "yarn run dev",
     "devUrl": "http://localhost:5173",
     "frontendDist": "../build"
@@ -41,6 +41,10 @@
       "signingIdentity": null
     },
     "resources": [],
+    "externalBin": [
+      "binaries/localnative",
+      "binaries/localnative-web-ext-host"
+    ],
     "targets": "all",
     "windows": {
       "certificateThumbprint": null,

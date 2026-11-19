@@ -231,8 +231,9 @@ rather than repetitive.
   the active tab and returns one bounded result; failure still saves the note.
 - **Highlight anchor drift**: quote+context anchors degrade gracefully;
   accept "unanchored highlight keeps its text" as the fallback state.
-- **Iced** stays frozen (per 2026-09-26 product decisions); none of these
-  phases touch it.
+- **Desktop shell:** Tauri is the only desktop front-end. Iced was removed after
+  its supported workflows and preferences were covered; these phases do not
+  maintain a second desktop UI.
 - **Out of scope for now**: PKM/backlinks, team/multi-user sync, commercial
   licensing, any hosted relay. B1-style evidence hashing (BLAKE2 + timestamp
   + signed bundle) remains a cheap future *mode* on top of Phase 1, not a
