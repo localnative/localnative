@@ -2,6 +2,9 @@
 name = "localnative_hostinstall"
 description = "Install browser native-messaging manifests for the Local Native extension host"
 homepage = "https://localnative.app"
+repository = "https://github.com/localnative/localnative"
+keywords = ["browser", "native-messaging", "local-first"]
+categories = ["development-tools"]
 authors = ["Yi Wang"]
 license = "AGPL-3.0"
 edition = "2024"

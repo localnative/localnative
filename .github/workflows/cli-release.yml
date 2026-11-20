@@ -1,0 +1,342 @@
+name: CLI packages
+
+on:
+  pull_request:
+    paths:
+      - "localnative-rs/**"
+      - "packaging/**"
+      - "pyproject.toml"
+      - "script/check-cli-install.py"
+      - ".github/workflows/cli-release.yml"
+  push:
+    tags: ["cli-v[0-9]+.[0-9]+.[0-9]+*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag such as cli-v0.8.0; leave empty for a branch rehearsal"
+        required: false
+      publish:
+        description: "Publish the tested artifacts to crates.io, PyPI, and npm"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+      - id: check
+        env:
+          TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          version=$(sed -n 's/^version = "\([^"]*\)".*/\1/p' localnative-rs/Cargo.toml | head -1)
+          npm_version=$(node -p 'require("./packaging/npm/package.json").version')
+          test "$npm_version" = "$version" || { echo "npm is $npm_version but Rust is $version"; exit 1; }
+          case "$TAG" in cli-v*) test "cli-v$version" = "$TAG" || { echo "$TAG does not match $version"; exit 1; } ;; esac
+          if [ "${{ inputs.publish }}" = "true" ]; then test "cli-v$version" = "$TAG" || { echo "Publishing requires cli-v$version"; exit 1; }; fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+  binaries:
+    name: binaries, ${{ matrix.platform.target }}
+    needs: version
+    runs-on: ${{ matrix.platform.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - {
+              runner: ubuntu-22.04,
+              target: x86_64-unknown-linux-gnu,
+              dir: linux-x64,
+              python: python3,
+            }
+          - {
+              runner: ubuntu-22.04-arm,
+              target: aarch64-unknown-linux-gnu,
+              dir: linux-arm64,
+              python: python3,
+            }
+          - {
+              runner: macos-15-intel,
+              target: x86_64-apple-darwin,
+              dir: darwin-x64,
+              python: python3,
+            }
+          - {
+              runner: macos-latest,
+              target: aarch64-apple-darwin,
+              dir: darwin-arm64,
+              python: python3,
+            }
+          - {
+              runner: windows-latest,
+              target: x86_64-pc-windows-msvc,
+              dir: win32-x64,
+              python: python,
+            }
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform.target }}
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+      - name: Build both release binaries
+        run: cargo build --manifest-path localnative-rs/Cargo.toml --release --locked -p localnative_cli --bin localnative --bin localnative-web-ext-host --target ${{ matrix.platform.target }}
+      - name: Test Cargo installation
+        shell: bash
+        run: |
+          cargo install --path localnative-rs/localnative_cli --locked --root "$RUNNER_TEMP/cargo-install" --target ${{ matrix.platform.target }} --bin localnative --bin localnative-web-ext-host
+          ${{ matrix.platform.python }} script/check-cli-install.py "$RUNNER_TEMP/cargo-install/bin"
+      - name: Test npm installation
+        shell: bash
+        run: |
+          suffix=""; [ "${{ matrix.platform.dir }}" = "win32-x64" ] && suffix=".exe"
+          for name in localnative localnative-web-ext-host; do
+            mkdir -p "packaging/npm/vendor/${{ matrix.platform.dir }}"
+            cp "localnative-rs/target/${{ matrix.platform.target }}/release/${name}${suffix}" "packaging/npm/vendor/${{ matrix.platform.dir }}/${name}${suffix}"
+          done
+          cp README.md LICENSE packaging/npm/
+          tgz=$(cd packaging/npm && npm pack --quiet)
+          prefix="$RUNNER_TEMP/npm-global"
+          npm install -g --prefix "$prefix" "packaging/npm/$tgz"
+          bin="$prefix/bin"; [ -d "$prefix/bin" ] || bin="$prefix"
+          ${{ matrix.platform.python }} script/check-cli-install.py "$bin"
+      - uses: actions/upload-artifact@v6
+        with:
+          name: cli-${{ matrix.platform.dir }}
+          path: packaging/npm/vendor/${{ matrix.platform.dir }}
+
+  wheels:
+    name: wheel, ${{ matrix.platform.target }}
+    needs: version
+    runs-on: ${{ matrix.platform.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - {
+              runner: ubuntu-22.04,
+              target: x86_64-unknown-linux-gnu,
+              python: python3,
+            }
+          - {
+              runner: ubuntu-22.04-arm,
+              target: aarch64-unknown-linux-gnu,
+              python: python3,
+            }
+          - {
+              runner: macos-15-intel,
+              target: x86_64-apple-darwin,
+              python: python3,
+            }
+          - {
+              runner: macos-latest,
+              target: aarch64-apple-darwin,
+              python: python3,
+            }
+          - {
+              runner: windows-latest,
+              target: x86_64-pc-windows-msvc,
+              python: python,
+            }
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+      - name: Build the wheel
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.platform.target }}
+          args: --release --locked --out dist
+          manylinux: auto
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+      - name: Test wheel installation
+        shell: bash
+        run: |
+          ${{ matrix.platform.python }} -m venv venv
+          bin=venv/bin; [ -d venv/Scripts ] && bin=venv/Scripts
+          "$bin/python" -m pip install --quiet dist/*.whl
+          ${{ matrix.platform.python }} script/check-cli-install.py "$bin"
+      - uses: actions/upload-artifact@v6
+        with:
+          name: package-${{ matrix.platform.target }}
+          path: dist/*.whl
+
+  sdist:
+    needs: version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build the source distribution
+        uses: PyO3/maturin-action@v1
+        with:
+          command: sdist
+          args: --out dist
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+      - name: Test source installation
+        run: |
+          python3 -m venv venv
+          venv/bin/python -m pip install --quiet dist/*.tar.gz
+          python3 script/check-cli-install.py venv/bin
+      - uses: actions/upload-artifact@v6
+        with:
+          name: package-sdist
+          path: dist/*.tar.gz
+
+  assemble-npm:
+    needs: binaries
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+      - uses: actions/download-artifact@v7
+        with:
+          pattern: cli-*
+          path: dist-cli
+      - name: Assemble and test the five-platform package
+        run: |
+          for dir in darwin-arm64 darwin-x64 linux-arm64 linux-x64 win32-x64; do
+            mkdir -p "packaging/npm/vendor/$dir"
+            cp "dist-cli/cli-$dir/"* "packaging/npm/vendor/$dir/"
+          done
+          chmod +x packaging/npm/vendor/darwin-*/* packaging/npm/vendor/linux-*/* packaging/npm/bin/*
+          test -f packaging/npm/vendor/win32-x64/localnative.exe
+          test -f packaging/npm/vendor/win32-x64/localnative-web-ext-host.exe
+          cp README.md LICENSE packaging/npm/
+          tgz=$(cd packaging/npm && npm pack --quiet)
+          prefix="$RUNNER_TEMP/npm-global"
+          npm install -g --prefix "$prefix" "packaging/npm/$tgz"
+          python3 script/check-cli-install.py "$prefix/bin"
+      - uses: actions/upload-artifact@v6
+        with:
+          name: npm-package
+          path: packaging/npm/*.tgz
+
+  publish-crates:
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish)
+    needs: [version, binaries, wheels, sdist, assemble-npm]
+    runs-on: ubuntu-latest
+    environment: crates-io
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+      - uses: rust-lang/crates-io-auth-action@v1
+        id: auth
+      - name: Publish the installer and core
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          publish_crate() {
+            crate=$1
+            if cargo info "$crate@$VERSION" --registry crates-io > /dev/null 2>&1; then
+              echo "$crate $VERSION is already published; skipping"
+            else
+              cargo publish --manifest-path localnative-rs/Cargo.toml -p "$crate" --locked
+            fi
+          }
+          publish_crate localnative_hostinstall
+          publish_crate localnative_core
+      - name: Wait for dependency indexing
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          for crate in localnative_core localnative_hostinstall; do
+            ready=false
+            for _ in {1..30}; do
+              if cargo info "$crate@$VERSION" --registry crates-io > /dev/null 2>&1; then ready=true; break; fi
+              sleep 2
+            done
+            test "$ready" = true || { echo "$crate $VERSION was not indexed"; exit 1; }
+          done
+      - name: Package and test the CLI crate
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          cargo package --manifest-path localnative-rs/Cargo.toml -p localnative_cli --locked
+          cargo install --path "localnative-rs/target/package/localnative_cli-$VERSION" --locked --root "$RUNNER_TEMP/cargo-install" --bin localnative --bin localnative-web-ext-host
+          python3 script/check-cli-install.py "$RUNNER_TEMP/cargo-install/bin"
+      - name: Publish the CLI
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          if cargo info "localnative_cli@$VERSION" --registry crates-io > /dev/null 2>&1; then
+            echo "localnative_cli $VERSION is already published; skipping"
+          else
+            cargo publish --manifest-path localnative-rs/Cargo.toml -p localnative_cli --locked
+          fi
+
+  publish-pypi:
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish)
+    needs: [publish-crates, wheels, sdist]
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          pattern: package-*
+          path: dist/
+          merge-multiple: true
+      - uses: pypa/gh-action-pypi-publish@release/v1
+
+  publish-npm:
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish)
+    needs: [publish-crates, assemble-npm]
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+      - uses: actions/download-artifact@v7
+        with:
+          name: npm-package
+          path: dist-npm
+      - name: Publish
+        run: |
+          npm install -g npm@latest
+          npm publish dist-npm/*.tgz --provenance --access public

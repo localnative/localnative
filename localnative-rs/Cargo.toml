@@ -11,7 +11,7 @@ resolver = "2"
 # carry one number; every other platform versions independently -- see
 # docs/VERSIONING.md.
 [workspace.package]
-version = "0.7.0"
+version = "0.8.0"
 
 [workspace.dependencies]
 anyhow = "1.0"

@@ -1,0 +1,40 @@
+{
+  "name": "localnative",
+  "version": "0.8.0",
+  "description": "Search, archive, sync, and provide read-only MCP access to your local LocalNative library",
+  "license": "AGPL-3.0-only",
+  "author": "Yi Wang",
+  "homepage": "https://localnative.app",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/localnative/localnative.git"
+  },
+  "bugs": {
+    "url": "https://github.com/localnative/localnative/issues"
+  },
+  "keywords": [
+    "local-first",
+    "notes",
+    "archive",
+    "mcp",
+    "sqlite"
+  ],
+  "bin": {
+    "localnative": "bin/localnative",
+    "localnative-web-ext-host": "bin/localnative-web-ext-host"
+  },
+  "files": [
+    "bin/",
+    "vendor/",
+    "run.js",
+    "install.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "postinstall": "node install.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

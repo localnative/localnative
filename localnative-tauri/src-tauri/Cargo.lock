@@ -2137,7 +2137,7 @@ dependencies = [
 
 [[package]]
 name = "localnative_core"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "anyhow",
  "base64 0.23.1",
@@ -2170,7 +2170,7 @@ dependencies = [
 
 [[package]]
 name = "localnative_hostinstall"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "dirs 7.0.0",
  "serde",

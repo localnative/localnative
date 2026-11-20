@@ -1,7 +1,10 @@
 [package]
 name = "localnative_core"
-description = "localnative core lib"
+description = "Local-first notes, text archive, search, and peer sync core for LocalNative"
 homepage = "https://localnative.app"
+repository = "https://github.com/localnative/localnative"
+keywords = ["local-first", "notes", "sqlite", "sync"]
+categories = ["database", "network-programming"]
 authors = ["Yi Wang"]
 version.workspace = true
 license = "AGPL-3.0"

@@ -13,7 +13,10 @@ async fn main() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_dialog::init())
-        .invoke_handler(tauri::generate_handler![command::input, command::fix_browser])
+        .invoke_handler(tauri::generate_handler![
+            command::input,
+            command::fix_browser
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

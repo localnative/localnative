@@ -21,6 +21,14 @@ To install from a source checkout instead:
 cargo install --path localnative-rs/localnative_cli --bin localnative --bin localnative-web-ext-host
 ```
 
+After the `cli-v0.8.0` package release, registry installation is also available:
+
+```bash
+cargo install localnative_cli --bin localnative --bin localnative-web-ext-host
+python -m pip install localnative
+npm install -g localnative
+```
+
 The former `localnative-mcp` executable remains a compatibility alias in this
 release. New configurations should use `localnative` with the `mcp` argument.
 

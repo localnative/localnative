@@ -5,6 +5,9 @@ title: Changelog
 [Updates](https://chuanyan.live/tags/localnative)
 
 ## Unreleased
+- **CLI packaging**: the unified `localnative` 0.8.0 command has five-platform
+  Cargo, PyPI and npm packages with real native-host/archive/MCP installation
+  checks. Registry publication is a separate approved release.
 - **Iced removed**: Tauri is now the only desktop front-end. Page size, theme,
   language, delete-confirmation and custom browser-origin preferences are
   persisted in the desktop app; notes and the SQLite schema are unchanged.

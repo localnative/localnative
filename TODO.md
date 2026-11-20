@@ -43,8 +43,13 @@ this slice.
 - [x] **Verification:** black-box tests cover legacy aliases, Pocket import,
   Markdown/database export and merge, archive search/get, MCP stdio and a real
   native-messaging insert after installation under a temporary home.
-- [ ] **Distribution:** add five-platform CI packages and install tests before
-  publishing the CLI to crates.io, PyPI and npm; no registry release is done.
+- [x] **Distribution engineering:** version 0.8.0 has crate metadata, two-binary
+  PyPI wheels and a self-contained source distribution, five-platform npm
+  packaging, and real install checks. `cli-release.yml` rehearses all artifacts
+  before idempotent crates publication followed by PyPI/npm.
+- [ ] **Registry release:** configure trusted publishing, make the initial
+  `localnative_hostinstall` crates.io upload with a maintainer token, then push
+  an approved `cli-v…` tag. No registry release has been done.
 
 ## Architecture review (2026-09-26)
 

@@ -49,7 +49,7 @@ Standalone core modules (not part of the JSON `Cmd` dispatch) driven by the unif
 ### Desktop (`localnative-tauri/`)
 - Tauri 2 + Svelte is the only desktop shell. It covers search, charts/tags, editing, archived-text reading, QR links, file sync and paired LAN sync.
 - Language, theme, page size and delete-confirmation preferences persist in WebView local storage. Browser host installation shares `localnative_hostinstall` with the CLI; custom Chrome origins are configurable in Settings.
-- Tauri has its own package and release workflow. `scripts/build-sidecars.mjs` stages the unified CLI and permanent browser host as target-triple sidecars for every desktop production build. The Rust `xtask release` command packages those two programs separately for CLI-only distribution.
+- Tauri has its own package and release workflow. `scripts/build-sidecars.mjs` stages the unified CLI and permanent browser host as target-triple sidecars for every desktop production build; `src-tauri/build.rs` also uses it so plain Cargo checks work on a clean checkout. The Rust `xtask release` command packages those two programs separately for CLI-only distribution.
 
 ## Common Commands
 
@@ -86,6 +86,12 @@ cd localnative-rs
 cargo run -p xtask -- release [-v <version>]   # package unified CLI + web-ext-host into dist/
 cargo run -p xtask -- ndkbd [--debug]          # cargo-ndk build of localnative_core .so for Android
 ```
+
+### CLI packages and releases
+- `pyproject.toml` builds two-binary PyPI wheels with Maturin; the sdist includes all three required crates.
+- `packaging/npm/` wraps the same two binaries for five platforms. `script/check-cli-install.py` is the shared real install check for Cargo, wheels, sdist and npm.
+- `.github/workflows/cli-release.yml` rehearses everything by default on manual runs and publishes only on an approved `cli-v…` tag or explicit `publish=true`. Crates publish in `localnative_hostinstall` → `localnative_core` → `localnative_cli` order, then PyPI and npm.
+- `script/set-version <v>` updates the Rust workspace and npm versions together. Registry publication has not been performed; first-time trusted-publisher setup is documented in `website/docs/release.md`.
 
 ### Front-ends
 ```bash

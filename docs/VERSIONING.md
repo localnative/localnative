@@ -46,21 +46,27 @@ Bump an artifact when *that artifact* ships. Never bump one to match another.
 ship together and carry one version, declared once in `[workspace.package]` in
 `localnative-rs/Cargo.toml`; members inherit it with `version.workspace = true`.
 
-`localnative_core` and `localnative_cli` are **published to crates.io**, which
-like the app stores forbids reuse and downgrades — so this number must only
-ever move forward.
+The crates.io packages are `localnative_hostinstall`, `localnative_core`, and
+`localnative_cli`, published in that dependency order. The registry forbids
+reuse and downgrades, so this number must only ever move forward.
+
+The npm and PyPI packages are both named `localnative` and use the same CLI
+version, independently of the Tauri/browser/mobile releases. Their tags are
+`cli-vX.Y.Z`. `script/set-version` also updates CLI path-dependency versions,
+Rust/Tauri lockfiles and `packaging/npm/package.json`; PyPI reads the Cargo
+version through `pyproject.toml`.
 
 ## Which script bumps what
 
 | Command | Touches |
 |---|---|
-| `script/set-version <v>` | Rust workspace version only (one line) |
+| `script/set-version <v>` | Rust workspace and npm CLI versions; PyPI inherits Cargo |
 | `script/set-version-extension <v>` | Browser extension manifest only |
 | `script/release-browser-extension <v>` | Extension manifest, then packages the upload zip |
 
-No script writes a version to a platform it does not release. Each edits by
-anchored match and fails loudly if the anchor is not unique — never by line
-number.
+No script writes a version to a platform it does not release. Text manifests
+use anchored matches that fail if the anchor is not unique; npm's package manifest
+is updated as structured JSON — never by line number.
 
 ## Why this policy exists
 
@@ -74,8 +80,8 @@ The consequences, all real:
   it** in the Manifest V2 deprecation. The MV3 code migration had landed; only
   the version had not.
 - Running it to release the extension at 0.5.2 would have **walked
-  `localnative_core` and `localnative_cli` backwards** from 0.7.0 — versions
-  already published to crates.io.
+  `localnative_core` and `localnative_cli` backwards** from the workspace's
+  0.7.0; crates.io releases had already stopped at 0.3.7.
 - Its `popup.html` line-60 target had long since drifted onto a CSS custom
   property (`--danger`), so a release would have silently corrupted the dark
   theme. The popup now reads its version from the manifest at runtime via

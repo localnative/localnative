@@ -1,7 +1,10 @@
 [package]
 name = "localnative_cli"
-description = "localnative app command line utility"
+description = "Local-first text archive, note search, sync, browser host, and MCP command line utility"
 homepage = "https://localnative.app"
+repository = "https://github.com/localnative/localnative"
+keywords = ["local-first", "notes", "archive", "mcp", "sync"]
+categories = ["command-line-utilities", "development-tools"]
 version.workspace = true
 authors = ["Yi Wang"]
 license = "AGPL-3.0"
@@ -14,8 +17,8 @@ path = "src/main.rs"
 
 [dependencies]
 clap = { workspace = true, features = ["cargo"] }
-localnative_core = { path = "../localnative_core" }
-localnative_hostinstall = { path = "../localnative_hostinstall" }
+localnative_core = { version = "0.8.0", path = "../localnative_core" }
+localnative_hostinstall = { version = "0.8.0", path = "../localnative_hostinstall" }
 serde_json = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
